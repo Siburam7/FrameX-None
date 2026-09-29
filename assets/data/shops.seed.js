@@ -22,14 +22,20 @@
       logo: null,
       coverImage: "assets/img/shops/cover-a.webp",
       description: null,
-      address: { line1: null, area: "Mathakarogola", city: "Dhenkanal", state: "Odisha", postalCode: "759024" },
+      address: {
+        line1: null,
+        area: "Mathakarogola",
+        city: "Dhenkanal",
+        state: "Odisha",
+        postalCode: "759024",
+      },
       location: { latitude: null, longitude: null },
       phone: null,
       openingHours: null, // null = not published yet
       fulfilment: ["pickup"],
-      rating: null,       // { average: 4.6, count: 128 } once real reviews exist
+      rating: null, // { average: 4.6, count: 128 } once real reviews exist
       isActive: true,
-      isSample: false
+      isSample: false,
     },
     {
       id: "shop-002",
@@ -38,14 +44,28 @@
       logo: null,
       coverImage: "assets/img/shops/cover-b.webp",
       description: null,
-      address: { line1: null, area: "Address to be added", city: null, state: null, postalCode: null },
+      address: {
+        line1: null,
+        area: "Address to be added",
+        city: null,
+        state: null,
+        postalCode: null,
+      },
       location: { latitude: null, longitude: null },
       phone: null,
-      openingHours: { mon: weekdayHours, tue: weekdayHours, wed: weekdayHours, thu: weekdayHours, fri: weekdayHours, sat: weekdayHours, sun: null },
+      openingHours: {
+        mon: weekdayHours,
+        tue: weekdayHours,
+        wed: weekdayHours,
+        thu: weekdayHours,
+        fri: weekdayHours,
+        sat: weekdayHours,
+        sun: null,
+      },
       fulfilment: ["pickup", "shop_delivery"],
       rating: null,
       isActive: true,
-      isSample: true
+      isSample: true,
     },
     {
       id: "shop-003",
@@ -54,14 +74,50 @@
       logo: null,
       coverImage: "assets/img/shops/cover-c.webp",
       description: null,
-      address: { line1: null, area: "Address to be added", city: null, state: null, postalCode: null },
+      address: {
+        line1: null,
+        area: "Address to be added",
+        city: null,
+        state: null,
+        postalCode: null,
+      },
       location: { latitude: null, longitude: null },
       phone: null,
-      openingHours: { mon: weekdayHours, tue: weekdayHours, wed: weekdayHours, thu: weekdayHours, fri: weekdayHours, sat: weekdayHours, sun: weekdayHours },
+      openingHours: {
+        mon: weekdayHours,
+        tue: weekdayHours,
+        wed: weekdayHours,
+        thu: weekdayHours,
+        fri: weekdayHours,
+        sat: weekdayHours,
+        sun: weekdayHours,
+      },
       fulfilment: ["pickup", "delivery_partner"],
       rating: null,
       isActive: true,
-      isSample: true
-    }
+      isSample: true,
+    },
+    {
+      id: "shop-004",
+      name: "Priya Internet House",
+      slug: "framex-studio",
+      logo: null,
+      coverImage: "assets/img/shops/cover-a.webp",
+      description: null,
+      address: {
+        line1: null,
+        area: "Mathakarogola",
+        city: "Dhenkanal",
+        state: "Odisha",
+        postalCode: "759024",
+      },
+      location: { latitude: null, longitude: null },
+      phone: "9556338348",
+      openingHours: null, // null = not published yet
+      fulfilment: ["pickup"],
+      rating: null, // { average: 4.6, count: 128 } once real reviews exist
+      isActive: true,
+      isSample: false,
+    },
   ];
 })((window.FrameX = window.FrameX || {}));
