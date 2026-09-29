@@ -1,0 +1,652 @@
+/* ==========================================================================
+   FrameX — Components
+   Reusable building blocks. Section-specific layout lives in the other files.
+   ========================================================================== */
+
+/* Buttons ------------------------------------------------------------------ */
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  min-height: 48px;
+  padding: 0 1.6rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.btn .icon {
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.btn:hover .icon--nudge {
+  transform: translateX(4px);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.55;
+}
+
+.btn--sm {
+  min-height: 44px;
+  padding: 0 1.1rem;
+  font-size: 0.85rem;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--primary {
+  background: var(--amber-strong);
+  color: var(--white);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--amber-deep);
+  box-shadow: 0 8px 22px rgba(222, 131, 46, 0.35);
+}
+
+.btn--dark {
+  background: var(--ink);
+  color: var(--white);
+}
+
+.btn--dark:hover:not(:disabled) {
+  background: #14182e;
+  box-shadow: 0 8px 22px rgba(5, 8, 22, 0.25);
+}
+
+.btn--outline-dark {
+  /* Outline button used over dark imagery (hero) */
+  background: rgba(5, 8, 22, 0.55);
+  border-color: var(--mist);
+  color: var(--mist);
+  backdrop-filter: blur(6px);
+}
+
+.btn--outline-dark:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--white);
+  color: var(--white);
+}
+
+.btn--outline {
+  border-color: var(--line);
+  color: var(--ink);
+  background: var(--white);
+}
+
+.btn--outline:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+
+.btn--rose {
+  background: var(--rose);
+  color: var(--white);
+  border-radius: var(--radius-sm);
+}
+
+.btn--rose:hover {
+  background: #d61f50;
+}
+
+.btn--brown {
+  background: var(--brown);
+  color: var(--white);
+  border-color: #e8d2af;
+  border-radius: var(--radius-md);
+}
+
+.btn--brown:hover {
+  background: var(--brown-deep);
+}
+
+.btn--light {
+  background: var(--white);
+  color: var(--ink);
+}
+
+.btn--light:hover {
+  background: var(--stone);
+}
+
+/* Round icon button ---------------------------------------------------------- */
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--ink);
+  box-shadow: 0 2px 8px rgba(5, 8, 22, 0.18);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.icon-btn:hover {
+  transform: scale(1.08);
+}
+
+.icon-btn:active {
+  transform: scale(0.94);
+}
+
+.icon-btn[aria-pressed="true"] {
+  background: var(--rose);
+  color: var(--white);
+}
+
+.icon-btn[aria-pressed="true"] .icon {
+  fill: currentColor;
+}
+
+/* Chips (filters, tabs) ------------------------------------------------------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+.chip:hover {
+  border-color: var(--ink);
+}
+
+.chip[aria-pressed="true"],
+.chip.is-active {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--white);
+}
+
+/* Small status pills -------------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  color: var(--ink);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.badge--discount {
+  background: var(--rose);
+  color: var(--white);
+}
+
+.badge--sample {
+  background: rgba(5, 8, 22, 0.78);
+  color: var(--white);
+  backdrop-filter: blur(6px);
+}
+
+.badge--open {
+  background: #e3f6ea;
+  color: #12633a;
+}
+
+.badge--closed {
+  background: #fdeaea;
+  color: #8f1d1d;
+}
+
+.badge--muted {
+  background: var(--stone-soft);
+  color: var(--muted);
+}
+
+/* Form controls ------------------------------------------------------------ */
+.field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field .icon {
+  position: absolute;
+  left: 14px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.input,
+.select {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font-size: var(--text-sm);
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.field .input {
+  padding-left: 42px;
+}
+
+.input:focus,
+.select:focus {
+  outline: none;
+  border-color: var(--amber);
+  box-shadow: var(--focus-ring);
+}
+
+.select {
+  appearance: none;
+  padding-right: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%235b5f6b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.switch input {
+  appearance: none;
+  position: relative;
+  width: 44px;
+  height: 26px;
+  margin: 0;
+  border-radius: var(--radius-pill);
+  background: var(--slate);
+  transition: background-color var(--dur-base) var(--ease-out);
+  cursor: pointer;
+}
+
+.switch input::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--white);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.switch input:checked {
+  background: var(--amber-strong);
+}
+
+.switch input:checked::after {
+  transform: translateX(18px);
+}
+
+.switch input:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 3px;
+}
+
+/* Price ------------------------------------------------------------------- */
+.price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+
+.price__now {
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.price__was {
+  color: var(--rose-soft);
+  font-size: var(--text-sm);
+  text-decoration: line-through;
+}
+
+/* Quantity stepper --------------------------------------------------------- */
+.qty {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+}
+
+.qty__btn {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.qty__btn:hover:not(:disabled) {
+  background: var(--stone-soft);
+}
+
+.qty__btn:disabled {
+  opacity: 0.4;
+}
+
+.qty__value {
+  min-width: 28px;
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Empty / error states ------------------------------------------------------ */
+.state-message {
+  grid-column: 1 / -1;
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 48px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  color: var(--muted);
+}
+
+.state-message strong {
+  color: var(--ink);
+  font-size: var(--text-lg);
+}
+
+/* ==========================================================================
+   Product card
+   ========================================================================== */
+.product-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-md);
+  background: var(--stone);
+  overflow: hidden;
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.product-card__media {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  background: var(--stone-soft);
+}
+
+.product-card__media::after {
+  /* thin inner keyline, as in the Original */
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+.product-card__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 700ms var(--ease-out);
+}
+
+.product-card__open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+}
+
+.product-card__badges {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.product-card__wish {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+}
+
+.product-card__body {
+  display: grid;
+  gap: 4px;
+  padding: 14px 14px 10px;
+}
+
+.product-card__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.7em;
+}
+
+.product-card__shop {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.product-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+  padding: 10px 14px 14px;
+  border-top: 1px solid rgba(8, 35, 52, 0.12);
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.product-card__stock--low {
+  color: var(--wine);
+  font-weight: 700;
+}
+
+.product-card__stock--out {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.product-card__add {
+  position: relative;
+  z-index: 2;
+}
+
+.product-card.is-unavailable .product-card__image {
+  filter: grayscale(0.85);
+  opacity: 0.75;
+}
+
+@media (hover: hover) {
+  .product-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .product-card:hover .product-card__image {
+    transform: scale(1.06);
+  }
+}
+
+/* ==========================================================================
+   Shop card
+   ========================================================================== */
+.shop-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+  overflow: hidden;
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.shop-card__cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--stone);
+}
+
+.shop-card__cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 700ms var(--ease-out);
+}
+
+.shop-card__top {
+  position: absolute;
+  inset: 12px 12px auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.shop-card__body {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 36px 20px 20px;
+  flex: 1;
+}
+
+.shop-card__logo {
+  position: absolute;
+  top: -28px;
+  left: 20px;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border: 3px solid var(--white);
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--white);
+  font-family: var(--font-display);
+  font-weight: 700;
+  overflow: hidden;
+}
+
+.shop-card__logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shop-card__name {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.shop-card__address {
+  display: flex;
+  gap: 6px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.shop-card__address .icon {
+  margin-top: 3px;
+}
+
+.shop-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.shop-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.shop-card__count {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+@media (hover: hover) {
+  .shop-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .shop-card:hover .shop-card__cover img {
+    transform: scale(1.05);
+  }
+}
+
+/* Skeleton placeholders sized like the real cards ----------------------------- */
+.skeleton-card {
+  border-radius: var(--radius-md);
+  aspect-ratio: 3 / 4;
+}
+
+.skeleton-card--shop {
+  aspect-ratio: 4 / 3.2;
+  border-radius: var(--radius-lg);
+}

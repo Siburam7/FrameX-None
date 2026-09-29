@@ -1,0 +1,217 @@
+/* ==========================================================================
+   FrameX — FAQ, contact strip, footer
+   ========================================================================== */
+
+/* FAQ ------------------------------------------------------------------------ */
+.faq-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .faq-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 28px;
+  }
+
+  .faq-column {
+    display: grid;
+    gap: 20px;
+  }
+}
+
+.faq-column {
+  display: grid;
+  gap: 14px;
+}
+
+@media (min-width: 900px) {
+  .faq-column {
+    gap: 20px;
+  }
+}
+
+.faq-item {
+  border-radius: 15px;
+  background: linear-gradient(to left, transparent, rgba(153, 157, 169, 0.33));
+}
+
+.faq-item__button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  min-height: 64px;
+  padding: 12px 14px 12px 20px;
+  text-align: left;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.faq-item__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--rose);
+  color: var(--white);
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out);
+}
+
+.faq-item__button:hover .faq-item__icon {
+  background: var(--rose-soft);
+}
+
+.faq-item.is-open .faq-item__icon {
+  transform: rotate(45deg);
+}
+
+.faq-item__panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 380ms var(--ease-out);
+}
+
+.faq-item.is-open .faq-item__panel {
+  grid-template-rows: 1fr;
+}
+
+.faq-item__panel > div {
+  overflow: hidden;
+}
+
+.faq-item__answer {
+  max-width: 62ch;
+  padding: 0 20px 18px;
+  color: #b95a05; /* darker amber for AA contrast on the tinted card */
+  font-size: var(--text-sm);
+}
+
+.contact-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding: clamp(20px, 3vw, 32px);
+  margin-top: clamp(32px, 5vw, 56px);
+  border-radius: var(--radius-lg);
+  background: var(--cream);
+}
+
+.contact-strip h3 {
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  font-weight: 600;
+}
+
+.contact-strip p {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+/* Footer ----------------------------------------------------------------------- */
+.site-footer {
+  background: var(--charcoal);
+  color: var(--stone);
+}
+
+.site-footer__top {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px 20px;
+  padding-block: clamp(36px, 6vw, 64px);
+}
+
+@media (min-width: 900px) {
+  .site-footer__top {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.site-footer h3 {
+  margin-bottom: 14px;
+  color: var(--white);
+  font-size: var(--text-sm);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.site-footer li a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--stone);
+  font-size: var(--text-sm);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.site-footer li a:hover {
+  color: rgba(228, 229, 231, 0.65);
+  text-decoration: underline;
+}
+
+.site-footer__bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 0;
+  padding-block: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 13px;
+}
+
+.site-footer__bottom span,
+.site-footer__bottom a {
+  padding-inline: 14px;
+}
+
+.site-footer__bottom a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.site-footer__bottom a {
+  border-left: 1px solid rgba(228, 229, 231, 0.4);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.site-footer__bottom a:hover {
+  color: var(--white);
+}
+
+@media (max-width: 599px) {
+  .site-footer__bottom {
+    justify-content: flex-start;
+  }
+
+  .site-footer__bottom span {
+    flex-basis: 100%;
+    padding-left: 0;
+  }
+
+  .site-footer__bottom a:first-of-type {
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+
+/* Collapsed answers must not be readable by assistive tech or focus */
+.faq-item__panel > div {
+  visibility: hidden;
+  transition: visibility 0s linear 380ms;
+}
+
+.faq-item.is-open .faq-item__panel > div {
+  visibility: visible;
+  transition-delay: 0s;
+}

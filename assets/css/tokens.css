@@ -1,0 +1,89 @@
+/* ==========================================================================
+   FrameX — Design tokens
+   Single source of truth for colour, type, spacing, radius, motion.
+   Values are taken from the Original design; do not add one-off values in
+   component files — add a token here instead.
+   ========================================================================== */
+
+:root {
+  /* Brand colour ------------------------------------------------------- */
+  --ink: #050816;            /* dark surfaces, primary text */
+  --night: #02030a;          /* deepest surface (header when scrolled, museum) */
+  --charcoal: #2b2b2b;       /* footer */
+
+  --amber: #ea780e;          /* primary accent */
+  --amber-strong: #de832e;   /* primary button fill */
+  --amber-deep: #c96a0a;     /* primary button hover */
+  --gold: #d8a15d;           /* secondary accent */
+
+  --rose: #ef295c;           /* reviews + FAQ accent */
+  --rose-soft: #d44a6c;
+  --wine: #bc143e;
+
+  --cream: #fff2db;          /* large soft panels */
+  --sand: #fae6c7;
+  --brown: #8b5e3c;          /* "how it works" buttons */
+  --brown-deep: #704529;
+  --tan: #a66a3f;
+
+  /* Neutrals ------------------------------------------------------------ */
+  --white: #ffffff;
+  --stone: #e4e5e7;          /* card bodies */
+  --stone-soft: #f1f2f3;
+  --mist: #adb0ba;           /* secondary text on dark */
+  --slate: #999da9;
+  --muted: #5b5f6b;          /* secondary text on light (AA on white) */
+  --star: #fbbc04;
+  --success: #1f9d55;
+  --danger: #c62828;
+
+  /* Semantic ------------------------------------------------------------ */
+  --bg: var(--white);
+  --text: var(--ink);
+  --text-on-dark: var(--white);
+  --line: rgba(5, 8, 22, 0.12);
+  --line-on-dark: rgba(255, 255, 255, 0.16);
+  --focus-ring: 0 0 0 3px rgba(234, 120, 14, 0.55);
+
+  /* Typography ---------------------------------------------------------- */
+  --font-display: "Sora", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-h3: clamp(1.125rem, 1.05rem + 0.4vw, 1.4rem);
+  --text-h2: clamp(1.75rem, 1.25rem + 2vw, 2.5rem);      /* section headings */
+  --text-display: clamp(2rem, 0.9rem + 4.6vw, 4.25rem); /* hero */
+
+  /* Layout -------------------------------------------------------------- */
+  --gutter: clamp(16px, 4.5vw, 56px);
+  --container: 1320px;
+  --header-h: 68px;
+  --section-gap: clamp(48px, 7vw, 96px);
+
+  /* Shape --------------------------------------------------------------- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(5, 8, 22, 0.06), 0 8px 24px rgba(5, 8, 22, 0.08);
+  --shadow-lift: 0 2px 4px rgba(5, 8, 22, 0.08), 0 16px 40px rgba(5, 8, 22, 0.16);
+  --shadow-overlay: 0 24px 80px rgba(2, 3, 10, 0.45);
+
+  /* Motion -------------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 160ms;
+  --dur-base: 280ms;
+  --dur-slow: 640ms;
+
+  /* Stacking ------------------------------------------------------------ */
+  --z-header: 100;
+  --z-overlay: 200;
+  --z-drawer: 210;
+  --z-toast: 300;
+}

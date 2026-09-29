@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>FrameX — Premium photo frames from local shops</title>
+  <meta name="description"
+    content="Discover premium photo frames from photo-frame shops near you. Choose a frame, add it to your cart and pick it up or have it delivered.">
+  <meta name="theme-color" content="#02030a">
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23050816'/%3E%3Crect x='7' y='8' width='18' height='16' rx='1.5' fill='none' stroke='%23ea780e' stroke-width='2.5'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@300;400;600;700;800&display=swap">
+  <link rel="preload" as="image" href="assets/img/ui/hero.webp" fetchpriority="high">
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/chrome.css">
+  <link rel="stylesheet" href="assets/css/catalog.css">
+  <link rel="stylesheet" href="assets/css/story.css">
+  <link rel="stylesheet" href="assets/css/overlays.css">
+  <link rel="stylesheet" href="assets/css/footer-faq.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+  <link rel="stylesheet" href="assets/css/layout-hero.css">
+  <script>document.documentElement.classList.add("js");</script>
+</head>
+
+<body data-page="home">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-header-root"></div>
+
+  <main id="main">
+    <section class="hero" id="home" aria-labelledby="hero-title">
+      <div class="hero__media"><img src="assets/img/ui/hero.webp"
+          alt="A framed family photo standing on a wooden table in a bright living room" width="1376" height="768"
+          fetchpriority="high"></div>
+      <div class="hero__inner">
+        <div class="hero__copy">
+          <h1 class="hero__title" id="hero-title" style="--i:0"><span class="hero__line">Preserve</span><span
+              class="hero__line">Your Memories in</span><span class="hero__line">Premium <em
+                class="hero__accent">Frames.</em></span></h1>
+          <p class="hero__lead" style="--i:1">Discover photo frames from local shops. Pick a size, add to your cart and
+            collect it, or have it delivered where the shop offers it.</p>
+          <div class="hero__actions" style="--i:2">
+            <a class="btn btn--primary" href="shop.html">Explore Frames</a>
+            <a class="btn btn--outline-dark" href="#custom-frame">Create Your Frame <svg class="icon icon--nudge"
+                aria-hidden="true">
+                <use href="#i-arrow-right"></use>
+              </svg></a>
+          </div>
+        </div>
+        <div class="hero__bar">
+          <div class="hero__socials"><span class="hero__socials-label">Follow us</span>
+            <a class="hero__social" href="#" data-social="facebook" aria-label="Facebook"><svg class="icon"
+                aria-hidden="true">
+                <use href="#i-facebook"></use>
+              </svg></a>
+            <a class="hero__social" href="#" data-social="instagram" aria-label="Instagram"><svg class="icon"
+                aria-hidden="true">
+                <use href="#i-instagram"></use>
+              </svg></a>
+            <a class="hero__social" href="#" data-social="linkedin" aria-label="LinkedIn"><svg class="icon"
+                aria-hidden="true">
+                <use href="#i-linkedin"></use>
+              </svg></a>
+          </div>
+          <div class="hero__stats" id="hero-stats" role="group" aria-label="FrameX in numbers"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="marquee ticker" id="ticker" data-speed="40" aria-label="Highlights">
+      <div class="marquee__track">
+        <div class="marquee__group">
+          <span class="ticker__item">Premium frames</span><span class="ticker__item">HD printing</span><span
+            class="ticker__item">Custom size</span>
+          <span class="ticker__item">Local shops</span><span class="ticker__item">Pickup &amp; delivery</span><span
+            class="ticker__item">Premium quality</span>
+        </div>
+      </div>
+    </div>
+
+    <section aria-label="Featured frame styles">
+      <div class="marquee frame-rail" id="featured-rail" data-speed="45">
+        <div class="marquee__track">
+          <div class="marquee__group frame-rail__group"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="categories" aria-labelledby="categories-title">
+      <div class="container">
+        <div class="section-head" data-reveal>
+          <h2 class="section-title" id="categories-title">Shop by category</h2>
+        </div>
+        <div class="category-row" id="category-row"></div>
+      </div>
+    </section>
+
+    <section class="section section--tight-top" id="shops" aria-labelledby="shops-title">
+      <div class="container">
+        <div class="section-head" data-reveal>
+          <div>
+            <h2 class="section-title" id="shops-title">Photo-frame shops near you</h2>
+            <p class="section-lead">Choose a shop, browse its frames and order for pickup or delivery.</p>
+          </div>
+          <a class="btn btn--outline btn--sm" href="shop.html#shops">Browse all shops</a>
+        </div>
+        <div class="shops-toolbar" id="shops-toolbar">
+          <button class="btn btn--dark btn--sm" type="button" id="shops-locate"><svg class="icon" aria-hidden="true">
+              <use href="#i-pin"></use>
+            </svg> Use my location</button>
+          <div class="segmented" role="group" aria-label="Sort shops">
+            <button class="chip" type="button" data-shop-sort="recommended" aria-pressed="true">Recommended</button>
+            <button class="chip" type="button" data-shop-sort="nearest" aria-pressed="false" disabled>Nearest</button>
+            <button class="chip" type="button" data-shop-sort="rating" aria-pressed="false" disabled>Top rated</button>
+          </div>
+          <p class="shops-toolbar__status" id="shops-status" role="status" aria-live="polite"></p>
+        </div>
+        <div class="shop-grid" id="shop-grid" data-limit="3" aria-busy="true"></div>
+      </div>
+    </section>
+
+    <section class="section section--tight-top" id="recommended" aria-labelledby="recommended-title">
+      <div class="container">
+        <div class="section-head" data-reveal>
+          <h2 class="section-title" id="recommended-title">Highly recommended frames</h2>
+          <a class="btn btn--outline btn--sm" href="shop.html">Shop all frames <svg class="icon icon--nudge"
+              aria-hidden="true">
+              <use href="#i-arrow-right"></use>
+            </svg></a>
+        </div>
+        <div class="recommended-rail" id="recommended-rail"></div>
+      </div>
+    </section>
+
+    <section class="section section--tight-top" id="custom-frame" aria-labelledby="custom-title">
+      <div class="container">
+        <div class="custom-frame" data-reveal>
+          <div class="custom-frame__media"><img src="assets/img/products/luxury-hd.webp"
+              alt="Assorted premium framed photos displayed on a white shelf" width="900" height="600" loading="lazy">
+          </div>
+          <div class="custom-frame__body">
+            <p class="custom-frame__eyebrow">Custom premium photo frame</p>
+            <h2 class="custom-frame__title" id="custom-title">A frame made around your photo</h2>
+            <p class="custom-frame__text">Pick a frame style from a local shop, choose the size that suits your wall and
+              add a note for the shop. Take it home, or have it delivered where the shop offers delivery.</p>
+            <ul class="check-list">
+              <li><svg class="icon" aria-hidden="true">
+                  <use href="#i-check"></use>
+                </svg><span><strong>Available now:</strong> choose a size, add an order note, preview your photo</span>
+              </li>
+              <li><svg class="icon" aria-hidden="true">
+                  <use href="#i-clock"></use>
+                </svg><span><strong>Planned:</strong> photo upload to the shop, custom sizes, frame colour
+                  options</span></li>
+            </ul>
+            <div class="custom-frame__actions">
+              <a class="btn btn--primary" href="shop.html">Explore Frames</a>
+              <a class="btn btn--outline-dark" href="services.html#journey">How it works</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="poster" aria-labelledby="poster-title">
+      <div class="poster__media"><img src="assets/img/ui/poster.webp" alt="" width="1584" height="672" loading="lazy">
+      </div>
+      <div class="container">
+        <div class="poster__copy" data-reveal>
+          <h2 class="poster__title" id="poster-title"><span class="poster__line">Premium wall art</span><span
+              class="poster__line poster__accent">for every room.</span></h2>
+          <p class="poster__offer">From a single portrait to a full gallery wall, find the frames that finish the room.
+          </p>
+          <a class="btn btn--primary poster__cta" href="gallery.html">See inspiration <svg class="icon icon--nudge"
+              aria-hidden="true">
+              <use href="#i-arrow-right"></use>
+            </svg></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="how-it-works" aria-labelledby="how-title">
+      <div class="container">
+        <div class="section-head" data-reveal>
+          <div>
+            <h2 class="section-title" id="how-title">Turn your memories into premium wall art</h2>
+            <p class="section-lead">Four simple steps from your photo to a finished frame.</p>
+          </div>
+        </div>
+        <ol class="how-steps" data-reveal>
+          <li class="how-step">
+            <div class="how-step__media"><img src="assets/img/steps/step-1.webp"
+                alt="A woman choosing a photo on her phone" width="720" height="540" loading="lazy"><span
+                class="how-step__num">01</span></div>
+            <div class="how-step__body">
+              <h3>Upload your photo</h3>
+              <p>Choose the memory you want to frame. Photo upload is planned; for now, share it with the shop.</p>
+            </div>
+          </li>
+          <li class="how-step">
+            <div class="how-step__media"><img src="assets/img/steps/step-2.webp" alt="A wall of framed family photos"
+                width="720" height="540" loading="lazy"><span class="how-step__num">02</span></div>
+            <div class="how-step__body">
+              <h3>Choose your frame</h3>
+              <p>Browse styles from local shops and pick the size that fits your space.</p>
+            </div>
+          </li>
+          <li class="how-step">
+            <div class="how-step__media"><img src="assets/img/steps/step-3.webp"
+                alt="A craftsman assembling a frame in a workshop" width="720" height="540" loading="lazy"><span
+                class="how-step__num">03</span></div>
+            <div class="how-step__body">
+              <h3>Printing &amp; framing</h3>
+              <p>The shop prints and assembles your frame with the materials it lists.</p>
+            </div>
+          </li>
+          <li class="how-step">
+            <div class="how-step__media"><img src="assets/img/steps/step-4.webp" alt="A framed print packed securely"
+                width="720" height="540" loading="lazy"><span class="how-step__num">04</span></div>
+            <div class="how-step__body">
+              <h3>Pickup or delivery</h3>
+              <p>Collect it from the shop, or receive it where the shop offers delivery.</p>
+            </div>
+          </li>
+        </ol>
+        <div class="section-more"><a class="btn btn--dark" href="shop.html">Start with a frame <svg
+              class="icon icon--nudge" aria-hidden="true">
+              <use href="#i-arrow-right"></use>
+            </svg></a><a class="btn btn--outline" href="services.html#journey">Full guide</a></div>
+      </div>
+    </section>
+
+    <section class="section section--tight-top" id="community" aria-labelledby="community-title">
+      <div class="container">
+        <div class="section-head" data-reveal>
+          <div>
+            <h2 class="section-title" id="community-title">From our community</h2>
+            <p class="section-lead">Frame styles to inspire your next project. <span class="placeholder-note">Sample
+                photos until customers share their own</span></p>
+          </div>
+        </div>
+        <div class="community-rail" id="community-rail"></div>
+        <div class="section-more">
+          <a class="btn btn--dark" href="gallery.html">View gallery <svg class="icon icon--nudge" aria-hidden="true">
+              <use href="#i-arrow-right"></use>
+            </svg></a>
+          <button class="btn btn--outline" type="button" data-action="coming-soon"
+            data-feature="Sharing your photos">Share your photo</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section--tight-top" id="reviews" aria-labelledby="reviews-title">
+      <div class="container">
+        <div class="section-head" data-reveal>
+          <div>
+            <h2 class="section-title" id="reviews-title">Customer stories &amp; feedback</h2>
+            <p class="section-lead"><span class="placeholder-note">Sample reviews — replace with verified customer
+                reviews</span></p>
+          </div>
+          <button class="btn btn--outline btn--sm" type="button" data-action="coming-soon"
+            data-feature="Sharing your story">Share your story</button>
+        </div>
+        <div class="review-rail" id="review-rail"></div>
+      </div>
+    </section>
+
+    <section class="section section--tight-top" id="faq" aria-labelledby="faq-title">
+      <div class="container">
+        <div class="section-head" data-reveal>
+          <h2 class="section-title" id="faq-title">Everything you need to know</h2>
+          <a class="btn btn--outline btn--sm" href="faq.html">See all questions <svg class="icon icon--nudge"
+              aria-hidden="true">
+              <use href="#i-arrow-right"></use>
+            </svg></a>
+        </div>
+        <div id="faq-root" data-preview="4"></div>
+      </div>
+    </section>
+
+    <section class="section section--tight-top" aria-labelledby="cta-title">
+      <div class="container">
+        <div class="final-cta" data-reveal>
+          <h2 class="final-cta__title" id="cta-title">Ready to frame your memories?</h2>
+          <p class="final-cta__text">Browse frames from local shops, or get in touch if you need something specific.</p>
+          <div class="final-cta__actions"><a class="btn btn--dark" href="shop.html">Explore Frames</a><a
+              class="btn btn--outline" href="contact.html">Contact us</a></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer-root"></div>
+  <div id="overlay-root"></div>
+
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/js/core/dom.js" defer></script>
+  <script src="assets/js/core/qs.js" defer></script>
+  <script src="assets/js/core/constants.js" defer></script>
+  <script src="assets/js/services/pricing.js" defer></script>
+  <script src="assets/js/services/location.js" defer></script>
+  <script src="assets/js/services/shop-utils.js" defer></script>
+  <script src="assets/data/site.seed.js" defer></script>
+  <script src="assets/data/categories.seed.js" defer></script>
+  <script src="assets/data/shops.seed.js" defer></script>
+  <script src="assets/data/products.seed.js" defer></script>
+  <script src="assets/data/reviews.seed.js" defer></script>
+  <script src="assets/data/community.seed.js" defer></script>
+  <script src="assets/data/faq.seed.js" defer></script>
+  <script src="assets/data/gallery.seed.js" defer></script>
+  <script src="assets/js/api/seed-provider.js" defer></script>
+  <script src="assets/js/api/http-provider.js" defer></script>
+  <script src="assets/js/api/api.js" defer></script>
+  <script src="assets/js/store/cart.js" defer></script>
+  <script src="assets/js/store/wishlist.js" defer></script>
+  <script src="assets/js/ui/icons.js" defer></script>
+  <script src="assets/js/ui/templates.js" defer></script>
+  <script src="assets/js/ui/toast.js" defer></script>
+  <script src="assets/js/ui/overlay.js" defer></script>
+  <script src="assets/js/ui/reveal.js" defer></script>
+  <script src="assets/js/ui/nav.js" defer></script>
+  <script src="assets/js/ui/chrome.js" defer></script>
+  <script src="assets/js/ui/cart-drawer.js" defer></script>
+  <script src="assets/js/ui/actions.js" defer></script>
+  <script src="assets/js/ui/marquee.js" defer></script>
+  <script src="assets/js/ui/site.js" defer></script>
+  <script src="assets/js/ui/featured.js" defer></script>
+  <script src="assets/js/ui/categories.js" defer></script>
+  <script src="assets/js/ui/shops.js" defer></script>
+  <script src="assets/js/ui/recommended.js" defer></script>
+  <script src="assets/js/ui/reviews.js" defer></script>
+  <script src="assets/js/ui/community.js" defer></script>
+  <script src="assets/js/ui/faq.js" defer></script>
+  <script src="assets/js/main.js" defer></script>
+</body>
+
+</html>

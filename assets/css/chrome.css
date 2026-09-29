@@ -1,0 +1,356 @@
+/* ==========================================================================
+   FrameX — Site chrome (header, mobile nav)
+   Shared across every page. Rendered into #site-header-root by ui/chrome.js.
+   ========================================================================== */
+
+/* Header ------------------------------------------------------------------- */
+.site-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: var(--z-header);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--white);
+  transition: border-color var(--dur-slow) var(--ease-out);
+  animation: header-in 700ms var(--ease-out) both;
+}
+
+/* The frosted background lives on a pseudo-element on purpose: putting
+   backdrop-filter on the header itself would make it the containing block for
+   the fixed-position mobile menu and break its positioning. */
+.site-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: transparent;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background-color var(--dur-slow) var(--ease-out);
+}
+
+.site-header.is-scrolled::before,
+.site-header.is-menu-open::before {
+  background: rgba(2, 3, 10, 0.86);
+}
+
+.site-header.is-scrolled,
+.site-header.is-menu-open {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+@keyframes header-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+}
+
+.site-header__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  height: var(--header-h);
+  padding-inline: var(--gutter);
+  max-width: 1600px;
+  margin-inline: auto;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  min-height: 44px; /* comfortable tap target around the logo */
+}
+
+.brand img {
+  width: 116px;
+  height: auto;
+}
+
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Cart button */
+.cart-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  color: var(--white);
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.cart-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.cart-btn:active {
+  transform: scale(0.94);
+}
+
+.cart-btn .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.cart-btn__count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--amber-strong);
+  color: var(--white);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  transform: scale(1);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.cart-btn__count[hidden] {
+  display: none;
+}
+
+.cart-btn.is-bumped .cart-btn__count {
+  animation: count-bump 420ms var(--ease-out);
+}
+
+@keyframes count-bump {
+  40% {
+    transform: scale(1.35);
+  }
+}
+
+/* Location chip (desktop only) */
+.location-chip {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  color: var(--mist);
+  text-align: left;
+  line-height: 1.25;
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+.location-chip:hover {
+  color: var(--white);
+}
+
+.location-chip small {
+  display: block;
+  font-size: 11px;
+}
+
+.location-chip strong {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.site-header .signup-btn {
+  display: none;
+  min-height: 44px;
+  padding: 0 1.4rem;
+  border: 2px solid rgba(255, 255, 255, 0.82);
+  background: var(--white);
+  color: var(--ink);
+}
+
+.site-header .signup-btn:hover {
+  background: var(--mist);
+  border-color: transparent;
+}
+
+/* Hamburger */
+.nav-toggle {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  color: var(--white);
+}
+
+.nav-toggle__bars {
+  position: relative;
+  width: 22px;
+  height: 2px;
+  background: currentColor;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.nav-toggle__bars::before,
+.nav-toggle__bars::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.nav-toggle__bars::before {
+  top: -7px;
+}
+
+.nav-toggle__bars::after {
+  top: 7px;
+}
+
+.nav-toggle[aria-expanded="true"] .nav-toggle__bars {
+  background: transparent;
+}
+
+.nav-toggle[aria-expanded="true"] .nav-toggle__bars::before {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.nav-toggle[aria-expanded="true"] .nav-toggle__bars::after {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Primary navigation — mobile panel first ---------------------------------- */
+.primary-nav {
+  position: fixed;
+  inset: var(--header-h) 0 auto;
+  max-height: calc(100dvh - var(--header-h));
+  overflow-y: auto;
+  padding: 8px var(--gutter) 24px;
+  background: var(--night);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out),
+    visibility 0s linear var(--dur-base);
+}
+
+.primary-nav.is-open {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition-delay: 0s;
+}
+
+.primary-nav__list a {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--mist);
+  font-size: 1.05rem;
+  font-weight: 500;
+  transition: color var(--dur-base) var(--ease-out);
+}
+
+.primary-nav__list a:hover,
+.primary-nav__list a[aria-current="page"] {
+  color: var(--white);
+}
+
+.primary-nav__mobile-extras {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.primary-nav__mobile-extras .location-chip {
+  display: flex;
+  padding-inline: 0;
+}
+
+@media (min-width: 1100px) {
+  .site-header__bar {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+  }
+
+  .nav-toggle,
+  .primary-nav__mobile-extras {
+    display: none;
+  }
+
+  .primary-nav {
+    position: static;
+    inset: auto;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+    background: none;
+    border: 0;
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+  }
+
+  .primary-nav__list {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .primary-nav__list a {
+    position: relative;
+    min-height: 44px;
+    padding: 0 16px;
+    border: 0;
+    font-size: var(--text-sm);
+  }
+
+  .primary-nav__list a::after {
+    content: "";
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 6px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--amber);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--dur-base) var(--ease-out);
+  }
+
+  .primary-nav__list a:hover::after,
+  .primary-nav__list a[aria-current="page"]::after {
+    transform: scaleX(1);
+  }
+
+  .site-header__actions {
+    justify-self: end;
+  }
+
+  .location-chip,
+  .site-header .signup-btn {
+    display: inline-flex;
+  }
+}
+
+
+/* Inner pages: solid header (there is no dark hero behind it) */
+.site-header--solid::before {
+  background: rgba(2, 3, 10, 0.96);
+}
+
+.location-chip {
+  min-height: 44px;
+}
