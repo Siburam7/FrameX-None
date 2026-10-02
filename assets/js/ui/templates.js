@@ -84,15 +84,15 @@
   }
 
   function frameCard(product) {
+    const price = hasSizeChoice(product) ? `From ${formatPrice(startingPrice(product))}` : formatPrice(finalPrice(product));
     return `<article class="frame-card" data-product-id="${esc(product.id)}">
-      <img class="frame-card__image" src="${esc(product.image)}" alt="${esc(product.name)}" width="520" height="640" loading="lazy" decoding="async">
-      <a class="frame-card__open" href="${FrameX.qs.productUrl(product.id)}" aria-label="View details for ${esc(product.name)}"></a>
-      <div class="frame-card__overlay">
-        <div>
-          <span class="frame-card__name">${esc(product.name)}</span>
-          <span class="frame-card__from">From ${formatPrice(finalPrice(product))}</span>
-        </div>
-        <div class="frame-card__tools">${wishButton(product)}</div>
+      <div class="frame-card__media">
+        <img class="frame-card__image" src="${esc(product.image)}" alt="${esc(product.name)}" width="520" height="650" loading="lazy" decoding="async" draggable="false">
+        ${wishButton(product, "frame-card__wish")}
+      </div>
+      <div class="frame-card__caption">
+        <a class="frame-card__open" href="${FrameX.qs.productUrl(product.id)}"><span class="frame-card__name">${esc(product.name)}</span></a>
+        <span class="frame-card__from">${price}</span>
       </div>
     </article>`;
   }

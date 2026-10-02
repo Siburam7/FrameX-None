@@ -179,6 +179,16 @@ button:disabled {
   text-wrap: balance;
 }
 
+/* Small uppercase label above a heading */
+.eyebrow {
+  margin-bottom: 8px;
+  color: var(--gold-muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 .section-lead {
   max-width: 56ch;
   margin-top: 8px;

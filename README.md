@@ -8,7 +8,7 @@ because every link and asset path is **relative**.
 
 | File | Purpose |
 |---|---|
-| `index.html` | Home: hero, categories, shops preview, featured frames, custom-frame section, how it works, community + reviews (sample), FAQ preview |
+| `index.html` | Home: hero, featured-frames showcase (auto-scroll + arrows + drag), category gallery, shops preview, custom-frame section, how it works, community + reviews (sample), frame guide |
 | `shop.html` | All shops + full product catalogue (search, category, sort, in-stock, load more). Supports `?category=` `?q=` `?shop=` |
 | `shop-detail.html?id=<shopId>` | One shop: profile, hours, services, its frames |
 | `product.html?id=<productId>` | **Product experience:** real photo + a CSS frame-colour/size visualizer, size selector (Small/Medium/Large/XL with live price), colour swatches, real-world size comparison (hand / A4 sheet), photo-preview upload with zoom/move/reset, live order summary, quantity, tabs, shop card, related frames |

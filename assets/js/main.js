@@ -9,7 +9,7 @@
   const PAGES = {
     home: async () => {
       FrameX.marquee.init(document.querySelector("#ticker"));
-      await Promise.all([call("site"), call("featured"), call("categories"), call("shops"), call("recommended"), call("reviews"), call("community"), call("faq")]);
+      await Promise.all([call("site"), call("featured"), call("categories"), call("shops"), call("recommended"), call("reviews"), call("community"), call("guide")]);
     },
     shop: async () => {
       const categories = await FrameX.api.getCategories();

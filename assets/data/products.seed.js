@@ -16,6 +16,30 @@
    photography yet), so the product page visualizes the chosen colour with a
    CSS frame mock-up next to the real photo, clearly labelled as a preview.
 
+   FRAME (product-specific visual config): each of the 10 named styles has a
+   `frame` object describing that product's OWN border/mat, derived by
+   inspecting its real photo. This drives the "Try With Your Own Image"
+   preview so every product gets its own frame shape/material there instead
+   of one generic CSS border for everyone.
+     shape:       "rectangle" | "square" | "arch"
+     style:       "plain" (flat colour) | "grain" (wood-grain gradient) |
+                  "ornate" (richer, carved-look gradient + corner detail)
+     borderWidth: "thin" | "medium" | "thick"
+     double:      true to add a thin inset accent line near the inner edge
+     ornament:    true to add a small decorative top crest
+     matColor:    "none" | "white" | "cream" | "red" — the mount/mat inside
+                  the frame, around the photo
+     matWidth:    "none" | "thin" | "medium" | "wide"
+   This never changes when the customer swaps their photo, zooms, pans or
+   resets — only `matColor`-less photo pixels move. Changing the frame
+   COLOUR (via `colors`/frame-colors.seed.js) only recolours this same
+   shape/style/mat; it never swaps to a different frame design.
+
+   STYLE COLLECTIONS: besides occasion categories, each product's
+   `categoryIds` lists the frame-style collections it belongs to (classic,
+   modern, wooden, luxury, minimal, decorative — see categories.seed.js).
+   These drive the "Shop by category" gallery on the home page.
+
    Amounts are whole rupees. In a real backend store money as integer paise.
    Final price = (price + size priceDelta) − discountPercent% (services/pricing.js).
    ========================================================================== */
@@ -80,62 +104,72 @@
   FrameX.seed.products = [
     // ---- Featured frame styles: size + colour visualizer, full descriptions ----
     styledProduct("p-001", "shop-001", "Ace of Us", "ace-of-us", 799, 10, {
-      categoryIds: ["photo-frames", "portraits"], isFeatured: true, material: "Walnut-finish wood",
+      categoryIds: ["photo-frames", "portraits", "decorative", "wooden"], isFeatured: true, material: "Walnut-finish wood",
       colors: ["walnut", "black", "natural-wood"],
+      frame: { shape: "rectangle", style: "ornate", borderWidth: "thin", matColor: "red", matWidth: "medium" },
       description: "A warm walnut-finish frame with a bold mat border, built for the portrait you want front and centre."
     }),
     styledProduct("p-002", "shop-001", "Classic Square", "classic-square", 499, 0, {
-      categoryIds: ["photo-frames", "family"], isFeatured: true, material: "White-wash wood", stock: 3,
+      categoryIds: ["photo-frames", "family", "classic", "minimal"], isFeatured: true, material: "White-wash wood", stock: 3,
       colors: ["white", "natural-wood", "black"],
+      frame: { shape: "square", style: "grain", borderWidth: "thick", matColor: "white", matWidth: "wide" },
       description: "A soft white-wash square frame that keeps the focus on the photo — a quiet, everyday favourite."
     }),
     styledProduct("p-003", "shop-001", "Grand Frame", "grand-frame", 1499, 15, {
-      categoryIds: ["photo-frames", "wedding"], isFeatured: true, material: "Solid wood",
+      categoryIds: ["photo-frames", "wedding", "classic", "wooden"], isFeatured: true, material: "Solid wood",
       colors: ["walnut", "dark-brown", "gold"],
+      frame: { shape: "rectangle", style: "grain", borderWidth: "thick", matColor: "white", matWidth: "wide" },
       description: "A substantial solid-wood frame with real presence — suited to a headboard wall or a wedding portrait."
     }),
     styledProduct("p-004", "shop-001", "Signature Frame", "signature-frame", 699, 10, {
-      categoryIds: ["photo-frames", "portraits"], isFeatured: true, material: "Dark wood",
+      categoryIds: ["photo-frames", "portraits", "minimal", "modern"], isFeatured: true, material: "Dark wood",
       colors: ["black", "dark-brown", "walnut"], sizeOptions: sizeSchemeCompact,
+      frame: { shape: "rectangle", style: "grain", borderWidth: "medium", matColor: "white", matWidth: "thin" },
       description: "A slim dark-wood frame with clean lines, equally at home on a desk or a gallery wall."
     }),
     styledProduct("p-005", "shop-002", "The Royal Arch", "royal-arch", 999, 10, {
-      categoryIds: ["photo-frames", "wedding", "portraits"], isFeatured: true, material: "Wood",
+      categoryIds: ["photo-frames", "wedding", "portraits", "decorative", "luxury"], isFeatured: true, material: "Wood",
       colors: ["gold", "black", "walnut"],
+      frame: { shape: "arch", style: "ornate", borderWidth: "thin", double: true, ornament: true, matColor: "red", matWidth: "medium" },
       description: "An arched silhouette with an ornate mat — a frame built for a moment worth dressing up."
     }),
     styledProduct("p-006", "shop-002", "Midnight Luxe", "midnight-luxe", 1199, 20, {
-      categoryIds: ["photo-frames", "portraits"], isFeatured: true, material: "Black wood", stock: 0,
+      categoryIds: ["photo-frames", "portraits", "luxury", "modern"], isFeatured: true, material: "Black wood", stock: 0,
       colors: ["black", "dark-brown", "walnut"],
+      frame: { shape: "rectangle", style: "plain", borderWidth: "thin", matColor: "none", matWidth: "none" },
       description: "A deep matte-black frame for black-and-white portraits and moody, low-light photos."
     }),
     styledProduct("p-007", "shop-002", "Imperial Gold", "imperial-gold", 1799, 15, {
-      categoryIds: ["photo-frames", "wall-art"], isFeatured: true, material: "Gold-finish wood",
+      categoryIds: ["photo-frames", "wall-art", "luxury", "decorative"], isFeatured: true, material: "Gold-finish wood",
       colors: ["gold", "black", "dark-brown"],
+      frame: { shape: "rectangle", style: "ornate", borderWidth: "thick", matColor: "cream", matWidth: "wide" },
       description: "A gold-finish statement frame with a wide profile, made to anchor a gallery wall."
     }),
     styledProduct("p-008", "shop-002", "Vintage Legacy", "vintage-legacy", 1299, 0, {
-      categoryIds: ["photo-frames", "family"], isFeatured: true, material: "Antique-finish wood",
+      categoryIds: ["photo-frames", "family", "classic", "decorative"], isFeatured: true, material: "Antique-finish wood",
       colors: ["dark-brown", "walnut", "black"],
+      frame: { shape: "rectangle", style: "ornate", borderWidth: "medium", double: true, ornament: true, matColor: "cream", matWidth: "medium" },
       description: "An antique-finish frame with a weathered edge, for photos that feel like they've always been there."
     }),
     styledProduct("p-009", "shop-003", "Nordic Oak Frame", "nordic-oak", 899, 10, {
-      categoryIds: ["photo-frames", "new-arrivals", "wall-art"], isFeatured: true, isNew: true, material: "Oak",
+      categoryIds: ["photo-frames", "new-arrivals", "wall-art", "wooden", "minimal", "modern"], isFeatured: true, isNew: true, material: "Oak",
       colors: ["natural-wood", "white", "black"],
+      frame: { shape: "rectangle", style: "grain", borderWidth: "thin", matColor: "white", matWidth: "thin" },
       description: "A pale oak frame with a thin, modern profile — minimal enough to hang in a row."
     }),
     styledProduct("p-010", "shop-003", "Urban Black", "urban-black", 749, 0, {
-      categoryIds: ["photo-frames", "new-arrivals", "wall-art"], isFeatured: true, isNew: true, material: "Black metal",
+      categoryIds: ["photo-frames", "new-arrivals", "wall-art", "modern", "minimal"], isFeatured: true, isNew: true, material: "Black metal",
       colors: ["black", "white", "gold"],
+      frame: { shape: "rectangle", style: "plain", borderWidth: "thin", matColor: "white", matWidth: "thin" },
       description: "A slim black metal frame with a contemporary edge, built for a clean, gallery-style hang."
     }),
 
     // ---- Everyday range (unchanged: single price, plain size list) ----
-    product("p-011", "shop-001", "Personalized Family Memory Wooden Photo Frame", "family-memory", 599, 25, { categoryIds: ["photo-frames", "family", "gifts"], isRecommended: true, material: "Wood" }),
-    product("p-012", "shop-001", "Custom Wedding Anniversary Premium Photo Frame", "wedding-anniversary", 849, 30, { categoryIds: ["photo-frames", "wedding", "gifts"], isRecommended: true, sizes: sizesLarge, material: "Premium wood" }),
-    product("p-013", "shop-002", "Multi-Photo Collage Wall Display Frame Set", "collage-set", 1099, 40, { categoryIds: ["photo-frames", "wall-art", "family"], isRecommended: true, sizes: ["Set of 5", "Set of 9"], material: "Wood" }),
-    product("p-014", "shop-003", "Luxury HD Printed Personalized Picture Frame", "luxury-hd", 1399, 35, { categoryIds: ["photo-frames", "new-arrivals", "wall-art"], isRecommended: true, isNew: true, sizes: sizesLarge, material: "Wood with HD print" }),
-    product("p-015", "shop-003", "Modern Decorative Wooden Wall Photo Frame", "modern-wooden", 449, 25, { categoryIds: ["photo-frames", "wall-art"], isRecommended: true, material: "Wood" }),
-    product("p-016", "shop-003", "A4 White Texture Frame Set of 4", "white-texture-set", 649, 10, { categoryIds: ["photo-frames", "new-arrivals"], isNew: true, sizes: ["A4"], material: "Textured MDF" })
+    product("p-011", "shop-001", "Personalized Family Memory Wooden Photo Frame", "family-memory", 599, 25, { categoryIds: ["photo-frames", "family", "gifts", "wooden", "classic"], isRecommended: true, material: "Wood" }),
+    product("p-012", "shop-001", "Custom Wedding Anniversary Premium Photo Frame", "wedding-anniversary", 849, 30, { categoryIds: ["photo-frames", "wedding", "gifts", "luxury", "classic"], isRecommended: true, sizes: sizesLarge, material: "Premium wood" }),
+    product("p-013", "shop-002", "Multi-Photo Collage Wall Display Frame Set", "collage-set", 1099, 40, { categoryIds: ["photo-frames", "wall-art", "family", "decorative", "modern"], isRecommended: true, sizes: ["Set of 5", "Set of 9"], material: "Wood" }),
+    product("p-014", "shop-003", "Luxury HD Printed Personalized Picture Frame", "luxury-hd", 1399, 35, { categoryIds: ["photo-frames", "new-arrivals", "wall-art", "luxury"], isRecommended: true, isNew: true, sizes: sizesLarge, material: "Wood with HD print" }),
+    product("p-015", "shop-003", "Modern Decorative Wooden Wall Photo Frame", "modern-wooden", 449, 25, { categoryIds: ["photo-frames", "wall-art", "modern", "wooden", "decorative"], isRecommended: true, material: "Wood" }),
+    product("p-016", "shop-003", "A4 White Texture Frame Set of 4", "white-texture-set", 649, 10, { categoryIds: ["photo-frames", "new-arrivals", "minimal", "modern"], isNew: true, sizes: ["A4"], material: "Textured MDF" })
   ];
 })((window.FrameX = window.FrameX || {}));

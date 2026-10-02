@@ -83,10 +83,26 @@
       </div>
     </div>
 
-    <section aria-label="Featured frame styles">
-      <div class="marquee frame-rail" id="featured-rail" data-speed="45">
-        <div class="marquee__track">
-          <div class="marquee__group frame-rail__group"></div>
+    <section class="showcase" id="featured-rail" data-speed="30" aria-labelledby="showcase-title">
+      <div class="container showcase__head">
+        <div>
+          <p class="eyebrow">The showcase</p>
+          <h2 class="showcase__title" id="showcase-title">Featured frame styles</h2>
+        </div>
+        <div class="showcase__nav">
+          <button class="showcase__arrow" type="button" data-showcase-prev aria-label="Previous frames"><svg
+              class="icon" aria-hidden="true">
+              <use href="#i-chev-left"></use>
+            </svg></button>
+          <button class="showcase__arrow" type="button" data-showcase-next aria-label="Next frames"><svg class="icon"
+              aria-hidden="true">
+              <use href="#i-chev-right"></use>
+            </svg></button>
+        </div>
+      </div>
+      <div class="showcase__viewport">
+        <div class="showcase__track">
+          <div class="showcase__group"></div>
         </div>
       </div>
     </section>
@@ -272,14 +288,172 @@
 
     <section class="section section--tight-top" id="faq" aria-labelledby="faq-title">
       <div class="container">
-        <div class="section-head" data-reveal>
-          <h2 class="section-title" id="faq-title">Everything you need to know</h2>
-          <a class="btn btn--outline btn--sm" href="faq.html">See all questions <svg class="icon icon--nudge"
-              aria-hidden="true">
+        <div class="guide" id="guide" data-reveal>
+          <div class="guide__head">
+            <p class="eyebrow">The frame guide</p>
+            <h2 class="section-title" id="faq-title">Everything you need to know</h2>
+            <p class="guide__lead">From choosing the right frame to creating a piece that feels personal, here's
+              everything you need to know before you order.</p>
+          </div>
+
+          <!-- Decorative visual: one figure per topic, cross-faded by ui/guide.js -->
+          <div class="guide__stage" aria-hidden="true">
+            <figure class="guide__figure guide__figure--sizes is-active" data-guide-figure="size">
+              <div class="size-compare">
+                <span class="size-compare__frame" style="--w:8;--h:10"><b>S</b><i>8 × 10</i></span>
+                <span class="size-compare__frame" style="--w:12;--h:16"><b>M</b><i>12 × 16</i></span>
+                <span class="size-compare__frame" style="--w:16;--h:20"><b>L</b><i>16 × 20</i></span>
+                <span class="size-compare__frame" style="--w:20;--h:24"><b>XL</b><i>20 × 24</i></span>
+              </div>
+              <figcaption class="guide__caption">Sizes in inches, to scale</figcaption>
+            </figure>
+            <figure class="guide__figure" data-guide-figure="frame">
+              <img src="assets/img/products/luxury-hd.webp" alt="" width="900" height="672" loading="lazy"
+                decoding="async">
+              <figcaption class="guide__caption guide__swatches">
+                <span style="--swatch:#1c1c1c"></span><span style="--swatch:#f3efe7"></span><span
+                  style="--swatch:#c8a165"></span><span style="--swatch:#5b3a29"></span><span
+                  style="--swatch:#3b2412"></span><span style="--swatch:#b8872b"></span>
+                Six finishes
+              </figcaption>
+            </figure>
+            <figure class="guide__figure" data-guide-figure="photo">
+              <img src="assets/img/steps/step-1.webp" alt="" width="720" height="393" loading="lazy" decoding="async">
+              <figcaption class="guide__caption">Sharp, well-lit photos frame best</figcaption>
+            </figure>
+            <figure class="guide__figure" data-guide-figure="custom">
+              <img src="assets/img/products/ace-of-us.webp" alt="" width="720" height="720" loading="lazy"
+                decoding="async">
+              <figcaption class="guide__caption">Size, finish and a note for the shop</figcaption>
+            </figure>
+            <figure class="guide__figure" data-guide-figure="delivery">
+              <img src="assets/img/steps/step-4.webp" alt="" width="720" height="393" loading="lazy" decoding="async">
+              <figcaption class="guide__caption">Pickup or delivery, set by each shop</figcaption>
+            </figure>
+            <figure class="guide__figure" data-guide-figure="care">
+              <img src="assets/video/hanging-2.jpg" alt="" width="1280" height="720" loading="lazy" decoding="async">
+              <figcaption class="guide__caption">Hang it well, dust it gently</figcaption>
+            </figure>
+          </div>
+
+          <ol class="guide__list">
+            <li class="guide-item is-open" data-guide-item="size">
+              <h3><button class="guide-item__button" type="button" id="guide-btn-1" aria-expanded="true"
+                  aria-controls="guide-panel-1"><span class="guide-item__num">01</span><span
+                    class="guide-item__title">Choosing the Right Size</span><span class="guide-item__icon"><svg
+                      class="icon" aria-hidden="true">
+                      <use href="#i-plus"></use>
+                    </svg></span></button></h3>
+              <div class="guide-item__panel" id="guide-panel-1" role="region" aria-labelledby="guide-btn-1">
+                <div>
+                  <p>Available sizes are shown on every product page. Most featured styles come in Small (8 × 10 in),
+                    Medium (12 × 16 in), Large (16 × 20 in) and Extra Large (20 × 24 in), and the price updates as you
+                    switch. Smaller frames suit desks and shelves; larger ones hold a wall on their own. If a product
+                    shows a single size, that is the only size the shop currently lists.</p>
+                  <a class="guide-item__link" href="shop.html">Browse frames <svg class="icon" aria-hidden="true">
+                      <use href="#i-arrow-right"></use>
+                    </svg></a>
+                </div>
+              </div>
+            </li>
+            <li class="guide-item" data-guide-item="frame">
+              <h3><button class="guide-item__button" type="button" id="guide-btn-2" aria-expanded="false"
+                  aria-controls="guide-panel-2"><span class="guide-item__num">02</span><span
+                    class="guide-item__title">Choosing Your Frame</span><span class="guide-item__icon"><svg class="icon"
+                      aria-hidden="true">
+                      <use href="#i-plus"></use>
+                    </svg></span></button></h3>
+              <div class="guide-item__panel" id="guide-panel-2" role="region" aria-labelledby="guide-btn-2">
+                <div>
+                  <p>Start with the room and the photo. Natural wood and walnut add warmth, black and white keep things
+                    modern, and gold makes a statement. Each product page lists the frame's material and the finishes
+                    that style comes in, with an on-screen preview of the colour you pick.</p>
+                  <a class="guide-item__link" href="#categories">Shop by category <svg class="icon" aria-hidden="true">
+                      <use href="#i-arrow-right"></use>
+                    </svg></a>
+                </div>
+              </div>
+            </li>
+            <li class="guide-item" data-guide-item="photo">
+              <h3><button class="guide-item__button" type="button" id="guide-btn-3" aria-expanded="false"
+                  aria-controls="guide-panel-3"><span class="guide-item__num">03</span><span
+                    class="guide-item__title">Preparing Your Photo</span><span class="guide-item__icon"><svg
+                      class="icon" aria-hidden="true">
+                      <use href="#i-plus"></use>
+                    </svg></span></button></h3>
+              <div class="guide-item__panel" id="guide-panel-3" role="region" aria-labelledby="guide-btn-3">
+                <div>
+                  <p>Pick a sharp, well-lit photo — the larger the frame, the more the detail matters. On a product
+                    page, "Try With Your Own Image" shows how your photo sits in that frame. The preview stays on your
+                    device: photo upload is not connected yet, so for now share your photo with the shop through the
+                    Contact page.</p>
+                  <a class="guide-item__link" href="contact.html">Contact us <svg class="icon" aria-hidden="true">
+                      <use href="#i-arrow-right"></use>
+                    </svg></a>
+                </div>
+              </div>
+            </li>
+            <li class="guide-item" data-guide-item="custom">
+              <h3><button class="guide-item__button" type="button" id="guide-btn-4" aria-expanded="false"
+                  aria-controls="guide-panel-4"><span class="guide-item__num">04</span><span
+                    class="guide-item__title">Customization</span><span class="guide-item__icon"><svg class="icon"
+                      aria-hidden="true">
+                      <use href="#i-plus"></use>
+                    </svg></span></button></h3>
+              <div class="guide-item__panel" id="guide-panel-4" role="region" aria-labelledby="guide-btn-4">
+                <div>
+                  <p>Frame styles and sizes are set by each shop. Today you can choose a size and finish and add a note
+                    for the shop with your order. Custom sizes and personalised frames are planned; until they are
+                    connected, please contact the shop directly through the Contact page.</p>
+                  <a class="guide-item__link" href="#custom-frame">About custom frames <svg class="icon"
+                      aria-hidden="true">
+                      <use href="#i-arrow-right"></use>
+                    </svg></a>
+                </div>
+              </div>
+            </li>
+            <li class="guide-item" data-guide-item="delivery">
+              <h3><button class="guide-item__button" type="button" id="guide-btn-5" aria-expanded="false"
+                  aria-controls="guide-panel-5"><span class="guide-item__num">05</span><span
+                    class="guide-item__title">Delivery &amp; Orders</span><span class="guide-item__icon"><svg
+                      class="icon" aria-hidden="true">
+                      <use href="#i-plus"></use>
+                    </svg></span></button></h3>
+              <div class="guide-item__panel" id="guide-panel-5" role="region" aria-labelledby="guide-btn-5">
+                <div>
+                  <p>You can build a cart on this site; online checkout and payment are not connected yet. Each shop
+                    chooses whether it offers pickup, its own delivery or a delivery partner, and sets its own fees and
+                    times, confirmed at checkout. Orders can be cancelled or changed only before production begins.</p>
+                  <a class="guide-item__link" href="services.html#journey">How ordering works <svg class="icon"
+                      aria-hidden="true">
+                      <use href="#i-arrow-right"></use>
+                    </svg></a>
+                </div>
+              </div>
+            </li>
+            <li class="guide-item" data-guide-item="care">
+              <h3><button class="guide-item__button" type="button" id="guide-btn-6" aria-expanded="false"
+                  aria-controls="guide-panel-6"><span class="guide-item__num">06</span><span
+                    class="guide-item__title">Care &amp; Maintenance</span><span class="guide-item__icon"><svg
+                      class="icon" aria-hidden="true">
+                      <use href="#i-plus"></use>
+                    </svg></span></button></h3>
+              <div class="guide-item__panel" id="guide-panel-6" role="region" aria-labelledby="guide-btn-6">
+                <div>
+                  <p>Dust the frame with a soft, dry cloth and avoid spraying cleaner directly onto it. Hang it away
+                    from direct sunlight and damp, on a fixing suited to its weight. If your frame arrives damaged or
+                    incorrect, contact us within 7 days and a replacement or refund is arranged once the issue is
+                    verified.</p>
+                </div>
+              </div>
+            </li>
+          </ol>
+
+          <a class="btn btn--outline btn--sm guide__more" href="faq.html">See all questions <svg
+              class="icon icon--nudge" aria-hidden="true">
               <use href="#i-arrow-right"></use>
             </svg></a>
         </div>
-        <div id="faq-root" data-preview="4"></div>
       </div>
     </section>
 
@@ -312,7 +486,6 @@
   <script src="assets/data/products.seed.js" defer></script>
   <script src="assets/data/reviews.seed.js" defer></script>
   <script src="assets/data/community.seed.js" defer></script>
-  <script src="assets/data/faq.seed.js" defer></script>
   <script src="assets/data/gallery.seed.js" defer></script>
   <script src="assets/js/api/seed-provider.js" defer></script>
   <script src="assets/js/api/http-provider.js" defer></script>
@@ -329,6 +502,7 @@
   <script src="assets/js/ui/cart-drawer.js" defer></script>
   <script src="assets/js/ui/actions.js" defer></script>
   <script src="assets/js/ui/marquee.js" defer></script>
+  <script src="assets/js/ui/showcase.js" defer></script>
   <script src="assets/js/ui/site.js" defer></script>
   <script src="assets/js/ui/featured.js" defer></script>
   <script src="assets/js/ui/categories.js" defer></script>
@@ -336,7 +510,7 @@
   <script src="assets/js/ui/recommended.js" defer></script>
   <script src="assets/js/ui/reviews.js" defer></script>
   <script src="assets/js/ui/community.js" defer></script>
-  <script src="assets/js/ui/faq.js" defer></script>
+  <script src="assets/js/ui/guide.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </body>
 

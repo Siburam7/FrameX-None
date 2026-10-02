@@ -481,19 +481,108 @@
   background: var(--stone-soft);
 }
 
+/* View Product vs. Try With Your Own Image toggle ----------------------------------- */
+.pdp-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.pdp-mode__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-align: center;
+  transition: border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+}
+
+.pdp-mode__btn .icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+}
+
+.pdp-mode__btn[aria-selected="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--white);
+}
+
+.pdp-mode__btn:hover {
+  border-color: var(--slate);
+}
+
+.pdp-stage__panel {
+  position: relative;
+  width: 100%;
+}
+
+.pdp-stage__panel[hidden] {
+  display: none;
+}
+
+.pdp-stage__real {
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+
+.pdp-stage__real img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
+/* The customization stage: Frame layer > Mat layer > Customer Photo layer.
+   Each product's OWN frame config (frameOf in product-page.js) drives the
+   style/border/shape classes below — never a single shared design. */
 .pdp-stage__frame {
   --aspect: 4 / 5;
   --swatch: #1c1c1c;
   position: relative;
   isolation: isolate;
   width: min(100%, 420px);
+  margin: 0 auto;
   aspect-ratio: var(--aspect);
-  padding: clamp(10px, 3.4%, 22px);
   background: var(--swatch);
   box-shadow: var(--shadow-card);
   transition: aspect-ratio var(--dur-base) var(--ease-out), padding var(--dur-base) var(--ease-out);
 }
 
+/* Border width — how thick the product's frame reads ------------------------------ */
+.pdp-stage__frame--border-thin { padding: clamp(8px, 2.4%, 16px); }
+.pdp-stage__frame--border-medium { padding: clamp(12px, 4%, 24px); }
+.pdp-stage__frame--border-thick { padding: clamp(18px, 6.5%, 36px); }
+
+/* Material/style — plain colour, wood grain, or a richer ornate carve ------------- */
+.pdp-stage__frame--style-grain {
+  background-image: repeating-linear-gradient(
+    118deg,
+    color-mix(in srgb, var(--swatch) 88%, white) 0px,
+    var(--swatch) 5px,
+    color-mix(in srgb, var(--swatch) 70%, black) 9px,
+    var(--swatch) 13px
+  );
+}
+
+.pdp-stage__frame--style-ornate {
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--swatch) 78%, white) 0%, var(--swatch) 45%, color-mix(in srgb, var(--swatch) 65%, black) 100%);
+  box-shadow: var(--shadow-card), inset 0 0 0 2px color-mix(in srgb, var(--swatch) 55%, black), inset 0 0 0 5px color-mix(in srgb, var(--swatch) 85%, white);
+}
+
+/* Colour-finish texture (from frame-colors.seed.js), independent of the shape above */
 .pdp-stage__frame--wood {
   background-image: linear-gradient(135deg, color-mix(in srgb, var(--swatch) 80%, white) 0%, var(--swatch) 45%, color-mix(in srgb, var(--swatch) 70%, black) 100%);
 }
@@ -501,6 +590,61 @@
 .pdp-stage__frame--metal {
   background-image: linear-gradient(135deg, color-mix(in srgb, var(--swatch) 60%, white) 0%, var(--swatch) 50%, color-mix(in srgb, var(--swatch) 80%, black) 100%);
 }
+
+/* Shape — square keeps a tight, minimal corner; arch gets a rounded top window --- */
+.pdp-stage__frame--square {
+  border-radius: 2px;
+}
+
+.pdp-stage__frame--arch {
+  border-radius: 46% 46% 6px 6px / 20% 20% 6px 6px;
+}
+
+.pdp-stage__frame--arch .pdp-stage__mat,
+.pdp-stage__frame--arch .pdp-stage__photo {
+  border-radius: 44% 44% 4px 4px / 19% 19% 4px 4px;
+}
+
+/* Double border — a thin inset accent line near the inner edge ------------------- */
+.pdp-stage__frame--double::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1.5px solid color-mix(in srgb, var(--swatch) 40%, white);
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Ornament — a small decorative crest at the top, for carved/vintage styles ------ */
+.pdp-stage__frame--ornament::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  background: color-mix(in srgb, var(--swatch) 70%, white);
+  border: 1.5px solid color-mix(in srgb, var(--swatch) 40%, black);
+  border-radius: 2px;
+  transform: translateX(-50%) rotate(45deg);
+  box-shadow: var(--shadow-card);
+  z-index: 1;
+}
+
+/* Mat layer — the mount between the frame and the photo --------------------------- */
+.pdp-stage__mat {
+  --mat-color: #f7f4ee;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: var(--mat-color);
+}
+
+.pdp-stage__mat--none { padding: 0; background: transparent; }
+.pdp-stage__mat--thin { padding: clamp(4px, 2%, 10px); }
+.pdp-stage__mat--medium { padding: clamp(8px, 4%, 18px); }
+.pdp-stage__mat--wide { padding: clamp(12px, 6%, 28px); }
 
 .pdp-stage__photo {
   position: relative;
@@ -520,11 +664,6 @@
   object-fit: cover;
   transform: translate(-50%, -50%) translate(var(--ox, 0%), var(--oy, 0%)) scale(var(--z, 1));
   transition: transform 120ms var(--ease-out);
-}
-
-.pdp-stage__photo.is-placeholder img {
-  opacity: 0.35;
-  filter: grayscale(0.4);
 }
 
 .pdp-stage__empty {
@@ -815,6 +954,9 @@
 /* `[hidden]` must win over this file's own `display:` rules — the JS toggles
    this attribute and relies on it collapsing the element. */
 .pdp-position[hidden],
-.pdp-stage__empty[hidden] {
+.pdp-stage__empty[hidden],
+.pdp-upload[hidden],
+.pdp-stage__panel[hidden],
+.pdp-gallery__thumbs[hidden] {
   display: none;
 }

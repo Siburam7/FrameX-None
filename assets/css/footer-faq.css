@@ -34,8 +34,17 @@
 }
 
 .faq-item {
+  border: 1px solid var(--line-warm);
   border-radius: 15px;
-  background: linear-gradient(to left, transparent, rgba(153, 157, 169, 0.33));
+  background: var(--ivory);
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+.faq-item.is-open {
+  border-color: rgba(143, 108, 54, 0.28);
+  background: var(--champagne);
 }
 
 .faq-item__button {
@@ -57,16 +66,16 @@
   flex: none;
   width: 34px;
   height: 34px;
-  border-radius: 8px;
-  background: var(--rose);
-  color: var(--white);
+  border-radius: 50%;
+  background: var(--charcoal);
+  color: var(--champagne);
   transition:
     transform var(--dur-base) var(--ease-out),
     background-color var(--dur-base) var(--ease-out);
 }
 
 .faq-item__button:hover .faq-item__icon {
-  background: var(--rose-soft);
+  background: var(--brown-deep);
 }
 
 .faq-item.is-open .faq-item__icon {
@@ -90,8 +99,348 @@
 .faq-item__answer {
   max-width: 62ch;
   padding: 0 20px 18px;
-  color: #b95a05; /* darker amber for AA contrast on the tinted card */
+  color: var(--umber);
   font-size: var(--text-sm);
+}
+
+/* Guide ("Everything you need to know" on the home page, ui/guide.js) ------------
+   Stacked on small screens (heading, visual, topics); two editorial columns
+   from 900px with the visual on the left and the topics on the right. */
+.guide {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "head"
+    "stage"
+    "list"
+    "more";
+  gap: clamp(20px, 3vw, 28px);
+  padding: clamp(20px, 4.5vw, 56px);
+  border: 1px solid var(--line-warm);
+  border-radius: var(--radius-xl);
+  background: var(--ivory);
+  color: var(--charcoal);
+}
+
+@media (min-width: 900px) {
+  .guide {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      "head list"
+      "stage list"
+      "more list";
+    column-gap: clamp(32px, 5vw, 72px);
+  }
+}
+
+.guide__head {
+  grid-area: head;
+}
+
+.guide__lead {
+  max-width: 44ch;
+  margin-top: 12px;
+  color: var(--taupe);
+}
+
+.guide__more {
+  grid-area: more;
+  justify-self: start;
+  align-self: start;
+}
+
+/* Visual stage: figures are stacked and cross-fade when the topic changes. */
+.guide__stage {
+  grid-area: stage;
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--beige);
+}
+
+.guide__figure {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(1.03);
+  transition:
+    opacity 420ms var(--ease-out),
+    transform 420ms var(--ease-out),
+    visibility 0s linear 420ms;
+}
+
+.guide__figure.is-active {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+}
+
+.guide__figure img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.guide__caption {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 24px);
+  padding: 7px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--ivory);
+  color: var(--charcoal);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.guide__swatches span {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: inset 0 0 0 1px rgba(43, 43, 43, 0.18);
+}
+
+.guide__swatches span:last-of-type {
+  margin-right: 4px;
+}
+
+/* Size comparison: four frame outlines drawn to the same scale. */
+.guide__figure--sizes {
+  display: grid;
+  place-items: center;
+  padding: 7% 7% 16%;
+}
+
+.size-compare {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3%;
+  width: 100%;
+}
+
+.size-compare__frame {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 2px;
+  flex: none;
+  /* 8 + 12 + 16 + 20 = 56 units of width, plus the gaps */
+  width: calc(var(--w) / 62 * 100%);
+  aspect-ratio: var(--w) / var(--h);
+  border: clamp(3px, 0.7vw, 6px) solid var(--brown-deep);
+  background: var(--ivory);
+  box-shadow: 0 6px 14px -8px rgba(74, 52, 28, 0.5);
+  color: var(--charcoal);
+  line-height: 1.1;
+}
+
+.size-compare__frame b {
+  font-family: var(--font-display);
+  font-size: clamp(0.7rem, 0.55rem + 0.6vw, 1rem);
+  font-weight: 600;
+}
+
+.size-compare__frame i {
+  color: var(--taupe);
+  font-size: clamp(0.5rem, 0.4rem + 0.4vw, 0.7rem);
+  font-style: normal;
+  white-space: nowrap;
+}
+
+.size-compare__frame:first-child i {
+  display: none;
+}
+
+/* Topics */
+.guide__list {
+  grid-area: list;
+  align-self: start;
+  display: grid;
+  gap: 6px;
+}
+
+.guide-item {
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  transition:
+    background-color 320ms var(--ease-out),
+    border-color 320ms var(--ease-out);
+}
+
+.guide-item + .guide-item::before {
+  content: "";
+  display: block;
+  height: 1px;
+  margin: -4px 16px 3px;
+  background: var(--line-warm);
+  transition: opacity 320ms var(--ease-out);
+}
+
+/* Hairlines next to the highlighted topic step aside. */
+.guide-item.is-open::before,
+.guide-item.is-open + .guide-item::before {
+  opacity: 0;
+}
+
+.guide-item.is-open {
+  border-color: rgba(143, 108, 54, 0.28);
+  background: var(--champagne);
+}
+
+.guide-item__button {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 2vw, 20px);
+  width: 100%;
+  min-height: 64px;
+  padding: 12px clamp(12px, 2vw, 20px);
+  border-radius: inherit;
+  text-align: left;
+}
+
+.guide-item__num {
+  flex: none;
+  min-width: 2ch;
+  color: var(--gold-muted);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  transition: color 320ms var(--ease-out);
+}
+
+.guide-item__title {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 0.94rem + 0.3vw, 1.2rem);
+  font-weight: 400;
+  line-height: 1.3;
+  transition: transform 320ms var(--ease-out);
+}
+
+.guide-item__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line-warm);
+  border-radius: 50%;
+  color: var(--taupe);
+  transition:
+    transform 320ms var(--ease-out),
+    background-color 320ms var(--ease-out),
+    border-color 320ms var(--ease-out),
+    color 320ms var(--ease-out);
+}
+
+.guide-item.is-open .guide-item__num {
+  color: var(--brown-deep);
+}
+
+.guide-item.is-open .guide-item__title {
+  font-weight: 600;
+}
+
+.guide-item.is-open .guide-item__icon {
+  transform: rotate(45deg);
+  border-color: var(--charcoal);
+  background: var(--charcoal);
+  color: var(--champagne);
+}
+
+@media (hover: hover) {
+  .guide-item:not(.is-open) .guide-item__button:hover .guide-item__title {
+    transform: translateX(4px);
+  }
+
+  .guide-item:not(.is-open) .guide-item__button:hover .guide-item__icon {
+    border-color: var(--gold-muted);
+    color: var(--charcoal);
+  }
+}
+
+.guide-item__panel > div {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  /* Aligns the copy with the title, past the numeral */
+  padding: 0 clamp(12px, 2vw, 20px) 20px calc(clamp(12px, 2vw, 20px) * 2 + 2ch);
+  color: var(--umber);
+  font-size: 0.95rem;
+}
+
+.guide-item__panel p {
+  max-width: 58ch;
+}
+
+.guide-item__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  border-bottom: 1px solid currentColor;
+  color: var(--brown-deep);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.guide-item__link .icon {
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.guide-item__link:hover .icon {
+  transform: translateX(4px);
+}
+
+@media (max-width: 479px) {
+  .guide-item__panel > div {
+    padding-left: clamp(12px, 2vw, 20px);
+  }
+}
+
+/* Collapsing only applies once JS is running, so every topic stays readable
+   without it. Height animates via the grid-row trick used by the FAQ. */
+.js .guide-item__panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 380ms var(--ease-out);
+}
+
+.js .guide-item.is-open .guide-item__panel {
+  grid-template-rows: 1fr;
+}
+
+.js .guide-item__panel > div {
+  overflow: hidden;
+  min-height: 0;
+  visibility: hidden;
+  opacity: 0;
+  /* Padding would hold the collapsed row open, so it animates with the height. */
+  padding-bottom: 0;
+  transition:
+    opacity 300ms var(--ease-out),
+    padding-bottom 380ms var(--ease-out),
+    visibility 0s linear 380ms;
+}
+
+.js .guide-item.is-open .guide-item__panel > div {
+  visibility: visible;
+  opacity: 1;
+  padding-bottom: 20px;
+  transition-delay: 80ms, 0s, 0s;
 }
 
 .contact-strip {

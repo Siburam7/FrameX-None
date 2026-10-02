@@ -266,109 +266,201 @@
   color: var(--amber);
 }
 
-/* Featured rail (auto-scrolling frame styles) ------------------------------------ */
-.frame-rail {
-  padding-block: clamp(28px, 4vw, 48px) 0;
+/* Showcase (featured frame styles: auto-scroll + arrows + drag, ui/showcase.js) ---- */
+.showcase {
+  padding-top: clamp(36px, 5vw, 64px);
+  background: var(--ivory);
 }
 
-.frame-rail__group {
-  gap: 20px;
-  padding-right: 20px;
+.showcase__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: clamp(8px, 1.6vw, 16px);
+}
+
+.showcase__title {
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 1.1rem + 1vw, 1.85rem);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.showcase__nav {
+  display: flex;
+  flex: none;
+  gap: 10px;
+}
+
+.showcase__arrow {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--line-warm);
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--charcoal);
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.showcase__arrow .icon {
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .showcase__arrow:hover {
+    background: var(--charcoal);
+    border-color: var(--charcoal);
+    color: var(--champagne);
+  }
+
+  .showcase__arrow[data-showcase-prev]:hover .icon {
+    transform: translateX(-2px);
+  }
+
+  .showcase__arrow[data-showcase-next]:hover .icon {
+    transform: translateX(2px);
+  }
+}
+
+.showcase__arrow:active {
+  transform: scale(0.94);
+}
+
+/* Vertical padding leaves room for the card lift + shadow inside the clip. */
+.showcase__viewport {
+  overflow: hidden;
+  padding-block: 16px clamp(36px, 5vw, 60px);
+  touch-action: pan-y; /* horizontal swipes drive the rail, vertical ones scroll the page */
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.showcase.is-dragging .showcase__viewport {
+  cursor: grabbing;
+}
+
+.showcase__track {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.showcase__group {
+  display: flex;
+  flex: none;
+  gap: clamp(16px, 2vw, 24px);
+  padding-right: clamp(16px, 2vw, 24px);
+}
+
+/* Until the script runs (or without it) the rail is a plain scrollable row. */
+.showcase:not(.is-ready) .showcase__viewport {
+  overflow-x: auto;
+  touch-action: auto;
 }
 
 .frame-card {
   position: relative;
   flex: none;
-  width: clamp(190px, 58vw, 260px);
-  aspect-ratio: 13 / 16;
+  width: clamp(200px, 60vw, 264px);
+  transition: transform 420ms var(--ease-out);
+}
+
+.frame-card__media {
+  position: relative;
+  aspect-ratio: 4 / 5;
   border-radius: var(--radius-md);
   overflow: hidden;
-  background: var(--stone);
-  isolation: isolate;
+  background: var(--beige);
+  box-shadow: 0 1px 2px rgba(43, 43, 43, 0.06);
+  transition: box-shadow 420ms var(--ease-out);
 }
 
 .frame-card__image {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 800ms var(--ease-out);
+  transition: transform 700ms var(--ease-out);
+  -webkit-user-drag: none;
 }
 
-.frame-card::before {
+.frame-card__wish {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+}
+
+.frame-card__caption {
+  display: grid;
+  gap: 2px;
+  padding: 14px 2px 0;
+}
+
+/* The name link stretches over the whole card so the image is clickable too. */
+.frame-card__open::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 1;
-  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.35);
-  border-radius: inherit;
-  pointer-events: none;
-}
-
-.frame-card__open {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-}
-
-.frame-card__overlay {
-  position: absolute;
-  inset: auto 0 0;
-  z-index: 3;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 44px 12px 12px 16px;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.82), transparent);
-  color: var(--white);
-  opacity: 0;
-  transform: translateY(8px);
-  transition:
-    opacity var(--dur-base) var(--ease-out),
-    transform var(--dur-base) var(--ease-out);
-  pointer-events: none;
 }
 
 .frame-card__name {
+  display: block;
+  overflow: hidden;
   font-size: 0.95rem;
-  font-weight: 700;
-  line-height: 1.3;
+  font-weight: 600;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--dur-base) var(--ease-out);
 }
 
 .frame-card__from {
-  display: block;
-  margin-top: 2px;
-  color: rgba(255, 255, 255, 0.78);
-  font-size: var(--text-xs);
-  font-weight: 500;
-}
-
-.frame-card__tools {
-  display: flex;
-  gap: 8px;
-  pointer-events: auto;
-}
-
-.frame-card:focus-within .frame-card__overlay {
-  opacity: 1;
-  transform: none;
+  color: var(--taupe);
+  font-size: var(--text-sm);
 }
 
 @media (hover: hover) {
-  .frame-card:hover .frame-card__overlay {
-    opacity: 1;
-    transform: none;
+  .frame-card__wish {
+    opacity: 0;
+    transition:
+      opacity var(--dur-base) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out),
+      background-color var(--dur-base) var(--ease-out),
+      color var(--dur-base) var(--ease-out);
   }
 
-  .frame-card:hover .frame-card__image {
-    transform: scale(1.07);
-  }
-}
-
-@media (hover: none) {
-  .frame-card__overlay {
+  .frame-card:hover .frame-card__wish,
+  .frame-card__wish:focus-visible,
+  .frame-card__wish[aria-pressed="true"] {
     opacity: 1;
-    transform: none;
+  }
+
+  .showcase:not(.is-dragging) .frame-card:hover {
+    transform: translateY(-6px);
+  }
+
+  .showcase:not(.is-dragging) .frame-card:hover .frame-card__media {
+    box-shadow: 0 18px 36px -14px rgba(74, 52, 28, 0.38);
+  }
+
+  .showcase:not(.is-dragging) .frame-card:hover .frame-card__image {
+    transform: scale(1.04);
+  }
+
+  .frame-card:hover .frame-card__name {
+    color: var(--brown-deep);
   }
 }
 

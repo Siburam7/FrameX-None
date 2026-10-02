@@ -98,7 +98,8 @@ says so next to the preview. Add real per-colour photography later by giving eac
 image and swapping the mock-up for an `<img>` swap.
 
 ### Category
-`{ id, name, image, sortOrder }` — the API adds `productCount` so empty categories can be hidden from filters.
+`{ id, name, image, sortOrder, kind? }` — the API adds `productCount` so empty categories can be hidden from filters.
+Categories with `kind: "style"` (classic, modern, wooden, luxury, minimal, decorative) are the frame-style collections shown as the home page "Shop by category" gallery; the others appear there as "shop by occasion" links.
 
 ### Cart line (client only, `localStorage`)
 `{ key, productId, shopId, shopName, name, image, size, color, note, unitPrice, qty }`. The key is

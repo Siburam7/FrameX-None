@@ -26,6 +26,15 @@
   --brown-deep: #704529;
   --tan: #a66a3f;
 
+  /* Premium warm tones (showcase, category gallery, guide) -------------- */
+  --ivory: #faf6ee;          /* warm off-white surface */
+  --beige: #f0e7d8;          /* soft panel / media backdrop */
+  --champagne: #ecdcbd;      /* active / selected surface */
+  --gold-muted: #8f6c36;     /* fine accents, numerals, hairlines */
+  --taupe: #6f6152;          /* secondary text on warm surfaces (AA on ivory) */
+  --umber: #4f4336;          /* body text on champagne (AA) */
+  --line-warm: rgba(112, 69, 41, 0.16);
+
   /* Neutrals ------------------------------------------------------------ */
   --white: #ffffff;
   --stone: #e4e5e7;          /* card bodies */

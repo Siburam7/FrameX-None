@@ -21,63 +21,142 @@
   let product, shop, categories, palette;
   const config = { sizeId: null, colorId: null, qty: 1, zoom: 1, ox: 0, oy: 0, photoName: "" };
   let photoUrl = null;
+  let previewMode = "view"; // "view" = real product photo, "custom" = your photo inside the product's own frame
 
   const colorsOf = (p) => (p.colors || []).map((id) => palette[id]).filter(Boolean);
   const currentColor = () => colorsOf(product).find((c) => c.id === config.colorId) || colorsOf(product)[0];
   const currentSize = () => sizeOptions(product).find((o) => o.id === config.sizeId) || sizeOptions(product)[0];
+
+  // Every product's own frame design (shape/material/border/mat) — see the
+  // `frame` field documented in assets/data/products.seed.js. Products that
+  // don't define one (the everyday range) fall back to a plain rectangle so
+  // the page still works, but the 10 named styles each carry their own.
+  const FRAME_DEFAULTS = { shape: "rectangle", style: "plain", borderWidth: "medium", double: false, ornament: false, matColor: "white", matWidth: "medium" };
+  const frameOf = (p) => Object.assign({}, FRAME_DEFAULTS, p.frame || {});
+  const MAT_COLORS = { none: "transparent", white: "#f7f4ee", cream: "#efe3c8", red: "#7a2020" };
+  const matHex = (id) => MAT_COLORS[id] || MAT_COLORS.white;
 
   function parseAspect(dimensions) {
     const m = /([\d.]+)\s*×\s*([\d.]+)/.exec(dimensions || "");
     return m ? { w: Number(m[1]), h: Number(m[2]) } : { w: 4, h: 5 };
   }
 
-  // ---- Visualizer stage (left column): colour + size + uploaded photo ------------
+  // ---- Visualizer stage (left column) ---------------------------------------------
+  // Two modes, per the brief: "View Product" (default) shows the real product
+  // photo exactly as sold — frame design included, since that's a real photo
+  // of the real frame. "Try With Your Own Image" switches to a CSS-built
+  // stage using THIS product's own frame config (frameOf), so the customer's
+  // photo sits inside the same frame shape/material/mat as the product they
+  // picked — never a generic shared border.
   function stageHtml() {
     const many = product.images.length > 1;
     return `<div class="pdp-visualizer">
-      <div class="pdp-stage" id="pdp-stage">
-        <div class="pdp-stage__frame" id="pdp-stage-frame">
-          <div class="pdp-stage__photo" id="pdp-stage-photo">
-            <img id="pdp-stage-img" src="${esc(product.image)}" alt="${esc(product.name)}" decoding="async">
+      <div class="pdp-mode" role="tablist" aria-label="How you'd like to preview this frame">
+        <button class="pdp-mode__btn" type="button" role="tab" id="pdp-mode-view" aria-selected="true" aria-controls="pdp-stage-view" tabindex="0">${icon("frame")}<span>View Product</span></button>
+        <button class="pdp-mode__btn" type="button" role="tab" id="pdp-mode-custom" aria-selected="false" aria-controls="pdp-stage-custom" tabindex="-1">${icon("upload")}<span>Try With Your Own Image</span></button>
+      </div>
+
+      <div class="pdp-stage">
+        <div class="pdp-stage__panel" id="pdp-stage-view" role="tabpanel" aria-labelledby="pdp-mode-view">
+          <div class="pdp-stage__real">
+            <img id="pdp-stage-real" src="${esc(product.image)}" alt="${esc(product.name)}" decoding="async">
           </div>
-          <p class="pdp-stage__empty" id="pdp-stage-empty">${icon("image")}<span>Your photo will appear here once you upload one below</span></p>
+        </div>
+        <div class="pdp-stage__panel" id="pdp-stage-custom" role="tabpanel" aria-labelledby="pdp-mode-custom" hidden>
+          <div class="pdp-stage__frame" id="pdp-stage-frame">
+            <div class="pdp-stage__mat" id="pdp-stage-mat">
+              <div class="pdp-stage__photo" id="pdp-stage-photo">
+                <img id="pdp-stage-img" src="" alt="Your photo inside the ${esc(product.name)} frame" decoding="async">
+              </div>
+            </div>
+          </div>
+          <p class="pdp-stage__empty" id="pdp-stage-empty">${icon("image")}<span>Upload your photo below to see it inside this frame</span></p>
         </div>
       </div>
-      ${many ? `<div class="pdp-gallery__thumbs" role="group" aria-label="Product images">${product.images
+
+      ${many ? `<div class="pdp-gallery__thumbs" id="pdp-stage-thumbs" role="group" aria-label="Product images">${product.images
         .map((src, i) => `<button class="pdp-gallery__thumb" type="button" data-thumb="${i}" aria-current="${i === 0}" aria-label="Show image ${i + 1} of ${product.images.length}"><img src="${esc(src)}" alt="" width="72" height="72" loading="lazy"></button>`)
         .join("")}</div>` : ""}
-      <p class="pdp-stage__caption">Preview only — not an exact render of the finished frame. Actual wood grain, mat and colour may vary.</p>
+      <p class="pdp-stage__caption" id="pdp-stage-caption">This is the actual ${esc(product.name)} frame, shown exactly as sold.</p>
     </div>`;
   }
 
+  function setMode(mode) {
+    previewMode = mode === "custom" ? "custom" : "view";
+    const isCustom = previewMode === "custom";
+    const viewBtn = $("#pdp-mode-view"), customBtn = $("#pdp-mode-custom");
+    viewBtn.setAttribute("aria-selected", String(!isCustom));
+    viewBtn.tabIndex = isCustom ? -1 : 0;
+    customBtn.setAttribute("aria-selected", String(isCustom));
+    customBtn.tabIndex = isCustom ? 0 : -1;
+    $("#pdp-stage-view").hidden = isCustom;
+    $("#pdp-stage-custom").hidden = !isCustom;
+    const thumbs = $("#pdp-stage-thumbs");
+    if (thumbs) thumbs.hidden = isCustom;
+    const upload = $("#pdp-upload-section");
+    if (upload) upload.hidden = !isCustom;
+    $("#pdp-stage-caption").textContent = isCustom
+      ? "Preview only — your photo inside the actual frame design. Not an exact render; wood grain, mat and colour may vary."
+      : `This is the actual ${product.name} frame, shown exactly as sold.`;
+    if (isCustom) applyStage();
+  }
+
   function applyStage() {
-    const frame = $("#pdp-stage-frame");
+    const frame = frameOf(product);
     const color = currentColor();
     const { w, h } = parseAspect((currentSize() || {}).dimensions);
-    frame.style.setProperty("--aspect", `${w} / ${h}`);
-    frame.style.setProperty("--swatch", color ? color.hex : "#1c1c1c");
-    frame.className = "pdp-stage__frame" + (color ? ` pdp-stage__frame--${color.texture}` : "");
+
+    const frameEl = $("#pdp-stage-frame");
+    frameEl.style.setProperty("--aspect", `${w} / ${h}`);
+    frameEl.style.setProperty("--swatch", color ? color.hex : "#1c1c1c");
+    frameEl.className = [
+      "pdp-stage__frame",
+      color ? `pdp-stage__frame--${color.texture}` : "",
+      `pdp-stage__frame--style-${frame.style}`,
+      `pdp-stage__frame--border-${frame.borderWidth}`,
+      frame.shape === "arch" ? "pdp-stage__frame--arch" : "",
+      frame.shape === "square" ? "pdp-stage__frame--square" : "",
+      frame.double ? "pdp-stage__frame--double" : "",
+      frame.ornament ? "pdp-stage__frame--ornament" : ""
+    ].filter(Boolean).join(" ");
+
+    const matEl = $("#pdp-stage-mat");
+    matEl.className = "pdp-stage__mat pdp-stage__mat--" + frame.matWidth;
+    matEl.style.setProperty("--mat-color", matHex(frame.matColor));
+    $("#pdp-stage-photo").classList.toggle("pdp-stage__photo--arch", frame.shape === "arch");
 
     const img = $("#pdp-stage-img");
     img.style.setProperty("--z", config.zoom);
     img.style.setProperty("--ox", config.ox + "%");
     img.style.setProperty("--oy", config.oy + "%");
-    img.src = photoUrl || product.image;
-    $("#pdp-stage-photo").classList.toggle("is-placeholder", !photoUrl);
+    if (photoUrl) img.src = photoUrl;
+    img.style.visibility = photoUrl ? "visible" : "hidden";
     $("#pdp-stage-empty").hidden = Boolean(photoUrl);
   }
 
   function wireStageThumbs() {
-    const main = $("#pdp-stage-img");
-    main.addEventListener("error", () => { if (!photoUrl && main.src.indexOf(FALLBACK_IMAGE) === -1) main.src = FALLBACK_IMAGE; });
+    const main = $("#pdp-stage-real");
+    main.addEventListener("error", () => { if (main.src.indexOf(FALLBACK_IMAGE) === -1) main.src = FALLBACK_IMAGE; });
     $$("[data-thumb]").forEach((t) =>
       t.addEventListener("click", () => {
-        if (photoUrl) return; // the uploaded photo takes priority in the stage
         product.image = product.images[Number(t.dataset.thumb)];
+        main.src = product.image;
         $$("[data-thumb]").forEach((b) => b.setAttribute("aria-current", String(b === t)));
-        applyStage();
       })
     );
+
+    const modeBtns = [$("#pdp-mode-view"), $("#pdp-mode-custom")];
+    modeBtns[0].addEventListener("click", () => setMode("view"));
+    modeBtns[1].addEventListener("click", () => setMode("custom"));
+    $(".pdp-mode").addEventListener("keydown", (e) => {
+      if (!["ArrowRight", "ArrowLeft"].includes(e.key)) return;
+      e.preventDefault();
+      const i = modeBtns.indexOf(document.activeElement);
+      if (i < 0) return;
+      const next = modeBtns[(i + (e.key === "ArrowRight" ? 1 : -1) + modeBtns.length) % modeBtns.length];
+      next.focus();
+      next.click();
+    });
   }
 
   // ---- Real-world size comparison --------------------------------------------------
@@ -208,7 +287,7 @@
   }
 
   function uploadHtml() {
-    return `<div class="pdp-upload" id="pdp-upload">
+    return `<div class="pdp-upload" id="pdp-upload-section" hidden>
       <strong>Customize / Upload Photo <span class="placeholder-note">Preview only</span></strong>
       <label class="pdp-upload__zone" for="pdp-file" id="pdp-upload-zone">${icon("upload")}<span>Choose a photo (JPG, PNG or WebP, up to ${MAX_UPLOAD_MB} MB)</span></label>
       <input class="visually-hidden" id="pdp-file" type="file" accept="${UPLOAD_TYPES.join(",")}">
@@ -487,6 +566,7 @@
 
     wireStageThumbs();
     applyStage();
+    setMode("view");
     applyComparison();
     updateSummary();
     wireSelectors();
