@@ -32,11 +32,13 @@
     document.dispatchEvent(new CustomEvent("framex:cart-change", { detail: Object.assign({ count: count() }, detail) }));
   }
 
-  const lineKey = (productId, size, note) => `${productId}::${size || ""}::${note || ""}`;
+  const lineKey = (productId, size, color, note) => `${productId}::${size || ""}::${color || ""}::${note || ""}`;
   const findLine = (key) => lines.find((l) => l.key === key);
 
-  function add(product, { size = null, qty = 1, note = "" } = {}) {
-    const key = lineKey(product.id, size, note);
+  /** sizeId selects the priced size option (see services/pricing.js); `size`
+      and `color` are the human-readable labels shown in the cart. */
+  function add(product, { sizeId = null, size = null, color = null, qty = 1, note = "" } = {}) {
+    const key = lineKey(product.id, size, color, note);
     const existing = findLine(key);
     if (existing) {
       existing.qty = Math.min(existing.qty + qty, MAX_QTY);
@@ -49,8 +51,9 @@
         name: product.name,
         image: product.image,
         size,
+        color,
         note,
-        unitPrice: pricing.finalPrice(product),
+        unitPrice: pricing.priceForSize(product, sizeId),
         qty: Math.min(qty, MAX_QTY)
       });
     }

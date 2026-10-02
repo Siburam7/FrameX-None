@@ -16,55 +16,14 @@
   }
 }
 
-/* Gallery -------------------------------------------------------------------- */
-.pdp-gallery {
-  display: grid;
-  gap: 12px;
-  position: sticky;
-  top: calc(var(--header-h) + 16px);
-}
-
-.pdp-gallery__stage {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  border-radius: var(--radius-lg);
-  background: var(--stone-soft);
-  overflow: hidden;
-}
-
-.pdp-gallery__stage img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  cursor: zoom-in;
-  transition: transform 260ms var(--ease-out);
-}
-
-.pdp-gallery__stage.is-zoomed img {
-  transform: scale(1.6);
-  cursor: zoom-out;
-}
-
-.pdp-gallery__nav {
-  position: absolute;
-  top: 50%;
-  translate: 0 -50%;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--ink);
-  box-shadow: var(--shadow-card);
-}
-
-.pdp-gallery__nav--prev {
-  left: 10px;
-}
-
-.pdp-gallery__nav--next {
-  right: 10px;
+/* Visualizer sticks alongside the info column on desktop only — the .pdp grid
+   is a single column below 900px, so sticking here would overlap the info
+   column underneath it as the page scrolls. */
+@media (min-width: 900px) {
+  .pdp-visualizer {
+    position: sticky;
+    top: calc(var(--header-h) + 16px);
+  }
 }
 
 .pdp-gallery__thumbs {
@@ -482,13 +441,6 @@
   }
 }
 
-.pdp-gallery__zoom {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 2;
-}
-
 .pdp-shop-card .shop-hero__logo {
   width: 52px;
   height: 52px;
@@ -511,4 +463,358 @@
 
 .pdp-info__shop {
   min-height: 44px;
+}
+
+/* ==========================================================================
+   Visualizer stage (colour + size + uploaded photo preview)
+   ========================================================================== */
+.pdp-visualizer {
+  display: grid;
+  gap: 12px;
+}
+
+.pdp-stage {
+  display: grid;
+  place-items: center;
+  padding: clamp(16px, 4vw, 32px);
+  border-radius: var(--radius-lg);
+  background: var(--stone-soft);
+}
+
+.pdp-stage__frame {
+  --aspect: 4 / 5;
+  --swatch: #1c1c1c;
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 420px);
+  aspect-ratio: var(--aspect);
+  padding: clamp(10px, 3.4%, 22px);
+  background: var(--swatch);
+  box-shadow: var(--shadow-card);
+  transition: aspect-ratio var(--dur-base) var(--ease-out), padding var(--dur-base) var(--ease-out);
+}
+
+.pdp-stage__frame--wood {
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--swatch) 80%, white) 0%, var(--swatch) 45%, color-mix(in srgb, var(--swatch) 70%, black) 100%);
+}
+
+.pdp-stage__frame--metal {
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--swatch) 60%, white) 0%, var(--swatch) 50%, color-mix(in srgb, var(--swatch) 80%, black) 100%);
+}
+
+.pdp-stage__photo {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--white);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.pdp-stage__photo img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: translate(-50%, -50%) translate(var(--ox, 0%), var(--oy, 0%)) scale(var(--z, 1));
+  transition: transform 120ms var(--ease-out);
+}
+
+.pdp-stage__photo.is-placeholder img {
+  opacity: 0.35;
+  filter: grayscale(0.4);
+}
+
+.pdp-stage__empty {
+  position: absolute;
+  inset: auto 10% 10%;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  text-align: center;
+  pointer-events: none;
+}
+
+.pdp-stage__empty .icon {
+  color: var(--slate);
+}
+
+.pdp-stage__caption {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+/* Real-world size comparison --------------------------------------------------------- */
+.pdp-compare {
+  padding: clamp(18px, 3vw, 28px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+}
+
+.pdp-compare__title {
+  margin-bottom: 18px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.pdp-compare__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(20px, 4vw, 48px);
+  min-height: 150px;
+  padding: 0 8px 14px;
+  border-bottom: 2px solid var(--line);
+}
+
+.pdp-compare__item {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.pdp-compare__shape {
+  display: block;
+  transition: width var(--dur-base) var(--ease-out), height var(--dur-base) var(--ease-out);
+}
+
+.pdp-compare__shape--frame {
+  border: 3px solid var(--ink);
+  background: var(--cream);
+  border-radius: 2px;
+}
+
+.pdp-compare__shape--hand {
+  color: var(--amber-strong);
+  stroke-width: 1.6;
+}
+
+.pdp-compare__shape--paper {
+  background: var(--white);
+  border: 1px solid var(--slate);
+  box-shadow: var(--shadow-card);
+}
+
+.pdp-compare__label {
+  max-width: 16ch;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  text-align: center;
+}
+
+.pdp-compare__note {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+/* Colour swatches ------------------------------------------------------------------ */
+.pdp-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.pdp-swatch {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--line);
+}
+
+.pdp-swatch__dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--swatch);
+}
+
+.pdp-swatch__dot--wood {
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--swatch) 75%, white), var(--swatch));
+}
+
+.pdp-swatch__dot--metal {
+  background-image: linear-gradient(135deg, color-mix(in srgb, var(--swatch) 55%, white), var(--swatch) 60%);
+}
+
+.pdp-swatch__check {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px;
+  height: 18px;
+  color: var(--white);
+  opacity: 0;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.6));
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.pdp-swatch[aria-checked="true"] {
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 4px var(--ink);
+}
+
+.pdp-swatch[aria-checked="true"] .pdp-swatch__check {
+  opacity: 1;
+}
+
+.pdp-option__value {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+/* Size cards -------------------------------------------------------------------------- */
+.pdp-size-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (min-width: 420px) {
+  .pdp-size-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.pdp-size-card {
+  position: relative;
+  display: grid;
+  gap: 2px;
+  padding: 12px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-md);
+  text-align: left;
+  transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+}
+
+.pdp-size-card__label {
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.pdp-size-card__dims {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.pdp-size-card__delta {
+  margin-top: 4px;
+  color: var(--amber-strong);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.pdp-size-card__check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  color: var(--amber-strong);
+  opacity: 0;
+}
+
+.pdp-size-card[aria-checked="true"] {
+  border-color: var(--ink);
+  background: var(--cream);
+}
+
+.pdp-size-card[aria-checked="true"] .pdp-size-card__check {
+  opacity: 1;
+}
+
+.pdp-option[data-invalid="true"] .pdp-size-card {
+  border-color: var(--danger);
+}
+
+/* Summary card ------------------------------------------------------------------------- */
+.pdp-summary {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--cream);
+}
+
+.pdp-summary__title {
+  margin-bottom: 10px;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.pdp-summary__list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  font-size: var(--text-sm);
+}
+
+.pdp-summary__list dt {
+  color: var(--muted);
+}
+
+.pdp-summary__list dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.pdp-summary__list dd#sum-price {
+  color: var(--amber-strong);
+  font-weight: 800;
+}
+
+/* Upload + position controls ----------------------------------------------------------- */
+.pdp-upload__meta-actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 2px;
+}
+
+.pdp-position {
+  display: grid;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--line);
+}
+
+.pdp-position__label {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.pdp-position__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 559px) {
+  .pdp-buybox .btn {
+    order: 3;
+    flex-basis: 100%;
+  }
+}
+
+/* `[hidden]` must win over this file's own `display:` rules — the JS toggles
+   this attribute and relies on it collapsing the element. */
+.pdp-position[hidden],
+.pdp-stage__empty[hidden] {
+  display: none;
 }

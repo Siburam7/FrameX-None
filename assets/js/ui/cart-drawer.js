@@ -14,7 +14,7 @@
       <img class="cart-line__image" src="${esc(line.image)}" alt="" width="72" height="72">
       <div class="cart-line__info">
         <p class="cart-line__name">${esc(line.name)}</p>
-        <p class="cart-line__meta">${line.size ? esc(line.size) + " · " : ""}${formatPrice(line.unitPrice)} each</p>
+        <p class="cart-line__meta">${[line.size, line.color].filter(Boolean).map(esc).join(" · ")}${line.size || line.color ? " · " : ""}${formatPrice(line.unitPrice)} each</p>
         ${line.note ? `<p class="cart-line__meta">Note: ${esc(line.note)}</p>` : ""}
         <div class="cart-line__row">
           <div class="qty" role="group" aria-label="Quantity for ${esc(line.name)}">

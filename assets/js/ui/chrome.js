@@ -45,24 +45,22 @@
     </header>`;
   }
 
+  // Every link below is a real page — no "#" placeholders.
   const col = (title, items) =>
-    `<div><h3>${esc(title)}</h3><ul>${items
-      .map(([label, href, feature]) =>
-        feature
-          ? `<li><a href="#" data-action="coming-soon" data-feature="${esc(feature)}">${esc(label)}</a></li>`
-          : `<li><a href="${href}">${esc(label)}</a></li>`
-      )
-      .join("")}</ul></div>`;
+    `<div><h3>${esc(title)}</h3><ul>${items.map(([label, href]) => `<li><a href="${href}">${esc(label)}</a></li>`).join("")}</ul></div>`;
 
   function footer() {
     return `<footer class="site-footer">
       <div class="container site-footer__top">
-        ${col("SHOP", [["All frames", "shop.html"], ["Shops near you", "shop.html#shops"], ["Gallery", pages.gallery]])}
-        ${col("COMPANY", [["About FrameX", pages.about], ["Services", pages.services], ["Contact", pages.contact]])}
-        ${col("HELP", [["FAQ", pages.faq], ["Pickup & delivery", "services.html#delivery"], ["How it works", "services.html#journey"]])}
-        ${col("LEGAL", [["Terms of use", "", "Terms of use"], ["Privacy notice", "", "Privacy notice"]])}
+        ${col("Company", [["Our Story", pages.story], ["About FrameX", pages.about], ["Contact", pages.contact]])}
+        ${col("Customer", [["Shop", pages.shop], ["FAQ", pages.faq], ["Terms of Use", pages.terms], ["Privacy Notice", pages.privacy]])}
+        ${col("Product", [["All Frames", pages.shop], ["Custom Frames", pages.home + "#custom-frame"], ["Gallery", pages.gallery]])}
       </div>
-      <div class="container site-footer__bottom"><span>© 2026 FrameX. All rights reserved.</span></div>
+      <div class="container site-footer__bottom">
+        <span>© 2026 FrameX. All rights reserved.</span>
+        <a href="${pages.terms}">Terms of Use</a>
+        <a href="${pages.privacy}">Privacy Notice</a>
+      </div>
     </footer>`;
   }
 

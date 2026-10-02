@@ -3,7 +3,7 @@
    ========================================================================== */
 (function (FrameX) {
   const { escapeHtml: esc, icon } = FrameX.dom;
-  const { formatPrice, finalPrice, availability } = FrameX.pricing;
+  const { formatPrice, finalPrice, startingPrice, availability, hasSizeChoice } = FrameX.pricing;
   const { FULFILMENT_METHODS } = FrameX.constants;
   const { formatAddress, isOpenNow } = FrameX.shopUtils;
   const { config } = FrameX;
@@ -18,12 +18,26 @@
     return { text: "In stock", className: "" };
   }
 
-  const hasSizeChoice = (product) => Array.isArray(product.sizes) && product.sizes.length > 1;
+  function priceBlock(product, { from = false } = {}) {
+    const now = from ? startingPrice(product) : finalPrice(product);
+    const was = !from && product.discountPercent > 0 ? `<s class="price__was">${formatPrice(product.price)}</s>` : "";
+    const prefix = from && hasSizeChoice(product) ? `<span class="price__from">From</span> ` : "";
+    return `<p class="price">${prefix}<strong class="price__now">${formatPrice(now)}</strong>${was}</p>`;
+  }
 
-  function priceBlock(product) {
-    const now = finalPrice(product);
-    const was = product.discountPercent > 0 ? `<s class="price__was">${formatPrice(product.price)}</s>` : "";
-    return `<p class="price"><strong class="price__now">${formatPrice(now)}</strong>${was}</p>`;
+  /** Small coloured dots showing which finishes a product offers. Text labels
+      are used alongside them (title attribute + visually-hidden summary) so
+      colour is never the only way to tell the options apart. */
+  function colorSwatchRow(product) {
+    if (!Array.isArray(product.colors) || !product.colors.length) return "";
+    const palette = (FrameX.seed.frameColors || []).reduce((map, c) => ((map[c.id] = c), map), {});
+    const dots = product.colors
+      .map((id) => palette[id])
+      .filter(Boolean)
+      .map((c) => `<span class="swatch-dot" style="--swatch:${c.hex}" title="${esc(c.name)}"></span>`)
+      .join("");
+    const names = product.colors.map((id) => (palette[id] || {}).name).filter(Boolean).join(", ");
+    return `<p class="product-card__colors"><span class="swatch-dot-row">${dots}</span><span class="visually-hidden">Colours: ${esc(names)}</span></p>`;
   }
 
   function wishButton(product, extraClass = "") {
@@ -39,6 +53,9 @@
     const badges = [];
     if (product.discountPercent > 0 && !unavailable) badges.push(`<span class="badge badge--discount">${product.discountPercent}% off</span>`);
     if (product.isNew && !unavailable) badges.push(`<span class="badge">New</span>`);
+    const needsChoice = hasSizeChoice(product) || (product.colors || []).length > 1;
+    const sizeCount = FrameX.pricing.sizeOptions(product).length;
+    const sizeNote = sizeCount > 1 ? `<span class="product-card__size-note">${sizeCount} sizes</span>` : "";
 
     return `<article class="product-card${unavailable ? " is-unavailable" : ""}" data-product-id="${esc(product.id)}">
       <div class="product-card__media">
@@ -50,14 +67,17 @@
       <div class="product-card__body">
         <h3 class="product-card__title"><a href="${FrameX.qs.productUrl(product.id)}">${esc(product.name)}</a></h3>
         <p class="product-card__shop">${icon("store")} ${esc(product.shopName)}</p>
-        ${priceBlock(product)}
+        ${product.description ? `<p class="product-card__desc">${esc(product.description)}</p>` : ""}
+        ${colorSwatchRow(product)}
+        ${priceBlock(product, { from: true })}
+        ${sizeNote}
       </div>
       <div class="product-card__foot">
         <span class="${stock.className}">${stock.text}</span>
         ${unavailable
           ? `<button class="btn btn--dark btn--sm product-card__add" type="button" disabled>Unavailable</button>`
-          : hasSizeChoice(product)
-            ? `<a class="btn btn--dark btn--sm product-card__add" href="${FrameX.qs.productUrl(product.id)}">Choose size</a>`
+          : needsChoice
+            ? `<a class="btn btn--dark btn--sm product-card__add" href="${FrameX.qs.productUrl(product.id)}">Customize</a>`
             : `<button class="btn btn--dark btn--sm product-card__add" type="button" data-action="add-to-cart" data-product-id="${esc(product.id)}">Add to cart</button>`}
       </div>
     </article>`;
@@ -133,5 +153,5 @@
     if (button) button.addEventListener("click", retry, { once: true });
   }
 
-  FrameX.templates = { productCard, frameCard, shopCard, skeletons, showError, hasSizeChoice, stockLabel, priceBlock, wishButton };
+  FrameX.templates = { productCard, frameCard, shopCard, skeletons, showError, hasSizeChoice, stockLabel, priceBlock, colorSwatchRow, wishButton };
 })((window.FrameX = window.FrameX || {}));

@@ -10,7 +10,10 @@
     shop: "shop.html",
     gallery: "gallery.html",
     contact: "contact.html",
-    faq: "faq.html"
+    faq: "faq.html",
+    story: "our-story.html",
+    terms: "terms-of-use.html",
+    privacy: "privacy-notice.html"
   };
 
   const productUrl = (id) => `product.html?id=${encodeURIComponent(id)}`;

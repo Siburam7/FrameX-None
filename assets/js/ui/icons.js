@@ -27,6 +27,9 @@
     <symbol id="i-upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
     <symbol id="i-chev-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
     <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-chev-up" viewBox="0 0 24 24"><path d="m18 15-6-6-6 6"/></symbol>
+    <symbol id="i-chev-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-hand" viewBox="0 0 24 24"><path d="M11 13V4a1.5 1.5 0 0 1 3 0v8M14 12V3a1.5 1.5 0 0 1 3 0v9M17 12.5V6a1.5 1.5 0 0 1 3 0v9c0 4-2.5 7-6.5 7H11a6 6 0 0 1-5-3l-2.5-4.2a1.4 1.4 0 0 1 2.2-1.7L8 15.5V6a1.5 1.5 0 0 1 3 0v7"/></symbol>
     <symbol id="i-zoom" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/></symbol>
     <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></symbol>
     <symbol id="i-frame" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><rect x="7" y="8" width="10" height="8"/></symbol>

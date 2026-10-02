@@ -10,20 +10,20 @@
   FrameX.seed.site = {
     brand: { name: "FrameX" },
     contact: {
-      phone: "", // e.g. "+91 98765 43210"  -> enables tel: link
-      whatsapp: "9337169824", // e.g. "919876543210"     -> enables WhatsApp link
-      email: "siburam.n7@gmail.com", // e.g. "hello@framex.example"
+      phone: "",       // e.g. "+91 98765 43210"  -> enables tel: link
+      whatsapp: "",    // e.g. "919876543210"     -> enables WhatsApp link
+      email: ""        // e.g. "hello@framex.example"
     },
     social: {
       facebook: "",
-      instagram: "https://www.instagram.com/cbuxrn?stkn=Ynk5Y2I3Znoyd2Zy",
-      linkedin: "",
+      instagram: "",
+      linkedin: ""
     },
     // Marketing figures supplied by the site owner (not computed).
     stats: [
       { value: 500, label: "Happy Customers", suffix: "+" },
-      { value: 1200, label: "Frames Delivered", suffix: "+" },
-      { value: 30, label: "Unique Designs", suffix: "+" },
-    ],
+      { value: 1000, label: "Frames Delivered", suffix: "+" },
+      { value: 50, label: "Unique Designs", suffix: "+" }
+    ]
   };
 })((window.FrameX = window.FrameX || {}));

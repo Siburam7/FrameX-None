@@ -67,25 +67,45 @@ The API response adds `productCount` and, when `lat`/`lng` are sent, `distanceKm
   "description": "…", "categoryIds": ["photo-frames", "wedding"],
   "image": "https://…", "images": ["https://…"],
   "price": 799, "currency": "INR", "discountPercent": 10,
-  "sizes": ["12 × 16 in", "16 × 20 in"], "material": "Walnut-finish wood",
+  // sizeOptions, when present, drives the visual size selector + live price on product.html.
+  // `sizes` (plain label strings) is still used by search/cards; it's derived from sizeOptions
+  // for the 10 named frame styles. A product with no sizeOptions falls back to one entry per
+  // `sizes` label with priceDelta 0 (see services/pricing.js:sizeOptions()).
+  "sizeOptions": [
+    { "id": "s", "label": "Small", "dimensions": "8 × 10 in", "priceDelta": -150 },
+    { "id": "m", "label": "Medium", "dimensions": "12 × 16 in", "priceDelta": 0 },
+    { "id": "l", "label": "Large", "dimensions": "16 × 20 in", "priceDelta": 250 },
+    { "id": "xl", "label": "Extra Large", "dimensions": "20 × 24 in", "priceDelta": 450 }
+  ],
+  "sizes": ["Small", "Medium", "Large", "Extra Large"],
+  // IDs into assets/data/frame-colors.seed.js. Optional — omit for a product with one fixed colour.
+  "colors": ["walnut", "black", "natural-wood"],
+  "material": "Walnut-finish wood",
   "stock": 20, "isAvailable": true, "isVisible": true,
   "isFeatured": false, "isRecommended": false, "isNew": false,
   "createdAt": "…", "updatedAt": "…"
 }
 ```
-Derived on the client (`services/pricing.js`): final price = `price − discountPercent`;
-availability = `out_of_stock` if `isAvailable` is false or `stock ≤ 0`, `low_stock` if
-`stock ≤ config.lowStockThreshold`, else `in_stock`.
-The API response adds `shopName`.
+Derived on the client (`services/pricing.js`): `priceForSize(product, sizeId)` = `(price + that
+size's priceDelta) − discountPercent%`; `finalPrice()` uses the default (Medium) size;
+`startingPrice()` uses the cheapest size, for "From ₹X" card labels. Availability =
+`out_of_stock` if `isAvailable` is false or `stock ≤ 0`, `low_stock` if `stock ≤
+config.lowStockThreshold`, else `in_stock`. The API response adds `shopName`.
 
-**Per-size pricing** is not modelled yet. When needed, replace `sizes: string[]` with
-`variants: [{ id, label, price, stock }]`; cart lines already store the chosen size.
+**Frame colour** is visualized with a CSS frame mock-up (border colour + a wood/metal-tinted
+gradient keyed off each colour's `texture`), not per-colour photography, and the product page
+says so next to the preview. Add real per-colour photography later by giving each colour its own
+image and swapping the mock-up for an `<img>` swap.
 
 ### Category
 `{ id, name, image, sortOrder }` — the API adds `productCount` so empty categories can be hidden from filters.
 
 ### Cart line (client only, `localStorage`)
-`{ key, productId, shopId, shopName, name, image, size, note, unitPrice, qty }`. The key is `productId::size::note`, so identical configurations merge and different notes stay separate.
+`{ key, productId, shopId, shopName, name, image, size, color, note, unitPrice, qty }`. The key is
+`productId::size::color::note`, so an identical size+colour+note configuration merges into one line
+and anything different (including just the note) stays a separate line. `unitPrice` is priced via
+`priceForSize()` at the moment the item is added — a display snapshot; the backend must re-price at
+checkout.
 `unitPrice` is a **display snapshot**. The backend must re-price every line at checkout.
 Lines are grouped by shop because a marketplace creates **one order per shop**.
 
