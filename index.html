@@ -53,21 +53,25 @@
           </div>
         </div>
         <div class="hero__bar">
-          <div class="hero__socials"><span class="hero__socials-label">Follow us</span>
-            <a class="hero__social" href="#" data-social="facebook" aria-label="Facebook"><svg class="icon"
-                aria-hidden="true">
-                <use href="#i-facebook"></use>
-              </svg></a>
-            <a class="hero__social" href="#" data-social="instagram" aria-label="Instagram"><svg class="icon"
-                aria-hidden="true">
-                <use href="#i-instagram"></use>
-              </svg></a>
-            <a class="hero__social" href="#" data-social="linkedin" aria-label="LinkedIn"><svg class="icon"
-                aria-hidden="true">
-                <use href="#i-linkedin"></use>
-              </svg></a>
+          <div class="hero__side">
+            <nav class="hero__links" aria-label="Quick links">
+              <a class="hero__link" href="#categories">Shop by category</a>
+              <a class="hero__link" href="#shops">Nearby shops</a>
+              <a class="hero__link" href="#how-it-works">How it works</a>
+            </nav>
+            <div class="hero__socials"><span class="hero__socials-label">Follow us</span>
+              <a class="hero__social" data-social="facebook" aria-label="Facebook"><svg class="icon" aria-hidden="true">
+                  <use href="#i-facebook"></use>
+                </svg></a>
+              <a class="hero__social" data-social="instagram" aria-label="Instagram"><svg class="icon"
+                  aria-hidden="true">
+                  <use href="#i-instagram"></use>
+                </svg></a>
+              <a class="hero__social" data-social="linkedin" aria-label="LinkedIn"><svg class="icon" aria-hidden="true">
+                  <use href="#i-linkedin"></use>
+                </svg></a>
+            </div>
           </div>
-          <div class="hero__stats" id="hero-stats" role="group" aria-label="FrameX in numbers"></div>
         </div>
       </div>
     </section>
@@ -162,21 +166,25 @@
           <div class="custom-frame__body">
             <p class="custom-frame__eyebrow">Custom premium photo frame</p>
             <h2 class="custom-frame__title" id="custom-title">A frame made around your photo</h2>
-            <p class="custom-frame__text">Pick a frame style from a local shop, choose the size that suits your wall and
-              add a note for the shop. Take it home, or have it delivered where the shop offers delivery.</p>
+            <p class="custom-frame__text">Pick a frame style from a local shop, then see your own photo inside that
+              exact
+              frame. Choose the colour and size that suit your wall and add a note for the shop.</p>
             <ul class="check-list">
               <li><svg class="icon" aria-hidden="true">
                   <use href="#i-check"></use>
-                </svg><span><strong>Available now:</strong> choose a size, add an order note, preview your photo</span>
+                </svg><span><strong>Available now:</strong> try your own photo in the frame, choose a frame colour and
+                  size, add an order note</span>
               </li>
               <li><svg class="icon" aria-hidden="true">
                   <use href="#i-clock"></use>
-                </svg><span><strong>Planned:</strong> photo upload to the shop, custom sizes, frame colour
-                  options</span></li>
+                </svg><span><strong>Planned:</strong> sending your photo to the shop, custom sizes</span></li>
             </ul>
             <div class="custom-frame__actions">
-              <a class="btn btn--primary" href="shop.html">Explore Frames</a>
-              <a class="btn btn--outline-dark" href="services.html#journey">How it works</a>
+              <a class="btn btn--primary" href="shop.html" data-try-link>Try With Your Own Image <svg
+                  class="icon icon--nudge" aria-hidden="true">
+                  <use href="#i-arrow-right"></use>
+                </svg></a>
+              <a class="btn btn--outline-dark" href="shop.html">Explore Frames</a>
             </div>
           </div>
         </div>
@@ -215,7 +223,7 @@
                 class="how-step__num">01</span></div>
             <div class="how-step__body">
               <h3>Upload your photo</h3>
-              <p>Choose the memory you want to frame. Photo upload is planned; for now, share it with the shop.</p>
+              <p>Choose the memory you want to frame and preview it inside the frame on the product page.</p>
             </div>
           </li>
           <li class="how-step">
@@ -259,14 +267,26 @@
             <p class="section-lead">Frame styles to inspire your next project. <span class="placeholder-note">Sample
                 photos until customers share their own</span></p>
           </div>
+          <div class="section-head__tools">
+            <div class="rail-arrows" data-rail-arrows="community-rail" role="group" aria-label="Scroll community photos"
+              hidden>
+              <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon"
+                  aria-hidden="true">
+                  <use href="#i-chev-left"></use>
+                </svg></button>
+              <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon"
+                  aria-hidden="true">
+                  <use href="#i-chev-right"></use>
+                </svg></button>
+            </div>
+          </div>
         </div>
         <div class="community-rail" id="community-rail"></div>
         <div class="section-more">
           <a class="btn btn--dark" href="gallery.html">View gallery <svg class="icon icon--nudge" aria-hidden="true">
               <use href="#i-arrow-right"></use>
             </svg></a>
-          <button class="btn btn--outline" type="button" data-action="coming-soon"
-            data-feature="Sharing your photos">Share your photo</button>
+          <a class="btn btn--outline" href="customer-gallery.html#share">Share your photo</a>
         </div>
       </div>
     </section>
@@ -276,11 +296,21 @@
         <div class="section-head" data-reveal>
           <div>
             <h2 class="section-title" id="reviews-title">Customer stories &amp; feedback</h2>
-            <p class="section-lead"><span class="placeholder-note">Sample reviews — replace with verified customer
-                reviews</span></p>
+            <p class="section-lead">Reviews from customers who have ordered through FrameX.</p>
           </div>
-          <button class="btn btn--outline btn--sm" type="button" data-action="coming-soon"
-            data-feature="Sharing your story">Share your story</button>
+          <div class="section-head__tools">
+            <div class="rail-arrows" data-rail-arrows="review-rail" role="group" aria-label="Scroll reviews" hidden>
+              <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon"
+                  aria-hidden="true">
+                  <use href="#i-chev-left"></use>
+                </svg></button>
+              <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon"
+                  aria-hidden="true">
+                  <use href="#i-chev-right"></use>
+                </svg></button>
+            </div>
+            <a class="btn btn--outline btn--sm" href="customer-gallery.html">Customer gallery</a>
+          </div>
         </div>
         <div class="review-rail" id="review-rail"></div>
       </div>
@@ -480,10 +510,7 @@
   <script src="assets/js/services/location.js" defer></script>
   <script src="assets/js/services/shop-utils.js" defer></script>
   <script src="assets/data/site.seed.js" defer></script>
-  <script src="assets/data/categories.seed.js" defer></script>
-  <script src="assets/data/frame-colors.seed.js" defer></script>
-  <script src="assets/data/shops.seed.js" defer></script>
-  <script src="assets/data/products.seed.js" defer></script>
+  <script src="js/edit.js" defer></script>
   <script src="assets/data/reviews.seed.js" defer></script>
   <script src="assets/data/community.seed.js" defer></script>
   <script src="assets/data/gallery.seed.js" defer></script>
@@ -503,6 +530,7 @@
   <script src="assets/js/ui/actions.js" defer></script>
   <script src="assets/js/ui/marquee.js" defer></script>
   <script src="assets/js/ui/showcase.js" defer></script>
+  <script src="assets/js/ui/rail-nav.js" defer></script>
   <script src="assets/js/ui/site.js" defer></script>
   <script src="assets/js/ui/featured.js" defer></script>
   <script src="assets/js/ui/categories.js" defer></script>

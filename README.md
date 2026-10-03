@@ -13,6 +13,7 @@ because every link and asset path is **relative**.
 | `shop-detail.html?id=<shopId>` | One shop: profile, hours, services, its frames |
 | `product.html?id=<productId>` | **Product experience:** real photo + a CSS frame-colour/size visualizer, size selector (Small/Medium/Large/XL with live price), colour swatches, real-world size comparison (hand / A4 sheet), photo-preview upload with zoom/move/reset, live order summary, quantity, tabs, shop card, related frames |
 | `about.html` `services.html` `gallery.html` `contact.html` `faq.html` | Content pages |
+| `customer-gallery.html` | Customer photos + reviews, and a share form (saved in the visitor's browser only until a backend exists) |
 | `our-story.html` | Brand story, philosophy, team/development credit |
 | `terms-of-use.html` `privacy-notice.html` | Legal pages with a table of contents (draft — see disclaimers on each page) |
 
@@ -55,10 +56,10 @@ shop has coordinates).
 
 | Change | Edit |
 |---|---|
-| Products, prices, stock, sizes, colours, images | `assets/data/products.seed.js` (10 named styles use `sizeOptions` + `colors`; see the comment at the top of the file) |
-| Frame colour palette (hex + finish) | `assets/data/frame-colors.seed.js` |
-| Shops (address, hours, coordinates, ratings, logo) | `assets/data/shops.seed.js` |
-| Categories | `assets/data/categories.seed.js` |
+| Products, prices, stock, sizes, colours, images | `js/edit.js` → PRODUCTS (each field is explained in the comment above the list) |
+| Frame colour palette (hex + finish) | `js/edit.js` → FRAME COLOURS |
+| Shops (address, hours, coordinates, ratings, logo) | `js/edit.js` → SHOPS |
+| Shops, products, categories, frame colours, home page lists | `js/edit.js` (the one file to edit) |
 | Phone / WhatsApp / email, social links, hero numbers | `assets/data/site.seed.js` |
 | FAQ, gallery, reviews, community tiles | `faq.seed.js`, `gallery.seed.js`, `reviews.seed.js`, `community.seed.js` |
 | Colours, fonts, spacing | `assets/css/tokens.css` |

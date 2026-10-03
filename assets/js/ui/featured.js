@@ -14,6 +14,9 @@
         return;
       }
       group.innerHTML = items.map(templates.frameCard).join("");
+      // "Try With Your Own Image" buttons open the first featured frame that has a photo preview.
+      const tryable = items.find((p) => p.frame && FrameX.pricing.availability(p) !== "out_of_stock") || items.find((p) => p.frame);
+      if (tryable) document.querySelectorAll("[data-try-link]").forEach((link) => (link.href = FrameX.qs.productUrl(tryable.id) + "&mode=custom"));
       FrameX.showcase.init(rail);
     } catch (error) {
       console.error("Featured frames failed to load", error);

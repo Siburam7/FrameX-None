@@ -31,7 +31,7 @@
       <div class="container">
         <nav class="page-banner__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span aria-hidden="true">/</span> <span aria-current="page">Gallery</span></nav>
         <h1 class="page-banner__title" id="page-title">Gallery &amp; inspiration</h1>
-        <p class="page-banner__lead">Frame styles and ideas for every room and every memory. These are style inspirations, not customer submissions.</p>
+        <p class="page-banner__lead">Frame styles and ideas for every room and every memory. Filter by theme, open any photo for a closer look, and jump straight to the frame.</p>
       </div>
     </section>
 
@@ -39,6 +39,13 @@
       <div class="container">
         <nav class="gallery-nav" id="gallery-nav" aria-label="Gallery sections"></nav>
         <div id="gallery-root"></div>
+        <div class="gallery-promo" data-reveal>
+          <div>
+            <h2>Framed something with FrameX?</h2>
+            <p>These are style inspirations. Photos and reviews from customers live in the customer gallery.</p>
+          </div>
+          <a class="btn btn--dark" href="customer-gallery.html">Customer gallery <svg class="icon icon--nudge" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a>
+        </div>
         <div class="final-cta" data-reveal>
           <h2 class="final-cta__title">Found a style you like?</h2>
           <p class="final-cta__text">Browse frames from local shops, or ask us about a custom frame.</p>
@@ -59,10 +66,7 @@
   <script src="assets/js/services/location.js" defer></script>
   <script src="assets/js/services/shop-utils.js" defer></script>
   <script src="assets/data/site.seed.js" defer></script>
-  <script src="assets/data/categories.seed.js" defer></script>
-  <script src="assets/data/frame-colors.seed.js" defer></script>
-  <script src="assets/data/shops.seed.js" defer></script>
-  <script src="assets/data/products.seed.js" defer></script>
+  <script src="js/edit.js" defer></script>
   <script src="assets/data/reviews.seed.js" defer></script>
   <script src="assets/data/community.seed.js" defer></script>
   <script src="assets/data/faq.seed.js" defer></script>

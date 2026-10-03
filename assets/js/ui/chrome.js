@@ -22,7 +22,7 @@
 
   function header(current) {
     // "shop-detail" and "product" belong to the Shop section in the nav.
-    const section = { "shop-detail": "shop", product: "shop" }[current] || current;
+    const section = { "shop-detail": "shop", product: "shop", "customer-gallery": "gallery" }[current] || current;
     const links = NAV.map(
       ([key, label]) => `<li><a href="${pages[key]}"${key === section ? ' aria-current="page"' : ""}>${label}</a></li>`
     ).join("");
@@ -45,16 +45,37 @@
     </header>`;
   }
 
+  /** WhatsApp helpers, shared with the contact page. Number = country code + digits. */
+  const digits = (n) => String(n || "").replace(/\D/g, "");
+  FrameX.contact = {
+    whatsappUrl: (n) => "https://wa.me/" + digits(n),
+    // "919337169824" -> "+91 93371 69824"
+    formatWhatsapp: (n) => {
+      const d = digits(n);
+      return d.length === 12 && d.startsWith("91") ? `+91 ${d.slice(2, 7)} ${d.slice(7)}` : "+" + d;
+    }
+  };
+
+  /** Email / WhatsApp from assets/data/site.seed.js, listed under Support when set. */
+  function contactLinks() {
+    const c = (FrameX.seed && FrameX.seed.site && FrameX.seed.site.contact) || {};
+    const links = [];
+    if (c.email) links.push(`<li><a href="mailto:${esc(c.email)}">${icon("mail")}<span>${esc(c.email)}</span></a></li>`);
+    if (c.whatsapp) links.push(`<li><a href="${esc(FrameX.contact.whatsappUrl(c.whatsapp))}" target="_blank" rel="noopener noreferrer">${icon("phone")}<span>WhatsApp ${esc(FrameX.contact.formatWhatsapp(c.whatsapp))}</span></a></li>`);
+    return links.join("");
+  }
+
   // Every link below is a real page — no "#" placeholders.
-  const col = (title, items) =>
-    `<div><h3>${esc(title)}</h3><ul>${items.map(([label, href]) => `<li><a href="${href}">${esc(label)}</a></li>`).join("")}</ul></div>`;
+  const col = (title, items, extra = "") =>
+    `<div><h3>${esc(title)}</h3><ul>${items.map(([label, href]) => `<li><a href="${href}">${esc(label)}</a></li>`).join("")}${extra}</ul></div>`;
 
   function footer() {
     return `<footer class="site-footer">
       <div class="container site-footer__top">
-        ${col("Company", [["Our Story", pages.story], ["About FrameX", pages.about], ["Contact", pages.contact]])}
-        ${col("Customer", [["Shop", pages.shop], ["FAQ", pages.faq], ["Terms of Use", pages.terms], ["Privacy Notice", pages.privacy]])}
-        ${col("Product", [["All Frames", pages.shop], ["Custom Frames", pages.home + "#custom-frame"], ["Gallery", pages.gallery]])}
+        ${col("Company", [["Our Story", pages.story], ["About FrameX", pages.about], ["Customer Gallery", pages.customerGallery], ["Contact", pages.contact]])}
+        ${col("Shop", [["All Frames", pages.shop], ["Custom Frames", pages.home + "#custom-frame"], ["Categories", pages.home + "#categories"], ["Gallery", pages.gallery]])}
+        ${col("Support", [["FAQ", pages.faq], ["How It Works", pages.services + "#journey"]], contactLinks())}
+        ${col("Legal", [["Terms of Use", pages.terms], ["Privacy Notice", pages.privacy]])}
       </div>
       <div class="container site-footer__bottom">
         <span>© 2026 FrameX. All rights reserved.</span>

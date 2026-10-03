@@ -1,6 +1,6 @@
 /* Applies site-level content (stats, socials, offer, contact) to the page. */
 (function (FrameX) {
-  const { $, $$, escapeHtml: esc } = FrameX.dom;
+  const { $, $$, escapeHtml: esc, icon } = FrameX.dom;
   const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
   function renderStats(stats) {
@@ -8,7 +8,8 @@
     if (!container) return;
     container.innerHTML = stats
       .map(
-        (s) => `<div class="hero__stat">
+        (s, i) => `<div class="hero__stat" style="--i:${i}">
+          ${s.icon ? `<span class="hero__stat-icon">${icon(s.icon)}</span>` : ""}
           <div class="hero__stat-value" data-count-to="${s.value}" data-suffix="${esc(s.suffix || "")}"><span>0</span></div>
           <div class="hero__stat-label">${esc(s.label)}</div>
         </div>`
@@ -57,6 +58,9 @@
     });
   }
 
+  /** Social icons link to the profile URLs in assets/data/site.seed.js. Until a
+      URL is added, the icon acts as a button that says the link is coming soon
+      (never a dead "#" link). */
   function applySocials(social) {
     $$("[data-social]").forEach((link) => {
       const url = social[link.dataset.social];
@@ -64,12 +68,17 @@
         link.href = url;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
-        link.removeAttribute("data-action");
-      } else {
-        link.setAttribute("href", "#");
-        link.dataset.action = "coming-soon";
-        link.dataset.feature = link.dataset.social.charAt(0).toUpperCase() + link.dataset.social.slice(1) + " link";
+        return;
       }
+      link.setAttribute("role", "button");
+      link.tabIndex = 0;
+      link.dataset.action = "coming-soon";
+      link.dataset.feature = "Our " + link.dataset.social.charAt(0).toUpperCase() + link.dataset.social.slice(1) + " page";
+      link.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        link.click();
+      });
     });
   }
 

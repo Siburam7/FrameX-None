@@ -11,19 +11,16 @@
     brand: { name: "FrameX" },
     contact: {
       phone: "",       // e.g. "+91 98765 43210"  -> enables tel: link
-      whatsapp: "",    // e.g. "919876543210"     -> enables WhatsApp link
-      email: ""        // e.g. "hello@framex.example"
+      whatsapp: "919337169824", // country code + number, digits only -> WhatsApp link
+      email: "support.framex@gmail.com"
     },
     social: {
       facebook: "",
       instagram: "",
       linkedin: ""
     },
-    // Marketing figures supplied by the site owner (not computed).
-    stats: [
-      { value: 500, label: "Happy Customers", suffix: "+" },
-      { value: 1000, label: "Frames Delivered", suffix: "+" },
-      { value: 50, label: "Unique Designs", suffix: "+" }
-    ]
+    // Hero figures (e.g. { value: 500, label: "Happy Customers", suffix: "+", icon: "users" }).
+    // Removed at the owner's request — add only figures you can back up.
+    stats: []
   };
 })((window.FrameX = window.FrameX || {}));

@@ -45,22 +45,25 @@
 }
 
 /* Categories (style-collection gallery + occasion links, ui/categories.js) ------ */
+/* Compact gallery: 2 square cards per row on phones, 3 per row on tablets,
+   all six in one row on wide screens. */
 .category-gallery {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
-@media (min-width: 420px) {
+@media (min-width: 640px) {
   .category-gallery {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1100px) {
   .category-gallery {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 24px;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 16px;
   }
 }
 
@@ -68,7 +71,7 @@
   position: relative;
   display: flex;
   align-items: flex-end;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--beige);
@@ -78,15 +81,15 @@
   transition: box-shadow 450ms var(--ease-out);
 }
 
-@media (min-width: 420px) {
+@media (min-width: 640px) {
   .category-card {
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 4 / 3;
   }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1100px) {
   .category-card {
-    aspect-ratio: 1 / 1;
+    aspect-ratio: 3 / 4;
   }
 }
 
@@ -126,9 +129,9 @@
 
 .category-card__body {
   display: grid;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
-  padding: clamp(14px, 2.4vw, 26px);
+  padding: clamp(12px, 1.6vw, 18px);
   transition: transform 450ms var(--ease-out);
 }
 
@@ -142,7 +145,7 @@
 
 .category-card__title {
   font-family: var(--font-display);
-  font-size: clamp(1.15rem, 0.95rem + 1vw, 1.6rem);
+  font-size: clamp(1rem, 0.92rem + 0.4vw, 1.25rem);
   font-weight: 400;
   letter-spacing: -0.01em;
   line-height: 1.2;
@@ -170,7 +173,7 @@
    hover/focus. Touch devices skip this block, so it is always visible. */
 @media (hover: hover) {
   .category-card__body {
-    transform: translateY(30px);
+    transform: translateY(26px);
   }
 
   .category-card__cta {
@@ -453,4 +456,23 @@
   position: absolute;
   inset: 0;
   z-index: 1;
+}
+
+/* Phones: occasion links scroll sideways in one line instead of stacking */
+@media (max-width: 639px) {
+  .category-more {
+    flex-wrap: nowrap;
+    margin-inline: calc(-1 * var(--gutter));
+    padding-inline: var(--gutter);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .category-more::-webkit-scrollbar {
+    display: none;
+  }
+
+  .category-more > * {
+    flex: none;
+  }
 }

@@ -49,11 +49,11 @@
     const rows = [
       contact.email && `<li>${icon("mail")}<a href="mailto:${esc(contact.email)}">${esc(contact.email)}</a></li>`,
       contact.phone && `<li>${icon("phone")}<a href="tel:${esc(contact.phone.replace(/[^\d+]/g, ""))}">${esc(contact.phone)}</a></li>`,
-      contact.whatsapp && `<li>${icon("phone")}<a href="https://wa.me/${esc(String(contact.whatsapp).replace(/\D/g, ""))}" target="_blank" rel="noopener noreferrer">WhatsApp</a></li>`
+      contact.whatsapp && `<li>${icon("phone")}<a href="https://wa.me/${esc(String(contact.whatsapp).replace(/\D/g, ""))}" target="_blank" rel="noopener noreferrer">WhatsApp ${esc(FrameX.contact.formatWhatsapp(contact.whatsapp))}</a></li>`
     ].filter(Boolean);
     info.innerHTML = rows.length
       ? `<ul class="info-list">${rows.join("")}</ul>`
-      : `<p class="placeholder-note">Business contact details will appear here once they are added (assets/data/site.seed.js).</p>`;
+      : `<p class="contact-info__empty">FrameX hasn't published a phone number or email address yet. They will be listed here as soon as they are available.</p>`;
 
     $$("input, textarea", form).forEach((field) => {
       field.addEventListener("blur", () => RULES[field.name] && setError(field, RULES[field.name](field.value)));

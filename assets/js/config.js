@@ -1,6 +1,7 @@
 /* ==========================================================================
    FrameX — runtime configuration
-   dataMode "seed" : read from assets/data/*.seed.js (no server needed)
+   dataMode "seed" : read shops/products/categories from js/edit.js and the
+                     rest from assets/data/*.seed.js (no server needed)
    dataMode "api"  : call apiBaseUrl (see docs/ARCHITECTURE.md for the contract)
    Switching modes is the only change the frontend needs once a backend exists.
    ========================================================================== */

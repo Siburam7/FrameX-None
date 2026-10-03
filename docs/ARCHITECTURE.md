@@ -35,6 +35,7 @@ Connecting a backend means: build the endpoints in section 3, change `dataMode` 
 > real server because none exists yet.
 
 Products, shops, categories, prices, images and stock are **not** written in `index.html`.
+In seed mode they all live in one hand-edited file, `js/edit.js` (shops, products, categories, frame colours and the home page lists).
 Editing `assets/data/*.seed.js` changes the site; the Admin Panel will do the same through
 the database.
 
@@ -78,7 +79,7 @@ The API response adds `productCount` and, when `lat`/`lng` are sent, `distanceKm
     { "id": "xl", "label": "Extra Large", "dimensions": "20 × 24 in", "priceDelta": 450 }
   ],
   "sizes": ["Small", "Medium", "Large", "Extra Large"],
-  // IDs into assets/data/frame-colors.seed.js. Optional — omit for a product with one fixed colour.
+  // IDs into the FRAME COLOURS list in js/edit.js. Optional — omit for a product with one fixed colour.
   "colors": ["walnut", "black", "natural-wood"],
   "material": "Walnut-finish wood",
   "stock": 20, "isAvailable": true, "isVisible": true,

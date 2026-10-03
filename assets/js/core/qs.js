@@ -9,6 +9,7 @@
     services: "services.html",
     shop: "shop.html",
     gallery: "gallery.html",
+    customerGallery: "customer-gallery.html",
     contact: "contact.html",
     faq: "faq.html",
     story: "our-story.html",

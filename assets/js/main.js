@@ -19,6 +19,7 @@
     "shop-detail": () => call("shopDetailPage"),
     product: () => call("productPage"),
     gallery: () => call("galleryPage"),
+    "customer-gallery": () => call("customerGalleryPage"),
     contact: () => call("contactPage"),
     faq: () => call("faq"),
     services: () => Promise.all([call("media"), call("orderInfo")]),

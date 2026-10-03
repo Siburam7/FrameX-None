@@ -74,12 +74,13 @@
       </div>
       <div class="product-card__foot">
         <span class="${stock.className}">${stock.text}</span>
-        ${unavailable
-          ? `<button class="btn btn--dark btn--sm product-card__add" type="button" disabled>Unavailable</button>`
-          : needsChoice
-            ? `<a class="btn btn--dark btn--sm product-card__add" href="${FrameX.qs.productUrl(product.id)}">Customize</a>`
-            : `<button class="btn btn--dark btn--sm product-card__add" type="button" data-action="add-to-cart" data-product-id="${esc(product.id)}">Add to cart</button>`}
+        <a class="btn btn--dark btn--sm product-card__add" href="${FrameX.qs.productUrl(product.id)}">View Product</a>
       </div>
+      ${product.frame
+        ? `<a class="product-card__extra" href="${FrameX.qs.productUrl(product.id)}&amp;mode=custom">${icon("upload")} Try With Your Own Image</a>`
+        : !unavailable && !needsChoice
+          ? `<button class="product-card__extra" type="button" data-action="add-to-cart" data-product-id="${esc(product.id)}">${icon("bag")} Add to cart</button>`
+          : ""}
     </article>`;
   }
 

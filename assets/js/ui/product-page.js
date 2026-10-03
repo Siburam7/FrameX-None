@@ -28,7 +28,7 @@
   const currentSize = () => sizeOptions(product).find((o) => o.id === config.sizeId) || sizeOptions(product)[0];
 
   // Every product's own frame design (shape/material/border/mat) — see the
-  // `frame` field documented in assets/data/products.seed.js. Products that
+  // `frame` field documented in js/edit.js. Products that
   // don't define one (the everyday range) fall back to a plain rectangle so
   // the page still works, but the 10 named styles each carry their own.
   const FRAME_DEFAULTS = { shape: "rectangle", style: "plain", borderWidth: "medium", double: false, ornament: false, matColor: "white", matWidth: "medium" };
@@ -70,7 +70,7 @@
               </div>
             </div>
           </div>
-          <p class="pdp-stage__empty" id="pdp-stage-empty">${icon("image")}<span>Upload your photo below to see it inside this frame</span></p>
+          <p class="pdp-stage__empty" id="pdp-stage-empty">${icon("image")}<span>Choose a photo below to see it inside this frame</span></p>
         </div>
       </div>
 
@@ -131,6 +131,8 @@
     img.style.setProperty("--oy", config.oy + "%");
     if (photoUrl) img.src = photoUrl;
     img.style.visibility = photoUrl ? "visible" : "hidden";
+    // Once zoomed in, the photo can be dragged inside the frame (see wireUpload).
+    $("#pdp-stage-photo").classList.toggle("is-pannable", Boolean(photoUrl) && config.zoom > 1);
     $("#pdp-stage-empty").hidden = Boolean(photoUrl);
   }
 
@@ -262,12 +264,12 @@
       ${uploadHtml()}
 
       <div class="pdp-summary" id="pdp-summary" aria-live="polite">
-        <h2 class="pdp-summary__title">Your frame</h2>
+        <h2 class="pdp-summary__title">${product.frame ? "Your frame" : "Your order"}</h2>
         <dl class="pdp-summary__list">
           <dt>Product</dt><dd id="sum-product">${esc(product.name)}</dd>
           <dt>Size</dt><dd id="sum-size">—</dd>
           <dt>Frame colour</dt><dd id="sum-color">—</dd>
-          <dt>Photo</dt><dd id="sum-photo">Not uploaded</dd>
+          <dt${product.frame ? "" : " hidden"}>Photo</dt><dd id="sum-photo"${product.frame ? "" : " hidden"}>Not uploaded</dd>
           <dt>Quantity</dt><dd id="sum-qty">1</dd>
           <dt>Price</dt><dd id="sum-price">—</dd>
         </dl>
@@ -436,6 +438,28 @@
     );
     $("#pdp-upload-remove").addEventListener("click", clear);
 
+    // Drag the photo itself to reposition it (mouse or touch). Only the photo
+    // moves; the frame and mat never do.
+    const photoEl = $("#pdp-stage-photo");
+    let pan = null;
+    photoEl.addEventListener("pointerdown", (e) => {
+      if (!photoUrl || config.zoom <= 1) return;
+      pan = { id: e.pointerId, x: e.clientX, y: e.clientY };
+      photoEl.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    photoEl.addEventListener("pointermove", (e) => {
+      if (!pan || e.pointerId !== pan.id) return;
+      const box = photoEl.getBoundingClientRect();
+      const maxPan = ((config.zoom - 1) / config.zoom) * 50;
+      config.ox = Math.max(-maxPan, Math.min(maxPan, config.ox + ((e.clientX - pan.x) / box.width) * 100));
+      config.oy = Math.max(-maxPan, Math.min(maxPan, config.oy + ((e.clientY - pan.y) / box.height) * 100));
+      pan.x = e.clientX;
+      pan.y = e.clientY;
+      applyStage();
+    });
+    ["pointerup", "pointercancel"].forEach((evt) => photoEl.addEventListener(evt, () => (pan = null)));
+
     const PAN_STEP = 10;
     $$("[data-pos]").forEach((btn) =>
       btn.addEventListener("click", () => {
@@ -564,9 +588,16 @@
       <div class="split" style="margin-top:clamp(28px,5vw,56px)">${comparisonHtml()}</div>
       <div class="split split--asym" style="margin-top:clamp(28px,5vw,56px)"><div>${tabsHtml()}</div><div>${shopCardHtml()}</div></div>`;
 
+    // Keep the photo controls directly under the preview so both fit on one phone screen.
+    $(".pdp-visualizer").appendChild($("#pdp-upload-section"));
+
     wireStageThumbs();
     applyStage();
-    setMode("view");
+    // Cards and the home page link here with ?mode=custom to open the photo preview directly.
+    // Products without their own `frame` design (accessories, sets) show the product photo only.
+    const canPreview = Boolean(product.frame);
+    $(".pdp-mode").hidden = !canPreview;
+    setMode(canPreview && FrameX.qs.param("mode") === "custom" ? "custom" : "view");
     applyComparison();
     updateSummary();
     wireSelectors();

@@ -564,3 +564,24 @@
   visibility: visible;
   transition-delay: 0s;
 }
+
+/* Footer: email + WhatsApp listed under Support */
+.site-footer li a .icon {
+  margin-right: 8px;
+  color: var(--gold);
+}
+
+.site-footer li a span {
+  overflow-wrap: anywhere;
+}
+
+/* Phones: Support (with the email + WhatsApp) uses the full width so the address never breaks mid-word */
+@media (max-width: 899px) {
+  .site-footer__top > div:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  .site-footer li a span {
+    overflow-wrap: normal;
+  }
+}

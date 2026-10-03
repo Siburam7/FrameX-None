@@ -1,7 +1,8 @@
 /* ==========================================================================
    Seed data provider
    Implements the same methods and response shapes as http-provider.js, but
-   reads from assets/data/*.seed.js and applies filtering/sorting client-side.
+   reads shops, products and categories from js/edit.js (and the remaining
+   content from assets/data/*.seed.js) and applies filtering/sorting client-side.
    This is NOT a backend: when the real API exists, set config.dataMode = "api"
    and this file is no longer used.
    ========================================================================== */
@@ -38,6 +39,9 @@
     name: (a, b) => a.name.localeCompare(b.name)
   };
 
+  /** Order set by the HOMEPAGE lists in js/edit.js (items not listed keep their place at the end). */
+  const byRank = (field) => (a, b) => nullsLast(a[field], b[field], (x, y) => x - y);
+
   const nullsLast = (a, b, compare) => (a == null ? (b == null ? 0 : 1) : b == null ? -1 : compare(a, b));
 
   const SHOP_SORTS = {
@@ -52,7 +56,8 @@
     async getCategories() {
       const counts = {};
       visibleProducts().forEach((p) => (p.categoryIds || []).forEach((id) => (counts[id] = (counts[id] || 0) + 1)));
-      return clone([...seed().categories].sort((a, b) => a.sortOrder - b.sortOrder)).map((c) =>
+      const active = seed().categories.filter((c) => c.isActive !== false);
+      return clone(active.sort((a, b) => a.sortOrder - b.sortOrder)).map((c) =>
         Object.assign(c, { productCount: counts[c.id] || 0 })
       );
     },
@@ -77,6 +82,7 @@
       const q = String(params.q || "").trim().toLowerCase();
       if (q) items = items.filter((s) => matches(s.name, q) || matches(s.address && s.address.area, q) || matches(s.address && s.address.city, q));
       if (SHOP_SORTS[params.sort]) items.sort(SHOP_SORTS[params.sort]);
+      else items.sort(byRank("featuredRank")); // "recommended": featured shops first
       return paginate(items, params.page, params.limit);
     },
 
@@ -101,6 +107,8 @@
 
       items = [...items];
       if (PRODUCT_SORTS[params.sort]) items.sort(PRODUCT_SORTS[params.sort]);
+      else if (params.isFeatured) items.sort(byRank("featuredRank"));
+      else if (params.isRecommended) items.sort(byRank("recommendedRank"));
 
       const page = paginate(items, params.page, params.limit);
       page.items = page.items.map(withShopName);

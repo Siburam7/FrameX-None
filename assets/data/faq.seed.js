@@ -2,33 +2,34 @@
    Policies (cancellation before production, 7-day damage claims) are carried
    over from the original FrameX site. Delivery times, COD and payments are
    deliberately NOT promised: they depend on each shop and are not connected yet.
+   Answers describe what the site does TODAY (photo preview on the device, cart
+   saved on the device, no online checkout). Update them when that changes.
    Please confirm every answer with the business before launch. */
 (function (FrameX) {
   FrameX.seed = FrameX.seed || {};
   FrameX.seed.faq = [
     { id: "about", title: "About FrameX", items: [
-      { q: "What is FrameX?", a: "FrameX is a photo-frame marketplace. You browse frames from local shops, choose a size and place a request to pick it up or, where the shop offers it, have it delivered." },
-      { q: "Is FrameX one shop or many?", a: "The site is built for several local shops. Each shop lists its own frames, and the shop name is shown on every product." }
+      { q: "What is FrameX?", a: "FrameX is a photo-frame marketplace. You browse frames from local shops, choose a size and frame colour, and place a request to pick it up or, where the shop offers it, have it delivered." },
+      { q: "Can I order from different local shops?", a: "Yes. Every product shows which shop sells it, and your cart can hold frames from more than one shop. Items from different shops are ordered separately, and each shop handles its own pickup or delivery." }
     ]},
-    { id: "customization", title: "Customization", items: [
-      { q: "Can I customize my frame?", a: "Frame styles and sizes are set by each shop. Custom sizes and personalised frames are planned; until they are connected, please contact the shop directly through the Contact page." }
+    { id: "photo", title: "Your photo", items: [
+      { q: "What photo resolution should I use?", a: "Use the original, full-size photo from your camera or phone rather than a screenshot or a copy forwarded through a messaging app, which is usually compressed. As a rule of thumb, aim for about 300 pixels for every inch of the print — roughly 2400 × 3000 pixels for an 8 × 10 in frame. Larger frames are viewed from further away, so a little less is usually fine. The shop preparing your frame can tell you whether a photo is sharp enough." },
+      { q: "Can I upload my own photo?", a: "Yes, as a preview. On a product page choose \"Try With Your Own Image\" to see your photo inside that exact frame, then zoom and reposition it. The photo stays on your device: it is not sent to FrameX or to the shop, and it disappears when you leave the page. Until photo upload is connected, share your photo with the shop through the Contact page." }
     ]},
-    { id: "sizes", title: "Product sizes", items: [
-      { q: "What frame sizes are available?", a: "Available sizes are shown on each product page. If a product shows a single size, that is the only size the shop currently lists." }
-    ]},
-    { id: "orders", title: "Orders", items: [
-      { q: "Can I place an order online?", a: "You can build a cart on this site. Online checkout and payment are not connected yet, so orders cannot be completed here at the moment." },
-      { q: "How will I follow my order?", a: "Once ordering is live, each order will move through: order placed, confirmed, preparing, ready, out for delivery (delivery orders only) and delivered or collected." }
+    { id: "frames", title: "Frames and sizes", items: [
+      { q: "What frame sizes are available?", a: "Available sizes are shown on each product page. Most featured styles come in Small (8 × 10 in), Medium (12 × 16 in), Large (16 × 20 in) and Extra Large (20 × 24 in), with a size comparison to help you picture them. If a product shows a single size, that is the only size the shop currently lists." },
+      { q: "Can I customize the frame?", a: "You can choose the size and, where the shop offers it, the frame colour, and add a note for the shop. The frame design itself belongs to the product, so changing colour or size never swaps it for a different frame. Custom sizes and personalised frames are planned; until then, please ask through the Contact page." }
     ]},
     { id: "delivery", title: "Pickup and delivery", items: [
-      { q: "Do you deliver?", a: "Each shop chooses whether it offers pickup, its own delivery, or a delivery partner. Open a shop page to see what it offers. Delivery fees and times are set by the shop and confirmed at checkout." }
+      { q: "Is pickup available?", a: "It depends on the shop. Shops that offer pickup show a \"Pickup\" label on their shop card and shop page." },
+      { q: "Is delivery available?", a: "It depends on the shop. Some shops deliver themselves, some use a delivery partner, and some offer pickup only. The options are shown on each shop card and shop page." },
+      { q: "How does delivery work?", a: "Each shop sets its own delivery area, fee and time, and these are confirmed at checkout. Online checkout is not connected yet, so delivery cannot be booked through this site at the moment." }
     ]},
-    { id: "cancellation", title: "Cancellation and refund", items: [
-      { q: "Can I cancel or modify my order?", a: "Orders can be cancelled or modified only before production begins. Once a custom frame is in production, changes or cancellations may not be possible." },
-      { q: "What if my frame arrives damaged or incorrect?", a: "Please contact us within 7 days of receiving it. A replacement or refund is arranged after the issue is verified." }
-    ]},
-    { id: "upload", title: "Photo upload", items: [
-      { q: "How do I send my photo?", a: "Photo upload is not connected yet. The product page includes a preview tool so you can see how your photo looks, but the photo is not uploaded or saved. For now, share your photo with the shop through the Contact page." }
+    { id: "orders", title: "Orders, cancellation and refunds", items: [
+      { q: "Can I place an order online?", a: "You can build a cart on this site, and it is saved on your device. Online checkout and payment are not connected yet, so orders cannot be completed here at the moment." },
+      { q: "How will I follow my order?", a: "Once ordering is live, each order will move through: order placed, confirmed, preparing, ready, out for delivery (delivery orders only) and delivered or collected." },
+      { q: "Can I cancel an order?", a: "Orders can be cancelled or modified only before production begins. Once a custom frame is in production, changes or cancellations may not be possible." },
+      { q: "What happens if my product arrives damaged?", a: "Please contact us within 7 days of receiving it. A replacement or refund is arranged after the issue is verified." }
     ]}
   ];
 })((window.FrameX = window.FrameX || {}));

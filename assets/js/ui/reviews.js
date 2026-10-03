@@ -26,7 +26,15 @@
     if (!rail) return;
     try {
       const reviews = await FrameX.api.getReviews();
+      if (!reviews.length) {
+        rail.classList.add("review-rail--empty");
+        rail.innerHTML = `<div class="state-message"><strong>No reviews yet</strong>
+          <span>Reviews will appear here once customers have ordered through FrameX and shared their feedback.</span>
+          <a class="btn btn--outline btn--sm" href="customer-gallery.html#share">Share your photo and review</a></div>`;
+        return;
+      }
       rail.innerHTML = reviews.map(card).join("");
+      if (FrameX.railNav) FrameX.railNav.attach(rail);
       rail.setAttribute("data-reveal-stagger", "");
       FrameX.reveal.observe(rail);
     } catch (error) {

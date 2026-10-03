@@ -81,16 +81,36 @@
     </section>
 
     <section class="section section--tight-top" id="wall-art" aria-labelledby="hanging-title">
-      <div class="container hanging">
-        <div data-reveal="left">
-          <h2 class="hanging__title" id="hanging-title">Wall art solutions: magnetic hanging</h2>
-          <div class="hanging__list">
-            <button class="hanging__item" type="button" data-video="assets/video/hanging-1.mp4" data-poster="assets/video/hanging-1.jpg" aria-current="true"><span class="hanging__stick"></span><span class="hanging__label">Just peel and stick</span></button>
-            <button class="hanging__item" type="button" data-video="assets/video/hanging-2.mp4" data-poster="assets/video/hanging-2.jpg" aria-current="false"><span class="hanging__stick"></span><span class="hanging__label">Adjust to perfection</span></button>
-            <button class="hanging__item" type="button" data-video="assets/video/hanging-3.mp4" data-poster="assets/video/hanging-3.jpg" aria-current="false"><span class="hanging__stick"></span><span class="hanging__label">Leave no marks</span></button>
+      <div class="container">
+        <div class="hanging" data-reveal>
+          <div class="hanging__head">
+            <p class="eyebrow">Wall art solutions</p>
+            <h2 class="hanging__title" id="hanging-title">Magnetic hanging, in three steps</h2>
+            <p class="hanging__lead">No drill and no nails. Pick a step to watch how it works.</p>
+          </div>
+          <div class="hanging__video"><video id="hanging-video" muted playsinline preload="none" aria-label="Demonstration of magnetic frame hanging"></video></div>
+          <ol class="hanging__list">
+            <li><button class="hanging__item" type="button" data-video="assets/video/hanging-1.mp4" data-poster="assets/video/hanging-1.jpg" aria-current="true">
+                <span class="hanging__num">01</span>
+                <span class="hanging__text"><span class="hanging__label">Just peel and stick</span><span class="hanging__desc">Peel the backing and press the mount onto the wall.</span></span>
+                <span class="hanging__bar" aria-hidden="true"></span>
+              </button></li>
+            <li><button class="hanging__item" type="button" data-video="assets/video/hanging-2.mp4" data-poster="assets/video/hanging-2.jpg" aria-current="false">
+                <span class="hanging__num">02</span>
+                <span class="hanging__text"><span class="hanging__label">Adjust to perfection</span><span class="hanging__desc">Nudge the frame until it sits exactly where you want it.</span></span>
+                <span class="hanging__bar" aria-hidden="true"></span>
+              </button></li>
+            <li><button class="hanging__item" type="button" data-video="assets/video/hanging-3.mp4" data-poster="assets/video/hanging-3.jpg" aria-current="false">
+                <span class="hanging__num">03</span>
+                <span class="hanging__text"><span class="hanging__label">Leave no marks</span><span class="hanging__desc">Take it down later without holes in the wall.</span></span>
+                <span class="hanging__bar" aria-hidden="true"></span>
+              </button></li>
+          </ol>
+          <div class="hanging__actions">
+            <a class="btn btn--dark" href="product.html?id=p-017">Shop Now <svg class="icon icon--nudge" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a>
+            <a class="btn btn--outline" href="shop.html?category=wall-art#collection">Explore Wall Art</a>
           </div>
         </div>
-        <div class="hanging__video" data-reveal="right"><video id="hanging-video" muted playsinline preload="none" aria-label="Demonstration of magnetic frame hanging"></video></div>
       </div>
     </section>
 
@@ -111,10 +131,7 @@
   <script src="assets/js/services/location.js" defer></script>
   <script src="assets/js/services/shop-utils.js" defer></script>
   <script src="assets/data/site.seed.js" defer></script>
-  <script src="assets/data/categories.seed.js" defer></script>
-  <script src="assets/data/frame-colors.seed.js" defer></script>
-  <script src="assets/data/shops.seed.js" defer></script>
-  <script src="assets/data/products.seed.js" defer></script>
+  <script src="js/edit.js" defer></script>
   <script src="assets/data/reviews.seed.js" defer></script>
   <script src="assets/data/community.seed.js" defer></script>
   <script src="assets/data/faq.seed.js" defer></script>

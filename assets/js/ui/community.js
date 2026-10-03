@@ -43,6 +43,7 @@
       const items = await FrameX.api.getCommunity();
       rail.innerHTML = items.map(tile).join("");
       wireVideos(rail);
+      if (FrameX.railNav) FrameX.railNav.attach(rail);
       rail.setAttribute("data-reveal-stagger", "");
       FrameX.reveal.observe(rail);
     } catch (error) {

@@ -960,3 +960,32 @@
 .pdp-gallery__thumbs[hidden] {
   display: none;
 }
+
+/* Photo controls sit directly under the preview (moved there by product-page.js) */
+.pdp-visualizer .pdp-upload {
+  margin-top: 14px;
+}
+
+.pdp-position__controls .icon-btn {
+  width: 48px;
+  height: 48px;
+}
+
+/* Zoomed-in photo can be dragged inside the frame */
+.pdp-stage__photo.is-pannable {
+  cursor: grab;
+  touch-action: none;
+}
+
+.pdp-stage__photo.is-pannable:active {
+  cursor: grabbing;
+}
+
+.pdp-stage__photo img {
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.pdp-mode[hidden] {
+  display: none;
+}
