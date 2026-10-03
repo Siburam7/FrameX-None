@@ -12,6 +12,7 @@
     ["about", "About"],
     ["services", "Services"],
     ["shop", "Shop"],
+    ["templates", "Templates"],
     ["gallery", "Gallery"],
     ["contact", "Contact"],
     ["faq", "FAQ"]
@@ -22,7 +23,7 @@
 
   function header(current) {
     // "shop-detail" and "product" belong to the Shop section in the nav.
-    const section = { "shop-detail": "shop", product: "shop", "customer-gallery": "gallery" }[current] || current;
+    const section = { "shop-detail": "shop", product: "shop", "customer-gallery": "gallery", template: "templates", studio: "templates" }[current] || current;
     const links = NAV.map(
       ([key, label]) => `<li><a href="${pages[key]}"${key === section ? ' aria-current="page"' : ""}>${label}</a></li>`
     ).join("");
@@ -34,10 +35,10 @@
         <nav class="primary-nav" id="primary-nav" aria-label="Primary">
           <ul class="primary-nav__list">${links}</ul>
           <div class="primary-nav__mobile-extras">${locationChip}
-            <button class="btn btn--light" type="button" data-action="coming-soon" data-feature="Customer accounts">Sign up</button></div>
+            <a class="btn btn--primary" href="${pages.shop}">Shop Frames</a></div>
         </nav>
         <div class="site-header__actions">${locationChip}
-          <button class="btn signup-btn" type="button" data-action="coming-soon" data-feature="Customer accounts">Sign up</button>
+          <a class="btn signup-btn" href="${pages.shop}">Shop Frames</a>
           <button class="cart-btn" type="button" data-action="open-cart" aria-label="Open cart, 0 items">${icon("bag")}<span class="cart-btn__count" hidden>0</span></button>
           <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open menu"><span class="nav-toggle__bars"></span></button>
         </div>
@@ -56,13 +57,13 @@
     }
   };
 
-  /** Email / WhatsApp from assets/data/site.seed.js, listed under Support when set. */
+  /** Email / WhatsApp from assets/data/site.seed.js, shown in the footer brand block when set. */
   function contactLinks() {
     const c = (FrameX.seed && FrameX.seed.site && FrameX.seed.site.contact) || {};
     const links = [];
     if (c.email) links.push(`<li><a href="mailto:${esc(c.email)}">${icon("mail")}<span>${esc(c.email)}</span></a></li>`);
     if (c.whatsapp) links.push(`<li><a href="${esc(FrameX.contact.whatsappUrl(c.whatsapp))}" target="_blank" rel="noopener noreferrer">${icon("phone")}<span>WhatsApp ${esc(FrameX.contact.formatWhatsapp(c.whatsapp))}</span></a></li>`);
-    return links.join("");
+    return links.length ? `<ul class="site-footer__contact">${links.join("")}</ul>` : "";
   }
 
   // Every link below is a real page — no "#" placeholders.
@@ -72,9 +73,14 @@
   function footer() {
     return `<footer class="site-footer">
       <div class="container site-footer__top">
+        <div class="site-footer__brand">
+          <a class="brand" href="${pages.home}" aria-label="FrameX home"><img src="assets/img/ui/logo-framex.png" alt="FrameX" width="116" height="24" loading="lazy"></a>
+          <p>Premium photo frames from local framing shops. Choose your frame, preview your own photo in it, then collect it or have it delivered.</p>
+          ${contactLinks()}
+        </div>
         ${col("Company", [["Our Story", pages.story], ["About FrameX", pages.about], ["Customer Gallery", pages.customerGallery], ["Contact", pages.contact]])}
-        ${col("Shop", [["All Frames", pages.shop], ["Custom Frames", pages.home + "#custom-frame"], ["Categories", pages.home + "#categories"], ["Gallery", pages.gallery]])}
-        ${col("Support", [["FAQ", pages.faq], ["How It Works", pages.services + "#journey"]], contactLinks())}
+        ${col("Shop", [["All Frames", pages.shop], ["Templates", pages.templates], ["FrameX Studio", pages.studio + "?mode=photo"], ["Custom Frames", pages.home + "#custom-frame"], ["Categories", pages.home + "#categories"], ["Gallery", pages.gallery]])}
+        ${col("Support", [["FAQ", pages.faq], ["How It Works", pages.services + "#journey"], ["For Framing Shops", pages.shopDashboard]])}
         ${col("Legal", [["Terms of Use", pages.terms], ["Privacy Notice", pages.privacy]])}
       </div>
       <div class="container site-footer__bottom">
@@ -94,7 +100,7 @@
       <div class="drawer__body" id="cart-body"></div>
       <div class="drawer__foot" id="cart-foot" hidden>
         <div class="summary-row"><span>Subtotal</span><strong id="cart-subtotal"></strong></div>
-        <div class="summary-row"><small>Delivery fee</small><small>Set by the shop at checkout</small></div>
+        <div class="summary-row"><small>Delivery fee</small><small>Confirmed by the shop</small></div>
         <p class="drawer__note" id="cart-shop-note" hidden>Items from different shops are ordered separately.</p>
         <button class="btn btn--primary btn--block" type="button" id="cart-checkout">Checkout</button>
         <button class="btn btn--outline btn--block" type="button" id="cart-continue">Continue shopping</button>

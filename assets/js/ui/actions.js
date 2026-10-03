@@ -14,7 +14,8 @@
     "add-to-cart": async (el) => {
       const product = await FrameX.api.getProduct(el.dataset.productId);
       if (!product) return;
-      FrameX.cart.add(product, { size: (product.sizes || [])[0] || null });
+      const only = FrameX.pricing.sizeOptions(product)[0];
+      FrameX.cart.add(product, { sizeId: only ? only.id : null, size: only ? only.label : null });
       FrameX.toast.show(`${product.name} added to cart.`, { action: { label: "View cart", onClick: () => FrameX.cartDrawer.open() } });
     },
 

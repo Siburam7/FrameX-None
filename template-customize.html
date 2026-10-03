@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Opening FrameX Studio…</title>
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="studio.html">
+  <script>
+    // The template customizer is now part of FrameX Studio. Keep old links working.
+    (function () {
+      var p = new URLSearchParams(location.search);
+      var next = new URLSearchParams();
+      if (p.get("design")) next.set("design", p.get("design"));
+      else if (p.get("t")) next.set("template", p.get("t"));
+      else next.set("mode", "photo");
+      location.replace("studio.html?" + next.toString());
+    })();
+  </script>
+</head>
+<body>
+  <p><a href="studio.html">Continue to FrameX Studio</a></p>
+</body>
+</html>

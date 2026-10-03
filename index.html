@@ -13,7 +13,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@300;400;600;700;800&display=swap">
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Great+Vibes&display=swap">
   <link rel="preload" as="image" href="assets/img/ui/hero.webp" fetchpriority="high">
   <link rel="stylesheet" href="assets/css/tokens.css">
   <link rel="stylesheet" href="assets/css/base.css">
@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="assets/css/footer-faq.css">
   <link rel="stylesheet" href="assets/css/pages.css">
   <link rel="stylesheet" href="assets/css/layout-hero.css">
+  <link rel="stylesheet" href="assets/css/templates.css">
   <script>document.documentElement.classList.add("js");</script>
 </head>
 
@@ -42,14 +43,13 @@
           <h1 class="hero__title" id="hero-title" style="--i:0"><span class="hero__line">Preserve</span><span
               class="hero__line">Your Memories in</span><span class="hero__line">Premium <em
                 class="hero__accent">Frames.</em></span></h1>
-          <p class="hero__lead" style="--i:1">Discover photo frames from local shops. Pick a size, add to your cart and
-            collect it, or have it delivered where the shop offers it.</p>
+          <p class="hero__lead" style="--i:1">Premium photo frames from local framing shops. Choose your frame, see your
+            own photo inside it, then collect it or have it delivered.</p>
           <div class="hero__actions" style="--i:2">
-            <a class="btn btn--primary" href="shop.html">Explore Frames</a>
-            <a class="btn btn--outline-dark" href="#custom-frame">Create Your Frame <svg class="icon icon--nudge"
-                aria-hidden="true">
+            <a class="btn btn--primary" href="shop.html">Shop Frames <svg class="icon icon--nudge" aria-hidden="true">
                 <use href="#i-arrow-right"></use>
               </svg></a>
+            <a class="btn btn--outline-dark" href="studio.html?mode=photo">Create Your Frame</a>
           </div>
         </div>
         <div class="hero__bar">
@@ -111,12 +111,64 @@
       </div>
     </section>
 
+    <section class="trust" aria-label="Why FrameX">
+      <div class="container">
+        <ul class="trust__list">
+          <li class="trust__item"><span class="trust__icon"><svg class="icon" aria-hidden="true">
+                <use href="#i-store"></use>
+              </svg></span><span><strong>Local framing shops</strong>Every frame is sold by a named local shop.</span>
+          </li>
+          <li class="trust__item"><span class="trust__icon"><svg class="icon" aria-hidden="true">
+                <use href="#i-image"></use>
+              </svg></span><span><strong>See it before you order</strong>Preview your own photo inside the frame.</span>
+          </li>
+          <li class="trust__item"><span class="trust__icon"><svg class="icon" aria-hidden="true">
+                <use href="#i-ruler"></use>
+              </svg></span><span><strong>Clear sizes and prices</strong>Every size and its price, shown up front.</span>
+          </li>
+          <li class="trust__item"><span class="trust__icon"><svg class="icon" aria-hidden="true">
+                <use href="#i-truck"></use>
+              </svg></span><span><strong>Pickup or delivery</strong>Choose from what each shop offers.</span></li>
+        </ul>
+      </div>
+    </section>
+
     <section class="section" id="categories" aria-labelledby="categories-title">
       <div class="container">
         <div class="section-head" data-reveal>
           <h2 class="section-title" id="categories-title">Shop by category</h2>
         </div>
         <div class="category-row" id="category-row"></div>
+      </div>
+    </section>
+
+    <section class="section section--tight-top" id="trending-templates" aria-labelledby="tt-title">
+      <div class="container">
+        <div class="section-head" data-reveal>
+          <div>
+            <p class="eyebrow">New · Personalised frames</p>
+            <h2 class="section-title" id="tt-title">Trending Templates</h2>
+            <p class="section-lead">Personalise your memories with designs people are loving right now.</p>
+          </div>
+          <div class="section-head__tools">
+            <div class="rail-arrows" data-rail-arrows="home-templates" role="group" aria-label="Scroll templates"
+              hidden>
+              <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon"
+                  aria-hidden="true">
+                  <use href="#i-chev-left"></use>
+                </svg></button>
+              <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon"
+                  aria-hidden="true">
+                  <use href="#i-chev-right"></use>
+                </svg></button>
+            </div>
+            <a class="btn btn--outline btn--sm" href="templates.html">View all templates <svg class="icon icon--nudge"
+                aria-hidden="true">
+                <use href="#i-arrow-right"></use>
+              </svg></a>
+          </div>
+        </div>
+        <div class="tpl-grid tpl-grid--rail" id="home-templates" data-limit="4"></div>
       </div>
     </section>
 
@@ -164,7 +216,7 @@
               alt="Assorted premium framed photos displayed on a white shelf" width="900" height="600" loading="lazy">
           </div>
           <div class="custom-frame__body">
-            <p class="custom-frame__eyebrow">Custom premium photo frame</p>
+            <p class="custom-frame__eyebrow">FrameX Studio</p>
             <h2 class="custom-frame__title" id="custom-title">A frame made around your photo</h2>
             <p class="custom-frame__text">Pick a frame style from a local shop, then see your own photo inside that
               exact
@@ -172,19 +224,19 @@
             <ul class="check-list">
               <li><svg class="icon" aria-hidden="true">
                   <use href="#i-check"></use>
-                </svg><span><strong>Available now:</strong> try your own photo in the frame, choose a frame colour and
-                  size, add an order note</span>
+                </svg><span><strong>Available now:</strong> preview your own photo in the frame, choose its colour and
+                  size, and add a note for the shop</span>
               </li>
               <li><svg class="icon" aria-hidden="true">
                   <use href="#i-clock"></use>
-                </svg><span><strong>Planned:</strong> sending your photo to the shop, custom sizes</span></li>
+                </svg><span><strong>Coming soon:</strong> send your photo with your order, and custom sizes</span></li>
             </ul>
             <div class="custom-frame__actions">
-              <a class="btn btn--primary" href="shop.html" data-try-link>Try With Your Own Image <svg
-                  class="icon icon--nudge" aria-hidden="true">
+              <a class="btn btn--primary" href="studio.html?mode=photo">Open FrameX Studio <svg class="icon icon--nudge"
+                  aria-hidden="true">
                   <use href="#i-arrow-right"></use>
                 </svg></a>
-              <a class="btn btn--outline-dark" href="shop.html">Explore Frames</a>
+              <a class="btn btn--outline-dark" href="shop.html">Shop Frames</a>
             </div>
           </div>
         </div>
@@ -213,25 +265,25 @@
         <div class="section-head" data-reveal>
           <div>
             <h2 class="section-title" id="how-title">Turn your memories into premium wall art</h2>
-            <p class="section-lead">Four simple steps from your photo to a finished frame.</p>
+            <p class="section-lead">From choosing a frame to hanging it on your wall, in four steps.</p>
           </div>
         </div>
         <ol class="how-steps" data-reveal>
           <li class="how-step">
-            <div class="how-step__media"><img src="assets/img/steps/step-1.webp"
-                alt="A woman choosing a photo on her phone" width="720" height="540" loading="lazy"><span
-                class="how-step__num">01</span></div>
+            <div class="how-step__media"><img src="assets/img/steps/step-2.webp" alt="A wall of framed family photos"
+                width="720" height="540" loading="lazy"><span class="how-step__num">01</span></div>
             <div class="how-step__body">
-              <h3>Upload your photo</h3>
-              <p>Choose the memory you want to frame and preview it inside the frame on the product page.</p>
+              <h3>Choose your frame</h3>
+              <p>Browse styles from local shops and pick the size and colour that suit your space.</p>
             </div>
           </li>
           <li class="how-step">
-            <div class="how-step__media"><img src="assets/img/steps/step-2.webp" alt="A wall of framed family photos"
-                width="720" height="540" loading="lazy"><span class="how-step__num">02</span></div>
+            <div class="how-step__media"><img src="assets/img/steps/step-1.webp"
+                alt="A woman choosing a photo on her phone" width="720" height="540" loading="lazy"><span
+                class="how-step__num">02</span></div>
             <div class="how-step__body">
-              <h3>Choose your frame</h3>
-              <p>Browse styles from local shops and pick the size that fits your space.</p>
+              <h3>Add your photo</h3>
+              <p>Preview it inside the frame, then share it with the shop on WhatsApp or by email.</p>
             </div>
           </li>
           <li class="how-step">
@@ -239,23 +291,23 @@
                 alt="A craftsman assembling a frame in a workshop" width="720" height="540" loading="lazy"><span
                 class="how-step__num">03</span></div>
             <div class="how-step__body">
-              <h3>Printing &amp; framing</h3>
-              <p>The shop prints and assembles your frame with the materials it lists.</p>
+              <h3>The shop prepares it</h3>
+              <p>Your local shop prints and assembles your frame with the materials it lists.</p>
             </div>
           </li>
           <li class="how-step">
             <div class="how-step__media"><img src="assets/img/steps/step-4.webp" alt="A framed print packed securely"
                 width="720" height="540" loading="lazy"><span class="how-step__num">04</span></div>
             <div class="how-step__body">
-              <h3>Pickup or delivery</h3>
-              <p>Collect it from the shop, or receive it where the shop offers delivery.</p>
+              <h3>Collect or receive it</h3>
+              <p>Pick it up from the shop, or have it delivered where the shop offers delivery.</p>
             </div>
           </li>
         </ol>
-        <div class="section-more"><a class="btn btn--dark" href="shop.html">Start with a frame <svg
-              class="icon icon--nudge" aria-hidden="true">
+        <div class="section-more"><a class="btn btn--dark" href="shop.html">Shop Frames <svg class="icon icon--nudge"
+              aria-hidden="true">
               <use href="#i-arrow-right"></use>
-            </svg></a><a class="btn btn--outline" href="services.html#journey">Full guide</a></div>
+            </svg></a><a class="btn btn--outline" href="services.html#journey">See the full process</a></div>
       </div>
     </section>
 
@@ -264,8 +316,8 @@
         <div class="section-head" data-reveal>
           <div>
             <h2 class="section-title" id="community-title">From our community</h2>
-            <p class="section-lead">Frame styles to inspire your next project. <span class="placeholder-note">Sample
-                photos until customers share their own</span></p>
+            <p class="section-lead">Frame styles to inspire your next project. <span class="placeholder-note">Style
+                samples</span></p>
           </div>
           <div class="section-head__tools">
             <div class="rail-arrows" data-rail-arrows="community-rail" role="group" aria-label="Scroll community photos"
@@ -414,10 +466,9 @@
               <div class="guide-item__panel" id="guide-panel-3" role="region" aria-labelledby="guide-btn-3">
                 <div>
                   <p>Pick a sharp, well-lit photo — the larger the frame, the more the detail matters. On a product
-                    page, "Try With Your Own Image" shows how your photo sits in that frame. The preview stays on your
-                    device: photo upload is not connected yet, so for now share your photo with the shop through the
-                    Contact page.</p>
-                  <a class="guide-item__link" href="contact.html">Contact us <svg class="icon" aria-hidden="true">
+                    page, "Try With Your Own Image" shows how your photo sits in that frame. The preview stays private
+                    on your device. To send the photo for printing, share it with the shop on WhatsApp or by email.</p>
+                  <a class="guide-item__link" href="contact.html">Get in touch <svg class="icon" aria-hidden="true">
                       <use href="#i-arrow-right"></use>
                     </svg></a>
                 </div>
@@ -433,8 +484,8 @@
               <div class="guide-item__panel" id="guide-panel-4" role="region" aria-labelledby="guide-btn-4">
                 <div>
                   <p>Frame styles and sizes are set by each shop. Today you can choose a size and finish and add a note
-                    for the shop with your order. Custom sizes and personalised frames are planned; until they are
-                    connected, please contact the shop directly through the Contact page.</p>
+                    for the shop with your order. Custom sizes and personalised frames are coming soon; for now, ask us
+                    on WhatsApp or by email.</p>
                   <a class="guide-item__link" href="#custom-frame">About custom frames <svg class="icon"
                       aria-hidden="true">
                       <use href="#i-arrow-right"></use>
@@ -451,7 +502,8 @@
                     </svg></span></button></h3>
               <div class="guide-item__panel" id="guide-panel-5" role="region" aria-labelledby="guide-btn-5">
                 <div>
-                  <p>You can build a cart on this site; online checkout and payment are not connected yet. Each shop
+                  <p>Build your cart here, then send your order to us on WhatsApp; online checkout and payment are
+                    coming soon. Each shop
                     chooses whether it offers pickup, its own delivery or a delivery partner, and sets its own fees and
                     times, confirmed at checkout. Orders can be cancelled or changed only before production begins.</p>
                   <a class="guide-item__link" href="services.html#journey">How ordering works <svg class="icon"
@@ -491,8 +543,9 @@
       <div class="container">
         <div class="final-cta" data-reveal>
           <h2 class="final-cta__title" id="cta-title">Ready to frame your memories?</h2>
-          <p class="final-cta__text">Browse frames from local shops, or get in touch if you need something specific.</p>
-          <div class="final-cta__actions"><a class="btn btn--dark" href="shop.html">Explore Frames</a><a
+          <p class="final-cta__text">Browse frames from local shops, or message us if you're looking for something
+            specific.</p>
+          <div class="final-cta__actions"><a class="btn btn--dark" href="shop.html">Shop Frames</a><a
               class="btn btn--outline" href="contact.html">Contact us</a></div>
         </div>
       </div>
@@ -511,6 +564,7 @@
   <script src="assets/js/services/shop-utils.js" defer></script>
   <script src="assets/data/site.seed.js" defer></script>
   <script src="js/edit.js" defer></script>
+  <script src="js/templates.js" defer></script>
   <script src="assets/data/reviews.seed.js" defer></script>
   <script src="assets/data/community.seed.js" defer></script>
   <script src="assets/data/gallery.seed.js" defer></script>
@@ -534,6 +588,11 @@
   <script src="assets/js/ui/site.js" defer></script>
   <script src="assets/js/ui/featured.js" defer></script>
   <script src="assets/js/ui/categories.js" defer></script>
+  <script src="assets/js/services/template-engine.js" defer></script>
+  <script src="assets/js/services/upload-service.js" defer></script>
+  <script src="assets/js/store/designs.js" defer></script>
+  <script src="assets/js/ui/template-components.js" defer></script>
+  <script src="assets/js/ui/templates-page.js" defer></script>
   <script src="assets/js/ui/shops.js" defer></script>
   <script src="assets/js/ui/recommended.js" defer></script>
   <script src="assets/js/ui/reviews.js" defer></script>

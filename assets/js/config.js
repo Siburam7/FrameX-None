@@ -13,6 +13,15 @@
     locale: "en-IN",
     productPageSize: 10,
     lowStockThreshold: 5,
-    storageKeys: { cart: "framex.cart.v1", wishlist: "framex.wishlist.v1" }
+    // true = a shop's "Publish" becomes "Submit for review" (status pending_review)
+    // until FrameX approves it. Needs the backend moderation queue.
+    productModeration: false,
+    storageKeys: {
+      cart: "framex.cart.v1",
+      wishlist: "framex.wishlist.v1",
+      shopProducts: "framex.shopProducts.v1", // products created / edited in the shop dashboard (this device)
+      shopEditor: "framex.shopEditor.v1", // unsaved edits to published products
+      shopSession: "framex.shopSession.v1" // which shop this device manages
+    }
   };
 })((window.FrameX = window.FrameX || {}));

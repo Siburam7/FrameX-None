@@ -676,3 +676,76 @@
     gap: 12px;
   }
 }
+
+.hero__socials[hidden],
+.hero__social[hidden] {
+  display: none;
+}
+
+/* Trust strip under the showcase: four short, factual reasons to use FrameX */
+.trust {
+  padding-block: clamp(20px, 3vw, 32px);
+  border-block: 1px solid var(--line-warm);
+  background: var(--ivory);
+}
+
+.trust__list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+@media (min-width: 560px) {
+  .trust__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 24px;
+  }
+}
+
+@media (min-width: 1000px) {
+  .trust__list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.trust__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--taupe);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+}
+
+.trust__item strong {
+  display: block;
+  color: var(--charcoal);
+  font-weight: 700;
+}
+
+.trust__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--champagne);
+  color: var(--brown-deep);
+}
+
+.frame-card__desc {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--taupe);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.frame-card__from {
+  margin-top: 4px;
+  color: var(--charcoal);
+  font-weight: 600;
+}

@@ -8,6 +8,9 @@
     about: "about.html",
     services: "services.html",
     shop: "shop.html",
+    templates: "templates.html",
+    studio: "studio.html",
+    shopDashboard: "shop-dashboard.html",
     gallery: "gallery.html",
     customerGallery: "customer-gallery.html",
     contact: "contact.html",
@@ -17,7 +20,10 @@
     privacy: "privacy-notice.html"
   };
 
-  const productUrl = (id) => `product.html?id=${encodeURIComponent(id)}`;
+  /** product.html?slug=<slug> for a product object with a slug, else ?id=<id>.
+      (A static host can't serve /products/<slug>; the slug keeps URLs readable.) */
+  const productUrl = (p) =>
+    p && typeof p === "object" ? (p.slug ? `product.html?slug=${encodeURIComponent(p.slug)}` : `product.html?id=${encodeURIComponent(p.id)}`) : `product.html?id=${encodeURIComponent(p)}`;
   const shopUrl = (id) => `shop-detail.html?id=${encodeURIComponent(id)}`;
   const shopListUrl = (params = {}) => {
     const q = new URLSearchParams();

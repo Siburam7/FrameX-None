@@ -177,6 +177,17 @@
   border-color: transparent;
 }
 
+/* Header call to action: "Shop Frames" in the brand amber */
+.site-header .signup-btn {
+  border: 0;
+  background: var(--amber-strong);
+  color: var(--white);
+}
+
+.site-header .signup-btn:hover {
+  background: var(--amber-deep);
+}
+
 /* Hamburger */
 .nav-toggle {
   display: grid;
@@ -353,4 +364,12 @@
 
 .location-chip {
   min-height: 44px;
+}
+
+/* With eight nav items, the header location button only shows on wide screens
+   (it stays in the mobile menu and in the "Photo-frame shops near you" section). */
+@media (min-width: 1100px) and (max-width: 1499px) {
+  .site-header__actions .location-chip {
+    display: none;
+  }
 }

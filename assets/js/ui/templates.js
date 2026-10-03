@@ -56,16 +56,19 @@
     const needsChoice = hasSizeChoice(product) || (product.colors || []).length > 1;
     const sizeCount = FrameX.pricing.sizeOptions(product).length;
     const sizeNote = sizeCount > 1 ? `<span class="product-card__size-note">${sizeCount} sizes</span>` : "";
+    const url = FrameX.qs.productUrl(product);
+    // Products that open in FrameX Studio (see productModel.studioSupport); older data falls back to its frame design.
+    const customizable = product.customizable != null ? product.customizable : Boolean(product.frame && product.frame.shape !== "arch");
 
     return `<article class="product-card${unavailable ? " is-unavailable" : ""}" data-product-id="${esc(product.id)}">
       <div class="product-card__media">
-        <img class="product-card__image" src="${esc(product.image)}" alt="${esc(product.name)}" width="720" height="720" loading="lazy" decoding="async">
-        <a class="product-card__open" href="${FrameX.qs.productUrl(product.id)}" aria-label="View details for ${esc(product.name)}"></a>
+        <img class="product-card__image" src="${esc(product.listingImage || product.image)}" alt="${esc(product.name)}" width="720" height="720" loading="lazy" decoding="async">
+        <a class="product-card__open" href="${url}" aria-label="View details for ${esc(product.name)}"></a>
         <div class="product-card__badges">${badges.join("")}</div>
         ${wishButton(product, "product-card__wish")}
       </div>
       <div class="product-card__body">
-        <h3 class="product-card__title"><a href="${FrameX.qs.productUrl(product.id)}">${esc(product.name)}</a></h3>
+        <h3 class="product-card__title"><a href="${url}">${esc(product.name)}</a></h3>
         <p class="product-card__shop">${icon("store")} ${esc(product.shopName)}</p>
         ${product.description ? `<p class="product-card__desc">${esc(product.description)}</p>` : ""}
         ${colorSwatchRow(product)}
@@ -74,10 +77,10 @@
       </div>
       <div class="product-card__foot">
         <span class="${stock.className}">${stock.text}</span>
-        <a class="btn btn--dark btn--sm product-card__add" href="${FrameX.qs.productUrl(product.id)}">View Product</a>
+        <a class="btn btn--dark btn--sm product-card__add" href="${url}">View Product</a>
       </div>
-      ${product.frame
-        ? `<a class="product-card__extra" href="${FrameX.qs.productUrl(product.id)}&amp;mode=custom">${icon("upload")} Try With Your Own Image</a>`
+      ${customizable && !unavailable
+        ? `<a class="product-card__extra" href="studio.html?product=${encodeURIComponent(product.id)}">${icon("upload")} Try With Your Own Image</a>`
         : !unavailable && !needsChoice
           ? `<button class="product-card__extra" type="button" data-action="add-to-cart" data-product-id="${esc(product.id)}">${icon("bag")} Add to cart</button>`
           : ""}
@@ -92,7 +95,8 @@
         ${wishButton(product, "frame-card__wish")}
       </div>
       <div class="frame-card__caption">
-        <a class="frame-card__open" href="${FrameX.qs.productUrl(product.id)}"><span class="frame-card__name">${esc(product.name)}</span></a>
+        <a class="frame-card__open" href="${FrameX.qs.productUrl(product)}"><span class="frame-card__name">${esc(product.name)}</span></a>
+        ${product.description ? `<span class="frame-card__desc">${esc(product.description)}</span>` : ""}
         <span class="frame-card__from">${price}</span>
       </div>
     </article>`;

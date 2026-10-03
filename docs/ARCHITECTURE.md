@@ -224,3 +224,57 @@ hook for a real checkout flow.
 | 8 Orders + payments | ⬜ not started (cart + explainer only) |
 | 9 Delivery integration | ⬜ not started |
 | 10 Commission & marketplace management | ⬜ not started (design in §7) |
+
+## Personalised templates
+
+Data: `js/templates.js` (categories, occasions, print sizes, templates). Pages:
+`templates.html` (browse), `template.html?t=<slug>` (details), FrameX Studio (below) is the customizer; `template-customize.html` only redirects to it.
+
+| Layer | File | Future replacement |
+|---|---|---|
+| Template data | `js/templates.js` via `api.getTemplates/getTemplate/getTemplateCategories/getTemplateOptions` | `GET /templates`, `/templates/:slug`, `/template-categories`, `/template-options` (http-provider already maps these) |
+| Layout engine | `assets/js/services/template-engine.js` | Same layout JSON rendered server-side at print resolution |
+| Photo storage | `assets/js/services/upload-service.js` (IndexedDB, this browser only) | Upload originals to object storage; `prepare()` returns remote id + URL |
+
+Pretty URLs (`/templates/<slug>`) need a server rewrite to `template.html?t=<slug>`; the page already sets a canonical URL, title and description from the template.
+
+## FrameX Studio (`studio.html`)
+
+One customization engine for every entry point: `?template=<slug>` (Templates), `?mode=photo` (Create Your Frame), `?product=<id>` (Customize This Frame on a product page), `?design=<id>` (a saved design).
+
+| Layer | File | Notes / future replacement |
+|---|---|---|
+| Catalogue: frame types, colours, finishes, border, mat, sizes, front cover, fonts, prices | `js/studio.js` | Placeholder data. `GET /studio/catalog` (already mapped in http-provider) |
+| Rules: context and capabilities, defaults, normalize, geometry, pricing, validation, summary | `assets/js/services/studio-engine.js` | Pure functions on one config object. Prices are only added up in `price()`; the server must re-price at checkout |
+| Preview renderer (screen) | `studio-engine.js` renderPreview() and `assets/css/studio.css` | Layers: frame, inner edge, mat(s), printed border, artwork or photo, text, cover. Positions come from `geometry()` in normalized units (print area = 1000 units wide), so a production renderer can draw the same geometry at print resolution |
+| Artwork | `assets/js/services/template-engine.js` | Template layouts, photo crop (fill / fit / crop, zoom, focal point, rotate), text styles, background override |
+| Per-template rules | `studio: { ... }` on a template in `js/templates.js` | Hides options a design does not support |
+| Photos | `assets/js/services/upload-service.js` | IndexedDB on this device. Replace with uploads to storage |
+| Drafts and saved designs | localStorage `framex.studioDrafts.v1` and `assets/js/store/designs.js` | Per-account designs API |
+| Cart line | `cart.addStudio()` | Stores productType, full config, price breakdown, summary, design id and shop |
+
+## Product system (product pages + shop products)
+
+Every product, whether it comes from `js/edit.js` or from a shop's dashboard, is turned into ONE flexible model by `assets/js/services/product-model.js` (`normalize()`). The UI never assumes a field exists: each product-page section is rendered only when the product has data for it.
+
+| Layer | File | Notes / future replacement |
+|---|---|---|
+| Product model: schema, vocabularies (view types, print materials, covers, components, quality fields, statuses), legacy conversion, pricing (`quote`), Studio capabilities (`studioOptions`), validation (`validateForPublish`), claim filter | `services/product-model.js` | Same rules run on the server; the server re-prices at checkout |
+| Product / shop services | `services/product-service.js` (`productService`, `shopService`, `pricingService` in the model) | UI only talks to these |
+| Data provider | `api/seed-provider.js` (catalogue + this device's dashboard records, `framex.shopProducts.v1`), `api/http-provider.js` | `GET /products` (filters: category, material, frameType, finish, size, priceMin, priceMax, customizable), `GET /products/facets`, `GET /products/:idOrSlug`, `GET /shops/:id/products?include=all`, `GET/PUT/DELETE /shop/products/:id`, `GET /products/slugs` |
+| Media | `services/media-service.js` | Validates type / size / minimum resolution, stores large + thumbnail copies in IndexedDB as `media:<id>`. Replace with `POST /media` (upload) returning https URLs |
+| ProductPage | `ui/product-page.js` | Used by `product.html` and by the wizard preview (`render(..., { preview: true })`) |
+| ProductGallery | `ui/product-gallery.js` | Views, crossfade, zoom, fullscreen lightbox, optional 360° (8+ frames, loaded only when opened) |
+| Sections | `ui/product-sections.js` | ComponentBreakdown, MaterialSection, Quality, BackView, ProductViews, SpecificationTable, Customization, Shop, Video, Reviews |
+| ProductWizard / ProductEditor | `ui/product-wizard.js` | 9 steps; drafts auto-save; edits to live products are held in `framex.shopEditor.v1` until "Save changes" |
+| ImageUploader | `ui/image-uploader.js` | Upload, preview, view type, alt text, set main, reorder (buttons / drag), delete |
+| ShopProductManager (dashboard) | `ui/shop-dashboard.js`, `shop-dashboard.html` | Hash routes `#/products`, `#/products/new`, `#/products/<id>/edit?step=`, `#/orders`, `#/inventory`, `#/profile`, `#/settings` |
+| Styles | `css/product.css` (container queries, so the preview matches the live page), `css/shop-admin.css` | |
+
+URLs: a static host can't serve `/products/:slug`, so product pages use `product.html?slug=<slug>` (the canonical link and JSON-LD use it too). With a server, rewrite `/products/:slug` to the same page.
+
+Statuses: `draft` → `published` / `unpublished`; with `config.productModeration = true`, publishing becomes `pending_review` until FrameX approves it. Only published products reach customers.
+
+Data safety: shop-entered quality information is always `shop_claimed`; `sanitizeShopInput()` resets `quality.verification` on every shop save, and `validateForPublish()` blocks "FrameX Verified", "Certified" and "Best Quality". Only the FrameX backend may set `verification.status = "framex_verified"`.
+
+FrameX Studio: `studio.html?product=<id>` builds its context from `productModel.studioOptions(product)`: only that product's frame colours, sizes (any width × height, in or cm), orientations, mat / border colours and widths, front covers (at the shop's prices), print materials and caption text. Options chosen on the product page come along as `&size=&color=&print=&cover=`.

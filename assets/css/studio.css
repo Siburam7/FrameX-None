@@ -1,0 +1,911 @@
+/* ==========================================================================
+   FRAME X STUDIO
+   Layered frame preview (services/studio-engine.js → renderPreview) and the
+   editor layout: big preview + option panel on desktop; preview, summary,
+   sections and a sticky price bar on phones. Shared tokens only.
+   ========================================================================== */
+
+.fs-section {
+  padding-top: clamp(8px, 2vw, 16px);
+}
+
+.fs-loading {
+  display: grid;
+  gap: 24px;
+}
+
+@media (min-width: 960px) {
+  .fs-loading {
+    grid-template-columns: 1.2fr 1fr;
+  }
+}
+
+/* Header ------------------------------------------------------------------ */
+.fs-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px 20px;
+  margin-bottom: clamp(16px, 3vw, 28px);
+}
+
+.fs-brand {
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 1rem + 1.4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1.1;
+}
+
+.fs-brand span {
+  color: var(--amber-strong);
+}
+
+.fs-tagline {
+  margin-top: 4px;
+  color: var(--taupe);
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(0.95rem, 0.9rem + 0.3vw, 1.1rem);
+  font-style: italic;
+}
+
+.fs-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--line-warm);
+  border-radius: var(--radius-pill);
+  background: var(--ivory);
+  color: var(--umber);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.fs-mode .icon {
+  color: var(--gold-muted);
+}
+
+/* Layout -------------------------------------------------------------------- */
+.fs-layout {
+  display: grid;
+  gap: clamp(18px, 3vw, 40px);
+}
+
+@media (min-width: 960px) {
+  .fs-layout {
+    grid-template-columns: minmax(0, 1.2fr) minmax(360px, 1fr);
+    align-items: start;
+  }
+
+  .fs-stagecol {
+    position: sticky;
+    top: calc(var(--header-h) + 16px);
+  }
+}
+
+/* The "wall" the frame hangs on */
+.fs-stage {
+  display: grid;
+  place-items: center;
+  min-height: clamp(300px, 52vw, 640px);
+  padding: clamp(20px, 5vw, 56px);
+  border-radius: var(--radius-xl);
+  background:
+    radial-gradient(ellipse at 50% 30%, rgba(255, 255, 255, 0.65), transparent 65%),
+    linear-gradient(180deg, #efe6d8, #e3d6c2);
+  overflow: hidden;
+}
+
+@media (min-width: 960px) {
+  .fs-stage {
+    height: calc(100svh - var(--header-h) - 140px);
+    min-height: 460px;
+    max-height: 760px;
+  }
+}
+
+/* Bigger sizes look bigger on the wall (--size-scale); the frame never
+   outgrows the stage (--frame-aspect keeps tall frames inside it). */
+.fs-preview {
+  display: grid;
+  place-items: center;
+  width: min(calc(var(--size-scale, 1) * 100%), calc(var(--size-scale, 1) * var(--frame-aspect, 0.8) * (min(100svh, 900px) - var(--header-h) - 230px)));
+  transition: width 360ms var(--ease-out);
+}
+
+@media (max-width: 959px) {
+  .fs-preview {
+    width: min(calc(var(--size-scale, 1) * 100%), calc(var(--size-scale, 1) * var(--frame-aspect, 0.8) * 52svh));
+  }
+}
+
+.fs-stage__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-top: 10px;
+  color: var(--taupe);
+  font-size: var(--text-xs);
+}
+
+.fs-stage__meta span:first-child {
+  color: var(--charcoal);
+  font-weight: 700;
+}
+
+/* Frame layers ------------------------------------------------------------------ */
+.fs-frame {
+  position: relative;
+  width: 100%;
+  container-type: inline-size;
+  filter: drop-shadow(0 2.2cqw 2.6cqw rgba(48, 34, 20, 0.35)) drop-shadow(0 0.4cqw 0.5cqw rgba(48, 34, 20, 0.25));
+}
+
+.fs-layer {
+  position: absolute;
+  display: block;
+}
+
+/* 1. Moulding */
+.fs-layer--frame {
+  background-color: var(--frame);
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 38%, rgba(0, 0, 0, 0.2));
+  box-shadow:
+    inset 0 0 0 0.25cqw rgba(255, 255, 255, 0.12),
+    inset 0 0 0 0.5cqw rgba(0, 0, 0, 0.12);
+}
+
+.fs-frame--bevel .fs-layer--frame {
+  box-shadow:
+    inset 0 0 0 0.25cqw rgba(255, 255, 255, 0.14),
+    inset 0 0 0 calc(var(--fw) * 0.45) rgba(255, 255, 255, 0.05),
+    inset 0 0 0 calc(var(--fw) * 0.5) rgba(0, 0, 0, 0.14);
+}
+
+.fs-frame--ornate .fs-layer--frame {
+  background-image:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.22) 0.35cqw, transparent 0.45cqw),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 40%, rgba(0, 0, 0, 0.28));
+  background-size: 1.6cqw 1.6cqw, 100% 100%;
+  box-shadow:
+    inset 0 0 0 0.3cqw rgba(0, 0, 0, 0.3),
+    inset 0 0 0 calc(var(--fw) * 0.3) rgba(255, 255, 255, 0.08),
+    inset 0 0 0 calc(var(--fw) * 0.34) rgba(0, 0, 0, 0.22),
+    inset 0 0 0 calc(var(--fw) * 0.7) rgba(255, 255, 255, 0.06),
+    inset 0 0 0 calc(var(--fw) * 0.75) rgba(0, 0, 0, 0.2);
+}
+
+.fs-frame--float .fs-layer--frame {
+  box-shadow:
+    inset 0 0 0 0.25cqw rgba(255, 255, 255, 0.12),
+    inset 0 0 0 calc(var(--fw) * 0.55) var(--frame),
+    inset 0 0 0 var(--fw) rgba(0, 0, 0, 0.35);
+}
+
+.fs-frame--none .fs-layer--frame {
+  background: none;
+  box-shadow: none;
+}
+
+/* Materials */
+.fs-tex--wood .fs-layer--frame {
+  background-image:
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.07) 0 0.25cqw, transparent 0.25cqw 0.9cqw, rgba(255, 255, 255, 0.05) 0.9cqw 1.1cqw, transparent 1.1cqw 1.9cqw),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.06) 0 0.2cqw, transparent 0.2cqw 1.3cqw),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 40%, rgba(0, 0, 0, 0.22));
+}
+
+.fs-tex--metal .fs-layer--frame {
+  background-image:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.25) 55%, rgba(0, 0, 0, 0.22)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 0.15cqw, transparent 0.15cqw 0.4cqw);
+}
+
+/* Finishes (drawn over the moulding) */
+.fs-layer--frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fs-finish--gloss .fs-layer--frame::after {
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 22%, rgba(255, 255, 255, 0) 70%, rgba(255, 255, 255, 0.18) 85%, rgba(255, 255, 255, 0) 100%);
+}
+
+.fs-finish--metallic .fs-layer--frame::after {
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.35) 45%, rgba(255, 255, 255, 0) 60%);
+}
+
+.fs-finish--textured .fs-layer--frame::after {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.12) 0.12cqw, transparent 0.16cqw), radial-gradient(rgba(255, 255, 255, 0.1) 0.1cqw, transparent 0.14cqw);
+  background-size: 0.7cqw 0.7cqw, 1.1cqw 1.1cqw;
+  background-position: 0 0, 0.35cqw 0.5cqw;
+}
+
+.fs-finish--wood-grain .fs-layer--frame::after {
+  background-image: repeating-linear-gradient(88deg, rgba(0, 0, 0, 0.08) 0 0.18cqw, transparent 0.18cqw 0.6cqw);
+}
+
+/* 3. Mat (card with a bevelled window) */
+.fs-layer--mat,
+.fs-layer--mat2 {
+  box-shadow: inset 0 0 0 0.12cqw rgba(0, 0, 0, 0.06);
+}
+
+.fs-layer--mat ~ .fs-layer--print {
+  box-shadow:
+    0 0 0 0.28cqw rgba(255, 255, 255, 0.75),
+    0 0 0 0.36cqw rgba(0, 0, 0, 0.1);
+}
+
+.fs-layer--mat2 {
+  box-shadow:
+    0 0 0 0.28cqw rgba(255, 255, 255, 0.7),
+    0 0 0 0.36cqw rgba(0, 0, 0, 0.1);
+}
+
+/* Floating frames: the print sits forward with its own shadow */
+.fs-frame--float .fs-layer--print {
+  box-shadow: 0 0.8cqw 1.6cqw rgba(0, 0, 0, 0.35);
+}
+
+/* 5. Artwork (photo / template) */
+.fs-layer--art .tpl-canvas {
+  width: 100%;
+  height: 100%;
+  box-shadow: none;
+}
+
+.fs-layer--art .tpl-slot img {
+  cursor: grab;
+  transition: transform 160ms var(--ease-out);
+}
+
+.fs-preview.is-adjusting .fs-layer--art .tpl-slot {
+  touch-action: none;
+}
+
+.fs-layer--art .tpl-slot:active img {
+  cursor: grabbing;
+  transition: none;
+}
+
+/* 2. Inner edge: the frame's lip casts a soft shadow onto the mat / print */
+.fs-layer--edge {
+  pointer-events: none;
+  box-shadow:
+    inset 0 0.7cqw 1.2cqw rgba(0, 0, 0, 0.32),
+    inset 0 0 0.3cqw rgba(0, 0, 0, 0.25),
+    0 0 0 0.25cqw rgba(0, 0, 0, 0.18);
+}
+
+.fs-frame--none .fs-layer--edge {
+  box-shadow: none;
+}
+
+/* 6. Acrylic / glass sheen */
+.fs-layer--cover {
+  pointer-events: none;
+  background: linear-gradient(118deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0) 62%, rgba(255, 255, 255, 0.1) 74%, rgba(255, 255, 255, 0) 86%);
+  mix-blend-mode: screen;
+}
+
+/* Panel ------------------------------------------------------------------------ */
+.fs-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.fs-config {
+  padding: 16px clamp(14px, 2.4vw, 20px);
+  border: 1px solid var(--line-warm);
+  border-radius: var(--radius-lg);
+  background: var(--ivory);
+}
+
+.fs-config__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.fs-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 1.1rem + 0.7vw, 1.6rem);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.fs-total strong {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+}
+
+.fs-config__list {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: var(--text-sm);
+}
+
+.fs-config__list li {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.fs-config__list span {
+  color: var(--taupe);
+}
+
+.fs-config__list strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.fs-sections {
+  display: grid;
+  gap: 10px;
+}
+
+/* Sections (accordion) */
+.sc-section {
+  border: 1px solid var(--line-warm);
+  border-radius: var(--radius-lg);
+  background: var(--ivory);
+  overflow: hidden;
+}
+
+.sc-section > summary {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 10px clamp(14px, 2.4vw, 18px);
+  cursor: pointer;
+  list-style: none;
+}
+
+.sc-section > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sc-section > summary:focus-visible {
+  outline-offset: -3px;
+}
+
+.sc-section__num {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--charcoal);
+  color: var(--champagne);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.sc-section__title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.sc-section__summary {
+  overflow: hidden;
+  color: var(--taupe);
+  font-size: var(--text-xs);
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sc-section > summary .icon {
+  color: var(--taupe);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.sc-section[open] > summary .icon {
+  transform: rotate(180deg);
+}
+
+.sc-section__body {
+  display: grid;
+  gap: 14px;
+  padding: 2px clamp(14px, 2.4vw, 18px) 18px;
+}
+
+.sc-section__body > [data-dynamic] {
+  display: grid;
+  gap: 14px;
+}
+
+.fs-field {
+  display: grid;
+  gap: 8px;
+}
+
+.fs-field--inline {
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+}
+
+.fs-label {
+  color: var(--charcoal);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.fs-hint {
+  color: var(--taupe);
+  font-size: var(--text-xs);
+  line-height: 1.55;
+}
+
+.fs-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.fs-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line-warm);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  color: var(--charcoal);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.fs-tool:hover {
+  background: var(--champagne);
+}
+
+.fs-tool--icon {
+  justify-content: center;
+  width: 40px;
+  padding: 0;
+}
+
+.fs-nudge {
+  display: flex;
+  gap: 4px;
+}
+
+.fs-notice {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--champagne);
+  color: var(--umber);
+  font-size: var(--text-sm);
+}
+
+.fs-notice > div {
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+}
+
+.fs-notice .icon {
+  flex: none;
+  color: var(--brown-deep);
+}
+
+/* Swatches */
+.sc-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sc-swatch {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  width: 64px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.sc-swatch input {
+  position: absolute;
+  opacity: 0;
+}
+
+.sc-swatch__chip {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+  transition: box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.sc-tex--wood {
+  background-image: repeating-linear-gradient(80deg, rgba(0, 0, 0, 0.12) 0 2px, transparent 2px 6px);
+}
+
+.sc-tex--metal {
+  background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 45%, rgba(0, 0, 0, 0.2));
+}
+
+.sc-swatch__name {
+  color: var(--umber);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.sc-swatch__price {
+  color: var(--taupe);
+  font-size: 10px;
+}
+
+.sc-swatch input:checked + .sc-swatch__chip {
+  box-shadow: 0 0 0 2px var(--ivory), 0 0 0 4px var(--brown-deep);
+}
+
+.sc-swatch input:focus-visible + .sc-swatch__chip {
+  box-shadow: 0 0 0 2px var(--ivory), var(--focus-ring);
+}
+
+.sc-swatch:hover .sc-swatch__chip {
+  transform: scale(1.06);
+}
+
+/* Option cards */
+.sc-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (min-width: 520px) {
+  .sc-cards--3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.sc-card {
+  position: relative;
+  cursor: pointer;
+}
+
+.sc-card input {
+  position: absolute;
+  opacity: 0;
+}
+
+.sc-card__body {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  height: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-warm);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  font-size: var(--text-sm);
+  transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+}
+
+.sc-card__desc {
+  color: var(--taupe);
+  font-size: var(--text-xs);
+  line-height: 1.35;
+}
+
+.sc-card__price {
+  margin-top: 4px;
+  color: var(--brown-deep);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.sc-card input:checked + .sc-card__body {
+  border-color: var(--brown-deep);
+  background: var(--champagne);
+  box-shadow: inset 0 0 0 1px var(--brown-deep);
+}
+
+.sc-card input:focus-visible + .sc-card__body {
+  box-shadow: var(--focus-ring);
+}
+
+.sc-card:hover .sc-card__body {
+  border-color: var(--gold-muted);
+}
+
+/* Little moulding sample on frame-type cards */
+.sc-profile {
+  display: block;
+  height: 30px;
+  margin-bottom: 6px;
+  border: var(--w, 6px) solid var(--charcoal);
+  border-radius: 2px;
+  background: var(--beige);
+}
+
+.sc-profile--ornate {
+  border-style: double;
+  border-color: var(--gold);
+}
+
+.sc-profile--float {
+  box-shadow: inset 0 0 0 4px var(--beige), inset 0 0 0 6px rgba(0, 0, 0, 0.25);
+}
+
+/* Segmented choices */
+.sc-seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.sc-seg__item {
+  position: relative;
+  cursor: pointer;
+}
+
+.sc-seg__item input {
+  position: absolute;
+  opacity: 0;
+}
+
+.sc-seg__item span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line-warm);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.sc-seg__item input:checked + span {
+  border-color: var(--charcoal);
+  background: var(--charcoal);
+  color: var(--champagne);
+}
+
+.sc-seg__item input:focus-visible + span {
+  box-shadow: var(--focus-ring);
+}
+
+/* Range */
+.sc-range {
+  display: grid;
+  gap: 6px;
+}
+
+.sc-range label {
+  display: flex;
+  justify-content: space-between;
+  color: var(--charcoal);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sc-range output {
+  color: var(--brown-deep);
+  letter-spacing: 0;
+}
+
+.sc-range input {
+  width: 100%;
+  height: 44px;
+  accent-color: var(--brown-deep);
+}
+
+/* Custom size (coming soon) */
+.fs-soon {
+  display: grid;
+  gap: 4px;
+  justify-items: start;
+  padding: 12px;
+  border: 1px dashed var(--line-warm);
+  border-radius: var(--radius-md);
+  color: var(--taupe);
+  font-size: var(--text-xs);
+}
+
+.fs-soon strong {
+  color: var(--charcoal);
+  font-size: var(--text-sm);
+}
+
+.fs-soon__inputs {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr 72px;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 6px;
+  opacity: 0.55;
+}
+
+.fs-soon__inputs .input,
+.fs-soon__inputs .select {
+  min-height: 40px;
+  min-width: 0;
+}
+
+/* Text style drawer under each text field */
+.fs-textstyle {
+  margin-top: 6px;
+  border-top: 1px dashed var(--line-warm);
+}
+
+.fs-textstyle > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  color: var(--brown-deep);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fs-textstyle[open] {
+  display: grid;
+  gap: 10px;
+  padding-bottom: 6px;
+}
+
+/* Price */
+.fs-price {
+  padding: 16px clamp(14px, 2.4vw, 20px);
+  border: 1px solid var(--line-warm);
+  border-radius: var(--radius-lg);
+  background: var(--white);
+}
+
+.fs-price__title {
+  margin-bottom: 8px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.fs-price__lines {
+  display: grid;
+  gap: 6px;
+}
+
+.fs-price__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: var(--text-sm);
+}
+
+.fs-price__row dt span {
+  display: block;
+  color: var(--taupe);
+  font-size: var(--text-xs);
+}
+
+.fs-price__row dd {
+  margin: 0;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fs-price__total {
+  display: flex;
+  justify-content: space-between;
+  margin: 10px 0 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-warm);
+  font-size: var(--text-lg);
+}
+
+.fs-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.fs-actions__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.fs-actions__row .btn {
+  padding-inline: 10px;
+  white-space: normal;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.fs-reset.is-confirming {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* Sticky price bar (phones + tablets) */
+.fs-buybar {
+  position: fixed;
+  inset: auto 0 0;
+  z-index: calc(var(--z-header) - 1);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line-warm);
+  background: rgba(250, 246, 238, 0.97);
+  box-shadow: 0 -8px 24px -16px rgba(43, 43, 43, 0.4);
+}
+
+.fs-buybar__thumb {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line-warm);
+  border-radius: 50%;
+  background: var(--white);
+}
+
+.fs-buybar__price {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.fs-buybar__price strong {
+  font-size: 1.15rem;
+}
+
+.fs-buybar__price span {
+  overflow: hidden;
+  color: var(--taupe);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 960px) {
+  .fs-buybar {
+    display: none;
+  }
+}
+
+@media (max-width: 959px) {
+  .fs-section {
+    padding-bottom: 100px;
+  }
+}
+
+.pdp-studio-link {
+  margin-top: 10px;
+}

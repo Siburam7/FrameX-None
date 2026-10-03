@@ -62,6 +62,10 @@
             <label class="switch"><input type="checkbox" id="collection-stock"><span>In stock only</span></label>
           </div>
           <div class="chip-scroll" id="collection-chips" role="group" aria-label="Filter by category"></div>
+          <details class="catalog-filters" id="collection-filters" hidden>
+            <summary>More filters <span class="catalog-filters__count" id="collection-filter-count"></span></summary>
+            <div class="catalog-filters__grid" id="collection-filter-fields"></div>
+          </details>
           <div class="shop-filter" id="collection-shop-filter" hidden><span>Showing frames from <strong id="collection-shop-name"></strong></span><button class="btn btn--outline btn--sm" type="button" id="collection-clear-shop">Show all shops</button></div>
         </div>
         <div class="product-grid" id="collection-grid" aria-busy="true"></div>
@@ -82,10 +86,12 @@
   <script src="assets/js/services/shop-utils.js" defer></script>
   <script src="assets/data/site.seed.js" defer></script>
   <script src="js/edit.js" defer></script>
+  <script src="js/studio.js" defer></script>
   <script src="assets/data/reviews.seed.js" defer></script>
   <script src="assets/data/community.seed.js" defer></script>
   <script src="assets/data/faq.seed.js" defer></script>
   <script src="assets/data/gallery.seed.js" defer></script>
+  <script src="assets/js/services/product-model.js" defer></script>
   <script src="assets/js/api/seed-provider.js" defer></script>
   <script src="assets/js/api/http-provider.js" defer></script>
   <script src="assets/js/api/api.js" defer></script>

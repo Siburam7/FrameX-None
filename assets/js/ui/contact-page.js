@@ -77,7 +77,7 @@
       const result = await sendMessage(data, contact);
       status(form, "info", result === "mailto"
         ? "Your email app should open with this message ready to send. Nothing has been sent yet."
-        : "Thanks — but this form isn't connected to a messaging service yet, so your message has NOT been sent. Your text is still here; please try again later or contact the shop directly.");
+        : "Your message couldn't be sent from this page. Please reach us on WhatsApp or by email using the details on this page.");
     });
   }
 

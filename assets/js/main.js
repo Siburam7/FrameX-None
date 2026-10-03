@@ -9,7 +9,7 @@
   const PAGES = {
     home: async () => {
       FrameX.marquee.init(document.querySelector("#ticker"));
-      await Promise.all([call("site"), call("featured"), call("categories"), call("shops"), call("recommended"), call("reviews"), call("community"), call("guide")]);
+      await Promise.all([call("site"), call("featured"), call("categories"), call("shops"), call("recommended"), call("reviews"), call("community"), call("guide"), call("trendingTemplates")]);
     },
     shop: async () => {
       const categories = await FrameX.api.getCategories();
@@ -19,6 +19,10 @@
     "shop-detail": () => call("shopDetailPage"),
     product: () => call("productPage"),
     gallery: () => call("galleryPage"),
+    templates: () => call("templatesPage"),
+    template: () => call("templateDetailPage"),
+    studio: () => call("studioPage"),
+    "shop-dashboard": () => call("shopDashboard"),
     "customer-gallery": () => call("customerGalleryPage"),
     contact: () => call("contactPage"),
     faq: () => call("faq"),

@@ -182,7 +182,7 @@
       form.reset();
       clearPhoto();
       render();
-      status(form, "info", "Saved on this device, so you can see how it looks above. It has NOT been sent to FrameX yet: online submissions aren't connected.");
+      status(form, "info", "Saved on this device, so you can see how it looks above. Publishing reviews on the site is coming soon, so it hasn't been sent to FrameX.");
       $("#cg-grid").scrollIntoView({ behavior: FrameX.dom.prefersReducedMotion() ? "auto" : "smooth", block: "start" });
     });
   }

@@ -10,13 +10,52 @@
   const { $, $$, escapeHtml: esc, debounce } = FrameX.dom;
   const { templates, config } = FrameX;
 
-  const state = { category: null, shopId: null, q: "", sort: "recommended", inStock: false, page: 1 };
+  // Attribute filters: the same parameter names the API accepts (see seed-provider getProducts).
+  const ATTRS = ["material", "frameType", "finish", "size", "priceMax", "customizable"];
+  const state = { category: null, shopId: null, q: "", sort: "recommended", inStock: false, page: 1, material: "", frameType: "", finish: "", size: "", priceMax: "", customizable: false };
   let requestId = 0;
   let els = {};
   let categoryNames = new Map();
   let active = false;
 
-  const params = (page) => ({ category: state.category, shopId: state.shopId, q: state.q, sort: state.sort, inStock: state.inStock, page, limit: config.productPageSize });
+  const params = (page) => ({ category: state.category, shopId: state.shopId, q: state.q, sort: state.sort, inStock: state.inStock, material: state.material, frameType: state.frameType, finish: state.finish, size: state.size, priceMax: state.priceMax, customizable: state.customizable, page, limit: config.productPageSize });
+
+  /** "More filters": only filters that real products can match are offered. */
+  async function renderFilters() {
+    const box = $("#collection-filters");
+    if (!box || !FrameX.api.getProductFacets) return;
+    let f;
+    try {
+      f = await FrameX.api.getProductFacets();
+    } catch (error) {
+      return; // filters are optional; the grid still works
+    }
+    const select = (key, label, options) =>
+      options.length > 1
+        ? `<label class="catalog-filters__field"><span>${label}</span><select class="select" data-attr="${key}"><option value="">Any</option>${options.map((o) => `<option value="${esc(o.id)}"${String(state[key]) === String(o.id) ? " selected" : ""}>${esc(o.name)}</option>`).join("")}</select></label>`
+        : "";
+    const steps = [500, 750, 1000, 1500, 2000, 3000].filter((n) => n > f.price.min && n < f.price.max);
+    const html = [
+      select("material", "Material", f.materials.map((m) => ({ id: m, name: m }))),
+      select("frameType", "Frame type", f.frameTypes),
+      select("finish", "Finish", f.finishes.map((m) => ({ id: m, name: m }))),
+      select("size", "Size", f.sizes.map((m) => ({ id: m, name: m }))),
+      select("priceMax", "Price", steps.map((n) => ({ id: n, name: `Up to ${FrameX.pricing.formatPrice(n)}` }))),
+      f.customizable ? `<label class="switch catalog-filters__switch"><input type="checkbox" data-attr="customizable"${state.customizable ? " checked" : ""}><span>Customizable in FrameX Studio</span></label>` : ""
+    ].join("");
+    if (!html.trim()) return;
+    $("#collection-filter-fields").innerHTML = html + `<button class="btn btn--outline btn--sm" type="button" data-clear-attrs>Clear these filters</button>`;
+    box.hidden = false;
+    syncFilterCount();
+  }
+
+  function syncFilterCount() {
+    const n = ATTRS.filter((k) => state[k]).length;
+    const el = $("#collection-filter-count");
+    if (el) el.textContent = n ? `(${n})` : "";
+    const box = $("#collection-filters");
+    if (box && n) box.open = true;
+  }
 
   function renderChips(categories) {
     if (!els.chips) return;
@@ -88,7 +127,10 @@
     if (scroll) $("#collection").scrollIntoView({ behavior: FrameX.dom.prefersReducedMotion() ? "auto" : "smooth" });
   }
 
-  const clearFilters = () => setFilters({ category: null, shopId: null, q: "", sort: "recommended", inStock: false });
+  const clearFilters = () => {
+    setFilters({ category: null, shopId: null, q: "", sort: "recommended", inStock: false, material: "", frameType: "", finish: "", size: "", priceMax: "", customizable: false });
+    renderFilters();
+  };
 
   async function init(categories = [], options = {}) {
     els = {
@@ -106,6 +148,7 @@
       state.category = FrameX.qs.param("category");
       state.q = FrameX.qs.param("q") || "";
       state.shopId = FrameX.qs.param("shop");
+      ATTRS.forEach((k) => FrameX.qs.param(k) && (state[k] = k === "customizable" ? true : FrameX.qs.param(k)));
     }
 
     if (els.chips) {
@@ -121,6 +164,21 @@
       const clearShop = $("#collection-clear-shop");
       if (clearShop) clearShop.addEventListener("click", () => setFilters({ shopId: null }));
       syncShopBanner();
+      const filters = $("#collection-filters");
+      if (filters) {
+        filters.addEventListener("change", (e) => {
+          const el = e.target.closest("[data-attr]");
+          if (!el) return;
+          setFilters({ [el.dataset.attr]: el.type === "checkbox" ? el.checked : el.value });
+          syncFilterCount();
+        });
+        filters.addEventListener("click", (e) => {
+          if (!e.target.closest("[data-clear-attrs]")) return;
+          setFilters({ material: "", frameType: "", finish: "", size: "", priceMax: "", customizable: false });
+          renderFilters();
+        });
+        renderFilters();
+      }
     }
 
     els.more.querySelector("button").addEventListener("click", () => {

@@ -11,8 +11,11 @@ because every link and asset path is **relative**.
 | `index.html` | Home: hero, featured-frames showcase (auto-scroll + arrows + drag), category gallery, shops preview, custom-frame section, how it works, community + reviews (sample), frame guide |
 | `shop.html` | All shops + full product catalogue (search, category, sort, in-stock, load more). Supports `?category=` `?q=` `?shop=` |
 | `shop-detail.html?id=<shopId>` | One shop: profile, hours, services, its frames |
-| `product.html?id=<productId>` | **Product experience:** real photo + a CSS frame-colour/size visualizer, size selector (Small/Medium/Large/XL with live price), colour swatches, real-world size comparison (hand / A4 sheet), photo-preview upload with zoom/move/reset, live order summary, quantity, tabs, shop card, related frames |
+| `product.html?slug=<slug>` (or `?id=`) | **Product page** built from the product data: gallery (front / side / back / close-up… views, zoom, fullscreen, optional 360°), size / colour / print / cover options with live price, Customize This Product (FrameX Studio), and only the sections the shop filled in: Frame Components (exploded view), Print Materials, Quality, Back View, Product Views, Specifications, Customization, Video, Shop, Reviews |
 | `about.html` `services.html` `gallery.html` `contact.html` `faq.html` | Content pages |
+| `templates.html` `template.html?t=<slug>` | Personalised templates: browse and details. Data in `js/templates.js` |
+| `studio.html` | FrameX Studio: customise a template, a single photo or a listed frame (frame, colour, border, mat, size, finish, crop, text) with live preview and price. Options and prices in `js/studio.js` |
+| `shop-dashboard.html` | **Shop dashboard** for local framing shops: product list (edit, preview, duplicate, publish / unpublish, delete), 9-step product wizard with image uploads, inventory, orders, profile, settings. Saves in the browser until a backend exists |
 | `customer-gallery.html` | Customer photos + reviews, and a share form (saved in the visitor's browser only until a backend exists) |
 | `our-story.html` | Brand story, philosophy, team/development credit |
 | `terms-of-use.html` `privacy-notice.html` | Legal pages with a table of contents (draft — see disclaimers on each page) |
@@ -96,5 +99,5 @@ docs/ARCHITECTURE.md
 ## GitHub Pages
 
 Push the folder contents to the repository root (or a `/docs` folder). No root-relative (`/...`) URLs are used,
-file names are lower-case, and detail pages use query strings (`product.html?id=...`), so refresh and deep links
+file names are lower-case, and detail pages use query strings (`product.html?slug=...`), so refresh and deep links
 work without server rewrites.

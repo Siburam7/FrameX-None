@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Personalised photo frame templates — FrameX</title>
+  <meta name="description" content="Choose a designed template, add your photos and text, and preview your personalised frame. Birthday, anniversary, wedding, family and more.">
+  <meta name="theme-color" content="#02030a">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23050816'/%3E%3Crect x='7' y='8' width='18' height='16' rx='1.5' fill='none' stroke='%23ea780e' stroke-width='2.5'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Great+Vibes&display=swap">
+  
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/chrome.css">
+  <link rel="stylesheet" href="assets/css/catalog.css">
+  <link rel="stylesheet" href="assets/css/story.css">
+  <link rel="stylesheet" href="assets/css/overlays.css">
+  <link rel="stylesheet" href="assets/css/footer-faq.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+  <link rel="stylesheet" href="assets/css/templates.css">
+  <script>document.documentElement.classList.add("js");</script>
+</head>
+<body data-page="templates">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-header-root"></div>
+
+  <main id="main">
+    <section class="page-banner tpl-banner" aria-labelledby="page-title">
+      <div class="container">
+        <nav class="page-banner__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span aria-hidden="true">/</span> <span aria-current="page">Templates</span></nav>
+        <h1 class="page-banner__title" id="page-title">Trending Templates</h1>
+        <p class="page-banner__lead">Turn your favourite moments into beautifully designed personalised frames.</p>
+      </div>
+    </section>
+
+    <section class="section tpl-browse" aria-label="Browse templates">
+      <div class="container">
+        <div class="tpl-toolbar">
+          <label class="field tpl-toolbar__search"><span class="visually-hidden">Search templates</span><svg class="icon" aria-hidden="true"><use href="#i-search"></use></svg><input class="input" id="tpl-search" type="search" placeholder="Search birthday, wedding, mom…" autocomplete="off"></label>
+          <label class="tpl-toolbar__sort"><span class="visually-hidden">Sort templates</span>
+            <select class="select" id="tpl-sort">
+              <option value="trending">Trending</option>
+              <option value="popular">Most popular</option>
+              <option value="newest">Newest</option>
+              <option value="price_asc">Price: low to high</option>
+              <option value="price_desc">Price: high to low</option>
+              <option value="photos">Fewest photos</option>
+            </select>
+          </label>
+          <button class="btn btn--outline btn--sm tpl-toolbar__toggle" id="tpl-filter-toggle" type="button" aria-expanded="false" aria-controls="tpl-filter-panel">Filters <span class="tpl-toolbar__badge" id="tpl-filter-count" hidden></span></button>
+        </div>
+
+        <div class="tpl-cats" id="tpl-categories" role="group" aria-label="Template categories"></div>
+
+        <div class="tpl-filters" id="tpl-filter-panel">
+          <div class="tpl-filters__flags" id="tpl-flags" role="group" aria-label="Show only">
+            <button class="chip" type="button" data-tpl-flag="trending" aria-pressed="false"><svg class="icon icon--fill" aria-hidden="true"><use href="#i-star"></use></svg> Trending</button>
+            <button class="chip" type="button" data-tpl-flag="popular" aria-pressed="false"><svg class="icon icon--fill" aria-hidden="true"><use href="#i-heart"></use></svg> Popular</button>
+            <button class="chip" type="button" data-tpl-flag="new" aria-pressed="false">New</button>
+          </div>
+          <label class="tpl-filters__select"><span>Photos</span>
+            <select class="select" id="tpl-photos">
+              <option value="">Any number</option>
+              <option value="1">1 photo</option>
+              <option value="2">2 photos</option>
+              <option value="3">3 photos</option>
+              <option value="4">4 photos</option>
+              <option value="6+">6 or more</option>
+            </select>
+          </label>
+          <label class="tpl-filters__select"><span>Occasion</span>
+            <select class="select" id="tpl-occasion"><option value="">Any occasion</option></select>
+          </label>
+        </div>
+
+        <p class="tpl-count" id="tpl-count" aria-live="polite"></p>
+        <div class="tpl-grid" id="tpl-grid" aria-busy="true"></div>
+        <div class="section-more"><button class="btn btn--outline" id="tpl-more" type="button" hidden>Load more templates</button></div>
+
+        <section class="tpl-saved" id="tpl-saved" aria-labelledby="tpl-saved-title" hidden>
+          <h2 class="tpl-saved__title" id="tpl-saved-title">Your saved designs</h2>
+          <p class="tpl-saved__lead">Saved in this browser. Pick one to keep editing.</p>
+          <ul class="saved-designs"></ul>
+        </section>
+      </div>
+    </section>
+
+    <section class="section section--tight-top" aria-labelledby="tpl-how-title">
+      <div class="container">
+        <div class="tpl-how" data-reveal>
+          <h2 class="tpl-how__title" id="tpl-how-title">How personalised frames work</h2>
+          <ol class="tpl-how__steps">
+            <li><span>1</span><strong>Choose a design</strong>Pick a template for the moment you want to keep.</li>
+            <li><span>2</span><strong>Add photos and text</strong>See your frame update live as you go.</li>
+            <li><span>3</span><strong>Order</strong>Add it to your cart and send your order on WhatsApp.</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer-root"></div>
+  <div id="overlay-root"></div>
+
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/js/core/dom.js" defer></script>
+  <script src="assets/js/core/qs.js" defer></script>
+  <script src="assets/js/core/constants.js" defer></script>
+  <script src="assets/js/services/pricing.js" defer></script>
+  <script src="assets/js/services/location.js" defer></script>
+  <script src="assets/js/services/shop-utils.js" defer></script>
+  <script src="assets/data/site.seed.js" defer></script>
+  <script src="js/edit.js" defer></script>
+  <script src="js/templates.js" defer></script>
+  <script src="assets/data/reviews.seed.js" defer></script>
+  <script src="assets/data/community.seed.js" defer></script>
+  <script src="assets/data/faq.seed.js" defer></script>
+  <script src="assets/data/gallery.seed.js" defer></script>
+  <script src="assets/js/api/seed-provider.js" defer></script>
+  <script src="assets/js/api/http-provider.js" defer></script>
+  <script src="assets/js/api/api.js" defer></script>
+  <script src="assets/js/store/cart.js" defer></script>
+  <script src="assets/js/store/wishlist.js" defer></script>
+  <script src="assets/js/ui/icons.js" defer></script>
+  <script src="assets/js/ui/templates.js" defer></script>
+  <script src="assets/js/ui/toast.js" defer></script>
+  <script src="assets/js/ui/overlay.js" defer></script>
+  <script src="assets/js/ui/reveal.js" defer></script>
+  <script src="assets/js/ui/nav.js" defer></script>
+  <script src="assets/js/ui/chrome.js" defer></script>
+  <script src="assets/js/ui/cart-drawer.js" defer></script>
+  <script src="assets/js/ui/actions.js" defer></script>
+  <script src="assets/js/services/template-engine.js" defer></script>
+  <script src="assets/js/services/upload-service.js" defer></script>
+  <script src="assets/js/store/designs.js" defer></script>
+  <script src="assets/js/ui/template-components.js" defer></script>
+  <script src="assets/js/ui/templates-page.js" defer></script>
+  <script src="assets/js/main.js" defer></script>
+</body>
+</html>

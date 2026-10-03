@@ -715,3 +715,14 @@
   font-size: var(--text-xs);
   font-weight: 600;
 }
+
+/* Product cards use the same warm surface as the rest of the site */
+.product-card {
+  border: 1px solid var(--line-warm);
+  background: var(--ivory);
+}
+
+.product-card__foot,
+.product-card__extra {
+  border-top-color: var(--line-warm);
+}

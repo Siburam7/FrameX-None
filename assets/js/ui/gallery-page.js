@@ -92,10 +92,10 @@
     $("#lightbox-tag").textContent = `${item.sectionTitle} · ${current + 1} of ${shown.length}`;
     $("#lightbox-text").textContent = item.product ? item.product.name : item.alt;
     $("#lightbox-actions").innerHTML = item.product
-      ? `<a class="btn btn--primary btn--sm" href="${FrameX.qs.productUrl(item.product.id)}">View Product</a>${
-          item.product.frame ? `<a class="btn btn--outline-dark btn--sm" href="${FrameX.qs.productUrl(item.product.id)}&amp;mode=custom">Try With Your Own Image</a>` : ""
+      ? `<a class="btn btn--primary btn--sm" href="${FrameX.qs.productUrl(item.product)}">View Product</a>${
+          item.product.frame && item.product.frame.shape !== "arch" ? `<a class="btn btn--outline-dark btn--sm" href="studio.html?product=${encodeURIComponent(item.product.id)}">Try With Your Own Image</a>` : ""
         }`
-      : `<a class="btn btn--outline-dark btn--sm" href="${FrameX.qs.pages.shop}">Explore Frames</a>`;
+      : `<a class="btn btn--outline-dark btn--sm" href="${FrameX.qs.pages.shop}">Shop Frames</a>`;
   }
 
   function open(index) {

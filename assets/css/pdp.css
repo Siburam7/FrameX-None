@@ -989,3 +989,8 @@
 .pdp-mode[hidden] {
   display: none;
 }
+
+/* Link to FrameX Studio under the buy box */
+.pdp-studio-link {
+  margin-top: 10px;
+}

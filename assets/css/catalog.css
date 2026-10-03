@@ -476,3 +476,52 @@
     flex: none;
   }
 }
+
+/* "More filters" (material, frame type, finish, size, price, customizable) */
+.catalog-filters {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--white);
+}
+
+.catalog-filters[hidden] {
+  display: none;
+}
+
+.catalog-filters summary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.catalog-filters__count {
+  color: var(--amber-deep);
+}
+
+.catalog-filters__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr));
+  align-items: end;
+  gap: 12px;
+  padding: 4px 16px 16px;
+}
+
+.catalog-filters__field {
+  display: grid;
+  gap: 4px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.catalog-filters__field .select {
+  width: 100%;
+}
+
+.catalog-filters__switch {
+  min-height: 44px;
+}

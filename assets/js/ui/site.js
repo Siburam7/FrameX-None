@@ -58,27 +58,19 @@
     });
   }
 
-  /** Social icons link to the profile URLs in assets/data/site.seed.js. Until a
-      URL is added, the icon acts as a button that says the link is coming soon
-      (never a dead "#" link). */
+  /** Social icons link to the profile URLs in assets/data/site.seed.js. An icon
+      without a URL stays hidden, and so does "Follow us" when none are set. */
   function applySocials(social) {
     $$("[data-social]").forEach((link) => {
       const url = social[link.dataset.social];
-      if (url) {
-        link.href = url;
-        link.target = "_blank";
-        link.rel = "noopener noreferrer";
-        return;
-      }
-      link.setAttribute("role", "button");
-      link.tabIndex = 0;
-      link.dataset.action = "coming-soon";
-      link.dataset.feature = "Our " + link.dataset.social.charAt(0).toUpperCase() + link.dataset.social.slice(1) + " page";
-      link.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        link.click();
-      });
+      link.hidden = !url;
+      if (!url) return;
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+    });
+    $$(".hero__socials").forEach((group) => {
+      group.hidden = !$$("[data-social]", group).some((link) => !link.hidden);
     });
   }
 

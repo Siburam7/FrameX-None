@@ -1584,3 +1584,16 @@
     flex: 1 1 100%;
   }
 }
+
+.shop-hours__note {
+  color: var(--taupe);
+  font-size: var(--text-sm);
+}
+
+/* Small status pills ("Style samples", "Coming soon", "Private preview") */
+.placeholder-note {
+  border: 1px solid var(--line-warm);
+  background: var(--ivory);
+  color: var(--taupe);
+  font-weight: 600;
+}

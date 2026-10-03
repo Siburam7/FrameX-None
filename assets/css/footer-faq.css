@@ -575,13 +575,36 @@
   overflow-wrap: anywhere;
 }
 
-/* Phones: Support (with the email + WhatsApp) uses the full width so the address never breaks mid-word */
-@media (max-width: 899px) {
-  .site-footer__top > div:nth-child(3) {
-    grid-column: 1 / -1;
+
+/* Footer brand block: logo, one-line description, email + WhatsApp */
+.site-footer__brand {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 14px;
+  max-width: 34ch;
+}
+
+.site-footer__brand p {
+  color: rgba(228, 229, 231, 0.75);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.site-footer__brand .brand img {
+  width: 116px;
+  height: auto;
+}
+
+.site-footer__contact li a {
+  min-height: 36px;
+}
+
+@media (min-width: 900px) {
+  .site-footer__top {
+    grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr));
   }
 
-  .site-footer li a span {
-    overflow-wrap: normal;
+  .site-footer__brand {
+    grid-column: auto;
   }
 }

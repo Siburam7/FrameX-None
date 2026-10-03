@@ -7,7 +7,7 @@
   const todayKey = () => ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date().getDay()];
 
   function hoursHtml(shop) {
-    if (!shop.openingHours) return `<p class="placeholder-note">Opening hours not added yet</p>`;
+    if (!shop.openingHours) return `<p class="shop-hours__note">Opening hours will be listed soon. Message us to check before visiting.</p>`;
     const today = todayKey();
     return `<dl class="shop-hero__hours">${DAYS.map(([k, label]) => {
       const h = shop.openingHours[k];

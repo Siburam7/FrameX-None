@@ -23,8 +23,28 @@
     return response.json();
   }
 
+  /** Authenticated writes for the shop dashboard (the session cookie identifies the shop). */
+  async function send(method, path, body) {
+    const response = await fetch(`${config.apiBaseUrl}${path}`, {
+      method,
+      credentials: "include",
+      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      body: body === undefined ? undefined : JSON.stringify(body)
+    });
+    if (!response.ok) throw new Error(`Request failed (${response.status}) for ${method} ${path}`);
+    return response.status === 204 ? true : response.json();
+  }
+
   FrameX.httpProvider = {
     buildUrl,
+    // Products: GET /products accepts material, frameType, finish, size, priceMin,
+    // priceMax, customizable as well as the older filters.
+    getProductFacets: () => request("/products/facets"),
+    getShopProducts: (shopId) => request(`/shops/${encodeURIComponent(shopId)}/products`, { include: "all" }),
+    getShopProduct: (id) => request(`/shop/products/${encodeURIComponent(id)}`),
+    saveShopProduct: (product) => send("PUT", `/shop/products/${encodeURIComponent(product.id)}`, product),
+    deleteShopProduct: (id) => send("DELETE", `/shop/products/${encodeURIComponent(id)}`),
+    getProductSlugs: () => request("/products/slugs"),
     getSite: () => request("/site"),
     getCategories: () => request("/categories"),
     getReviews: () => request("/reviews"),
@@ -34,6 +54,11 @@
     getShops: (params) => request("/shops", params),
     getShop: (id) => request(`/shops/${encodeURIComponent(id)}`),
     getProducts: (params) => request("/products", params),
-    getProduct: (id) => request(`/products/${encodeURIComponent(id)}`)
+    getProduct: (id) => request(`/products/${encodeURIComponent(id)}`),
+    getTemplates: (params) => request("/templates", params),
+    getTemplate: (slug) => request(`/templates/${encodeURIComponent(slug)}`),
+    getTemplateCategories: () => request("/template-categories"),
+    getTemplateOptions: () => request("/template-options"),
+    getStudioCatalog: () => request("/studio/catalog")
   };
 })((window.FrameX = window.FrameX || {}));

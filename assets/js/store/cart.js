@@ -36,9 +36,11 @@
   const findLine = (key) => lines.find((l) => l.key === key);
 
   /** sizeId selects the priced size option (see services/pricing.js); `size`
-      and `color` are the human-readable labels shown in the cart. */
-  function add(product, { sizeId = null, size = null, color = null, qty = 1, note = "" } = {}) {
-    const key = lineKey(product.id, size, color, note);
+      and `color` are the human-readable labels shown in the cart.
+      `options` (e.g. ["Print: Matte Paper", "Front cover: Acrylic"]) and
+      `unitPrice` come from the product page's pricingService.quote(). */
+  function add(product, { sizeId = null, size = null, color = null, qty = 1, note = "", options = [], unitPrice = null } = {}) {
+    const key = lineKey(product.id, size, [color].concat(options).filter(Boolean).join("|"), note);
     const existing = findLine(key);
     if (existing) {
       existing.qty = Math.min(existing.qty + qty, MAX_QTY);
@@ -49,16 +51,50 @@
         shopId: product.shopId,
         shopName: product.shopName || "",
         name: product.name,
-        image: product.image,
+        image: product.listingImage || product.image,
         size,
         color,
+        options,
         note,
-        unitPrice: pricing.priceForSize(product, sizeId),
+        unitPrice: typeof unitPrice === "number" ? unitPrice : pricing.priceForSize(product, sizeId),
         qty: Math.min(qty, MAX_QTY)
       });
     }
     persist();
     emit({ type: "add", productId: product.id });
+  }
+
+  /** A FrameX Studio design (template, simple photo or customised product).
+      The line keeps the COMPLETE configuration (config), the price breakdown
+      (pricing) and a readable summary, keyed by the saved design id. */
+  function addStudio(item) {
+    const key = `studio::${item.design.id}`;
+    const existing = findLine(key);
+    const line = {
+      key,
+      type: "studio",
+      productType: item.productType, // "template" | "simple-photo" | "product-frame"
+      productId: item.productId || `studio:${item.productType}`,
+      templateId: item.templateId || null,
+      designId: item.design.id,
+      shopId: item.shopId,
+      shopName: item.shopName,
+      name: item.name,
+      image: item.thumbnail || "",
+      size: item.sizeLabel || null,
+      color: null,
+      note: "",
+      summary: item.summary || [],
+      customText: item.customText || {},
+      photoCount: item.photoCount || 0,
+      pricing: item.pricing || null,
+      config: item.config,
+      unitPrice: item.unitPrice,
+      qty: Math.min((existing ? existing.qty : 0) + 1, MAX_QTY)
+    };
+    lines = existing ? lines.map((l) => (l.key === key ? line : l)) : lines.concat(line);
+    persist();
+    emit({ type: "add", productId: line.productId });
   }
 
   function setQty(key, qty) {
@@ -95,5 +131,5 @@
     return [...groups.values()].map((g) => Object.assign(g, { subtotal: subtotal(g.lines) }));
   }
 
-  FrameX.cart = { add, setQty, remove, clear, count, subtotal, groupedByShop, getLines: () => lines.map((l) => Object.assign({}, l)), MAX_QTY };
+  FrameX.cart = { add, addStudio, setQty, remove, clear, count, subtotal, groupedByShop, getLines: () => lines.map((l) => Object.assign({}, l)), MAX_QTY };
 })((window.FrameX = window.FrameX || {}));
