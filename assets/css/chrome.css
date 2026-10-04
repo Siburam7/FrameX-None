@@ -368,8 +368,73 @@
 
 /* With eight nav items, the header location button only shows on wide screens
    (it stays in the mobile menu and in the "Photo-frame shops near you" section). */
-@media (min-width: 1100px) and (max-width: 1499px) {
+/* The chip never wraps; with the account button in the header it needs a wider screen. */
+.location-chip {
+  flex: none;
+  white-space: nowrap;
+}
+
+@media (min-width: 1100px) and (max-width: 1699px) {
   .site-header__actions .location-chip {
     display: none;
   }
+}
+
+/* Account button (shown when the FrameX backend is connected).
+   Logged out: "Log in". Logged in: first name / Dashboard / Admin. */
+.account-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: var(--radius-pill);
+  color: var(--white);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color var(--dur-base) var(--ease-out);
+}
+
+.account-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.account-btn .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.account-btn.is-authed {
+  border-color: var(--amber-strong);
+}
+
+.account-btn__text {
+  display: none;
+  max-width: 96px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 380px) {
+  .account-btn {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 1100px) {
+  .account-btn {
+    width: auto;
+    padding: 0 16px;
+  }
+
+  .account-btn__text {
+    display: inline;
+  }
+}
+
+.primary-nav__mobile-extras [data-account-mobile] {
+  justify-content: center;
 }

@@ -3,7 +3,7 @@
 
      productService   customer reads (get, list, facets) and shop writes
                       (save, publish, unpublish, duplicate, remove)
-     shopService      shops, and which shop this device manages
+     shopService      shops (the logged-in shop comes from FrameX.auth)
 
    They sit on FrameX.api (seed provider today, HTTP provider later), the
    product model (rules, validation) and the media service (uploaded files),
@@ -12,9 +12,6 @@
 (function (FrameX) {
   const model = () => FrameX.productModel;
   const api = () => FrameX.api;
-  const SESSION =
-    (FrameX.config.storageKeys && FrameX.config.storageKeys.shopSession) ||
-    "framex.shopSession.v1";
 
   async function listingImageFor(p, previous) {
     const main = model().mainView(p);
@@ -127,22 +124,6 @@
   const shopService = {
     list: (params) => api().getShops(Object.assign({ limit: 1000 }, params)),
     get: (id) => api().getShop(id),
-    /** Shop sign-in arrives with the backend; until then this device picks its shop. */
-    currentId() {
-      try {
-        return localStorage.getItem(SESSION) || null;
-      } catch (e) {
-        return null;
-      }
-    },
-    setCurrent(id) {
-      try {
-        if (id) localStorage.setItem(SESSION, id);
-        else localStorage.removeItem(SESSION);
-      } catch (e) {
-        /* storage blocked: the choice lasts for this page only */
-      }
-    },
   };
 
   FrameX.productService = productService;

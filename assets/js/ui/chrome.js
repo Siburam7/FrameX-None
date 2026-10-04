@@ -21,6 +21,35 @@
   const locationChip = `<button class="location-chip" type="button" data-action="use-location">
       ${icon("pin")}<span><small>Nearby shops</small><strong data-location-label>Set your location</strong></span></button>`;
 
+  /* Account button. Rendered only when a FrameX backend is configured; it
+     starts as "Log in" and is updated by syncAccount() once the session is known. */
+  const accountBtn = () =>
+    FrameX.http && FrameX.http.enabled()
+      ? `<a class="account-btn" href="${pages.login}" data-account aria-label="Log in">${icon("user")}<span class="account-btn__text" data-account-text>Log in</span></a>`
+      : "";
+  const accountLink = () =>
+    FrameX.http && FrameX.http.enabled()
+      ? `<a class="btn btn--light" href="${pages.login}" data-account-mobile>${icon("user")} <span data-account-text>Log in</span></a>`
+      : "";
+
+  /** Point the account button at the right place for whoever is logged in. */
+  function syncAccount() {
+    const s = FrameX.auth && FrameX.auth.state;
+    if (!s) return;
+    const user = s.user;
+    const href = user ? (user.role === "CUSTOMER" ? pages.account : FrameX.auth.homeFor(user.role)) : pages.login;
+    const first = user ? String(user.role === "SHOP" && user.shop ? user.shop.name : user.name).split(/\s+/)[0] : "";
+    const text = user ? (user.role === "SHOP" ? "Dashboard" : user.role === "ADMIN" ? "Admin" : first) : "Log in";
+    document.querySelectorAll("[data-account], [data-account-mobile]").forEach((a) => {
+      a.href = href;
+      a.classList.toggle("is-authed", Boolean(user));
+      if (a.hasAttribute("data-account")) a.setAttribute("aria-label", user ? `Your account (${first})` : "Log in");
+      const label = a.querySelector("[data-account-text]");
+      if (label) label.textContent = a.hasAttribute("data-account-mobile") && user ? (user.role === "CUSTOMER" ? "My account" : text) : text;
+    });
+  }
+  document.addEventListener("framex:auth-change", syncAccount);
+
   function header(current) {
     // "shop-detail" and "product" belong to the Shop section in the nav.
     const section =
@@ -43,10 +72,12 @@
         <nav class="primary-nav" id="primary-nav" aria-label="Primary">
           <ul class="primary-nav__list">${links}</ul>
           <div class="primary-nav__mobile-extras">${locationChip}
+            ${accountLink()}
             <a class="btn btn--primary" href="${pages.shop}">Shop Frames</a></div>
         </nav>
         <div class="site-header__actions">${locationChip}
           <a class="btn signup-btn" href="${pages.shop}">Shop Frames</a>
+          ${accountBtn()}
           <button class="cart-btn" type="button" data-action="open-cart" aria-label="Open cart, 0 items">${icon("bag")}<span class="cart-btn__count" hidden>0</span></button>
           <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open menu"><span class="nav-toggle__bars"></span></button>
         </div>
@@ -114,7 +145,8 @@
         ${col("Support", [
           ["FAQ", pages.faq],
           ["How It Works", pages.services + "#journey"],
-          ["For Framing Shops", pages.shopDashboard],
+          ["Partner With FrameX", pages.partner],
+          ["Shop Login", pages.login + "?type=shop"],
         ])}
         ${col("Legal", [
           ["Terms of Use", pages.terms],
@@ -152,6 +184,7 @@
     $("#site-header-root").outerHTML = header(page);
     $("#site-footer-root").outerHTML = footer();
     $("#overlay-root").outerHTML = overlays;
+    syncAccount();
   }
 
   FrameX.chrome = { render };

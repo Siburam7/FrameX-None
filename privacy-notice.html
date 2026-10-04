@@ -51,7 +51,8 @@
             <li><a href="#s6">Data retention</a></li>
             <li><a href="#s7">Third-party services</a></li>
             <li><a href="#s8">Your rights</a></li>
-            <li><a href="#s9">Contact us</a></li>
+            <li><a href="#s9">Accounts and nearby-shop search</a></li>
+            <li><a href="#s10">Contact us</a></li>
           </ol>
         </nav>
         <div class="prose legal__body" id="legal-heading">
@@ -107,9 +108,11 @@
           </section>
           <section class="legal-section" id="s7">
             <h2>7. Third-party services</h2>
-            <p>The site loads fonts from Google Fonts and, if you grant permission, uses your browser's built-in
-              location feature to calculate distance to shops entirely on your device &mdash; your coordinates are not
-              sent to FrameX. No advertising or analytics trackers are used in this version of the site.</p>
+            <p>The site loads fonts from Google Fonts. If you grant permission, it uses your browser&rsquo;s built-in
+              location feature to find nearby shops. Where FrameX accounts are not switched on, the distance is worked
+              out on your device and your coordinates are not sent to FrameX. Where they are switched on, your
+              coordinates are sent to the FrameX server only to calculate distances and are not stored in the FrameX database (see section 9).
+              No advertising or analytics trackers are used in this version of the site.</p>
           </section>
           <section class="legal-section" id="s8">
             <h2>8. Your rights</h2>
@@ -119,7 +122,31 @@
               delete your stored information.</p>
           </section>
           <section class="legal-section" id="s9">
-            <h2>9. Contact us</h2>
+            <h2>9. Accounts and nearby-shop search</h2>
+            <p>Where FrameX accounts are switched on, the site talks to a FrameX server, and the following applies in
+              addition to the sections above.</p>
+            <ul>
+              <li><strong>Your account.</strong> If you create an account, FrameX stores your name, email address and
+                phone number (if you give one). Your password is stored only as a one-way hash; FrameX staff cannot
+                read it. You can see and edit your details on your account page.</li>
+              <li><strong>Staying logged in.</strong> A session cookie keeps you logged in. It contains a random
+                code, not your password, and cannot be read by scripts on the page. Logging out ends the session.</li>
+              <li><strong>Nearby shops.</strong> If you press &ldquo;Use my location&rdquo;, your browser asks your
+                permission. Your coordinates are then sent to the FrameX server only to find shops near you and
+                calculate their distance. They are not saved with your account or stored in the FrameX database.</li>
+              <li><strong>Typing a location.</strong> If you enter a city, area or PIN code instead, that text is
+                looked up through OpenStreetMap's Nominatim place search to find its approximate position.</li>
+              <li><strong>Shop applications.</strong> Details sent through &ldquo;Partner With FrameX&rdquo; are stored
+                so FrameX can review the shop and contact its owner.</li>
+              <li><strong>Password codes by text message.</strong> If you reset your password with your mobile number,
+                FrameX sends a one-time code to that number through an SMS delivery provider.</li>
+              <li><strong>Password emails.</strong> If you ask to reset your password by email, FrameX sends a one-time code
+                and link to the address on your account through an email delivery provider.</li>
+            </ul>
+            <p>To have your account or application removed, contact us using the details below.</p>
+          </section>
+          <section class="legal-section" id="s10">
+            <h2>10. Contact us</h2>
             <p>Questions about this notice can be sent through the <a href="contact.html">Contact page</a>, by email to
               <a href="mailto:support.framex@gmail.com">support.framex@gmail.com</a>, or on WhatsApp at <a
                 href="https://wa.me/919337169824" target="_blank" rel="noopener noreferrer">+91 93371 69824</a>.
@@ -146,8 +173,11 @@
   <script src="assets/data/community.seed.js" defer></script>
   <script src="assets/data/faq.seed.js" defer></script>
   <script src="assets/data/gallery.seed.js" defer></script>
+  <script src="assets/js/api/client.js" defer></script>
+  <script src="assets/js/store/auth.js" defer></script>
   <script src="assets/js/api/seed-provider.js" defer></script>
   <script src="assets/js/api/http-provider.js" defer></script>
+  <script src="assets/js/api/shop-directory.js" defer></script>
   <script src="assets/js/api/api.js" defer></script>
   <script src="assets/js/store/cart.js" defer></script>
   <script src="assets/js/store/wishlist.js" defer></script>

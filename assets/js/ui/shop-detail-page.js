@@ -75,6 +75,12 @@
       .map((w) => w[0])
       .join("");
 
+    // Real coordinates only: the link appears when the shop has a stored position.
+    const loc = shop.location || {};
+    const directions =
+      Number.isFinite(loc.latitude) && Number.isFinite(loc.longitude)
+        ? `<a class="btn btn--outline" href="https://www.google.com/maps/dir/?api=1&destination=${loc.latitude},${loc.longitude}" target="_blank" rel="noopener noreferrer">${icon("pin")} Directions</a>`
+        : "";
     root.innerHTML = `<div class="shop-hero">
       ${shop.coverImage ? `<div class="shop-hero__cover"><img src="${esc(shop.coverImage)}" alt="${esc(shop.name)}" width="1200" height="514" fetchpriority="high"></div>` : ""}
       <div class="shop-hero__body">
@@ -92,6 +98,7 @@
           </ul>
           <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap">
             <a class="btn btn--primary" href="#collection">Browse frames</a>
+            ${directions}
             <a class="btn btn--outline" href="shop.html#shops">All shops</a>
           </div>
         </div>
@@ -100,7 +107,8 @@
 
     $("#shop-title").textContent = `Frames from ${shop.name}`;
     const categories = await FrameX.api.getCategories();
-    FrameX.collection.init(categories, { shopId: shop.id });
+    // Products still come from the catalogue file; a backend shop points at them with catalogRef.
+    FrameX.collection.init(categories, { shopId: shop.catalogRef || shop.id });
   }
 
   FrameX.shopDetailPage = { init };

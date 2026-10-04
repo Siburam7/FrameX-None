@@ -1,0 +1,55 @@
+# Render blueprint for the FrameX backend (optional: any Node.js host works).
+# The website itself stays on GitHub Pages. See backend/README.md → Deploy.
+# Values marked "sync: false" are secrets you type into Render's dashboard;
+# nothing secret is stored in this file.
+services:
+  - type: web
+    name: framex-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SERVE_FRONTEND
+        value: "false"
+      - key: TRUST_PROXY
+        value: "1"
+      - key: DATABASE_SSL
+        value: require
+      - key: DATABASE_URL
+        sync: false
+      - key: AUTH_SECRET
+        generateValue: true
+      # The website's public address, e.g. https://siburam7.github.io/FrameX-None (used in reset links)
+      - key: FRONTEND_URL
+        sync: false
+      # The website's origin, e.g. https://siburam7.github.io
+      - key: CORS_ORIGINS
+        sync: false
+      # GitHub Pages and this host are different sites, so the session travels as a bearer token.
+      - key: AUTH_ALLOW_BEARER
+        value: "true"
+      # Email: Brevo. Until the key and a verified sender are filled in, the website says
+      # "Email service is not configured." (the logs and "npm run doctor" say what is missing).
+      - key: EMAIL_PROVIDER
+        value: brevo
+      - key: EMAIL_PROVIDER_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      # SMS codes: Fast2SMS. Set SMS_PROVIDER to "none" to launch with email only.
+      - key: SMS_PROVIDER
+        value: fast2sms
+      - key: SMS_API_KEY
+        sync: false
+      - key: SMS_SENDER_ID
+        sync: false
+      - key: SMS_TEMPLATE_ID
+        sync: false
+      - key: GEOCODER_PROVIDER
+        value: nominatim
+      - key: GEOCODER_CONTACT_EMAIL
+        sync: false

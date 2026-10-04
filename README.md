@@ -15,13 +15,42 @@ because every link and asset path is **relative**.
 | `about.html` `services.html` `gallery.html` `contact.html` `faq.html` | Content pages                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `templates.html` `template.html?t=<slug>`                             | Personalised templates: browse and details. Data in `js/templates.js`                                                                                                                                                                                                                                                                                                                                              |
 | `studio.html`                                                         | FrameX Studio: customise a template, a single photo or a listed frame (frame, colour, border, mat, size, finish, crop, text) with live preview and price. Options and prices in `js/studio.js`                                                                                                                                                                                                                     |
-| `shop-dashboard.html`                                                 | **Shop dashboard** for local framing shops: product list (edit, preview, duplicate, publish / unpublish, delete), 9-step product wizard with image uploads, inventory, orders, profile, settings. Saves in the browser until a backend exists                                                                                                                                                                      |
+| `shop-dashboard.html` | **Shop dashboard** (SHOP login required): Shop ID, status, location, shop profile, account. Products / Orders / Inventory are Step 2 areas; the product tools work today only for shops linked to the catalogue file and save in the browser |
+| `login.html` `signup.html` `forgot-password.html` `reset-password.html` `account.html` | **Accounts** (need the backend): customer sign-up, customer / shop login, password reset, shop password setup, account page |
+| `partner.html` | **Partner With FrameX**: a shop applies to be listed. Creates an application, never a login |
+| `admin.html` | **Admin dashboard** (ADMIN login required): shop applications, approve / reject, shops, activate / deactivate, locations, shop credentials, activity log |
 | `customer-gallery.html`                                               | Customer photos + reviews, and a share form (saved in the visitor's browser only until a backend exists)                                                                                                                                                                                                                                                                                                           |
 | `our-story.html`                                                      | Brand story, philosophy, team/development credit                                                                                                                                                                                                                                                                                                                                                                   |
 | `terms-of-use.html` `privacy-notice.html`                             | Legal pages with a table of contents (draft — see disclaimers on each page)                                                                                                                                                                                                                                                                                                                                        |
 
 Header, footer, cart drawer and toasts are rendered from **one template** (`assets/js/ui/chrome.js`),
 so navigation is never copy-pasted between pages. Each page only sets `<body data-page="...">`.
+
+## Backend (Step 1: accounts, roles, shop onboarding, nearby shops)
+
+The site is still static and still deploys to GitHub Pages. Accounts and nearby-shop search are provided by a separate
+Node.js + PostgreSQL service in [`backend/`](backend/README.md):
+
+```bash
+cd backend
+npm install
+npm run seed:dev   # optional demo data + demo logins
+npm start          # http://localhost:4000  (serves the website too)
+```
+
+**Password reset needs an email provider and an SMS provider.** Until their API keys are in `backend/.env`, no
+email or text message is sent and the Forgot password page says "Email service is not configured." /
+"SMS service is not configured." Setup steps (Brevo for email, Fast2SMS for SMS) are in
+[`backend/README.md`](backend/README.md) → "Email" and "SMS"; `npm run doctor` in `backend/` shows what is missing.
+
+On Windows you can also double-click **`start-backend.bat`** in the project folder. Keep its window open while you
+use the site: when the backend is not running, the login pages say "Accounts aren't available right now".
+
+- `assets/js/config.js` → `PRODUCTION_API_URL` is the deployed backend's address. While it is empty the site works
+  exactly as before (no accounts; shops from `js/edit.js`).
+- With a backend, shop lists and every distance come from it (`GET /api/shops/nearby`); products still come from
+  `js/edit.js` until Step 2.
+- Full guide (configuration, admin creation, deployment, API): [`backend/README.md`](backend/README.md).
 
 ## Run / test locally
 

@@ -1,0 +1,8 @@
+# Backend secrets, local database and dependencies never go to Git.
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/.data/
+backend/node_modules/
+node_modules/
+*.log

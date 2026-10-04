@@ -34,6 +34,13 @@
     template: () => call("templateDetailPage"),
     studio: () => call("studioPage"),
     "shop-dashboard": () => call("shopDashboard"),
+    login: () => call("authPages"),
+    signup: () => call("authPages"),
+    "forgot-password": () => call("authPages"),
+    "reset-password": () => call("authPages"),
+    account: () => call("accountPage"),
+    partner: () => call("partnerPage"),
+    admin: () => call("adminPage"),
     "customer-gallery": () => call("customerGalleryPage"),
     contact: () => call("contactPage"),
     faq: () => call("faq"),
@@ -47,6 +54,8 @@
     FrameX.nav.init();
     FrameX.actions.init();
     FrameX.cartDrawer.init();
+    // Who is logged in (one request; pages that need it await FrameX.auth.ready).
+    if (FrameX.auth) FrameX.auth.init();
     try {
       await (PAGES[document.body.dataset.page] || PAGES.about)();
     } catch (error) {

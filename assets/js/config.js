@@ -6,7 +6,39 @@
    Switching modes is the only change the frontend needs once a backend exists.
    ========================================================================== */
 (function (FrameX) {
+  /* ---- FrameX backend (accounts, shops, nearby search) -------------------
+     The website stays a static site; the backend is a separate service
+     (see backend/README.md).
+
+     PRODUCTION_API_URL  the deployed backend's address + "/api", for example
+                         "https://framex-api.onrender.com/api".
+                         Leave "" until the backend is deployed: the site then
+                         works exactly as before, without accounts.
+     Local development   pages opened from localhost / 127.0.0.1 use the
+                         backend on port 4000 of the same machine.            */
+  const PRODUCTION_API_URL = "";
+  const LOCAL_API_PORT = "4000";
+  const host = window.location.hostname;
+  const isLocal = host === "localhost" || host === "127.0.0.1";
+  const backendUrl = isLocal
+    ? window.location.port === LOCAL_API_PORT
+      ? "/api"
+      : `http://${host}:${LOCAL_API_PORT}/api`
+    : PRODUCTION_API_URL;
+
   FrameX.config = {
+    backend: {
+      url: backendUrl,
+      // "cookie" (recommended): the session lives in an httpOnly cookie that
+      //   JavaScript can't read. Needs the website and the API on the same site
+      //   (localhost, or example.com + api.example.com).
+      // "bearer": the session token is kept in sessionStorage and sent as a
+      //   header. Only for a website and API on different sites (e.g.
+      //   *.github.io + *.onrender.com); the backend needs AUTH_ALLOW_BEARER=true.
+      session: "cookie",
+    },
+    // Used only if the backend can't be asked (GET /api/config is the source of truth).
+    nearby: { radiusOptionsKm: [5, 10, 25, 50], defaultRadiusKm: 25 },
     dataMode: "seed",
     apiBaseUrl: "/api/v1",
     currency: "INR",
@@ -21,7 +53,6 @@
       wishlist: "framex.wishlist.v1",
       shopProducts: "framex.shopProducts.v1", // products created / edited in the shop dashboard (this device)
       shopEditor: "framex.shopEditor.v1", // unsaved edits to published products
-      shopSession: "framex.shopSession.v1", // which shop this device manages
     },
   };
 })((window.FrameX = window.FrameX || {}));

@@ -399,7 +399,7 @@
           ${has(a.leadTime) ? `<p class="pshop__line">${icon("clock")}<span>Ready in ${esc(a.leadTime)}</span></p>` : ""}
           ${has(a.deliveryNotes) ? `<p class="pshop__line">${icon("truck")}<span>${esc(a.deliveryNotes)}</span></p>` : ""}
         </div>
-        <div class="pshop__actions"><a class="btn btn--outline btn--sm" href="${FrameX.qs.shopUrl(s.id)}">View shop</a><a class="btn btn--outline btn--sm" href="${FrameX.qs.shopListUrl({ shop: s.id })}#collection">More from this shop</a></div>
+        <div class="pshop__actions"><a class="btn btn--outline btn--sm" href="${FrameX.qs.shopUrl(s.id)}">View shop</a><a class="btn btn--outline btn--sm" href="${FrameX.qs.shopListUrl({ shop: s.catalogRef || s.id })}#collection">More from this shop</a></div>
       </div>`,
     );
   }

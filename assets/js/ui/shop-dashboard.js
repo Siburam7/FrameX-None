@@ -1,32 +1,41 @@
 /* ==========================================================================
-   Shop dashboard (shop-dashboard.html) — ShopProductManager.
+   Shop dashboard (shop-dashboard.html). SHOP role only.
 
    Routes (hash, so it works on any static host):
-     #/products                    product list: add, edit, preview, duplicate,
-                                   publish / unpublish, delete
-     #/products/new                ProductWizard for a new product
-     #/products/<id>/edit[?step=]  ProductWizard for an existing product
-     #/orders  #/inventory  #/profile  #/settings
+     #/overview                    Shop ID, status, location, account
+     #/profile                     shop profile (FrameX-controlled identity +
+                                   the fields a shop may edit itself)
+     #/products  #/orders  #/inventory
+                                   Step 2 areas. Product tools work today only
+                                   for shops linked to the catalogue file, and
+                                   save in this browser; otherwise a placeholder.
+     #/account                     login details, password, log out
 
-   Shop sign-in comes with the FrameX backend. Until then this device picks
-   the shop it manages (shopService.currentId), and products are saved in this
-   browser through productService (seed provider). Nothing here pretends to
-   reach a server.
+   Access: the page asks the backend who is logged in (FrameX.auth.guard) and
+   loads the shop from GET /api/shops/<own Shop ID>/dashboard. The backend
+   refuses that request for customers, admins and any other shop, so nothing
+   here can show another shop's data.
    ========================================================================== */
 (function (FrameX) {
   const { $, $$, escapeHtml: esc, icon } = FrameX.dom;
   const { formatPrice } = FrameX.pricing;
   const M = () => FrameX.productModel;
   const svc = () => FrameX.productService;
-  const shopSvc = () => FrameX.shopService;
 
   const NAV = [
-    ["products", "Products", "frame"],
+    ["overview", "Overview", "frame"],
+    ["profile", "Shop profile", "store"],
+    ["products", "Products", "image"],
     ["orders", "Orders", "bag"],
     ["inventory", "Inventory", "package"],
-    ["profile", "Profile", "store"],
-    ["settings", "Settings", "settings"],
+    ["account", "Account", "settings"],
   ];
+  const SHOP_STATUS = {
+    ACTIVE: ["Approved · Active", "published", "Your shop is listed. Customers can find it and see how far away it is."],
+    INACTIVE: ["Approved · Inactive", "draft", "Your shop is approved but not listed to customers right now. Contact FrameX to activate it."],
+    PENDING: ["Waiting for approval", "pending_review", "FrameX is still reviewing your shop."],
+    REJECTED: ["Not approved", "unpublished", "This shop isn't approved on FrameX."],
+  };
   const FILTERS = [
     ["all", "All"],
     ["draft", "Drafts"],
@@ -57,7 +66,7 @@
       : "";
 
   function parse() {
-    const h = location.hash.replace(/^#/, "") || "/products";
+    const h = location.hash.replace(/^#/, "") || "/overview";
     const [path, query] = h.split("?");
     return {
       parts: path.split("/").filter(Boolean),
@@ -65,43 +74,47 @@
     };
   }
 
-  /* ---------------------------------------------------------------- Shop choice */
-  async function chooseShop() {
-    const { items } = await shopSvc().list();
-    root.innerHTML = `<div class="sd-choose">
-      <h1 class="sd-title">Shop dashboard</h1>
-      <p class="sd-lead">Shop sign-in arrives with the FrameX backend. On this device, choose the shop you manage. Products you create are saved in this browser until then.</p>
-      <ul class="sd-choose__list">${items
-        .map(
-          (s) =>
-            `<li><button class="sd-choose__shop" type="button" data-pick="${esc(s.id)}"><span class="sd-logo">${esc(monogram(s.name))}</span><span><strong>${esc(s.name)}</strong><small>${esc(FrameX.shopUtils.formatAddress(s))}${s.isSample ? " · Sample shop" : ""}</small></span>${icon("chev-right")}</button></li>`,
-        )
-        .join("")}</ul></div>`;
-    root.onclick = (e) => {
-      const b = e.target.closest("[data-pick]");
-      if (!b) return;
-      shopSvc().setCurrent(b.dataset.pick);
-      start();
-    };
-  }
-
   /* ---------------------------------------------------------------- Layout */
   function layout(section) {
     root.onclick = null;
+    const [label, tone] = SHOP_STATUS[shop.status] || [shop.status, "draft"];
     root.innerHTML = `<div class="sd">
       <aside class="sd-side">
-        <div class="sd-shop"><span class="sd-logo">${esc(monogram(shop.name))}</span><div><strong>${esc(shop.name)}</strong><button class="sd-link" type="button" data-switch>Switch shop</button></div></div>
-        <nav class="sd-nav" aria-label="Dashboard"><ul>${NAV.map(([id, label, ic]) => `<li><a href="#/${id}"${id === section ? ' aria-current="page"' : ""}>${icon(ic)}<span>${label}</span></a></li>`).join("")}</ul></nav>
-        <p class="sd-side__note">${icon("alert")} Saved on this device until the FrameX backend is connected.</p>
+        <div class="sd-shop"><span class="sd-logo">${esc(monogram(shop.name))}</span><div><strong>${esc(shop.name)}</strong><span class="sd-side__who"><code>${esc(shop.shopCode)}</code></span></div></div>
+        <span class="sd-status sd-status--${tone}">${esc(label)}</span>
+        <nav class="sd-nav" aria-label="Dashboard"><ul>${NAV.map(([id, text, ic]) => `<li><a href="#/${id}"${id === section ? ' aria-current="page"' : ""}>${icon(ic)}<span>${text}</span></a></li>`).join("")}</ul></nav>
+        <button class="btn btn--outline btn--sm" type="button" data-logout>${icon("logout")} Log out</button>
       </aside>
       <section class="sd-main" data-main></section>
     </div>`;
-    $("[data-switch]", root).addEventListener("click", () => {
-      shopSvc().setCurrent(null);
-      location.hash = "#/products";
-      start();
-    });
+    $("[data-logout]", root).addEventListener("click", logout);
     return $("[data-main]", root);
+  }
+
+  async function logout() {
+    window.onbeforeunload = null;
+    await FrameX.auth.logout();
+    window.location.href = "login.html?type=shop";
+  }
+
+  /* ---------------------------------------------------------------- Overview */
+  const mapUrl = (lat, lng) => `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`;
+  const fullAddress = () => [shop.address.line1, shop.address.area, shop.address.city, shop.address.state, shop.address.postalCode].filter(Boolean).join(", ");
+
+  function overviewView(main) {
+    const [label, tone, meaning] = SHOP_STATUS[shop.status] || [shop.status, "draft", ""];
+    const loc = shop.location || {};
+    const hasPin = loc.latitude != null && loc.longitude != null;
+    main.innerHTML = `<header class="sd-head"><div><h1 class="sd-title">${esc(shop.name)}</h1><p class="sd-lead">Your shop on FrameX.</p></div>
+        ${shop.status === "ACTIVE" ? `<a class="btn btn--outline btn--sm" href="${FrameX.qs.shopUrl(shop.shopCode)}">View public page</a>` : ""}</header>
+      <div class="sd-cards">
+        <article class="sd-card"><h2>Shop ID</h2><p class="sd-card__big"><code>${esc(shop.shopCode)}</code></p><p>Your FrameX identity. Use it (or your email) to log in.</p></article>
+        <article class="sd-card"><h2>Status</h2><p><span class="sd-status sd-status--${tone}">${esc(label)}</span></p><p>${esc(meaning)}</p></article>
+        <article class="sd-card"><h2>Location</h2><p>${esc(fullAddress()) || "No address on file"}</p>
+          ${hasPin ? `<p><code>${Number(loc.latitude).toFixed(5)}, ${Number(loc.longitude).toFixed(5)}</code></p><a class="btn btn--outline btn--sm" href="${mapUrl(loc.latitude, loc.longitude)}" target="_blank" rel="noopener noreferrer">${icon("pin")} View on map</a>` : ""}
+          <p>Customers' distances are measured to this point. If the pin is wrong, ask FrameX to correct it.</p></article>
+        <article class="sd-card"><h2>Account</h2><p>${esc(shop.account ? shop.account.email : "")}</p><a class="btn btn--outline btn--sm" href="#/account">Account settings</a></article>
+      </div>`;
   }
 
   /* ---------------------------------------------------------------- Products */
@@ -313,27 +326,59 @@
 
   function profileView(main) {
     const { FULFILMENT_METHODS } = FrameX.constants;
-    const rows = [
+    const forms = FrameX.forms;
+    const options = Object.entries(FULFILMENT_METHODS).filter(([id, m]) => m.enabled && ["pickup", "shop_delivery", "delivery_partner"].includes(id));
+    const fixed = [
+      ["Shop ID", shop.shopCode],
       ["Shop name", shop.name],
-      ["Address", FrameX.shopUtils.formatAddress(shop)],
-      ["Phone", shop.phone],
-      ["About", shop.description],
-      [
-        "Pickup & delivery",
-        (shop.fulfilment || [])
-          .map((id) => (FULFILMENT_METHODS[id] || {}).label)
-          .filter(Boolean)
-          .join(", "),
-      ],
+      ["Owner", shop.ownerName],
+      ["Address", fullAddress()],
     ];
-    main.innerHTML = `<header class="sd-head"><div><h1 class="sd-title">Profile</h1><p class="sd-lead">What customers see about your shop.</p></div><a class="btn btn--outline btn--sm" href="${FrameX.qs.shopUrl(shop.id)}">View public page</a></header>
-      <dl class="sd-profile">${rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v ? esc(v) : `<span class="pp-muted">Not added yet</span>`}</dd></div>`).join("")}</dl>
-      <p class="wz-note">${icon("alert")} Profile changes are made by FrameX for now. Send updates to <a href="contact.html">FrameX support</a>.</p>`;
+    main.innerHTML = `<header class="sd-head"><div><h1 class="sd-title">Shop profile</h1><p class="sd-lead">What customers see about your shop.</p></div></header>
+      <dl class="sd-profile">${fixed.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v ? esc(v) : `<span class="pp-muted">Not added yet</span>`}</dd></div>`).join("")}</dl>
+      <p class="wz-note">${icon("lock")} Shop ID, name, address and map location are managed by FrameX. To change them, <a href="contact.html">contact FrameX</a>.</p>
+      <h2 class="ad-subtitle">Details you can edit</h2>
+      <form id="shop-profile-form" class="form-grid" novalidate>
+        ${forms.field("phone", "Shop phone", { type: "tel", autocomplete: "tel", value: shop.phone || "", hint: "Shown to customers on your shop page.", prefix: "sp" })}
+        ${forms.field("description", "About your shop", { rows: 4, maxlength: 1000, value: shop.description || "", prefix: "sp" })}
+        <div class="form-field"><span class="ad-label">Pickup and delivery</span><div class="ad-checks">${options.map(([id, m]) => `<label class="wz-check"><input type="checkbox" name="fulfilment" value="${id}"${(shop.fulfilment || []).includes(id) ? " checked" : ""}> ${esc(m.label)}</label>`).join("")}</div></div>
+        <div class="form-status" role="status" aria-live="polite"></div>
+        <div><button class="btn btn--dark btn--sm" type="submit">Save changes</button></div>
+      </form>`;
+    const form = $("#shop-profile-form", main);
+    forms.handle(form, {
+      busyLabel: "Saving…",
+      send: (v) => FrameX.http.patch(`/shops/${encodeURIComponent(shop.shopCode)}/profile`, { phone: v.phone, description: v.description, fulfilment: new FormData(form).getAll("fulfilment") }),
+      onSuccess(result) {
+        setShop(result.shop);
+        FrameX.toast.show("Shop profile saved.");
+        profileView(main);
+      },
+    });
+  }
+
+  /** Products / inventory are Step 2. Shown instead of the tools for shops not linked to the catalogue file. */
+  function comingSoon(main, title, text, ic) {
+    main.innerHTML = `<header class="sd-head"><div><h1 class="sd-title">${title}</h1></div></header>
+      <div class="sd-empty">${icon(ic)}<strong>${title} are coming in the next FrameX update</strong><span>${text}</span></div>`;
+  }
+
+  function accountView(main) {
+    const a = shop.account || {};
+    main.innerHTML = `<header class="sd-head"><div><h1 class="sd-title">Account</h1><p class="sd-lead">How you log in to FrameX.</p></div></header>
+      <dl class="sd-profile">
+        <div><dt>Shop ID</dt><dd><code>${esc(shop.shopCode)}</code></dd></div>
+        <div><dt>Login email</dt><dd>${esc(a.email || "")}</dd></div>
+        <div><dt>Last login</dt><dd>${a.lastLoginAt ? esc(when(a.lastLoginAt)) : "—"}</dd></div>
+      </dl>
+      <div class="ad-actions"><a class="btn btn--dark btn--sm" href="account.html">${icon("lock")} Change password</a><button class="btn btn--outline btn--sm" type="button" data-logout-2>${icon("logout")} Log out</button></div>
+      ${shop.productTools ? `<h2 class="ad-subtitle">Products on this device</h2><div data-device></div>` : ""}`;
+    $("[data-logout-2]", main).addEventListener("click", logout);
+    if (shop.productTools) settingsView($("[data-device]", main));
   }
 
   async function settingsView(main) {
-    main.innerHTML = `<header class="sd-head"><div><h1 class="sd-title">Settings</h1></div></header>
-      <div class="sd-cards">
+    main.innerHTML = `<div class="sd-cards">
         <article class="sd-card"><h2>Publishing</h2><p>${FrameX.config.productModeration ? "FrameX reviews new products before they go live (Pending review)." : "Products go live as soon as you publish them. FrameX may add a review step later; products would then show “Pending review” first."}</p></article>
         <article class="sd-card"><h2>Export products</h2><p>Download the products you created or edited on this device as a file you can send to FrameX. Uploaded photos stay on this device and are not in the file.</p><button class="btn btn--outline btn--sm" type="button" data-export>${icon("upload")} Download products (JSON)</button></article>
         <article class="sd-card"><h2>This device</h2><p>Remove every product, draft and photo this browser saved for the dashboard. Products in the catalogue file are not affected.</p><button class="btn btn--outline btn--sm sd-danger" type="button" data-wipe>Clear dashboard data</button></article>
@@ -388,11 +433,22 @@
   async function route() {
     window.onbeforeunload = null;
     const { parts, params } = parse();
-    const section = NAV.some(([id]) => id === parts[0]) ? parts[0] : "products";
+    const section = NAV.some(([id]) => id === parts[0]) ? parts[0] : "overview";
     const main = layout(section);
     main.onclick = null;
     document.title = `${NAV.find(([id]) => id === section)[1]} · ${shop.name} — FrameX shop dashboard`;
     try {
+      root.classList.remove("is-editing");
+      if (section === "overview") return overviewView(main);
+      if (section === "profile") return profileView(main);
+      if (section === "account") return accountView(main);
+      if (section === "orders") return ordersView(main);
+      // Step 2 areas: placeholders unless this shop is linked to the catalogue file.
+      if (!shop.productTools) {
+        return section === "products"
+          ? comingSoon(main, "Products", "You'll add and manage your frames here once product management opens for your shop. FrameX will let you know.", "image")
+          : comingSoon(main, "Inventory", "Stock and availability for your products will be managed here.", "package");
+      }
       if (section === "products" && parts[1]) {
         const box = document.createElement("div");
         main.appendChild(box);
@@ -405,22 +461,54 @@
         document.title = `${parts[1] === "new" ? "New product" : "Edit product"} · ${shop.name} — FrameX`;
         return;
       }
-      root.classList.remove("is-editing");
       if (section === "products") await productsView(main);
-      if (section === "orders") ordersView(main);
       if (section === "inventory") await inventoryView(main);
-      if (section === "profile") profileView(main);
-      if (section === "settings") await settingsView(main);
     } catch (error) {
       console.error("Dashboard view failed", error);
       FrameX.templates.showError(main, "This page couldn't be loaded.", route);
     }
   }
 
+  /** Keep the backend's shop record, plus the id the (catalogue-file) product tools use. */
+  function setShop(s) {
+    shop = Object.assign({}, s, {
+      // Products still live in the catalogue file (Step 2 moves them to the backend):
+      // only a shop FrameX has linked to that file can use the product tools.
+      id: s.catalogRef || s.shopCode,
+      productTools: Boolean(s.catalogRef),
+    });
+  }
+
+  function message(title, text, actions) {
+    root.innerHTML = `<div class="not-found">${icon("lock")}<h1 class="section-title">${title}</h1><p class="section-lead">${text}</p><div class="final-cta__actions">${actions}</div></div>`;
+  }
+
   async function start() {
-    const id = shopSvc().currentId();
-    shop = id ? await shopSvc().get(id) : null;
-    if (!shop) return chooseShop();
+    const state = await FrameX.auth.ready;
+    if (!state.available || !state.reachable) {
+      return message(
+        "The shop dashboard isn't available right now",
+        state.available ? "We can't reach the FrameX server. Please try again in a little while." : "Shop accounts haven't been switched on for this site yet.",
+        `<a class="btn btn--dark" href="partner.html">Partner with FrameX</a><a class="btn btn--outline" href="index.html">Back to FrameX</a>`,
+      );
+    }
+    const user = await FrameX.auth.guard(["SHOP"], {
+      accountType: "shop",
+      onForbidden: (u) =>
+        message(
+          "This area is for FrameX partner shops",
+          "You're logged in with a different kind of account.",
+          `<a class="btn btn--dark" href="${u.role === "ADMIN" ? "admin.html" : "account.html"}">${u.role === "ADMIN" ? "Open admin dashboard" : "Go to my account"}</a><a class="btn btn--outline" href="partner.html">Partner with FrameX</a>`,
+        ),
+    });
+    if (!user) return;
+    try {
+      // The backend answers only for the logged-in shop's own Shop ID.
+      setShop((await FrameX.http.get(`/shops/${encodeURIComponent(user.shop.shopCode)}/dashboard`)).shop);
+    } catch (error) {
+      if (error.status === 401) return window.location.replace(FrameX.auth.loginUrl("shop"));
+      return message("Your shop couldn't be loaded", esc(error.message), `<a class="btn btn--dark" href="shop-dashboard.html">Try again</a>`);
+    }
     route();
   }
 

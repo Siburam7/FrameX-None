@@ -1,0 +1,28 @@
+{
+  "name": "framex-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FrameX API: authentication, roles, shop onboarding and nearby-shop search.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.12"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "migrate": "node scripts/migrate.js",
+    "admin:create": "node scripts/create-admin.js",
+    "seed:dev": "node scripts/seed-dev.js",
+    "email:setup": "node scripts/setup-email.js",
+    "email:test": "node scripts/test-email.js",
+    "sms:test": "node scripts/test-sms.js",
+    "doctor": "node scripts/doctor.js",
+    "test": "node --test test/api.test.js"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "express": "^5.2.1",
+    "nodemailer": "^10.0.14",
+    "pg": "^8.23.1"
+  }
+}

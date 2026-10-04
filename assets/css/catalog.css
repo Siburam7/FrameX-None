@@ -525,3 +525,103 @@
 .catalog-filters__switch {
   min-height: 44px;
 }
+
+/* Nearby shops: why location is asked, the chosen place + distance, problems, manual entry */
+.shops-nearby {
+  margin: -6px 0 20px;
+  font-size: var(--text-sm);
+}
+
+.shops-nearby__why,
+.shops-nearby__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  color: var(--muted);
+}
+
+.shops-nearby__why .icon,
+.shops-nearby__bar > .icon {
+  flex: none;
+  color: var(--amber-deep);
+}
+
+.shops-nearby__bar {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--ivory);
+  color: var(--ink);
+}
+
+.shops-nearby__bar em {
+  color: var(--taupe);
+  font-style: normal;
+  font-weight: 500;
+}
+
+.shops-nearby__radius {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.shops-nearby__radius[hidden] {
+  display: none;
+}
+
+.shops-nearby__radius .select {
+  min-height: 40px;
+  padding-block: 6px;
+}
+
+.shops-nearby__link {
+  min-height: 32px;
+  color: var(--brown-deep);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.shops-nearby__alert {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: #fff6e6;
+  color: #7c3f06;
+}
+
+.shops-nearby__alert strong,
+.shops-nearby__alert span {
+  display: block;
+}
+
+.shops-nearby__actions {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  gap: 8px;
+}
+
+.shops-nearby__form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.shops-nearby__form .input {
+  flex: 1 1 220px;
+  max-width: 360px;
+}
+
+.shops-toolbar [hidden] {
+  display: none;
+}
+
+/* A shop without a cover photo gets a calm branded panel instead of an empty grey block. */
+.shop-card__cover:not(:has(img)) {
+  background: radial-gradient(120% 90% at 30% 20%, #fbf7f0 0%, var(--beige) 60%, var(--champagne) 100%);
+}

@@ -1,0 +1,7 @@
+# Secrets and local data never go to Git.
+.env
+.env.*
+!.env.example
+.data/
+node_modules/
+*.log

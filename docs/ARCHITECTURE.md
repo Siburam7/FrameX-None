@@ -253,13 +253,12 @@ have `null` coordinates, so today the UI shows the honest message _"Distances wi
 shops add their map coordinates."_ For many shops, move the calculation to the server
 (PostGIS / geo index) and return `distanceKm` — the UI already displays whatever the API returns.
 
-## 9. Auth & payments (future)
+## 9. Auth (done in Step 1) & payments (future)
 
-Customer, shop-owner and admin roles with separate sessions; the frontend's "Sign up" and
-"Share your story" buttons currently show a "coming soon" notice. Payment gateway integration
-should sit behind the backend (`POST /orders` → payment intent → webhook); the cart's Checkout
-button emits a `framex:checkout-requested` DOM event carrying the per-shop groups, which is the
-hook for a real checkout flow.
+Customer, shop and admin accounts are implemented by the backend in `backend/` (see "Step 1 backend" at the end
+of this document). Payment gateway integration should sit behind the backend (`POST /orders` → payment intent →
+webhook); the cart's Checkout button emits a `framex:checkout-requested` DOM event carrying the per-shop groups,
+which is the hook for a real checkout flow.
 
 ## 10. Roadmap status
 
@@ -269,9 +268,9 @@ hook for a real checkout flow.
 | 2 Responsive / mobile                  | ✅ done (tested 320 – 2560 px)         |
 | 3 Animations                           | ✅ done                                |
 | 4 Product / shop data structure        | ✅ done (seed + API contract)          |
-| 5 Admin Panel                          | ⬜ not started                         |
-| 6 Backend + database                   | ⬜ not started                         |
-| 7 Authentication                       | ⬜ not started                         |
+| 5 Admin Panel                          | 🟡 shop onboarding done (Step 1)       |
+| 6 Backend + database                   | 🟡 accounts, shops, locations (Step 1) |
+| 7 Authentication                       | ✅ done (Step 1)                       |
 | 8 Orders + payments                    | ⬜ not started (cart + explainer only) |
 | 9 Delivery integration                 | ⬜ not started                         |
 | 10 Commission & marketplace management | ⬜ not started (design in §7)          |
@@ -329,3 +328,56 @@ Statuses: `draft` → `published` / `unpublished`; with `config.productModeratio
 Data safety: shop-entered quality information is always `shop_claimed`; `sanitizeShopInput()` resets `quality.verification` on every shop save, and `validateForPublish()` blocks "FrameX Verified", "Certified" and "Best Quality". Only the FrameX backend may set `verification.status = "framex_verified"`.
 
 FrameX Studio: `studio.html?product=<id>` builds its context from `productModel.studioOptions(product)`: only that product's frame colours, sizes (any width × height, in or cm), orientations, mat / border colours and widths, front covers (at the shop's prices), print materials and caption text. Options chosen on the product page come along as `&size=&color=&print=&cover=`.
+
+## Step 1 backend: accounts, roles, shop onboarding, nearby shops
+
+A separate service in `backend/` (Node.js + Express + PostgreSQL). The website remains a static site and reaches it
+over HTTPS; while `PRODUCTION_API_URL` in `assets/js/config.js` is empty the site runs without it. Run, configure and
+deploy instructions and the endpoint list are in `backend/README.md`.
+
+| Concern | Where | Notes |
+|---|---|---|
+| Settings | `backend/src/config.js`, `backend/.env` | Environment variables only. Production refuses to start without `AUTH_SECRET`, a database and `CORS_ORIGINS` |
+| Database | `backend/src/db/` | PostgreSQL. `DATABASE_URL` → `pg`; empty → embedded PGlite for local work. Schema: `migrations/001_init.sql` |
+| Passwords | `backend/src/lib/passwords.js` | scrypt, per-password salt, parameters stored with the hash |
+| Sessions | `backend/src/middleware/auth.js`, `services/auth-service.js` | Server-side sessions; random token, hash stored; httpOnly cookie (or bearer token for cross-site hosting) |
+| Roles | `requireRole`, `requireOwnShop` | CUSTOMER / SHOP / ADMIN, read from the database on every request. Shop routes also match the Shop ID in the URL to the session's shop |
+| One-time links | `auth_tokens` table | Password reset (60 min) and shop account setup (72 h): random, hashed, expiring, single-use |
+| Shop onboarding | `services/shop-service.js`, `routes/admin.js` | application (PENDING → UNDER_REVIEW → APPROVED / REJECTED) → admin approval creates shop + Shop ID (`FRX-SHOP-1001`…) + SHOP login awaiting password setup |
+| Nearby shops | `nearbyShops()` + `lib/geo.js` | Indexed latitude / longitude box, then Haversine in SQL. Only APPROVED + ACTIVE shops. Radius options in `config.nearby` |
+| Place search | `lib/geocoder.js` | OpenStreetMap Nominatim behind `GET /api/geo/search`; replaceable provider; off → text matching |
+| Password recovery | `services/auth-service.js`, `otp_codes` table | `recovery/start` (find account, masked options) → `recovery/send` (6-digit code by email or SMS) → `recovery/verify` → one-time reset token. Codes: hashed, 10 min, 5 tries, 30 s resend wait, 5 per hour. Customers and shops only; admins reset from the command line |
+| Email | `lib/mailer.js` | `brevo` (default) / `resend` / `gmail` / `smtp` / `none`. No provider = "Email service is not configured."; nothing is simulated. `dev` = explicit test mode with a mailbox at `/dev/mailbox` (never in production) |
+| SMS | `lib/sms.js` | `fast2sms` (default) / `2factor` / `twilio` / `none`. Same rules as email |
+| Audit | `audit_logs` table, `lib/audit.js` | actor, action, target, time, written in the same transaction as the change |
+
+Data model (Step 1):
+
+```
+users (id, name, email, phone, password_hash, role, status, shop_id → shops)      role: CUSTOMER | SHOP | ADMIN
+shops (id, shop_code, catalog_ref, name, owner, contact, address…, latitude, longitude,
+       approval_status: PENDING|APPROVED|REJECTED, active_status: ACTIVE|INACTIVE, fulfilment, is_demo, application_id)
+shop_applications (id, shop + owner + contact + address, status, review_note, reviewed_by → users, shop_id → shops)
+sessions (id, user_id → users, token_hash, expires_at, revoked_at)
+auth_tokens (id, user_id → users, purpose: PASSWORD_RESET|ACCOUNT_SETUP, token_hash, expires_at, used_at)
+audit_logs (id, actor_user_id → users, action, target_type, target_id, metadata, created_at)
+```
+
+Step 2 tables (products, carts, orders, payments, reviews, notifications) reference `users.id` and `shops.id`;
+authentication and authorization do not change.
+
+Website side:
+
+| Piece | File |
+|---|---|
+| Backend address + session mode | `assets/js/config.js` (`backend.url`, `backend.session`) |
+| HTTP client (base URL, session, CSRF header, friendly errors) | `assets/js/api/client.js` → `FrameX.http` |
+| Auth state (`loading`, `authenticated`, `user`, `role`) + page guard | `assets/js/store/auth.js` → `FrameX.auth`, event `framex:auth-change` |
+| Shops + nearby from the backend, catalogue fallback | `assets/js/api/shop-directory.js` (wraps `FrameX.api.getShops / getShop`) |
+| Nearby UI: permission states, radius, manual location | `assets/js/ui/shops.js`, `assets/js/services/location.js` |
+| Login / sign-up / forgot / reset | `assets/js/ui/auth-pages.js` |
+| Account, partner application, admin dashboard | `assets/js/ui/account-page.js`, `partner-page.js`, `admin-page.js` |
+| Shop dashboard (SHOP only) | `assets/js/ui/shop-dashboard.js` |
+
+Until products move to the database, a backend shop is linked to its catalogue products by `shops.catalog_ref`
+(a shop id from `js/edit.js`), set by an admin.

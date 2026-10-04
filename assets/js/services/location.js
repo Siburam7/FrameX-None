@@ -1,9 +1,12 @@
 /* ==========================================================================
    Location service.
-   Real behaviour only: asks the browser for the visitor's position and
-   computes great-circle distance from real coordinates. If a shop has no
-   coordinates, no distance is shown — nothing is estimated or typed in.
-   The visitor's position is kept in memory only (never stored).
+   Real behaviour only. The visitor's position comes from the browser
+   (navigator.geolocation, asked only after they press a button) or from a
+   place they typed in. It is kept in memory for this page only, never stored.
+
+   With the FrameX backend connected, distances are calculated by the backend
+   from each shop's stored coordinates. distanceKm() below is only used by the
+   catalogue-file fallback, and shows nothing when a shop has no coordinates.
    ========================================================================== */
 (function (FrameX) {
   const EARTH_RADIUS_KM = 6371;
@@ -29,45 +32,60 @@
     return km < 1 ? `${Math.round(km * 100) * 10} m` : `${km.toFixed(1)} km`;
   }
 
+  // { latitude, longitude, accuracy, source: "device" | "place", label }
   let current = null;
 
-  /** Resolves {latitude, longitude, accuracy}. Rejects with an Error whose `code` is "unsupported" | "denied" | "unavailable" | "timeout". */
+  /**
+   * Ask the browser for the device's position. Call only from a click.
+   * Resolves the location; rejects with an Error whose `code` is
+   * "unsupported" | "insecure" | "denied" | "unavailable" | "timeout".
+   */
   function requestPosition() {
     return new Promise((resolve, reject) => {
-      if (!("geolocation" in navigator)) {
-        return reject(
-          Object.assign(new Error("Geolocation unsupported"), {
-            code: "unsupported",
-          }),
-        );
-      }
+      const fail = (code, message) =>
+        reject(Object.assign(new Error(message || code), { code }));
+      if (!("geolocation" in navigator)) return fail("unsupported");
+      // Browsers only share location on https:// (or localhost).
+      if (window.isSecureContext === false) return fail("insecure");
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           current = {
             latitude: pos.coords.latitude,
             longitude: pos.coords.longitude,
             accuracy: pos.coords.accuracy,
+            source: "device",
+            label: "your location",
           };
           resolve(current);
         },
-        (err) => {
-          const code =
-            err.code === 1
-              ? "denied"
-              : err.code === 3
-                ? "timeout"
-                : "unavailable";
-          reject(Object.assign(new Error(err.message), { code }));
-        },
+        (err) =>
+          fail(
+            err.code === 1 ? "denied" : err.code === 3 ? "timeout" : "unavailable",
+            err.message,
+          ),
         { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
       );
     });
+  }
+
+  /** Use a place the visitor typed in (found by place search). It is approximate, and labelled so. */
+  function setPlace(place) {
+    current = {
+      latitude: place.latitude,
+      longitude: place.longitude,
+      accuracy: null,
+      source: "place",
+      label: place.label,
+    };
+    return current;
   }
 
   FrameX.location = {
     distanceKm,
     formatDistance,
     requestPosition,
+    setPlace,
+    clear: () => (current = null),
     getCurrent: () => current,
   };
 })((window.FrameX = window.FrameX || {}));
