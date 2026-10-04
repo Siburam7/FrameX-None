@@ -19,20 +19,23 @@
     const hasRatings = lastShops.some((s) => s.rating);
     $$("[data-shop-sort]", els.toolbar).forEach((btn) => {
       const sort = btn.dataset.shopSort;
-      btn.disabled = (sort === "nearest" && !hasDistance) || (sort === "rating" && !hasRatings);
+      btn.disabled =
+        (sort === "nearest" && !hasDistance) ||
+        (sort === "rating" && !hasRatings);
       btn.setAttribute("aria-pressed", String(sort === state.sort));
     });
   }
 
   async function load() {
     els.grid.setAttribute("aria-busy", "true");
-    if (!lastShops.length) els.grid.innerHTML = templates.skeletons(3, "skeleton-card--shop");
+    if (!lastShops.length)
+      els.grid.innerHTML = templates.skeletons(3, "skeleton-card--shop");
     try {
       const result = await FrameX.api.getShops({
         sort: state.sort,
         lat: state.position ? state.position.latitude : null,
         lng: state.position ? state.position.longitude : null,
-        limit: Number(els.grid.dataset.limit) || 50
+        limit: Number(els.grid.dataset.limit) || 50,
       });
       lastShops = result.items;
       els.grid.innerHTML = lastShops.length
@@ -62,16 +65,21 @@
         await load();
         setStatus("Showing shops nearest to you first.");
       } else {
-        setStatus("Location is on. Distances will appear once shops add their map coordinates.");
+        setStatus(
+          "Location is on. Distances will appear once shops add their map coordinates.",
+        );
       }
-      $$("[data-location-label]").forEach((el) => (el.textContent = "Using your location"));
+      $$("[data-location-label]").forEach(
+        (el) => (el.textContent = "Using your location"),
+      );
       els.locate.hidden = true;
     } catch (error) {
       const messages = {
-        denied: "Location access is blocked. Allow it in your browser settings to see distances.",
+        denied:
+          "Location access is blocked. Allow it in your browser settings to see distances.",
         unsupported: "Your browser doesn't support location.",
         timeout: "Finding your location took too long. Please try again.",
-        unavailable: "We couldn't find your location. Please try again."
+        unavailable: "We couldn't find your location. Please try again.",
       };
       setStatus(messages[error.code] || messages.unavailable);
       els.locate.disabled = false;
@@ -79,7 +87,12 @@
   }
 
   function init() {
-    els = { grid: $("#shop-grid"), toolbar: $("#shops-toolbar"), status: $("#shops-status"), locate: $("#shops-locate") };
+    els = {
+      grid: $("#shop-grid"),
+      toolbar: $("#shops-toolbar"),
+      status: $("#shops-status"),
+      locate: $("#shops-locate"),
+    };
     if (!els.grid) return Promise.resolve();
 
     els.locate.addEventListener("click", useLocation);

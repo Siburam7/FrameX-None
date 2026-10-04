@@ -17,7 +17,7 @@
           <span class="method-card__icon">${icon(m.icon)}</span>
           <h3>${esc(m.label)}</h3>
           <p>${esc(m.summary)}</p>
-        </article>`
+        </article>`,
       )
       .join("");
     grid.setAttribute("data-reveal-stagger", "");
@@ -27,19 +27,26 @@
     const tracker = $("#order-tracker");
     if (!tracker) return;
     tracker.innerHTML = ORDER_FLOW.map(
-      (status) => `<li class="tracker__step"><span class="tracker__dot">${icon("check")}</span><span>${esc(ORDER_STATUS[status].label)}</span></li>`
+      (status) =>
+        `<li class="tracker__step"><span class="tracker__dot">${icon("check")}</span><span>${esc(ORDER_STATUS[status].label)}</span></li>`,
     ).join("");
 
     const steps = $$(".tracker__step", tracker);
     const lightAll = () => steps.forEach((s) => s.classList.add("is-lit"));
-    if (prefersReducedMotion() || !("IntersectionObserver" in window)) return lightAll();
+    if (prefersReducedMotion() || !("IntersectionObserver" in window))
+      return lightAll();
 
     // One orchestrated moment: steps light up in sequence when scrolled into view.
-    const observer = new IntersectionObserver((entries) => {
-      if (!entries[0].isIntersecting) return;
-      observer.disconnect();
-      steps.forEach((step, i) => setTimeout(() => step.classList.add("is-lit"), i * 320));
-    }, { threshold: 0.4 });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0].isIntersecting) return;
+        observer.disconnect();
+        steps.forEach((step, i) =>
+          setTimeout(() => step.classList.add("is-lit"), i * 320),
+        );
+      },
+      { threshold: 0.4 },
+    );
     observer.observe(tracker);
   }
 

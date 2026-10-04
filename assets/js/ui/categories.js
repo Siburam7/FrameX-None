@@ -21,7 +21,9 @@
     const row = $("#category-row");
     if (!row) return [];
     try {
-      const categories = (await FrameX.api.getCategories()).filter((c) => c.productCount > 0);
+      const categories = (await FrameX.api.getCategories()).filter(
+        (c) => c.productCount > 0,
+      );
       categories.forEach((c) => byId.set(c.id, c));
       let styles = categories.filter((c) => c.kind === "style");
       let others = categories.filter((c) => c.kind !== "style");
@@ -30,7 +32,10 @@
 
       const more = others.length
         ? `<p class="category-more" data-reveal><span class="category-more__label">Or shop by occasion</span>${others
-            .map((c) => `<a class="category-more__link" href="${esc(url(c))}">${esc(c.name)}</a>`)
+            .map(
+              (c) =>
+                `<a class="category-more__link" href="${esc(url(c))}">${esc(c.name)}</a>`,
+            )
             .join("")}</p>`
         : "";
       row.innerHTML = `<div class="category-gallery" data-reveal-stagger>${styles.map(card).join("")}</div>${more}`;
@@ -43,5 +48,9 @@
     }
   }
 
-  FrameX.categories = { init, nameOf: (id) => (byId.get(id) ? byId.get(id).name : id), byId };
+  FrameX.categories = {
+    init,
+    nameOf: (id) => (byId.get(id) ? byId.get(id).name : id),
+    byId,
+  };
 })((window.FrameX = window.FrameX || {}));

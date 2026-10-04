@@ -7,7 +7,10 @@
     if (!rail) return;
     rail.innerHTML = FrameX.templates.skeletons(5);
     try {
-      const { items } = await FrameX.api.getProducts({ isRecommended: true, limit: 5 });
+      const { items } = await FrameX.api.getProducts({
+        isRecommended: true,
+        limit: 5,
+      });
       if (!items.length) {
         rail.closest("section").hidden = true;
         return;
@@ -17,7 +20,11 @@
       FrameX.reveal.observe(rail);
     } catch (error) {
       console.error("Recommended products failed to load", error);
-      FrameX.templates.showError(rail, "Recommended frames couldn't be loaded.", init);
+      FrameX.templates.showError(
+        rail,
+        "Recommended frames couldn't be loaded.",
+        init,
+      );
     }
   }
 

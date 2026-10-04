@@ -13,22 +13,36 @@
   const { formatPrice } = FrameX.pricing;
 
   /* ---------------------------------------------------------------- Shared */
-  const sizesById = () => new Map((FrameX.seed.templateSizes || []).map((s) => [s.id, s]));
+  const sizesById = () =>
+    new Map((FrameX.seed.templateSizes || []).map((s) => [s.id, s]));
   const url = (t) => `template.html?t=${encodeURIComponent(t.slug)}`;
-  const customizeUrl = (t, designId) => (designId ? `studio.html?design=${encodeURIComponent(designId)}` : `studio.html?template=${encodeURIComponent(t.slug)}`);
+  const customizeUrl = (t, designId) =>
+    designId
+      ? `studio.html?design=${encodeURIComponent(designId)}`
+      : `studio.html?template=${encodeURIComponent(t.slug)}`;
 
   /** Price for one size (base price + that size's difference). */
   function priceFor(template, sizeId) {
     const size = sizesById().get(sizeId);
-    return Math.max(0, Number(template.price) + (size ? Number(size.priceDelta) || 0 : 0));
+    return Math.max(
+      0,
+      Number(template.price) + (size ? Number(size.priceDelta) || 0 : 0),
+    );
   }
-  const priceFrom = (t) => Math.min(...(t.sizes && t.sizes.length ? t.sizes : ["m"]).map((id) => priceFor(t, id)));
+  const priceFrom = (t) =>
+    Math.min(
+      ...(t.sizes && t.sizes.length ? t.sizes : ["m"]).map((id) =>
+        priceFor(t, id),
+      ),
+    );
 
   /** At most ONE badge per card, so cards never get badge-heavy. */
   function badge(t) {
-    if (t.isTrending) return `<span class="tpl-badge tpl-badge--trending">${icon("star", "icon--fill")}Trending</span>`;
+    if (t.isTrending)
+      return `<span class="tpl-badge tpl-badge--trending">${icon("star", "icon--fill")}Trending</span>`;
     if (t.isNew) return `<span class="tpl-badge tpl-badge--new">New</span>`;
-    if (t.isPopular) return `<span class="tpl-badge tpl-badge--popular">${icon("heart", "icon--fill")}Popular</span>`;
+    if (t.isPopular)
+      return `<span class="tpl-badge tpl-badge--popular">${icon("heart", "icon--fill")}Popular</span>`;
     return "";
   }
 
@@ -38,7 +52,10 @@
   function card(t, { categoryName = "" } = {}) {
     const preview = t.thumbnail
       ? `<img src="${esc(t.thumbnail)}" alt="" loading="lazy" decoding="async">`
-      : FrameX.templateEngine.render(t, { mode: "sample", label: `${t.title} template preview` });
+      : FrameX.templateEngine.render(t, {
+          mode: "sample",
+          label: `${t.title} template preview`,
+        });
     return `<article class="tpl-card" data-template-id="${esc(t.id)}">
       <div class="tpl-card__media tpl-card__media--${esc(t.orientation)}">
         ${preview}
@@ -55,7 +72,16 @@
     </article>`;
   }
 
-  FrameX.templateUI = { card, badge, url, customizeUrl, priceFor, priceFrom, photoLabel, sizesById };
+  FrameX.templateUI = {
+    card,
+    badge,
+    url,
+    customizeUrl,
+    priceFor,
+    priceFrom,
+    photoLabel,
+    sizesById,
+  };
 
   /* ---------------------------------------------------------------- PhotoUploader
      options: { slots: ["photo1", …], getPhotoUrl(slot) -> url|null,
@@ -80,11 +106,12 @@
             <label class="uploader__action" for="${uid}-${i}">Replace</label>
             <button class="uploader__action" type="button" data-remove>Remove</button>
           </div>
-        </li>`
+        </li>`,
       )
       .join("")}</ol>`;
 
-    const tileOf = (slot) => $(`.uploader__tile[data-slot="${CSS.escape(slot)}"]`, root);
+    const tileOf = (slot) =>
+      $(`.uploader__tile[data-slot="${CSS.escape(slot)}"]`, root);
 
     function paint(slot) {
       const tile = tileOf(slot);
@@ -94,7 +121,9 @@
       if (src) img.src = src;
       tile.classList.toggle("has-photo", Boolean(src));
       $(".uploader__actions", tile).hidden = !src;
-      $(".uploader__hint", tile).innerHTML = src ? `${icon("check")} Added` : `${icon("upload")} Tap to choose or drop a photo`;
+      $(".uploader__hint", tile).innerHTML = src
+        ? `${icon("check")} Added`
+        : `${icon("upload")} Tap to choose or drop a photo`;
     }
 
     function message(slot, text, kind = "") {
@@ -110,11 +139,20 @@
       message(slot, "Preparing your photo…");
       bar.hidden = false;
       try {
-        const photo = await FrameX.uploadService.prepare(file, (p) => ($("span", bar).style.width = p + "%"));
+        const photo = await FrameX.uploadService.prepare(
+          file,
+          (p) => ($("span", bar).style.width = p + "%"),
+        );
         onPhoto(slot, photo);
         message(slot, `${photo.name}`, "ok");
       } catch (error) {
-        message(slot, error instanceof FrameX.uploadService.UploadError ? error.message : "That photo couldn't be added. Please try another one.", "error");
+        message(
+          slot,
+          error instanceof FrameX.uploadService.UploadError
+            ? error.message
+            : "That photo couldn't be added. Please try another one.",
+          "error",
+        );
       } finally {
         bar.hidden = true;
         $("span", bar).style.width = "0";
@@ -134,14 +172,15 @@
         drop.addEventListener(evt, (e) => {
           e.preventDefault();
           tile.classList.add("is-dragover");
-        })
+        }),
       );
       ["dragleave", "drop"].forEach((evt) =>
         drop.addEventListener(evt, (e) => {
           e.preventDefault();
           tile.classList.remove("is-dragover");
-          if (evt === "drop" && e.dataTransfer.files[0]) handle(slot, e.dataTransfer.files[0]);
-        })
+          if (evt === "drop" && e.dataTransfer.files[0])
+            handle(slot, e.dataTransfer.files[0]);
+        }),
       );
       $("[data-remove]", tile).addEventListener("click", () => {
         onRemove(slot);
@@ -160,7 +199,7 @@
           message(slot, "This photo is needed for the design.", "error");
         });
         if (missing[0]) $(".uploader__input", tileOf(missing[0])).focus();
-      }
+      },
     };
   }
 
@@ -195,7 +234,8 @@
       const input = $("input", wrap);
       const count = $(".text-field__count", wrap);
       input.addEventListener("input", () => {
-        if (count) count.textContent = `${input.value.length}/${input.maxLength}`;
+        if (count)
+          count.textContent = `${input.value.length}/${input.maxLength}`;
         if (input.value.trim()) wrap.dataset.invalid = "false";
         onChange(wrap.dataset.field, input.value);
       });
@@ -203,10 +243,21 @@
 
     return {
       showMissing(missing) {
-        missing.forEach((f) => ($(`.text-field[data-field="${CSS.escape(f.id)}"]`, root).dataset.invalid = "true"));
-        const first = missing[0] && $(`.text-field[data-field="${CSS.escape(missing[0].id)}"] input`, root);
+        missing.forEach(
+          (f) =>
+            ($(
+              `.text-field[data-field="${CSS.escape(f.id)}"]`,
+              root,
+            ).dataset.invalid = "true"),
+        );
+        const first =
+          missing[0] &&
+          $(
+            `.text-field[data-field="${CSS.escape(missing[0].id)}"] input`,
+            root,
+          );
         if (first) first.focus();
-      }
+      },
     };
   }
 

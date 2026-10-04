@@ -17,13 +17,17 @@
     faq: "faq.html",
     story: "our-story.html",
     terms: "terms-of-use.html",
-    privacy: "privacy-notice.html"
+    privacy: "privacy-notice.html",
   };
 
   /** product.html?slug=<slug> for a product object with a slug, else ?id=<id>.
       (A static host can't serve /products/<slug>; the slug keeps URLs readable.) */
   const productUrl = (p) =>
-    p && typeof p === "object" ? (p.slug ? `product.html?slug=${encodeURIComponent(p.slug)}` : `product.html?id=${encodeURIComponent(p.id)}`) : `product.html?id=${encodeURIComponent(p)}`;
+    p && typeof p === "object"
+      ? p.slug
+        ? `product.html?slug=${encodeURIComponent(p.slug)}`
+        : `product.html?id=${encodeURIComponent(p.id)}`
+      : `product.html?id=${encodeURIComponent(p)}`;
   const shopUrl = (id) => `shop-detail.html?id=${encodeURIComponent(id)}`;
   const shopListUrl = (params = {}) => {
     const q = new URLSearchParams();

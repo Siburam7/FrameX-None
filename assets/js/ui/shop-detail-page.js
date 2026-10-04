@@ -3,11 +3,21 @@
 (function (FrameX) {
   const { $, escapeHtml: esc, icon } = FrameX.dom;
   const { FULFILMENT_METHODS } = FrameX.constants;
-  const DAYS = [["mon", "Monday"], ["tue", "Tuesday"], ["wed", "Wednesday"], ["thu", "Thursday"], ["fri", "Friday"], ["sat", "Saturday"], ["sun", "Sunday"]];
-  const todayKey = () => ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date().getDay()];
+  const DAYS = [
+    ["mon", "Monday"],
+    ["tue", "Tuesday"],
+    ["wed", "Wednesday"],
+    ["thu", "Thursday"],
+    ["fri", "Friday"],
+    ["sat", "Saturday"],
+    ["sun", "Sunday"],
+  ];
+  const todayKey = () =>
+    ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][new Date().getDay()];
 
   function hoursHtml(shop) {
-    if (!shop.openingHours) return `<p class="shop-hours__note">Opening hours will be listed soon. Message us to check before visiting.</p>`;
+    if (!shop.openingHours)
+      return `<p class="shop-hours__note">Opening hours will be listed soon. Message us to check before visiting.</p>`;
     const today = todayKey();
     return `<dl class="shop-hero__hours">${DAYS.map(([k, label]) => {
       const h = shop.openingHours[k];
@@ -33,20 +43,37 @@
     } catch (error) {
       console.error("Shop failed to load", error);
       $("#shop-products").hidden = true;
-      return FrameX.templates.showError(root, "This shop couldn't be loaded.", init);
+      return FrameX.templates.showError(
+        root,
+        "This shop couldn't be loaded.",
+        init,
+      );
     }
-    if (!shop) return notFound(root, "That shop doesn't exist or is no longer listed.");
+    if (!shop)
+      return notFound(root, "That shop doesn't exist or is no longer listed.");
 
     document.title = `${shop.name} — FrameX`;
     $("#shop-crumb-name").textContent = shop.name;
     const open = FrameX.shopUtils.isOpenNow(shop);
-    const methods = (shop.fulfilment || []).filter((m) => FULFILMENT_METHODS[m] && FULFILMENT_METHODS[m].enabled);
+    const methods = (shop.fulfilment || []).filter(
+      (m) => FULFILMENT_METHODS[m] && FULFILMENT_METHODS[m].enabled,
+    );
     const badges = [
-      shop.isSample ? `<span class="badge badge--sample">Sample shop</span>` : "",
-      open === null ? "" : `<span class="badge ${open ? "badge--open" : "badge--closed"}">${open ? "Open now" : "Closed now"}</span>`,
-      shop.rating ? `<span class="badge badge--muted">${icon("star", "icon--fill")} ${shop.rating.average.toFixed(1)} (${shop.rating.count})</span>` : `<span class="badge badge--muted">No ratings yet</span>`
+      shop.isSample
+        ? `<span class="badge badge--sample">Sample shop</span>`
+        : "",
+      open === null
+        ? ""
+        : `<span class="badge ${open ? "badge--open" : "badge--closed"}">${open ? "Open now" : "Closed now"}</span>`,
+      shop.rating
+        ? `<span class="badge badge--muted">${icon("star", "icon--fill")} ${shop.rating.average.toFixed(1)} (${shop.rating.count})</span>`
+        : `<span class="badge badge--muted">No ratings yet</span>`,
     ].join("");
-    const monogram = shop.name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("");
+    const monogram = shop.name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("");
 
     root.innerHTML = `<div class="shop-hero">
       ${shop.coverImage ? `<div class="shop-hero__cover"><img src="${esc(shop.coverImage)}" alt="${esc(shop.name)}" width="1200" height="514" fetchpriority="high"></div>` : ""}

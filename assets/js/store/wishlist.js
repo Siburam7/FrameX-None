@@ -24,7 +24,11 @@
     const nowSaved = !ids.has(productId);
     nowSaved ? ids.add(productId) : ids.delete(productId);
     persist();
-    document.dispatchEvent(new CustomEvent("framex:wishlist-change", { detail: { productId, saved: nowSaved } }));
+    document.dispatchEvent(
+      new CustomEvent("framex:wishlist-change", {
+        detail: { productId, saved: nowSaved },
+      }),
+    );
     return nowSaved;
   }
 

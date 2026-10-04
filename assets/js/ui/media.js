@@ -8,9 +8,14 @@
 
   function whenVisible(el, onEnter, onLeave) {
     if (!("IntersectionObserver" in window)) return onEnter();
-    new IntersectionObserver((entries) => {
-      entries.forEach((entry) => (entry.isIntersecting ? onEnter() : onLeave()));
-    }, { threshold: 0.35 }).observe(el);
+    new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) =>
+          entry.isIntersecting ? onEnter() : onLeave(),
+        );
+      },
+      { threshold: 0.35 },
+    ).observe(el);
   }
 
   function initHanging() {
@@ -25,7 +30,8 @@
     video.poster = items[0].dataset.poster;
     if (reduced) video.controls = true;
 
-    const setProgress = (i, value) => items[i].style.setProperty("--progress", value);
+    const setProgress = (i, value) =>
+      items[i].style.setProperty("--progress", value);
 
     function select(i, { play = true } = {}) {
       index = i;
@@ -40,7 +46,8 @@
     }
 
     video.addEventListener("timeupdate", () => {
-      if (video.duration) setProgress(index, video.currentTime / video.duration);
+      if (video.duration)
+        setProgress(index, video.currentTime / video.duration);
     });
     video.addEventListener("ended", () => select((index + 1) % items.length));
     items.forEach((item, i) => item.addEventListener("click", () => select(i)));
@@ -52,7 +59,7 @@
         if (reduced) return;
         loaded ? video.play().catch(() => {}) : select(0);
       },
-      () => video.pause()
+      () => video.pause(),
     );
   }
 
@@ -71,7 +78,7 @@
         }
         video.play().catch(() => {});
       },
-      () => video.pause()
+      () => video.pause(),
     );
   }
 

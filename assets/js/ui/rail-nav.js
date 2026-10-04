@@ -19,7 +19,11 @@
       if (cards.length > 1) return cards[1].offsetLeft - cards[0].offsetLeft;
       return rail.clientWidth * 0.8;
     };
-    const go = (dir) => rail.scrollBy({ left: dir * step(), behavior: prefersReducedMotion() ? "auto" : "smooth" });
+    const go = (dir) =>
+      rail.scrollBy({
+        left: dir * step(),
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+      });
 
     function sync() {
       const max = rail.scrollWidth - rail.clientWidth;

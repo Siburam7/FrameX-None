@@ -27,7 +27,8 @@
       return false; // storage full or blocked: the session still works
     }
   };
-  const newId = () => "d-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const newId = () =>
+    "d-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const clone = (v) => JSON.parse(JSON.stringify(v));
 
   /* ---- Drafts + saved designs ------------------------------------------------ */
@@ -35,7 +36,9 @@
     getDraft: (templateId) => read(DRAFTS, {})[templateId] || null,
     setDraft(design) {
       const all = read(DRAFTS, {});
-      all[design.templateId] = Object.assign({}, design, { updatedAt: new Date().toISOString() });
+      all[design.templateId] = Object.assign({}, design, {
+        updatedAt: new Date().toISOString(),
+      });
       return write(DRAFTS, all);
     },
     clearDraft(templateId) {
@@ -47,14 +50,20 @@
     get: (id) => read(SAVED, []).find((d) => d.id === id) || null,
     /** Save a snapshot; returns the saved design (with its id) or null if storage is full. */
     save(design) {
-      const saved = Object.assign(clone(design), { id: design.id && design.id.startsWith("d-") ? design.id : newId(), updatedAt: new Date().toISOString() });
+      const saved = Object.assign(clone(design), {
+        id: design.id && design.id.startsWith("d-") ? design.id : newId(),
+        updatedAt: new Date().toISOString(),
+      });
       const list = read(SAVED, []).filter((d) => d.id !== saved.id);
       list.unshift(saved);
       return write(SAVED, list.slice(0, MAX_SAVED)) ? saved : null;
     },
     remove(id) {
-      write(SAVED, read(SAVED, []).filter((d) => d.id !== id));
-    }
+      write(
+        SAVED,
+        read(SAVED, []).filter((d) => d.id !== id),
+      );
+    },
   };
 
   FrameX.designs = designs;

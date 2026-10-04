@@ -27,7 +27,9 @@
       const clone = group.cloneNode(true);
       clone.dataset.clone = "";
       clone.setAttribute("aria-hidden", "true");
-      $$("a, button, input", clone).forEach((el) => el.setAttribute("tabindex", "-1"));
+      $$("a, button, input", clone).forEach((el) =>
+        el.setAttribute("tabindex", "-1"),
+      );
       track.appendChild(clone);
     }
 
@@ -46,7 +48,7 @@
           lastWidth = window.innerWidth;
           build(marquee);
         }
-      }, 200)
+      }, 200),
     );
   }
 

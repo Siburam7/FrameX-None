@@ -22,11 +22,35 @@
 
   /** Per kind: accepted types, max size and the smallest sensible image. */
   const RULES = {
-    view: { types: IMAGE_TYPES, maxMB: 12, minEdge: 600, large: 2000, thumb: 480 },
-    frame360: { types: IMAGE_TYPES, maxMB: 6, minEdge: 400, large: 1400, thumb: 0 },
-    material: { types: IMAGE_TYPES, maxMB: 8, minEdge: 300, large: 1200, thumb: 360 },
-    thumbnail: { types: IMAGE_TYPES, maxMB: 8, minEdge: 300, large: 1200, thumb: 480 },
-    video: { types: VIDEO_TYPES, maxMB: 60 }
+    view: {
+      types: IMAGE_TYPES,
+      maxMB: 12,
+      minEdge: 600,
+      large: 2000,
+      thumb: 480,
+    },
+    frame360: {
+      types: IMAGE_TYPES,
+      maxMB: 6,
+      minEdge: 400,
+      large: 1400,
+      thumb: 0,
+    },
+    material: {
+      types: IMAGE_TYPES,
+      maxMB: 8,
+      minEdge: 300,
+      large: 1200,
+      thumb: 360,
+    },
+    thumbnail: {
+      types: IMAGE_TYPES,
+      maxMB: 8,
+      minEdge: 300,
+      large: 1200,
+      thumb: 480,
+    },
+    video: { types: VIDEO_TYPES, maxMB: 60 },
   };
 
   class MediaError extends Error {}
@@ -59,14 +83,19 @@
   const memory = new Map(); // key -> Blob
   const urls = new Map(); // key -> object URL
 
-  const label = (types) => types.map((t) => t.split("/")[1].toUpperCase().replace("JPEG", "JPG")).join(", ");
+  const label = (types) =>
+    types
+      .map((t) => t.split("/")[1].toUpperCase().replace("JPEG", "JPG"))
+      .join(", ");
 
   /** Friendly message for a file that can't be used, or "" when it's fine. */
   function validate(file, kind = "view") {
     const rule = RULES[kind] || RULES.view;
     if (!file) return "No file was selected.";
-    if (!rule.types.includes(file.type)) return `“${file.name}” isn't a supported file. Please use ${label(rule.types)}.`;
-    if (file.size > rule.maxMB * 1024 * 1024) return `“${file.name}” is larger than ${rule.maxMB} MB. Please use a smaller file.`;
+    if (!rule.types.includes(file.type))
+      return `“${file.name}” isn't a supported file. Please use ${label(rule.types)}.`;
+    if (file.size > rule.maxMB * 1024 * 1024)
+      return `“${file.name}” is larger than ${rule.maxMB} MB. Please use a smaller file.`;
     return "";
   }
 
@@ -77,14 +106,21 @@
       image.onload = () => resolve({ image, url });
       image.onerror = () => {
         URL.revokeObjectURL(url);
-        reject(new MediaError("That file doesn't look like a valid image. Please choose another photo."));
+        reject(
+          new MediaError(
+            "That file doesn't look like a valid image. Please choose another photo.",
+          ),
+        );
       };
       image.src = url;
     });
   }
 
   function resize(image, edge, quality = 0.86) {
-    const ratio = Math.min(1, edge / Math.max(image.naturalWidth, image.naturalHeight));
+    const ratio = Math.min(
+      1,
+      edge / Math.max(image.naturalWidth, image.naturalHeight),
+    );
     const canvas = document.createElement("canvas");
     canvas.width = Math.max(1, Math.round(image.naturalWidth * ratio));
     canvas.height = Math.max(1, Math.round(image.naturalHeight * ratio));
@@ -92,10 +128,13 @@
     ctx.fillStyle = "#ffffff"; // transparent PNGs get a clean background
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-    return new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/jpeg", quality));
+    return new Promise((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", quality),
+    );
   }
 
-  const newId = () => "md-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  const newId = () =>
+    "md-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
   async function put(key, blob) {
     memory.set(key, blob);
@@ -108,7 +147,9 @@
       const url = URL.createObjectURL(blob);
       v.preload = "metadata";
       v.onloadedmetadata = () => {
-        resolve({ duration: isFinite(v.duration) ? Math.round(v.duration) : null });
+        resolve({
+          duration: isFinite(v.duration) ? Math.round(v.duration) : null,
+        });
         URL.revokeObjectURL(url);
       };
       v.onerror = () => {
@@ -130,17 +171,31 @@
       await put(id, file);
       const meta = await videoMeta(file);
       onProgress(100);
-      return { id, url: `media:${id}`, thumb: "", width: null, height: null, name: file.name, size: file.size, duration: meta.duration };
+      return {
+        id,
+        url: `media:${id}`,
+        thumb: "",
+        width: null,
+        height: null,
+        name: file.name,
+        size: file.size,
+        duration: meta.duration,
+      };
     }
     const { image, url } = await decode(file);
     try {
       const shortest = Math.min(image.naturalWidth, image.naturalHeight);
       if (shortest < rule.minEdge) {
-        throw new MediaError(`“${file.name}” is too small (${image.naturalWidth} × ${image.naturalHeight} px). Please use a photo at least ${rule.minEdge} px on its shortest side so it looks sharp.`);
+        throw new MediaError(
+          `“${file.name}” is too small (${image.naturalWidth} × ${image.naturalHeight} px). Please use a photo at least ${rule.minEdge} px on its shortest side so it looks sharp.`,
+        );
       }
       onProgress(40);
       const large = await resize(image, rule.large);
-      if (!large) throw new MediaError("That photo couldn't be prepared. Please try another one.");
+      if (!large)
+        throw new MediaError(
+          "That photo couldn't be prepared. Please try another one.",
+        );
       await put(id, large);
       onProgress(75);
       if (rule.thumb) {
@@ -148,7 +203,15 @@
         if (small) await put(`${id}:thumb`, small);
       }
       onProgress(100);
-      return { id, url: `media:${id}`, thumb: rule.thumb ? `media:${id}:thumb` : "", width: image.naturalWidth, height: image.naturalHeight, name: file.name, size: file.size };
+      return {
+        id,
+        url: `media:${id}`,
+        thumb: rule.thumb ? `media:${id}:thumb` : "",
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+        name: file.name,
+        size: file.size,
+      };
     } finally {
       URL.revokeObjectURL(url);
     }
@@ -185,11 +248,16 @@
     try {
       const { image, url } = await decode(await (await fetch(src)).blob());
       URL.revokeObjectURL(url);
-      const ratio = Math.min(1, edge / Math.max(image.naturalWidth, image.naturalHeight));
+      const ratio = Math.min(
+        1,
+        edge / Math.max(image.naturalWidth, image.naturalHeight),
+      );
       const canvas = document.createElement("canvas");
       canvas.width = Math.round(image.naturalWidth * ratio);
       canvas.height = Math.round(image.naturalHeight * ratio);
-      canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas
+        .getContext("2d")
+        .drawImage(image, 0, 0, canvas.width, canvas.height);
       return canvas.toDataURL("image/jpeg", 0.78);
     } catch (e) {
       return "";
@@ -208,10 +276,26 @@
 
   /** Delete stored files no product refers to any more. */
   async function collectGarbage(referenced) {
-    const keep = new Set(Array.from(referenced || []).map((r) => keyOf(r).replace(/:thumb$/, "")));
+    const keep = new Set(
+      Array.from(referenced || []).map((r) => keyOf(r).replace(/:thumb$/, "")),
+    );
     const keys = (await tx("readonly", (store) => store.getAllKeys())) || [];
-    await Promise.all(keys.filter((k) => !keep.has(String(k).replace(/:thumb$/, ""))).map((k) => remove(k)));
+    await Promise.all(
+      keys
+        .filter((k) => !keep.has(String(k).replace(/:thumb$/, "")))
+        .map((k) => remove(k)),
+    );
   }
 
-  FrameX.mediaService = { RULES, validate, prepare, resolve, listingThumb, remove, collectGarbage, isMedia, MediaError };
+  FrameX.mediaService = {
+    RULES,
+    validate,
+    prepare,
+    resolve,
+    listingThumb,
+    remove,
+    collectGarbage,
+    isMedia,
+    MediaError,
+  };
 })((window.FrameX = window.FrameX || {}));

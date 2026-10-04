@@ -35,9 +35,13 @@
         root.innerHTML = `<div class="faq-column">${items.map(item).join("")}</div>`;
       } else {
         root.innerHTML = groups
-          .map((g) => `<section class="faq-group" id="faq-${esc(g.id)}" aria-labelledby="faq-title-${esc(g.id)}">
+          .map(
+            (
+              g,
+            ) => `<section class="faq-group" id="faq-${esc(g.id)}" aria-labelledby="faq-title-${esc(g.id)}">
               <h2 class="faq-group__title" id="faq-title-${esc(g.id)}">${esc(g.title)}</h2>
-              <div class="faq-column">${g.items.map(item).join("")}</div></section>`)
+              <div class="faq-column">${g.items.map(item).join("")}</div></section>`,
+          )
           .join("");
       }
       wire(root);

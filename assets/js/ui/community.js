@@ -30,7 +30,10 @@
       mute.addEventListener("click", () => {
         video.muted = !video.muted;
         mute.setAttribute("aria-pressed", String(!video.muted));
-        mute.setAttribute("aria-label", video.muted ? "Unmute video" : "Mute video");
+        mute.setAttribute(
+          "aria-label",
+          video.muted ? "Unmute video" : "Mute video",
+        );
         mute.innerHTML = icon(video.muted ? "volume-off" : "volume-on");
       });
     });
@@ -48,7 +51,11 @@
       FrameX.reveal.observe(rail);
     } catch (error) {
       console.error("Community failed to load", error);
-      FrameX.templates.showError(rail, "Community photos couldn't be loaded.", init);
+      FrameX.templates.showError(
+        rail,
+        "Community photos couldn't be loaded.",
+        init,
+      );
     }
   }
 

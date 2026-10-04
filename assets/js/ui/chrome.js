@@ -15,7 +15,7 @@
     ["templates", "Templates"],
     ["gallery", "Gallery"],
     ["contact", "Contact"],
-    ["faq", "FAQ"]
+    ["faq", "FAQ"],
   ];
 
   const locationChip = `<button class="location-chip" type="button" data-action="use-location">
@@ -23,9 +23,17 @@
 
   function header(current) {
     // "shop-detail" and "product" belong to the Shop section in the nav.
-    const section = { "shop-detail": "shop", product: "shop", "customer-gallery": "gallery", template: "templates", studio: "templates" }[current] || current;
+    const section =
+      {
+        "shop-detail": "shop",
+        product: "shop",
+        "customer-gallery": "gallery",
+        template: "templates",
+        studio: "templates",
+      }[current] || current;
     const links = NAV.map(
-      ([key, label]) => `<li><a href="${pages[key]}"${key === section ? ' aria-current="page"' : ""}>${label}</a></li>`
+      ([key, label]) =>
+        `<li><a href="${pages[key]}"${key === section ? ' aria-current="page"' : ""}>${label}</a></li>`,
     ).join("");
     const solid = current === "home" ? "" : " site-header--solid";
 
@@ -53,17 +61,28 @@
     // "919337169824" -> "+91 93371 69824"
     formatWhatsapp: (n) => {
       const d = digits(n);
-      return d.length === 12 && d.startsWith("91") ? `+91 ${d.slice(2, 7)} ${d.slice(7)}` : "+" + d;
-    }
+      return d.length === 12 && d.startsWith("91")
+        ? `+91 ${d.slice(2, 7)} ${d.slice(7)}`
+        : "+" + d;
+    },
   };
 
   /** Email / WhatsApp from assets/data/site.seed.js, shown in the footer brand block when set. */
   function contactLinks() {
-    const c = (FrameX.seed && FrameX.seed.site && FrameX.seed.site.contact) || {};
+    const c =
+      (FrameX.seed && FrameX.seed.site && FrameX.seed.site.contact) || {};
     const links = [];
-    if (c.email) links.push(`<li><a href="mailto:${esc(c.email)}">${icon("mail")}<span>${esc(c.email)}</span></a></li>`);
-    if (c.whatsapp) links.push(`<li><a href="${esc(FrameX.contact.whatsappUrl(c.whatsapp))}" target="_blank" rel="noopener noreferrer">${icon("phone")}<span>WhatsApp ${esc(FrameX.contact.formatWhatsapp(c.whatsapp))}</span></a></li>`);
-    return links.length ? `<ul class="site-footer__contact">${links.join("")}</ul>` : "";
+    if (c.email)
+      links.push(
+        `<li><a href="mailto:${esc(c.email)}">${icon("mail")}<span>${esc(c.email)}</span></a></li>`,
+      );
+    if (c.whatsapp)
+      links.push(
+        `<li><a href="${esc(FrameX.contact.whatsappUrl(c.whatsapp))}" target="_blank" rel="noopener noreferrer">${icon("phone")}<span>WhatsApp ${esc(FrameX.contact.formatWhatsapp(c.whatsapp))}</span></a></li>`,
+      );
+    return links.length
+      ? `<ul class="site-footer__contact">${links.join("")}</ul>`
+      : "";
   }
 
   // Every link below is a real page — no "#" placeholders.
@@ -78,10 +97,29 @@
           <p>Premium photo frames from local framing shops. Choose your frame, preview your own photo in it, then collect it or have it delivered.</p>
           ${contactLinks()}
         </div>
-        ${col("Company", [["Our Story", pages.story], ["About FrameX", pages.about], ["Customer Gallery", pages.customerGallery], ["Contact", pages.contact]])}
-        ${col("Shop", [["All Frames", pages.shop], ["Templates", pages.templates], ["FrameX Studio", pages.studio + "?mode=photo"], ["Custom Frames", pages.home + "#custom-frame"], ["Categories", pages.home + "#categories"], ["Gallery", pages.gallery]])}
-        ${col("Support", [["FAQ", pages.faq], ["How It Works", pages.services + "#journey"], ["For Framing Shops", pages.shopDashboard]])}
-        ${col("Legal", [["Terms of Use", pages.terms], ["Privacy Notice", pages.privacy]])}
+        ${col("Company", [
+          ["Our Story", pages.story],
+          ["About FrameX", pages.about],
+          ["Customer Gallery", pages.customerGallery],
+          ["Contact", pages.contact],
+        ])}
+        ${col("Shop", [
+          ["All Frames", pages.shop],
+          ["Templates", pages.templates],
+          ["FrameX Studio", pages.studio + "?mode=photo"],
+          ["Custom Frames", pages.home + "#custom-frame"],
+          ["Categories", pages.home + "#categories"],
+          ["Gallery", pages.gallery],
+        ])}
+        ${col("Support", [
+          ["FAQ", pages.faq],
+          ["How It Works", pages.services + "#journey"],
+          ["For Framing Shops", pages.shopDashboard],
+        ])}
+        ${col("Legal", [
+          ["Terms of Use", pages.terms],
+          ["Privacy Notice", pages.privacy],
+        ])}
       </div>
       <div class="container site-footer__bottom">
         <span>© 2026 FrameX. All rights reserved.</span>

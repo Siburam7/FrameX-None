@@ -6,7 +6,9 @@
     const a = shop.address || {};
     const first = [a.line1, a.area].filter(Boolean).join(", ");
     const second = [a.city, a.postalCode].filter(Boolean).join(" - ");
-    return [first, second].filter(Boolean).join(", ") || "Address not added yet";
+    return (
+      [first, second].filter(Boolean).join(", ") || "Address not added yet"
+    );
   }
 
   const toMinutes = (hhmm) => {

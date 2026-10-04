@@ -34,7 +34,9 @@
   const stars = (n) =>
     `<div class="review-card__stars" role="img" aria-label="${n} out of 5 stars">${Array.from({ length: 5 }, (_, i) => icon("star", i < n ? "icon--fill" : "")).join("")}</div>`;
 
-  const card = (r) => `<article class="cg-card${r.photo ? "" : " cg-card--text"}">
+  const card = (
+    r,
+  ) => `<article class="cg-card${r.photo ? "" : " cg-card--text"}">
       ${r.photo ? `<div class="cg-card__media"><img src="${esc(r.photo)}" alt="Framed photo shared by ${esc(r.name)}" width="800" height="1000" loading="lazy" decoding="async"></div>` : ""}
       <div class="cg-card__body">
         ${stars(r.rating)}
@@ -50,7 +52,9 @@
 
   function render() {
     const grid = $("#cg-grid");
-    const all = loadLocal().map((r) => Object.assign({ isLocal: true }, r)).concat(published);
+    const all = loadLocal()
+      .map((r) => Object.assign({ isLocal: true }, r))
+      .concat(published);
     grid.classList.toggle("cg-grid--empty", !all.length);
     grid.innerHTML = all.length
       ? all.map(card).join("")
@@ -65,11 +69,16 @@
       const url = URL.createObjectURL(file);
       const img = new Image();
       img.onload = () => {
-        const scale = Math.min(1, PHOTO_EDGE / Math.max(img.naturalWidth, img.naturalHeight));
+        const scale = Math.min(
+          1,
+          PHOTO_EDGE / Math.max(img.naturalWidth, img.naturalHeight),
+        );
         const canvas = document.createElement("canvas");
         canvas.width = Math.round(img.naturalWidth * scale);
         canvas.height = Math.round(img.naturalHeight * scale);
-        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas
+          .getContext("2d")
+          .drawImage(img, 0, 0, canvas.width, canvas.height);
         URL.revokeObjectURL(url);
         resolve(canvas.toDataURL("image/jpeg", 0.82));
       };
@@ -84,8 +93,12 @@
   const RULES = {
     name: (v) => (v.trim().length >= 2 ? "" : "Please enter your name."),
     rating: (v) => (v ? "" : "Please choose a star rating."),
-    text: (v) => (v.trim().length >= 10 ? "" : "Please write at least 10 characters."),
-    consent: (v) => (v ? "" : "Please confirm you have the right to share this photo and review.")
+    text: (v) =>
+      v.trim().length >= 10 ? "" : "Please write at least 10 characters.",
+    consent: (v) =>
+      v
+        ? ""
+        : "Please confirm you have the right to share this photo and review.",
   };
 
   function setError(form, name, message) {
@@ -115,15 +128,29 @@
     async function handleFile(picked) {
       setError(form, "photo", "");
       if (!picked) return;
-      if (!TYPES.includes(picked.type)) return setError(form, "photo", "Please choose a JPG, PNG or WebP image.");
-      if (picked.size > MAX_UPLOAD_MB * 1024 * 1024) return setError(form, "photo", `That file is larger than ${MAX_UPLOAD_MB} MB.`);
+      if (!TYPES.includes(picked.type))
+        return setError(
+          form,
+          "photo",
+          "Please choose a JPG, PNG or WebP image.",
+        );
+      if (picked.size > MAX_UPLOAD_MB * 1024 * 1024)
+        return setError(
+          form,
+          "photo",
+          `That file is larger than ${MAX_UPLOAD_MB} MB.`,
+        );
       try {
         photoData = await readPhoto(picked);
         $("img", preview).src = photoData;
         preview.hidden = false;
         zone.hidden = true;
       } catch (error) {
-        setError(form, "photo", "That image couldn't be read. Please try another one.");
+        setError(
+          form,
+          "photo",
+          "That image couldn't be read. Please try another one.",
+        );
       }
     }
 
@@ -133,7 +160,7 @@
         event.preventDefault();
         zone.classList.toggle("is-dragover", evt === "dragover");
         if (evt === "drop") handleFile(event.dataTransfer.files[0]);
-      })
+      }),
     );
     $("#cg-photo-remove", form).addEventListener("click", clearPhoto);
 
@@ -144,15 +171,25 @@
         const name = wrap && wrap.dataset.field;
         if (!RULES[name] || wrap.dataset.invalid !== "true") return;
         const field = event.target;
-        const value = field.type === "checkbox" ? (field.checked ? "yes" : "") : field.value;
+        const value =
+          field.type === "checkbox"
+            ? field.checked
+              ? "yes"
+              : ""
+            : field.value;
         if (!RULES[name](value)) setError(form, name, "");
-      })
+      }),
     );
 
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       const data = new FormData(form);
-      const values = { name: data.get("name") || "", rating: data.get("rating") || "", text: data.get("text") || "", consent: data.get("consent") || "" };
+      const values = {
+        name: data.get("name") || "",
+        rating: data.get("rating") || "",
+        text: data.get("text") || "",
+        consent: data.get("consent") || "",
+      };
       let firstBad = null;
       Object.keys(RULES).forEach((name) => {
         const message = RULES[name](values[name]);
@@ -161,7 +198,10 @@
       });
       if (firstBad) {
         status(form, "error", "Please fix the highlighted fields.");
-        const field = $(`[data-field="${firstBad}"] input, [data-field="${firstBad}"] textarea`, form);
+        const field = $(
+          `[data-field="${firstBad}"] input, [data-field="${firstBad}"] textarea`,
+          form,
+        );
         return field && field.focus();
       }
 
@@ -172,18 +212,33 @@
         text: values.text.trim(),
         productName: data.get("product") || "",
         photo: photoData,
-        dateLabel: new Date().toLocaleDateString(FrameX.config.locale, { day: "numeric", month: "short", year: "numeric" })
+        dateLabel: new Date().toLocaleDateString(FrameX.config.locale, {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        }),
       };
       try {
         saveLocal([entry].concat(loadLocal()).slice(0, MAX_LOCAL));
       } catch (error) {
-        return status(form, "error", "This browser couldn't save your review (its storage is full or blocked). Nothing was saved.");
+        return status(
+          form,
+          "error",
+          "This browser couldn't save your review (its storage is full or blocked). Nothing was saved.",
+        );
       }
       form.reset();
       clearPhoto();
       render();
-      status(form, "info", "Saved on this device, so you can see how it looks above. Publishing reviews on the site is coming soon, so it hasn't been sent to FrameX.");
-      $("#cg-grid").scrollIntoView({ behavior: FrameX.dom.prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+      status(
+        form,
+        "info",
+        "Saved on this device, so you can see how it looks above. Publishing reviews on the site is coming soon, so it hasn't been sent to FrameX.",
+      );
+      $("#cg-grid").scrollIntoView({
+        behavior: FrameX.dom.prefersReducedMotion() ? "auto" : "smooth",
+        block: "start",
+      });
     });
   }
 
@@ -193,9 +248,15 @@
     if (!grid || !form) return;
 
     try {
-      const [reviews, products] = await Promise.all([FrameX.api.getReviews(), FrameX.api.getProducts({ limit: 1000 })]);
+      const [reviews, products] = await Promise.all([
+        FrameX.api.getReviews(),
+        FrameX.api.getProducts({ limit: 1000 }),
+      ]);
       published = reviews;
-      $("#cg-product", form).insertAdjacentHTML("beforeend", products.items.map((p) => `<option>${esc(p.name)}</option>`).join(""));
+      $("#cg-product", form).insertAdjacentHTML(
+        "beforeend",
+        products.items.map((p) => `<option>${esc(p.name)}</option>`).join(""),
+      );
     } catch (error) {
       console.error("Customer gallery failed to load", error);
     }

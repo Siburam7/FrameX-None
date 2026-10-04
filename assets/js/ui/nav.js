@@ -23,7 +23,7 @@
           requestAnimationFrame(update);
         }
       },
-      { passive: true }
+      { passive: true },
     );
     update();
 
@@ -36,7 +36,9 @@
       document.body.classList.toggle("is-locked", open);
     };
 
-    toggle.addEventListener("click", () => setOpen(toggle.getAttribute("aria-expanded") !== "true"));
+    toggle.addEventListener("click", () =>
+      setOpen(toggle.getAttribute("aria-expanded") !== "true"),
+    );
     panel.addEventListener("click", (event) => {
       if (event.target.closest("a, button")) setOpen(false);
     });

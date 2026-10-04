@@ -130,15 +130,60 @@
 
     // ---- Product types (shops pick these in the shop dashboard) ----
     // Empty categories stay hidden until a shop lists a product in them.
-    { id: "premium", name: "Premium Frames", image: "assets/img/products/imperial-gold.webp", isActive: true },
-    { id: "metal", name: "Metal Frames", image: "assets/img/products/urban-black.webp", isActive: true },
-    { id: "gallery-frames", name: "Gallery Frames", image: "assets/img/products/nordic-oak.webp", isActive: true },
-    { id: "collage", name: "Collage Frames", image: "assets/img/products/collage-set.webp", isActive: true },
-    { id: "floating", name: "Floating Frames", image: "assets/img/products/signature-frame.webp", isActive: true },
-    { id: "canvas", name: "Canvas", image: "assets/img/categories/wall-art.webp", isActive: true },
-    { id: "photo-prints", name: "Photo Prints", image: "assets/img/categories/photo-frames.webp", isActive: true },
-    { id: "custom", name: "Custom Frames", image: "assets/img/products/wedding-anniversary.webp", isActive: true },
-    { id: "personalized", name: "Personalized Frames", image: "assets/img/products/family-memory.webp", isActive: true },
+    {
+      id: "premium",
+      name: "Premium Frames",
+      image: "assets/img/products/imperial-gold.webp",
+      isActive: true,
+    },
+    {
+      id: "metal",
+      name: "Metal Frames",
+      image: "assets/img/products/urban-black.webp",
+      isActive: true,
+    },
+    {
+      id: "gallery-frames",
+      name: "Gallery Frames",
+      image: "assets/img/products/nordic-oak.webp",
+      isActive: true,
+    },
+    {
+      id: "collage",
+      name: "Collage Frames",
+      image: "assets/img/products/collage-set.webp",
+      isActive: true,
+    },
+    {
+      id: "floating",
+      name: "Floating Frames",
+      image: "assets/img/products/signature-frame.webp",
+      isActive: true,
+    },
+    {
+      id: "canvas",
+      name: "Canvas",
+      image: "assets/img/categories/wall-art.webp",
+      isActive: true,
+    },
+    {
+      id: "photo-prints",
+      name: "Photo Prints",
+      image: "assets/img/categories/photo-frames.webp",
+      isActive: true,
+    },
+    {
+      id: "custom",
+      name: "Custom Frames",
+      image: "assets/img/products/wedding-anniversary.webp",
+      isActive: true,
+    },
+    {
+      id: "personalized",
+      name: "Personalized Frames",
+      image: "assets/img/products/family-memory.webp",
+      isActive: true,
+    },
 
     // ADD NEW CATEGORY HERE — put a comma after the line above, then copy this line:
     // { id: "kids", name: "Kids' Room", image: "assets/img/categories/kids.webp", isActive: true }
@@ -526,7 +571,14 @@
       name: "Personalized Family Memory Wooden Photo Frame",
       image: "assets/img/products/family-memory.webp",
       description: "",
-      categoryIds: ["photo-frames", "family", "gifts", "wooden", "classic", "personalized"],
+      categoryIds: [
+        "photo-frames",
+        "family",
+        "gifts",
+        "wooden",
+        "classic",
+        "personalized",
+      ],
       price: 599,
       discountPercent: 25,
       stock: 20,
@@ -542,7 +594,14 @@
       name: "Custom Wedding Anniversary Premium Photo Frame",
       image: "assets/img/products/wedding-anniversary.webp",
       description: "",
-      categoryIds: ["photo-frames", "wedding", "gifts", "luxury", "classic", "custom"],
+      categoryIds: [
+        "photo-frames",
+        "wedding",
+        "gifts",
+        "luxury",
+        "classic",
+        "custom",
+      ],
       price: 849,
       discountPercent: 30,
       stock: 20,
@@ -675,7 +734,8 @@
         "wall-art",
         "family",
         "decorative",
-        "modern", "collage",
+        "modern",
+        "collage",
       ],
       price: 1099,
       discountPercent: 40,
@@ -732,7 +792,8 @@
         "new-arrivals",
         "wall-art",
         "modern",
-        "minimal", "metal",
+        "minimal",
+        "metal",
       ],
       price: 749,
       discountPercent: 0,
@@ -757,7 +818,13 @@
       name: "Luxury HD Printed Personalized Picture Frame",
       image: "assets/img/products/luxury-hd.webp",
       description: "",
-      categoryIds: ["photo-frames", "new-arrivals", "wall-art", "luxury", "personalized"],
+      categoryIds: [
+        "photo-frames",
+        "new-arrivals",
+        "wall-art",
+        "luxury",
+        "personalized",
+      ],
       price: 1399,
       discountPercent: 35,
       stock: 20,
@@ -954,10 +1021,25 @@
       );
     if (typeof p.price !== "number")
       warn(`Product "${p.id}" needs a number for price (no quotes).`);
-    const VIEW_TYPES = ["FRONT", "SIDE", "BACK", "CORNER", "DETAIL", "MATERIAL", "WALL_PREVIEW", "LIFESTYLE", "PACKAGING", "PHOTO"];
+    const VIEW_TYPES = [
+      "FRONT",
+      "SIDE",
+      "BACK",
+      "CORNER",
+      "DETAIL",
+      "MATERIAL",
+      "WALL_PREVIEW",
+      "LIFESTYLE",
+      "PACKAGING",
+      "PHOTO",
+    ];
     (p.views || [])
       .filter((v) => !v || !v.url || !VIEW_TYPES.includes(v.type))
-      .forEach(() => warn(`Product "${p.id}" has a view without a url or with an unknown type (use ${VIEW_TYPES.join(", ")}).`));
+      .forEach(() =>
+        warn(
+          `Product "${p.id}" has a view without a url or with an unknown type (use ${VIEW_TYPES.join(", ")}).`,
+        ),
+      );
   });
   homepage.featuredProductIds
     .concat(homepage.recommendedProductIds)

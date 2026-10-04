@@ -15,15 +15,34 @@
   const MIN_360 = 8;
   const FALLBACK = "assets/img/ui/frame-decor.webp";
 
-  const resolve = (url, opts) => (FrameX.mediaService ? FrameX.mediaService.resolve(url, opts) : Promise.resolve(url));
-  const typeOf = (v) => (FrameX.productModel ? FrameX.productModel.viewType(v.type) : { id: v.type, label: v.type, short: v.type });
+  const resolve = (url, opts) =>
+    FrameX.mediaService
+      ? FrameX.mediaService.resolve(url, opts)
+      : Promise.resolve(url);
+  const typeOf = (v) =>
+    FrameX.productModel
+      ? FrameX.productModel.viewType(v.type)
+      : { id: v.type, label: v.type, short: v.type };
   const labelOf = (v) => (v.type && v.type !== "PHOTO" ? typeOf(v).label : "");
 
-  function mount(root, { name = "Product", views = [], product360 = null, lightbox = false, startIndex = 0, onClose = null } = {}) {
+  function mount(
+    root,
+    {
+      name = "Product",
+      views = [],
+      product360 = null,
+      lightbox = false,
+      startIndex = 0,
+      onClose = null,
+    } = {},
+  ) {
     const frames = (product360 && product360.frames) || [];
     const has360 = frames.length >= MIN_360;
     const items = views.map((v, i) => Object.assign({ index: i }, v));
-    let index = Math.min(Math.max(0, startIndex), Math.max(0, items.length - 1));
+    let index = Math.min(
+      Math.max(0, startIndex),
+      Math.max(0, items.length - 1),
+    );
     let token = 0;
     let zoomed = false;
     let mode = "photos"; // "photos" | "360"
@@ -42,20 +61,34 @@
           </div>
         </div>
         <p class="pg-tag" aria-live="polite"><span data-label></span><span class="pg-tag__count" data-count></span></p>
-        ${items.length > 1 ? `<button class="pg-nav pg-nav--prev" type="button" data-step="-1" aria-label="Previous image">${icon("chev-left")}</button>
-        <button class="pg-nav pg-nav--next" type="button" data-step="1" aria-label="Next image">${icon("chev-right")}</button>` : ""}
+        ${
+          items.length > 1
+            ? `<button class="pg-nav pg-nav--prev" type="button" data-step="-1" aria-label="Previous image">${icon("chev-left")}</button>
+        <button class="pg-nav pg-nav--next" type="button" data-step="1" aria-label="Next image">${icon("chev-right")}</button>`
+            : ""
+        }
         <div class="pg-tools">
           <button class="pg-btn" type="button" data-zoom aria-pressed="false" aria-label="Zoom in">${icon("zoom")}</button>
           ${lightbox ? `<button class="pg-btn" type="button" data-close aria-label="Close fullscreen">${icon("close")}</button>` : `<button class="pg-btn" type="button" data-full aria-label="View fullscreen">${icon("frame")}</button>`}
         </div>
         <span class="pg-spinner" aria-hidden="true"></span>
       </div>
-      ${items.length > 1 || has360 ? `<div class="pg-thumbs" role="tablist" aria-label="Product views">
-        ${items.map((v) => `<button class="pg-thumb" type="button" role="tab" data-thumb="${v.index}" aria-selected="false" aria-label="${esc(labelOf(v) || "Photo " + (v.index + 1))}">
+      ${
+        items.length > 1 || has360
+          ? `<div class="pg-thumbs" role="tablist" aria-label="Product views">
+        ${items
+          .map(
+            (
+              v,
+            ) => `<button class="pg-thumb" type="button" role="tab" data-thumb="${v.index}" aria-selected="false" aria-label="${esc(labelOf(v) || "Photo " + (v.index + 1))}">
             <span class="pg-thumb__img"><img alt="" loading="lazy" decoding="async" data-thumb-src="${esc(v.thumb || v.url)}"></span>
-            ${labelOf(v) ? `<span class="pg-thumb__label">${esc(typeOf(v).short)}</span>` : ""}</button>`).join("")}
+            ${labelOf(v) ? `<span class="pg-thumb__label">${esc(typeOf(v).short)}</span>` : ""}</button>`,
+          )
+          .join("")}
         ${has360 ? `<button class="pg-thumb pg-thumb--360" type="button" role="tab" data-open-360 aria-selected="false"><span class="pg-thumb__img"><b>360°</b></span><span class="pg-thumb__label">360° View</span></button>` : ""}
-      </div>` : ""}
+      </div>`
+          : ""
+      }
     </div>`;
 
     const stage = $(".pg-stage", root);
@@ -66,7 +99,11 @@
     $$("[data-thumb-src]", root).forEach((img) => {
       const src = img.dataset.thumbSrc;
       resolve(src, { thumb: true }).then((u) => (img.src = u || FALLBACK));
-      img.addEventListener("error", () => img.src.indexOf(FALLBACK) === -1 && (img.src = FALLBACK), { once: true });
+      img.addEventListener(
+        "error",
+        () => img.src.indexOf(FALLBACK) === -1 && (img.src = FALLBACK),
+        { once: true },
+      );
     });
 
     function setZoom(on, e) {
@@ -86,20 +123,36 @@
       const img = $(".pg-img.is-active", frame);
       if (!img) return;
       const r = stage.getBoundingClientRect();
-      const x = Math.min(100, Math.max(0, ((e.clientX - r.left) / r.width) * 100));
-      const y = Math.min(100, Math.max(0, ((e.clientY - r.top) / r.height) * 100));
+      const x = Math.min(
+        100,
+        Math.max(0, ((e.clientX - r.left) / r.width) * 100),
+      );
+      const y = Math.min(
+        100,
+        Math.max(0, ((e.clientY - r.top) / r.height) * 100),
+      );
       img.style.transformOrigin = `${x}% ${y}%`;
     }
 
     function updateChrome() {
       const v = items[index];
-      $("[data-label]", root).textContent = mode === "360" ? "360° view" : v ? labelOf(v) : "";
-      $("[data-count]", root).textContent = mode === "360" || items.length < 2 ? "" : `${index + 1} / ${items.length}`;
-      $$("[data-thumb]", root).forEach((b) => b.setAttribute("aria-selected", String(mode === "photos" && Number(b.dataset.thumb) === index)));
+      $("[data-label]", root).textContent =
+        mode === "360" ? "360° view" : v ? labelOf(v) : "";
+      $("[data-count]", root).textContent =
+        mode === "360" || items.length < 2
+          ? ""
+          : `${index + 1} / ${items.length}`;
+      $$("[data-thumb]", root).forEach((b) =>
+        b.setAttribute(
+          "aria-selected",
+          String(mode === "photos" && Number(b.dataset.thumb) === index),
+        ),
+      );
       const t360 = $("[data-open-360]", root);
       if (t360) t360.setAttribute("aria-selected", String(mode === "360"));
       const active = $(`[data-thumb="${index}"]`, root);
-      if (active && mode === "photos") active.scrollIntoView({ block: "nearest", inline: "nearest" });
+      if (active && mode === "photos")
+        active.scrollIntoView({ block: "nearest", inline: "nearest" });
     }
 
     async function show(i, dir = 0) {
@@ -167,7 +220,7 @@
             });
             status.textContent = `Loading 360° view… ${++done} / ${frames.length}`;
             return u;
-          })
+          }),
         );
       }
       status.textContent = "";
@@ -188,9 +241,17 @@
     /* ---- events ---- */
     const onClick = (e) => {
       const step = e.target.closest("[data-step]");
-      if (step) return show(index + Number(step.dataset.step), Number(step.dataset.step));
+      if (step)
+        return show(
+          index + Number(step.dataset.step),
+          Number(step.dataset.step),
+        );
       const thumb = e.target.closest("[data-thumb]");
-      if (thumb) return show(Number(thumb.dataset.thumb), Number(thumb.dataset.thumb) > index ? 1 : -1);
+      if (thumb)
+        return show(
+          Number(thumb.dataset.thumb),
+          Number(thumb.dataset.thumb) > index ? 1 : -1,
+        );
       if (e.target.closest("[data-open-360]")) return open360();
       const s360 = e.target.closest("[data-360-step]");
       if (s360) return rotate(Number(s360.dataset["360Step"]));
@@ -198,7 +259,12 @@
       if (e.target.closest("[data-full]")) return openLightbox();
       if (e.target.closest("[data-close]")) return onClose && onClose();
       // Clicking the photo itself toggles zoom (desktop) — touch uses the button + drag.
-      if (mode === "photos" && e.target.closest(".pg-stage__frame") && e.pointerType !== "touch") setZoom(!zoomed, e);
+      if (
+        mode === "photos" &&
+        e.target.closest(".pg-stage__frame") &&
+        e.pointerType !== "touch"
+      )
+        setZoom(!zoomed, e);
     };
     root.addEventListener("click", onClick);
 
@@ -206,7 +272,13 @@
     let drag = null;
     stage.addEventListener("pointerdown", (e) => {
       if (e.target.closest("button")) return;
-      drag = { x: e.clientX, y: e.clientY, start: frame360, moved: false, id: e.pointerId };
+      drag = {
+        x: e.clientX,
+        y: e.clientY,
+        start: frame360,
+        moved: false,
+        id: e.pointerId,
+      };
       if (mode === "360") stage.setPointerCapture(e.pointerId);
     });
     stage.addEventListener("pointermove", (e) => {
@@ -214,14 +286,23 @@
       if (!drag || mode !== "360" || !frameUrls) return;
       const w = stage.getBoundingClientRect().width;
       const steps = Math.round(((e.clientX - drag.x) / w) * frameUrls.length);
-      frame360 = (((drag.start - steps) % frameUrls.length) + frameUrls.length) % frameUrls.length;
+      frame360 =
+        (((drag.start - steps) % frameUrls.length) + frameUrls.length) %
+        frameUrls.length;
       $(".pg-360__img", root).src = frameUrls[frame360];
     });
     const endDrag = (e) => {
       if (!drag) return;
       const dx = e.clientX - drag.x;
       const dy = e.clientY - drag.y;
-      if (mode === "photos" && !zoomed && Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.4 && items.length > 1) show(index + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+      if (
+        mode === "photos" &&
+        !zoomed &&
+        Math.abs(dx) > 45 &&
+        Math.abs(dx) > Math.abs(dy) * 1.4 &&
+        items.length > 1
+      )
+        show(index + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
       drag = null;
     };
     stage.addEventListener("pointerup", endDrag);
@@ -256,9 +337,19 @@
       };
       const onKey = (e) => {
         if (e.key === "Escape") close();
-        if (e.key === "Tab") FrameX.overlay && FrameX.overlay.trapFocus ? FrameX.overlay.trapFocus(shell, e) : null;
+        if (e.key === "Tab")
+          FrameX.overlay && FrameX.overlay.trapFocus
+            ? FrameX.overlay.trapFocus(shell, e)
+            : null;
       };
-      inner = mount(shell, { name, views, product360, lightbox: true, startIndex: index, onClose: close });
+      inner = mount(shell, {
+        name,
+        views,
+        product360,
+        lightbox: true,
+        startIndex: index,
+        onClose: close,
+      });
       document.addEventListener("keydown", onKey);
       requestAnimationFrame(() => shell.classList.add("is-open"));
       $(".pg-stage", shell).focus();
@@ -277,7 +368,7 @@
         root.removeEventListener("click", onClick);
         cleanups.forEach((fn) => fn());
         root.innerHTML = "";
-      }
+      },
     };
   }
 

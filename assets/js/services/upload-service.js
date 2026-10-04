@@ -52,9 +52,15 @@
   function readFile(file, onProgress) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onprogress = (e) => e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 70));
+      reader.onprogress = (e) =>
+        e.lengthComputable && onProgress(Math.round((e.loaded / e.total) * 70));
       reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new UploadError("That photo couldn't be read. Please try another one."));
+      reader.onerror = () =>
+        reject(
+          new UploadError(
+            "That photo couldn't be read. Please try another one.",
+          ),
+        );
       reader.readAsArrayBuffer(file);
     });
   }
@@ -66,38 +72,68 @@
       image.onload = () => resolve({ image, url });
       image.onerror = () => {
         URL.revokeObjectURL(url);
-        reject(new UploadError("That file doesn't look like a valid image. Please choose a JPG, PNG or WebP photo."));
+        reject(
+          new UploadError(
+            "That file doesn't look like a valid image. Please choose a JPG, PNG or WebP photo.",
+          ),
+        );
       };
       image.src = url;
     });
   }
 
   function scale(image) {
-    const ratio = Math.min(1, PREVIEW_EDGE / Math.max(image.naturalWidth, image.naturalHeight));
+    const ratio = Math.min(
+      1,
+      PREVIEW_EDGE / Math.max(image.naturalWidth, image.naturalHeight),
+    );
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(image.naturalWidth * ratio);
     canvas.height = Math.round(image.naturalHeight * ratio);
     canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
-    return new Promise((resolve) => canvas.toBlob((b) => resolve({ blob: b, width: canvas.width, height: canvas.height }), "image/jpeg", 0.88));
+    return new Promise((resolve) =>
+      canvas.toBlob(
+        (b) => resolve({ blob: b, width: canvas.width, height: canvas.height }),
+        "image/jpeg",
+        0.88,
+      ),
+    );
   }
 
   /** Validate, read and store one photo. Throws UploadError with a friendly message. */
   async function prepare(file, onProgress = () => {}) {
     if (!file) throw new UploadError("No photo was selected.");
-    if (!TYPES.includes(file.type)) throw new UploadError("Please choose a JPG, PNG or WebP photo.");
-    if (file.size > MAX_MB * 1024 * 1024) throw new UploadError(`That photo is larger than ${MAX_MB} MB. Please choose a smaller one.`);
+    if (!TYPES.includes(file.type))
+      throw new UploadError("Please choose a JPG, PNG or WebP photo.");
+    if (file.size > MAX_MB * 1024 * 1024)
+      throw new UploadError(
+        `That photo is larger than ${MAX_MB} MB. Please choose a smaller one.`,
+      );
     onProgress(2);
     const buffer = await readFile(file, onProgress);
-    const { image, url } = await decode(new Blob([buffer], { type: file.type }));
+    const { image, url } = await decode(
+      new Blob([buffer], { type: file.type }),
+    );
     onProgress(80);
     const out = await scale(image);
     URL.revokeObjectURL(url);
-    if (!out.blob) throw new UploadError("That photo couldn't be prepared. Please try another one.");
-    const id = "ph-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    if (!out.blob)
+      throw new UploadError(
+        "That photo couldn't be prepared. Please try another one.",
+      );
+    const id =
+      "ph-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     memory.set(id, out.blob);
     await tx("readwrite", (store) => store.put(out.blob, id));
     onProgress(100);
-    return { id, url: getUrlSync(id), name: file.name, width: image.naturalWidth, height: image.naturalHeight, size: file.size };
+    return {
+      id,
+      url: getUrlSync(id),
+      name: file.name,
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+      size: file.size,
+    };
   }
 
   function getUrlSync(id) {
@@ -126,5 +162,13 @@
     await tx("readwrite", (store) => store.delete(id));
   }
 
-  FrameX.uploadService = { prepare, getUrl, remove, UploadError, TYPES, MAX_MB, persistent: () => db().then(Boolean) };
+  FrameX.uploadService = {
+    prepare,
+    getUrl,
+    remove,
+    UploadError,
+    TYPES,
+    MAX_MB,
+    persistent: () => db().then(Boolean),
+  };
 })((window.FrameX = window.FrameX || {}));

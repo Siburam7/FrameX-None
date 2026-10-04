@@ -35,7 +35,9 @@
   function dismiss(toast) {
     if (!toast.isConnected || toast.classList.contains("is-leaving")) return;
     toast.classList.add("is-leaving");
-    toast.addEventListener("animationend", () => toast.remove(), { once: true });
+    toast.addEventListener("animationend", () => toast.remove(), {
+      once: true,
+    });
     setTimeout(() => toast.remove(), 400); // safety net when animations are disabled
   }
 

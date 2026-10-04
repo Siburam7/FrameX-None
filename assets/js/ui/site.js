@@ -12,7 +12,7 @@
           ${s.icon ? `<span class="hero__stat-icon">${icon(s.icon)}</span>` : ""}
           <div class="hero__stat-value" data-count-to="${s.value}" data-suffix="${esc(s.suffix || "")}"><span>0</span></div>
           <div class="hero__stat-label">${esc(s.label)}</div>
-        </div>`
+        </div>`,
       )
       .join("");
     startCounters(container);
@@ -27,7 +27,10 @@
       el.innerHTML = `${compact.format(Number(el.dataset.countTo))}<span>${esc(el.dataset.suffix)}</span>`;
     };
 
-    if (FrameX.dom.prefersReducedMotion() || !("IntersectionObserver" in window)) {
+    if (
+      FrameX.dom.prefersReducedMotion() ||
+      !("IntersectionObserver" in window)
+    ) {
       targets.forEach(finish);
       return;
     }

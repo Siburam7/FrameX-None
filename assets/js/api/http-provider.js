@@ -10,16 +10,25 @@
   function buildUrl(path, params) {
     const query = new URLSearchParams();
     Object.entries(params || {}).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "" && value !== false) query.set(key, String(value));
+      if (
+        value !== undefined &&
+        value !== null &&
+        value !== "" &&
+        value !== false
+      )
+        query.set(key, String(value));
     });
     const qs = query.toString();
     return `${config.apiBaseUrl}${path}${qs ? "?" + qs : ""}`;
   }
 
   async function request(path, params) {
-    const response = await fetch(buildUrl(path, params), { headers: { Accept: "application/json" } });
+    const response = await fetch(buildUrl(path, params), {
+      headers: { Accept: "application/json" },
+    });
     if (response.status === 404) return null;
-    if (!response.ok) throw new Error(`Request failed (${response.status}) for ${path}`);
+    if (!response.ok)
+      throw new Error(`Request failed (${response.status}) for ${path}`);
     return response.json();
   }
 
@@ -28,10 +37,16 @@
     const response = await fetch(`${config.apiBaseUrl}${path}`, {
       method,
       credentials: "include",
-      headers: { Accept: "application/json", "Content-Type": "application/json" },
-      body: body === undefined ? undefined : JSON.stringify(body)
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
     });
-    if (!response.ok) throw new Error(`Request failed (${response.status}) for ${method} ${path}`);
+    if (!response.ok)
+      throw new Error(
+        `Request failed (${response.status}) for ${method} ${path}`,
+      );
     return response.status === 204 ? true : response.json();
   }
 
@@ -40,10 +55,15 @@
     // Products: GET /products accepts material, frameType, finish, size, priceMin,
     // priceMax, customizable as well as the older filters.
     getProductFacets: () => request("/products/facets"),
-    getShopProducts: (shopId) => request(`/shops/${encodeURIComponent(shopId)}/products`, { include: "all" }),
+    getShopProducts: (shopId) =>
+      request(`/shops/${encodeURIComponent(shopId)}/products`, {
+        include: "all",
+      }),
     getShopProduct: (id) => request(`/shop/products/${encodeURIComponent(id)}`),
-    saveShopProduct: (product) => send("PUT", `/shop/products/${encodeURIComponent(product.id)}`, product),
-    deleteShopProduct: (id) => send("DELETE", `/shop/products/${encodeURIComponent(id)}`),
+    saveShopProduct: (product) =>
+      send("PUT", `/shop/products/${encodeURIComponent(product.id)}`, product),
+    deleteShopProduct: (id) =>
+      send("DELETE", `/shop/products/${encodeURIComponent(id)}`),
     getProductSlugs: () => request("/products/slugs"),
     getSite: () => request("/site"),
     getCategories: () => request("/categories"),
@@ -59,6 +79,6 @@
     getTemplate: (slug) => request(`/templates/${encodeURIComponent(slug)}`),
     getTemplateCategories: () => request("/template-categories"),
     getTemplateOptions: () => request("/template-options"),
-    getStudioCatalog: () => request("/studio/catalog")
+    getStudioCatalog: () => request("/studio/catalog"),
   };
 })((window.FrameX = window.FrameX || {}));

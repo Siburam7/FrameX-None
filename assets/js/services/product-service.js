@@ -12,21 +12,34 @@
 (function (FrameX) {
   const model = () => FrameX.productModel;
   const api = () => FrameX.api;
-  const SESSION = (FrameX.config.storageKeys && FrameX.config.storageKeys.shopSession) || "framex.shopSession.v1";
+  const SESSION =
+    (FrameX.config.storageKeys && FrameX.config.storageKeys.shopSession) ||
+    "framex.shopSession.v1";
 
   async function listingImageFor(p, previous) {
     const main = model().mainView(p);
     if (!main) return { listingImage: "", listingImageFor: "" };
-    if (!FrameX.mediaService || !FrameX.mediaService.isMedia(main.url)) return { listingImage: "", listingImageFor: main.url };
-    if (previous && previous.listingImageFor === main.url && previous.listingImage) return { listingImage: previous.listingImage, listingImageFor: main.url };
-    return { listingImage: await FrameX.mediaService.listingThumb(main.url), listingImageFor: main.url };
+    if (!FrameX.mediaService || !FrameX.mediaService.isMedia(main.url))
+      return { listingImage: "", listingImageFor: main.url };
+    if (
+      previous &&
+      previous.listingImageFor === main.url &&
+      previous.listingImage
+    )
+      return { listingImage: previous.listingImage, listingImageFor: main.url };
+    return {
+      listingImage: await FrameX.mediaService.listingThumb(main.url),
+      listingImageFor: main.url,
+    };
   }
 
   const productService = {
     /** A published product by id or slug, as the full product model. */
     async get(idOrSlug) {
       const p = await api().getProduct(idOrSlug);
-      return p ? Object.assign(model().normalize(p), { shopName: p.shopName }) : null;
+      return p
+        ? Object.assign(model().normalize(p), { shopName: p.shopName })
+        : null;
     },
     list: (params) => api().getProducts(params),
     facets: () => api().getProductFacets(),
@@ -44,9 +57,14 @@
       const p = m.sanitizeShopInput(product);
       const now = new Date().toISOString();
       if (status) p.status = status;
-      const taken = (await api().getProductSlugs()).filter((x) => x.id !== p.id).map((x) => x.slug);
+      const taken = (await api().getProductSlugs())
+        .filter((x) => x.id !== p.id)
+        .map((x) => x.slug);
       const wanted = m.slugify(p.slug || p.name);
-      p.slug = wanted && !taken.includes(wanted) ? wanted : m.uniqueSlug(p.name || "product", taken);
+      p.slug =
+        wanted && !taken.includes(wanted)
+          ? wanted
+          : m.uniqueSlug(p.name || "product", taken);
       p.updatedAt = now;
       if (p.status === "published" && !p.publishedAt) p.publishedAt = now;
       Object.assign(p, await listingImageFor(p, product));
@@ -59,11 +77,18 @@
     async publish(product) {
       const check = model().validateForPublish(product);
       if (!check.ready) return { ok: false, issues: check.issues };
-      const status = FrameX.config.productModeration ? "pending_review" : "published";
-      return { ok: true, status, product: await productService.save(product, { status }) };
+      const status = FrameX.config.productModeration
+        ? "pending_review"
+        : "published";
+      return {
+        ok: true,
+        status,
+        product: await productService.save(product, { status }),
+      };
     },
 
-    unpublish: (product) => productService.save(product, { status: "unpublished" }),
+    unpublish: (product) =>
+      productService.save(product, { status: "unpublished" }),
 
     async duplicate(product) {
       const taken = (await api().getProductSlugs()).map((x) => x.slug);
@@ -78,12 +103,14 @@
       await api().deleteShopProduct(product.id);
       if (FrameX.mediaService && FrameX.config.dataMode !== "api") {
         const shops = await api().getShops({ limit: 1000 });
-        const all = (await Promise.all(shops.items.map((s) => api().getShopProducts(s.id)))).flat();
+        const all = (
+          await Promise.all(shops.items.map((s) => api().getShopProducts(s.id)))
+        ).flat();
         const refs = all.flatMap((p) => mediaRefs(p));
         FrameX.mediaService.collectGarbage(refs);
       }
       return true;
-    }
+    },
   };
 
   /** Every uploaded-file reference inside a product. */
@@ -115,7 +142,7 @@
       } catch (e) {
         /* storage blocked: the choice lasts for this page only */
       }
-    }
+    },
   };
 
   FrameX.productService = productService;

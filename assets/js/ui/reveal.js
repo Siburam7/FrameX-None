@@ -18,13 +18,14 @@
             reveal(entry.target);
           });
         },
-        { rootMargin: "0px 0px -8% 0px", threshold: 0.1 }
+        { rootMargin: "0px 0px -8% 0px", threshold: 0.1 },
       )
     : null;
 
   function reveal(el) {
     el.classList.add("is-revealed");
-    const delay = parseFloat(getComputedStyle(el).getPropertyValue("--reveal-delay")) || 0;
+    const delay =
+      parseFloat(getComputedStyle(el).getPropertyValue("--reveal-delay")) || 0;
     setTimeout(() => {
       el.removeAttribute("data-reveal");
       el.classList.remove("is-revealed");
@@ -35,7 +36,8 @@
   function observe(root = document) {
     $$("[data-reveal-stagger]", root).forEach((parent) => {
       Array.from(parent.children).forEach((child, i) => {
-        if (!child.hasAttribute("data-reveal")) child.setAttribute("data-reveal", "");
+        if (!child.hasAttribute("data-reveal"))
+          child.setAttribute("data-reveal", "");
         child.style.setProperty("--reveal-delay", Math.min(i, 6) * 70 + "ms");
       });
       parent.removeAttribute("data-reveal-stagger");

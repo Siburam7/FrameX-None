@@ -15,7 +15,10 @@
   let lastFocus = null;
   let els = {};
 
-  const tile = (item, i) => `<button class="gallery-tile${i % 7 === 0 ? " gallery-tile--feature" : ""}" type="button" data-index="${i}" aria-label="Open photo: ${esc(item.alt)}">
+  const tile = (
+    item,
+    i,
+  ) => `<button class="gallery-tile${i % 7 === 0 ? " gallery-tile--feature" : ""}" type="button" data-index="${i}" aria-label="Open photo: ${esc(item.alt)}">
       <img src="${esc(item.src)}" alt="" width="640" height="800" loading="lazy" decoding="async">
       <span class="gallery-tile__overlay">
         <span class="gallery-tile__tag">${esc(item.sectionTitle)}</span>
@@ -25,16 +28,33 @@
     </button>`;
 
   function renderFilters(sections) {
-    const chips = [{ id: "all", title: "All", count: items.length }].concat(sections.map((s) => ({ id: s.id, title: s.title, count: s.items.length })));
+    const chips = [{ id: "all", title: "All", count: items.length }].concat(
+      sections.map((s) => ({
+        id: s.id,
+        title: s.title,
+        count: s.items.length,
+      })),
+    );
     els.nav.innerHTML = chips
-      .map((c) => `<button class="chip" type="button" data-gallery-filter="${esc(c.id)}" aria-pressed="${c.id === filter}">${esc(c.title)} <span class="gallery-nav__count">${c.count}</span></button>`)
+      .map(
+        (c) =>
+          `<button class="chip" type="button" data-gallery-filter="${esc(c.id)}" aria-pressed="${c.id === filter}">${esc(c.title)} <span class="gallery-nav__count">${c.count}</span></button>`,
+      )
       .join("");
   }
 
   function renderGrid() {
-    shown = filter === "all" ? items : items.filter((item) => item.sectionId === filter);
+    shown =
+      filter === "all"
+        ? items
+        : items.filter((item) => item.sectionId === filter);
     els.root.innerHTML = `<div class="gallery-grid">${shown.map(tile).join("")}</div>`;
-    $$("[data-gallery-filter]", els.nav).forEach((chip) => chip.setAttribute("aria-pressed", String(chip.dataset.galleryFilter === filter)));
+    $$("[data-gallery-filter]", els.nav).forEach((chip) =>
+      chip.setAttribute(
+        "aria-pressed",
+        String(chip.dataset.galleryFilter === filter),
+      ),
+    );
   }
 
   /* Viewer ------------------------------------------------------------------ */
@@ -55,14 +75,15 @@
           </figcaption>
         </figure>
         <button class="lightbox__nav lightbox__nav--next" type="button" data-lightbox-step="1" aria-label="Next photo">${icon("chev-right")}</button>
-      </div>`
+      </div>`,
     );
     const box = $("#lightbox");
     box.addEventListener("click", (event) => {
       const step = event.target.closest("[data-lightbox-step]");
       if (step) return show(current + Number(step.dataset.lightboxStep));
       // Close on the close button, or a click on the dark area around the photo.
-      if (event.target.closest("[data-lightbox-close]") || event.target === box) close();
+      if (event.target.closest("[data-lightbox-close]") || event.target === box)
+        close();
     });
     box.addEventListener("keydown", (event) => {
       if (event.key === "Escape") close();
@@ -72,7 +93,11 @@
     });
     // Swipe left / right on touch screens
     let startX = null;
-    box.addEventListener("pointerdown", (event) => (startX = event.pointerType === "touch" ? event.clientX : null));
+    box.addEventListener(
+      "pointerdown",
+      (event) =>
+        (startX = event.pointerType === "touch" ? event.clientX : null),
+    );
     box.addEventListener("pointerup", (event) => {
       if (startX === null) return;
       const dx = event.clientX - startX;
@@ -89,11 +114,16 @@
     const img = $("#lightbox-img");
     img.src = item.src;
     img.alt = item.alt;
-    $("#lightbox-tag").textContent = `${item.sectionTitle} · ${current + 1} of ${shown.length}`;
-    $("#lightbox-text").textContent = item.product ? item.product.name : item.alt;
+    $("#lightbox-tag").textContent =
+      `${item.sectionTitle} · ${current + 1} of ${shown.length}`;
+    $("#lightbox-text").textContent = item.product
+      ? item.product.name
+      : item.alt;
     $("#lightbox-actions").innerHTML = item.product
       ? `<a class="btn btn--primary btn--sm" href="${FrameX.qs.productUrl(item.product)}">View Product</a>${
-          item.product.frame && item.product.frame.shape !== "arch" ? `<a class="btn btn--outline-dark btn--sm" href="studio.html?product=${encodeURIComponent(item.product.id)}">Try With Your Own Image</a>` : ""
+          item.product.frame && item.product.frame.shape !== "arch"
+            ? `<a class="btn btn--outline-dark btn--sm" href="studio.html?product=${encodeURIComponent(item.product.id)}">Try With Your Own Image</a>`
+            : ""
         }`
       : `<a class="btn btn--outline-dark btn--sm" href="${FrameX.qs.pages.shop}">Shop Frames</a>`;
   }
@@ -117,10 +147,21 @@
     els = { root: $("#gallery-root"), nav: $("#gallery-nav") };
     if (!els.root) return;
     try {
-      const [sections, products] = await Promise.all([FrameX.api.getGallery(), FrameX.api.getProducts({ limit: 1000 })]);
+      const [sections, products] = await Promise.all([
+        FrameX.api.getGallery(),
+        FrameX.api.getProducts({ limit: 1000 }),
+      ]);
       // A photo that is also a product image links to that product.
       const productByImage = new Map(products.items.map((p) => [p.image, p]));
-      items = sections.flatMap((s) => s.items.map((item) => ({ src: item.src, alt: item.alt, sectionId: s.id, sectionTitle: s.title, product: productByImage.get(item.src) || null })));
+      items = sections.flatMap((s) =>
+        s.items.map((item) => ({
+          src: item.src,
+          alt: item.alt,
+          sectionId: s.id,
+          sectionTitle: s.title,
+          product: productByImage.get(item.src) || null,
+        })),
+      );
 
       renderFilters(sections);
       renderGrid();
@@ -136,10 +177,21 @@
         if (button) open(Number(button.dataset.index));
       });
       // Never leave a broken image behind
-      els.root.addEventListener("error", (e) => e.target.closest && e.target.closest(".gallery-tile") && e.target.closest(".gallery-tile").remove(), true);
+      els.root.addEventListener(
+        "error",
+        (e) =>
+          e.target.closest &&
+          e.target.closest(".gallery-tile") &&
+          e.target.closest(".gallery-tile").remove(),
+        true,
+      );
     } catch (error) {
       console.error("Gallery failed to load", error);
-      FrameX.templates.showError(els.root, "The gallery couldn't be loaded.", init);
+      FrameX.templates.showError(
+        els.root,
+        "The gallery couldn't be loaded.",
+        init,
+      );
     }
   }
 

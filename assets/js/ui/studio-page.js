@@ -48,10 +48,17 @@
   function setPath(path, value) {
     const keys = path.split(".");
     let node = cfg;
-    keys.slice(0, -1).forEach((k) => (node = node[k] = node[k] && typeof node[k] === "object" ? node[k] : {}));
+    keys
+      .slice(0, -1)
+      .forEach(
+        (k) =>
+          (node = node[k] =
+            node[k] && typeof node[k] === "object" ? node[k] : {}),
+      );
     node[keys[keys.length - 1]] = value;
   }
-  const getPath = (path) => path.split(".").reduce((n, k) => (n == null ? undefined : n[k]), cfg);
+  const getPath = (path) =>
+    path.split(".").reduce((n, k) => (n == null ? undefined : n[k]), cfg);
 
   function commit({ preview = true, panel = true } = {}) {
     engine.normalize(cfg, ctx);
@@ -67,21 +74,30 @@
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(() => {
       const g = engine.geometry(cfg, ctx);
-      const maxDiag = Math.max(...cat.SIZES.concat(ctx.caps.sizes).map((s) => Math.hypot(s.w, s.h)));
+      const maxDiag = Math.max(
+        ...cat.SIZES.concat(ctx.caps.sizes).map((s) => Math.hypot(s.w, s.h)),
+      );
       const scale = 0.7 + 0.3 * (Math.hypot(g.inches.w, g.inches.h) / maxDiag);
       const stage = $("#fs-preview");
       stage.style.setProperty("--size-scale", scale.toFixed(3));
       // Touch-dragging photos only while "Position & crop" is open, so the page still scrolls.
       stage.classList.toggle("is-adjusting", openSections.has("adjust"));
       stage.style.setProperty("--frame-aspect", (g.OW / g.OH).toFixed(4));
-      stage.innerHTML = engine.renderPreview(cfg, ctx, { photoUrls, mode: "live" });
-      $("#fs-preview-size").textContent = `${g.inches.w} × ${g.inches.h} in print · ${cfg.orientation}`;
+      stage.innerHTML = engine.renderPreview(cfg, ctx, {
+        photoUrls,
+        mode: "live",
+      });
+      $("#fs-preview-size").textContent =
+        `${g.inches.w} × ${g.inches.h} in print · ${cfg.orientation}`;
     });
   }
 
   /* ---------------------------------------------------------------- Sections */
   function cropOf(slot) {
-    return Object.assign({ fit: "fill", zoom: 1, px: 50, py: 50, rotate: 0 }, cfg.crop[slot] || {});
+    return Object.assign(
+      { fit: "fill", zoom: 1, px: 50, py: 50, rotate: 0 },
+      cfg.crop[slot] || {},
+    );
   }
 
   function photoNotice() {
@@ -90,15 +106,25 @@
     const g = engine.geometry(cfg, ctx);
     let area = { w: g.layers.photo.w, h: g.layers.photo.h };
     if (ctx.template) {
-      const el = ctx.template.layout.elements.find((e) => e.slot === activeSlot);
+      const el = ctx.template.layout.elements.find(
+        (e) => e.slot === activeSlot,
+      );
       if (el) area = { w: el.width, h: el.height };
     }
     const photoWide = meta.w / meta.h > 1.08;
     const areaWide = area.w / area.h > 1.08;
     const photoTall = meta.h / meta.w > 1.08;
     const areaTall = area.h / area.w > 1.08;
-    if ((photoWide && areaWide) || (photoTall && areaTall) || (!photoWide && !photoTall && !areaWide && !areaTall)) return "";
-    const canSwitch = ctx.mode !== "template" && byId(ctx.caps.orientations, photoWide ? "landscape" : "portrait") && cfg.orientation !== (photoWide ? "landscape" : "portrait");
+    if (
+      (photoWide && areaWide) ||
+      (photoTall && areaTall) ||
+      (!photoWide && !photoTall && !areaWide && !areaTall)
+    )
+      return "";
+    const canSwitch =
+      ctx.mode !== "template" &&
+      byId(ctx.caps.orientations, photoWide ? "landscape" : "portrait") &&
+      cfg.orientation !== (photoWide ? "landscape" : "portrait");
     return `<div class="fs-notice">${icon("alert")}<div><strong>Your photo is ${photoWide ? "wider" : "taller"} than this space.</strong>
       <span>Drag the photo in the preview to choose what stays in the frame${canSwitch ? `, or switch to a ${photoWide ? "landscape" : "portrait"} frame` : ", or choose Fit to show all of it"}.</span>
       ${canSwitch ? `<button class="btn btn--outline btn--sm" type="button" data-act="orient" data-value="${photoWide ? "landscape" : "portrait"}">Use ${photoWide ? "landscape" : "portrait"} frame</button>` : ""}</div></div>`;
@@ -108,20 +134,46 @@
     photos: {
       title: () => (ctx.caps.photoSlots.length > 1 ? "Photos" : "Photo"),
       show: () => true,
-      summary: () => `${ctx.caps.photoSlots.filter((s) => cfg.photos[s]).length} of ${ctx.caps.photoSlots.length} added`,
-      body: () => `<div id="fs-uploader"></div><p class="fs-hint">JPG, PNG or WebP, up to ${FrameX.uploadService.MAX_MB} MB. Photos stay on this device for the preview; when you order, you'll send them to us on WhatsApp.</p>`
+      summary: () =>
+        `${ctx.caps.photoSlots.filter((s) => cfg.photos[s]).length} of ${ctx.caps.photoSlots.length} added`,
+      body: () =>
+        `<div id="fs-uploader"></div><p class="fs-hint">JPG, PNG or WebP, up to ${FrameX.uploadService.MAX_MB} MB. Photos stay on this device for the preview; when you order, you'll send them to us on WhatsApp.</p>`,
     },
     adjust: {
       title: () => "Position & crop",
       show: () => ctx.caps.crop !== false,
-      summary: () => ({ fill: "Fill", fit: "Fit", crop: "Custom crop" })[cropOf(activeSlot).fit],
+      summary: () =>
+        ({ fill: "Fill", fit: "Fit", crop: "Custom crop" })[
+          cropOf(activeSlot).fit
+        ],
       dynamic: () => {
         const slots = ctx.caps.photoSlots;
-        if (!slots.some((s) => cfg.photos[s])) return `<p class="fs-hint">Add a photo first, then drag it in the preview to position it.</p>`;
+        if (!slots.some((s) => cfg.photos[s]))
+          return `<p class="fs-hint">Add a photo first, then drag it in the preview to position it.</p>`;
         const crop = cropOf(activeSlot);
-        return `${slots.length > 1 ? `<div class="fs-field"><span class="fs-label">Photo</span>${ui.segmented("ui.activeSlot", slots.map((s, i) => ({ id: s, name: `Photo ${i + 1}` })), activeSlot, { label: "Photo to adjust" })}</div>` : ""}
-          ${cfg.photos[activeSlot] ? `
-          <div class="fs-field"><span class="fs-label">Fit</span>${ui.segmented(`crop.${activeSlot}.fit`, [{ id: "fill", name: "Fill" }, { id: "fit", name: "Fit" }, { id: "crop", name: "Crop" }], crop.fit, { label: "Photo fit" })}
+        return `${
+          slots.length > 1
+            ? `<div class="fs-field"><span class="fs-label">Photo</span>${ui.segmented(
+                "ui.activeSlot",
+                slots.map((s, i) => ({ id: s, name: `Photo ${i + 1}` })),
+                activeSlot,
+                { label: "Photo to adjust" },
+              )}</div>`
+            : ""
+        }
+          ${
+            cfg.photos[activeSlot]
+              ? `
+          <div class="fs-field"><span class="fs-label">Fit</span>${ui.segmented(
+            `crop.${activeSlot}.fit`,
+            [
+              { id: "fill", name: "Fill" },
+              { id: "fit", name: "Fit" },
+              { id: "crop", name: "Crop" },
+            ],
+            crop.fit,
+            { label: "Photo fit" },
+          )}
             <p class="fs-hint">${{ fill: "Fill covers the whole space, centred. Edges may be trimmed.", fit: "Fit shows the whole photo; any gap shows the background.", crop: "Crop lets you zoom and drag the photo to choose exactly what shows." }[crop.fit]}</p></div>
           ${crop.fit !== "fit" ? ui.range(`crop.${activeSlot}.zoom`, { min: 1, max: 3, step: 0.05, value: crop.zoom, label: "Zoom", unit: "×" }) : ""}
           <div class="fs-row">
@@ -134,89 +186,205 @@
             </div>
             <button class="fs-tool" type="button" data-act="crop-reset">Reset</button>
           </div>
-          ${photoNotice()}` : `<p class="fs-hint">Add this photo to adjust it.</p>`}`;
-      }
+          ${photoNotice()}`
+              : `<p class="fs-hint">Add this photo to adjust it.</p>`
+          }`;
+      },
     },
     text: {
       title: () => "Text",
       show: () => ctx.caps.text,
       summary: () => Object.values(cfg.text).filter(Boolean)[0] || "",
-      body: () => `<div id="fs-text"></div>`
+      body: () => `<div id="fs-text"></div>`,
     },
     background: {
       title: () => "Background",
       show: () => ctx.caps.background,
-      summary: () => (cfg.background ? (byId(cat.BACKGROUNDS.colors, cfg.background.colorId) || {}).name || "Custom" : "Original"),
+      summary: () =>
+        cfg.background
+          ? (byId(cat.BACKGROUNDS.colors, cfg.background.colorId) || {}).name ||
+            "Custom"
+          : "Original",
       dynamic: () => {
         const bg = cfg.background || {};
         return `<div class="fs-field"><span class="fs-label">Colour</span>${ui.swatches("background.colorId", cat.BACKGROUNDS.colors, bg.colorId, { label: "Background colour" })}</div>
           <div class="fs-field"><span class="fs-label">Pattern</span>${ui.segmented("background.pattern", cat.BACKGROUNDS.patterns, bg.pattern != null ? bg.pattern : null, { label: "Background pattern" })}</div>
           ${cfg.background ? `<button class="fs-tool" type="button" data-act="bg-reset">Use the design's original background</button>` : ""}`;
-      }
+      },
     },
     frame: {
       title: () => "Frame",
       show: () => ctx.caps.frame,
-      summary: () => engine.summary(cfg, ctx).find((l) => l.key === "frame").value,
+      summary: () =>
+        engine.summary(cfg, ctx).find((l) => l.key === "frame").value,
       dynamic: () => {
         const types = ctx.caps.frameTypes;
         const colors = ctx.caps.colorsFor(cfg.frame.typeId);
         const finishes = ctx.caps.finishesFor(cfg.frame.typeId);
         const showPrice = ctx.mode !== "product";
-        return `${types.length > 1 ? `<div class="fs-field"><span class="fs-label">Frame type</span>${ui.cards("frame.typeId", types.map((t) => ({ id: t.id, name: t.name, description: `${t.material} · ${t.description}`, price: ui.delta(t.priceModifier) || "Included" })), cfg.frame.typeId, { label: "Frame type", visual: (o) => `<span class="sc-profile sc-profile--${esc(byId(types, o.id).profile)}" style="--w:${Math.round(byId(types, o.id).width / 6)}px"></span>` })}</div>` : `<p class="fs-hint">${esc(types[0] ? `${types[0].name} frame · ${types[0].material}` : "")}</p>`}
+        return `${
+          types.length > 1
+            ? `<div class="fs-field"><span class="fs-label">Frame type</span>${ui.cards(
+                "frame.typeId",
+                types.map((t) => ({
+                  id: t.id,
+                  name: t.name,
+                  description: `${t.material} · ${t.description}`,
+                  price: ui.delta(t.priceModifier) || "Included",
+                })),
+                cfg.frame.typeId,
+                {
+                  label: "Frame type",
+                  visual: (o) =>
+                    `<span class="sc-profile sc-profile--${esc(byId(types, o.id).profile)}" style="--w:${Math.round(byId(types, o.id).width / 6)}px"></span>`,
+                },
+              )}</div>`
+            : `<p class="fs-hint">${esc(types[0] ? `${types[0].name} frame · ${types[0].material}` : "")}</p>`
+        }
           <div class="fs-field"><span class="fs-label">Colour</span>${ui.swatches("frame.colorId", colors, cfg.frame.colorId, { label: "Frame colour", showPrice })}</div>
-          ${finishes.length ? `<div class="fs-field"><span class="fs-label">Finish</span>${ui.cards("frame.finishId", finishes.map((f) => ({ id: f.id, name: f.name, description: f.description, price: ui.delta(f.priceModifier) || "Included" })), cfg.frame.finishId, { label: "Frame finish", columns: 3 })}</div>` : ""}`;
-      }
+          ${
+            finishes.length
+              ? `<div class="fs-field"><span class="fs-label">Finish</span>${ui.cards(
+                  "frame.finishId",
+                  finishes.map((f) => ({
+                    id: f.id,
+                    name: f.name,
+                    description: f.description,
+                    price: ui.delta(f.priceModifier) || "Included",
+                  })),
+                  cfg.frame.finishId,
+                  { label: "Frame finish", columns: 3 },
+                )}</div>`
+              : ""
+          }`;
+      },
     },
     border: {
       title: () => "Border",
       show: () => ctx.caps.border,
-      summary: () => engine.summary(cfg, ctx).find((l) => l.key === "border").value,
-      dynamic: () => `<p class="fs-hint">The printed space between your photo and the mat or frame.</p>
-        <div class="fs-field"><span class="fs-label">Thickness</span>${ui.segmented("border.width", ctx.caps.borderPresets.map((p) => ({ id: p.width, name: p.name })), cfg.border.width, { label: "Border thickness", number: true })}</div>
+      summary: () =>
+        engine.summary(cfg, ctx).find((l) => l.key === "border").value,
+      dynamic:
+        () => `<p class="fs-hint">The printed space between your photo and the mat or frame.</p>
+        <div class="fs-field"><span class="fs-label">Thickness</span>${ui.segmented(
+          "border.width",
+          ctx.caps.borderPresets.map((p) => ({ id: p.width, name: p.name })),
+          cfg.border.width,
+          { label: "Border thickness", number: true },
+        )}</div>
         ${ctx.productOptions ? "" : ui.range("border.width", { min: cat.BORDER.min, max: cat.BORDER.max, step: 1, value: cfg.border.width, label: "Fine-tune", unit: "" })}
-        ${cfg.border.width ? `<div class="fs-field"><span class="fs-label">Border colour</span>${ui.swatches("border.colorId", ctx.caps.borderColors, cfg.border.colorId, { label: "Border colour" })}</div>` : ""}`
+        ${cfg.border.width ? `<div class="fs-field"><span class="fs-label">Border colour</span>${ui.swatches("border.colorId", ctx.caps.borderColors, cfg.border.colorId, { label: "Border colour" })}</div>` : ""}`,
     },
     mat: {
       title: () => "Mat",
       show: () => ctx.caps.mat,
-      summary: () => engine.summary(cfg, ctx).find((l) => l.key === "mat").value,
+      summary: () =>
+        engine.summary(cfg, ctx).find((l) => l.key === "mat").value,
       dynamic: () => {
         const type = byId(cat.MAT.types, cfg.mat.type) || cat.MAT.types[0];
         return `<p class="fs-hint">A card mount between the frame and your print. It gives the photo room to breathe.</p>
-          <div class="fs-field"><span class="fs-label">Mat</span>${ui.cards("mat.type", ctx.caps.matTypes.map((m) => ({ id: m.id, name: m.name, price: ui.delta(m.priceModifier) || "Included" })), cfg.mat.type, { label: "Mat type", columns: 3 })}</div>
-          ${type.layers ? `<div class="fs-field"><span class="fs-label">${type.layers > 1 ? "Outer mat colour" : "Mat colour"}</span>${ui.swatches("mat.colorId", ctx.caps.matColors, cfg.mat.colorId, { label: "Mat colour" })}</div>
+          <div class="fs-field"><span class="fs-label">Mat</span>${ui.cards(
+            "mat.type",
+            ctx.caps.matTypes.map((m) => ({
+              id: m.id,
+              name: m.name,
+              price: ui.delta(m.priceModifier) || "Included",
+            })),
+            cfg.mat.type,
+            { label: "Mat type", columns: 3 },
+          )}</div>
+          ${
+            type.layers
+              ? `<div class="fs-field"><span class="fs-label">${type.layers > 1 ? "Outer mat colour" : "Mat colour"}</span>${ui.swatches("mat.colorId", ctx.caps.matColors, cfg.mat.colorId, { label: "Mat colour" })}</div>
             ${type.layers > 1 ? `<div class="fs-field"><span class="fs-label">Inner mat colour</span>${ui.swatches("mat.color2Id", ctx.caps.matColors, cfg.mat.color2Id, { label: "Inner mat colour" })}</div>` : ""}
-            <div class="fs-field"><span class="fs-label">Mat width</span>${ui.segmented("mat.widthId", ctx.caps.matWidths, cfg.mat.widthId, { label: "Mat width" })}</div>` : ""}`;
-      }
+            <div class="fs-field"><span class="fs-label">Mat width</span>${ui.segmented("mat.widthId", ctx.caps.matWidths, cfg.mat.widthId, { label: "Mat width" })}</div>`
+              : ""
+          }`;
+      },
     },
     size: {
       title: () => "Size",
       show: () => true,
-      summary: () => engine.summary(cfg, ctx).find((l) => l.key === "size").value,
+      summary: () =>
+        engine.summary(cfg, ctx).find((l) => l.key === "size").value,
       dynamic: () => {
-        const base = engine.price(Object.assign(clone(cfg), { sizeId: "m" }), ctx).total;
-        return `<div class="fs-field"><span class="fs-label">Frame size</span>${ui.cards("sizeId", ctx.caps.sizes.map((s) => {
-            const p = engine.price(Object.assign(clone(cfg), { sizeId: s.id }), ctx).total;
-            return { id: s.id, name: s.label, description: s.dims || `${s.w} × ${s.h} in`, price: formatPrice(p) + (s.id !== "m" && p !== base ? "" : "") };
-          }), cfg.sizeId, { label: "Frame size", columns: 2 })}</div>
-          ${ctx.caps.orientations.length > 1 ? `<div class="fs-field"><span class="fs-label">Orientation</span>${ui.segmented("orientation", ctx.caps.orientations.map((o) => ({ id: o.id, name: o.name })), cfg.orientation, { label: "Orientation" })}</div>` : ""}
-          ${ctx.productOptions ? "" : `<div class="fs-soon"><strong>Custom size</strong><span>Enter your own width and height in inches or cm.</span><span class="placeholder-note">Coming soon</span>
-            <div class="fs-soon__inputs" aria-hidden="true"><input class="input" disabled placeholder="Width"><span>×</span><input class="input" disabled placeholder="Height"><select class="select" disabled><option>in</option></select></div></div>`}`;
-      }
+        const base = engine.price(
+          Object.assign(clone(cfg), { sizeId: "m" }),
+          ctx,
+        ).total;
+        return `<div class="fs-field"><span class="fs-label">Frame size</span>${ui.cards(
+          "sizeId",
+          ctx.caps.sizes.map((s) => {
+            const p = engine.price(
+              Object.assign(clone(cfg), { sizeId: s.id }),
+              ctx,
+            ).total;
+            return {
+              id: s.id,
+              name: s.label,
+              description: s.dims || `${s.w} × ${s.h} in`,
+              price: formatPrice(p) + (s.id !== "m" && p !== base ? "" : ""),
+            };
+          }),
+          cfg.sizeId,
+          { label: "Frame size", columns: 2 },
+        )}</div>
+          ${
+            ctx.caps.orientations.length > 1
+              ? `<div class="fs-field"><span class="fs-label">Orientation</span>${ui.segmented(
+                  "orientation",
+                  ctx.caps.orientations.map((o) => ({
+                    id: o.id,
+                    name: o.name,
+                  })),
+                  cfg.orientation,
+                  { label: "Orientation" },
+                )}</div>`
+              : ""
+          }
+          ${
+            ctx.productOptions
+              ? ""
+              : `<div class="fs-soon"><strong>Custom size</strong><span>Enter your own width and height in inches or cm.</span><span class="placeholder-note">Coming soon</span>
+            <div class="fs-soon__inputs" aria-hidden="true"><input class="input" disabled placeholder="Width"><span>×</span><input class="input" disabled placeholder="Height"><select class="select" disabled><option>in</option></select></div></div>`
+          }`;
+      },
     },
     print: {
       title: () => "Print",
       show: () => ctx.caps.printMaterials.length > 1,
-      summary: () => (byId(ctx.caps.printMaterials, cfg.printMaterialId) || {}).name || "",
-      dynamic: () => ui.cards("printMaterialId", ctx.caps.printMaterials.map((m) => ({ id: m.id, name: m.name, description: [m.finish, m.description].filter(Boolean).join(" · "), price: ui.delta(Number(m.priceModifier) || 0) || "Included" })), cfg.printMaterialId, { label: "Print material", columns: 2 })
+      summary: () =>
+        (byId(ctx.caps.printMaterials, cfg.printMaterialId) || {}).name || "",
+      dynamic: () =>
+        ui.cards(
+          "printMaterialId",
+          ctx.caps.printMaterials.map((m) => ({
+            id: m.id,
+            name: m.name,
+            description: [m.finish, m.description].filter(Boolean).join(" · "),
+            price: ui.delta(Number(m.priceModifier) || 0) || "Included",
+          })),
+          cfg.printMaterialId,
+          { label: "Print material", columns: 2 },
+        ),
     },
     front: {
       title: () => "Front cover",
       show: () => ctx.caps.protection.length > 1,
       summary: () => (byId(cat.PROTECTION, cfg.protection) || {}).name || "",
-      dynamic: () => ui.cards("protection", ctx.caps.protection.map((p) => ({ id: p.id, name: p.name, description: p.description, price: ui.delta(p.priceModifier) || "Included" })), cfg.protection, { label: "Front cover", columns: 2 })
-    }
+      dynamic: () =>
+        ui.cards(
+          "protection",
+          ctx.caps.protection.map((p) => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            price: ui.delta(p.priceModifier) || "Included",
+          })),
+          cfg.protection,
+          { label: "Front cover", columns: 2 },
+        ),
+    },
   };
 
   function renderPanel() {
@@ -229,8 +397,12 @@
           number: ++n,
           summary: s.summary(),
           open: openSections.has(key),
-          body: (s.body ? s.body() : "") + (s.dynamic ? `<div data-dynamic="${key}">${s.dynamic()}</div>` : "")
-        })
+          body:
+            (s.body ? s.body() : "") +
+            (s.dynamic
+              ? `<div data-dynamic="${key}">${s.dynamic()}</div>`
+              : ""),
+        }),
       )
       .join("");
     mountUploader();
@@ -240,12 +412,21 @@
   /** Re-render only the parts that depend on the config, keeping focus where it was. */
   function renderDynamic() {
     const active = document.activeElement;
-    const focusKey = active && active.dataset && active.dataset.set ? `${active.dataset.set}::${active.value}` : null;
-    $$("[data-dynamic]").forEach((box) => (box.innerHTML = SECTIONS[box.dataset.dynamic].dynamic()));
-    $$("[data-summary]").forEach((el) => (el.textContent = SECTIONS[el.dataset.summary].summary()));
+    const focusKey =
+      active && active.dataset && active.dataset.set
+        ? `${active.dataset.set}::${active.value}`
+        : null;
+    $$("[data-dynamic]").forEach(
+      (box) => (box.innerHTML = SECTIONS[box.dataset.dynamic].dynamic()),
+    );
+    $$("[data-summary]").forEach(
+      (el) => (el.textContent = SECTIONS[el.dataset.summary].summary()),
+    );
     if (ctx.caps.textStyle) renderTextStyles();
     if (focusKey) {
-      const again = $$("[data-set]").find((el) => `${el.dataset.set}::${el.value}` === focusKey);
+      const again = $$("[data-set]").find(
+        (el) => `${el.dataset.set}::${el.value}` === focusKey,
+      );
       if (again) again.focus({ preventScroll: true });
     }
   }
@@ -253,12 +434,18 @@
   function renderPrice() {
     const p = engine.price(cfg, ctx);
     $("#fs-price-lines").innerHTML = p.lines
-      .map((l) => `<div class="fs-price__row"><dt>${esc(l.label)}${l.detail ? `<span>${esc(l.detail)}</span>` : ""}</dt><dd>${l.amount < 0 ? "−" : ""}${formatPrice(Math.abs(l.amount))}</dd></div>`)
+      .map(
+        (l) =>
+          `<div class="fs-price__row"><dt>${esc(l.label)}${l.detail ? `<span>${esc(l.detail)}</span>` : ""}</dt><dd>${l.amount < 0 ? "−" : ""}${formatPrice(Math.abs(l.amount))}</dd></div>`,
+      )
       .join("");
     $$("[data-total]").forEach((el) => (el.textContent = formatPrice(p.total)));
     $("#fs-config").innerHTML = engine
       .summary(cfg, ctx)
-      .map((l) => `<li><span>${esc(l.label)}</span><strong>${esc(l.value)}</strong></li>`)
+      .map(
+        (l) =>
+          `<li><span>${esc(l.label)}</span><strong>${esc(l.value)}</strong></li>`,
+      )
       .join("");
   }
 
@@ -279,7 +466,9 @@
           const want = wide ? "landscape" : "portrait";
           if (cfg.orientation !== want && byId(ctx.caps.orientations, want)) {
             cfg.orientation = want;
-            FrameX.toast.show(`Switched to a ${want} frame to match your photo.`);
+            FrameX.toast.show(
+              `Switched to a ${want} frame to match your photo.`,
+            );
           }
         }
         openSections.add("adjust");
@@ -292,12 +481,14 @@
         delete cfg.photoMeta[slot];
         delete cfg.crop[slot];
         commit();
-      }
+      },
     });
   }
 
   function renderPanelSummaries() {
-    $$("[data-summary]").forEach((el) => (el.textContent = SECTIONS[el.dataset.summary].summary()));
+    $$("[data-summary]").forEach(
+      (el) => (el.textContent = SECTIONS[el.dataset.summary].summary()),
+    );
   }
 
   function mountText() {
@@ -308,7 +499,7 @@
         cfg.text[fieldId] = value;
         commit({ panel: false });
         renderPanelSummaries();
-      }
+      },
     });
     if (ctx.caps.textStyle) renderTextStyles();
   }
@@ -326,9 +517,23 @@
         wrap.appendChild(box);
       }
       box.innerHTML = `<summary>${icon("frame")} Style this text</summary>
-        <div class="fs-field"><span class="fs-label">Font</span>${ui.segmented(`textStyle.${field}.fontId`, cat.FONTS.map((f) => ({ id: f.id, name: f.name })), st.fontId || null, { label: "Font" })}</div>
+        <div class="fs-field"><span class="fs-label">Font</span>${ui.segmented(
+          `textStyle.${field}.fontId`,
+          cat.FONTS.map((f) => ({ id: f.id, name: f.name })),
+          st.fontId || null,
+          { label: "Font" },
+        )}</div>
         <div class="fs-field fs-field--inline"><span class="fs-label">Size</span>${ui.segmented(`textStyle.${field}.sizeId`, cat.TEXT_SIZES, st.sizeId || "m", { label: "Text size" })}</div>
-        <div class="fs-field fs-field--inline"><span class="fs-label">Align</span>${ui.segmented(`textStyle.${field}.align`, [{ id: "left", name: "Left" }, { id: "center", name: "Centre" }, { id: "right", name: "Right" }], st.align || null, { label: "Text alignment" })}</div>
+        <div class="fs-field fs-field--inline"><span class="fs-label">Align</span>${ui.segmented(
+          `textStyle.${field}.align`,
+          [
+            { id: "left", name: "Left" },
+            { id: "center", name: "Centre" },
+            { id: "right", name: "Right" },
+          ],
+          st.align || null,
+          { label: "Text alignment" },
+        )}</div>
         <div class="fs-field"><span class="fs-label">Colour</span>${ui.swatches(`textStyle.${field}.colorId`, cat.TEXT_COLORS, st.colorId || null, { label: "Text colour" })}</div>
         <div class="fs-row"><span class="fs-label">Position</span>
           <button class="fs-tool fs-tool--icon" type="button" data-act="text-move" data-field="${esc(field)}" data-dy="-15" aria-label="Move text up">${icon("chev-up")}</button>
@@ -348,7 +553,10 @@
     const img = slotImage(slot);
     if (!img) return;
     const box = img.closest(".tpl-slot").getBoundingClientRect();
-    img.style.cssText = FrameX.templateEngine.photoStyle({ width: box.width, height: box.height }, cropOf(slot));
+    img.style.cssText = FrameX.templateEngine.photoStyle(
+      { width: box.width, height: box.height },
+      cropOf(slot),
+    );
   }
 
   function wirePreviewDrag() {
@@ -360,18 +568,32 @@
       const slot = slotEl.dataset.slotId;
       activeSlot = slot;
       const crop = cropOf(slot);
-      if (crop.fit !== "crop") cfg.crop[slot] = Object.assign(crop, { fit: "crop" });
+      if (crop.fit !== "crop")
+        cfg.crop[slot] = Object.assign(crop, { fit: "crop" });
       const rect = slotEl.getBoundingClientRect();
-      drag = { slot, x: e.clientX, y: e.clientY, w: rect.width, h: rect.height, moved: false };
+      drag = {
+        slot,
+        x: e.clientX,
+        y: e.clientY,
+        w: rect.width,
+        h: rect.height,
+        moved: false,
+      };
       slotEl.setPointerCapture(e.pointerId);
       e.preventDefault();
     });
     stage.addEventListener("pointermove", (e) => {
       if (!drag) return;
       const crop = cfg.crop[drag.slot];
-      const k = 100 / Math.max(1, crop.zoom) * 1.4;
-      crop.px = Math.min(100, Math.max(0, crop.px - ((e.clientX - drag.x) / drag.w) * k));
-      crop.py = Math.min(100, Math.max(0, crop.py - ((e.clientY - drag.y) / drag.h) * k));
+      const k = (100 / Math.max(1, crop.zoom)) * 1.4;
+      crop.px = Math.min(
+        100,
+        Math.max(0, crop.px - ((e.clientX - drag.x) / drag.w) * k),
+      );
+      crop.py = Math.min(
+        100,
+        Math.max(0, crop.py - ((e.clientY - drag.y) / drag.h) * k),
+      );
       drag.x = e.clientX;
       drag.y = e.clientY;
       drag.moved = true;
@@ -408,13 +630,18 @@
       if (out) out.textContent = value + (el.dataset.unit || "");
       setPath(path, value);
       if (path.startsWith("crop.")) {
-        if (cfg.crop[activeSlot].fit === "fill") cfg.crop[activeSlot].fit = "crop";
+        if (cfg.crop[activeSlot].fit === "fill")
+          cfg.crop[activeSlot].fit = "crop";
         liveCrop(activeSlot);
       } else renderPreview();
       if (e.type === "change") commit({ preview: false });
       return;
     }
-    if (path.startsWith("background.")) cfg.background = Object.assign({ colorId: null, pattern: "" }, cfg.background || {});
+    if (path.startsWith("background."))
+      cfg.background = Object.assign(
+        { colorId: null, pattern: "" },
+        cfg.background || {},
+      );
     if (path === "orientation") cfg.userChoseOrientation = true;
     if (path.startsWith("crop.")) cfg.crop[activeSlot] = cropOf(activeSlot);
     setPath(path, value);
@@ -426,17 +653,36 @@
     if (!btn) return;
     const act = btn.dataset.act;
     const crop = cropOf(activeSlot);
-    if (act === "rotate") cfg.crop[activeSlot] = Object.assign(crop, { rotate: (crop.rotate + 90) % 360 });
-    if (act === "nudge") cfg.crop[activeSlot] = Object.assign(crop, { fit: "crop", px: Math.min(100, Math.max(0, crop.px + Number(btn.dataset.dx))), py: Math.min(100, Math.max(0, crop.py + Number(btn.dataset.dy))) });
-    if (act === "crop-reset") cfg.crop[activeSlot] = { fit: "fill", zoom: 1, px: 50, py: 50, rotate: 0 };
+    if (act === "rotate")
+      cfg.crop[activeSlot] = Object.assign(crop, {
+        rotate: (crop.rotate + 90) % 360,
+      });
+    if (act === "nudge")
+      cfg.crop[activeSlot] = Object.assign(crop, {
+        fit: "crop",
+        px: Math.min(100, Math.max(0, crop.px + Number(btn.dataset.dx))),
+        py: Math.min(100, Math.max(0, crop.py + Number(btn.dataset.dy))),
+      });
+    if (act === "crop-reset")
+      cfg.crop[activeSlot] = {
+        fit: "fill",
+        zoom: 1,
+        px: 50,
+        py: 50,
+        rotate: 0,
+      };
     if (act === "orient") {
       cfg.orientation = btn.dataset.value;
       cfg.userChoseOrientation = true;
     }
     if (act === "bg-reset") cfg.background = null;
     if (act === "text-move") {
-      const st = (cfg.textStyle[btn.dataset.field] = cfg.textStyle[btn.dataset.field] || {});
-      st.dy = Math.max(-150, Math.min(150, (st.dy || 0) + Number(btn.dataset.dy)));
+      const st = (cfg.textStyle[btn.dataset.field] =
+        cfg.textStyle[btn.dataset.field] || {});
+      st.dy = Math.max(
+        -150,
+        Math.min(150, (st.dy || 0) + Number(btn.dataset.dy)),
+      );
     }
     if (act === "text-reset") delete cfg.textStyle[btn.dataset.field];
     commit();
@@ -451,7 +697,8 @@
     const first = result.issues[0];
     goTo(first.section);
     if (first.section === "photos") uploader.showMissing(result.missingPhotos);
-    if (first.section === "text" && texts) texts.showMissing(result.missingText);
+    if (first.section === "text" && texts)
+      texts.showMissing(result.missingText);
   }
 
   function goTo(section) {
@@ -459,19 +706,35 @@
     if (!det) return;
     det.open = true;
     openSections.add(section);
-    det.scrollIntoView({ behavior: FrameX.dom.prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+    det.scrollIntoView({
+      behavior: FrameX.dom.prefersReducedMotion() ? "auto" : "smooth",
+      block: "start",
+    });
   }
 
   function thumbnail() {
     const first = ctx.caps.photoSlots.map((s) => photoUrls[s]).find(Boolean);
-    if (!first) return Promise.resolve(ctx.template && ctx.template.thumbnail ? ctx.template.thumbnail : "");
+    if (!first)
+      return Promise.resolve(
+        ctx.template && ctx.template.thumbnail ? ctx.template.thumbnail : "",
+      );
     return new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
         const c = document.createElement("canvas");
         c.width = c.height = 160;
         const side = Math.min(img.naturalWidth, img.naturalHeight);
-        c.getContext("2d").drawImage(img, (img.naturalWidth - side) / 2, (img.naturalHeight - side) / 2, side, side, 0, 0, 160, 160);
+        c.getContext("2d").drawImage(
+          img,
+          (img.naturalWidth - side) / 2,
+          (img.naturalHeight - side) / 2,
+          side,
+          side,
+          0,
+          0,
+          160,
+          160,
+        );
         resolve(c.toDataURL("image/jpeg", 0.8));
       };
       img.onerror = () => resolve("");
@@ -479,18 +742,41 @@
     });
   }
 
-  const title = () => (ctx.template ? ctx.template.title : ctx.product ? ctx.product.name : "Framed photo");
+  const title = () =>
+    ctx.template
+      ? ctx.template.title
+      : ctx.product
+        ? ctx.product.name
+        : "Framed photo";
 
   async function saveDesign({ quiet = false } = {}) {
-    const record = { kind: "studio", id: cfg.designId || null, draftKey, mode: ctx.mode, templateId: cfg.templateId, productId: cfg.productId, title: title(), thumbnail: await thumbnail(), config: clone(cfg) };
+    const record = {
+      kind: "studio",
+      id: cfg.designId || null,
+      draftKey,
+      mode: ctx.mode,
+      templateId: cfg.templateId,
+      productId: cfg.productId,
+      title: title(),
+      thumbnail: await thumbnail(),
+      config: clone(cfg),
+    };
     const saved = FrameX.designs.save(record);
     if (!saved) {
-      FrameX.toast.show("This browser couldn't save your design (storage is full or blocked).");
+      FrameX.toast.show(
+        "This browser couldn't save your design (storage is full or blocked).",
+      );
       return null;
     }
     cfg.designId = saved.id;
     saveDraft();
-    if (!quiet) FrameX.toast.show("Design saved on this device.", { action: { label: "View saved", onClick: () => (location.href = "templates.html#tpl-saved") } });
+    if (!quiet)
+      FrameX.toast.show("Design saved on this device.", {
+        action: {
+          label: "View saved",
+          onClick: () => (location.href = "templates.html#tpl-saved"),
+        },
+      });
     return saved;
   }
 
@@ -501,10 +787,17 @@
     const saved = await saveDesign({ quiet: true });
     if (!saved) return;
     const pricing = engine.price(cfg, ctx);
-    const shop = ctx.product ? await FrameX.api.getShop(ctx.product.shopId) : null;
+    const shop = ctx.product
+      ? await FrameX.api.getShop(ctx.product.shopId)
+      : null;
     FrameX.cart.addStudio({
       design: saved,
-      productType: ctx.mode === "template" ? "template" : ctx.mode === "product" ? "product-frame" : "simple-photo",
+      productType:
+        ctx.mode === "template"
+          ? "template"
+          : ctx.mode === "product"
+            ? "product-frame"
+            : "simple-photo",
       name: title(),
       productId: ctx.product ? ctx.product.id : null,
       templateId: cfg.templateId,
@@ -517,9 +810,11 @@
       photoCount: Object.keys(cfg.photos).length,
       unitPrice: pricing.total,
       pricing,
-      config: clone(cfg)
+      config: clone(cfg),
     });
-    FrameX.toast.show(`${title()} added to your cart.`, { action: { label: "View cart", onClick: () => FrameX.cartDrawer.open() } });
+    FrameX.toast.show(`${title()} added to your cart.`, {
+      action: { label: "View cart", onClick: () => FrameX.cartDrawer.open() },
+    });
   }
 
   let resetTimer = 0;
@@ -534,9 +829,16 @@
       }, 4000);
       return;
     }
-    const keep = { photos: cfg.photos, photoMeta: cfg.photoMeta, designId: cfg.designId };
+    const keep = {
+      photos: cfg.photos,
+      photoMeta: cfg.photoMeta,
+      designId: cfg.designId,
+    };
     cfg = Object.assign(engine.defaults(ctx), keep);
-    Object.keys(keep.photos).forEach((slot) => (cfg.crop[slot] = { fit: "fill", zoom: 1, px: 50, py: 50, rotate: 0 }));
+    Object.keys(keep.photos).forEach(
+      (slot) =>
+        (cfg.crop[slot] = { fit: "fill", zoom: 1, px: 50, py: 50, rotate: 0 }),
+    );
     btn.classList.remove("is-confirming");
     btn.textContent = "Reset customization";
     renderPanel();
@@ -552,25 +854,58 @@
     let product = null;
     // Older template-only designs are converted on the fly.
     const legacy = record && record.kind !== "studio" ? record : null;
-    const templateRef = (record && record.kind === "studio" && record.templateId) || (legacy && legacy.templateId) || q("template") || q("t");
-    const productRef = (record && record.kind === "studio" && record.productId) || q("product");
+    const templateRef =
+      (record && record.kind === "studio" && record.templateId) ||
+      (legacy && legacy.templateId) ||
+      q("template") ||
+      q("t");
+    const productRef =
+      (record && record.kind === "studio" && record.productId) || q("product");
     if (templateRef) template = await FrameX.api.getTemplate(templateRef);
     else if (productRef) product = await FrameX.api.getProduct(productRef);
-    if (templateRef && !template) throw Object.assign(new Error("missing"), { friendly: "That template isn't available any more." });
-    if (productRef && !product) throw Object.assign(new Error("missing"), { friendly: "That frame isn't available any more." });
-    if (template && FrameX.templateEngine.validate(template).length) throw Object.assign(new Error("broken"), { friendly: "This template can't be opened right now." });
+    if (templateRef && !template)
+      throw Object.assign(new Error("missing"), {
+        friendly: "That template isn't available any more.",
+      });
+    if (productRef && !product)
+      throw Object.assign(new Error("missing"), {
+        friendly: "That frame isn't available any more.",
+      });
+    if (template && FrameX.templateEngine.validate(template).length)
+      throw Object.assign(new Error("broken"), {
+        friendly: "This template can't be opened right now.",
+      });
 
     ctx = engine.context({ template, product });
-    draftKey = template ? `template:${template.id}` : product ? `product:${product.id}` : "photo";
+    draftKey = template
+      ? `template:${template.id}`
+      : product
+        ? `product:${product.id}`
+        : "photo";
     const base = engine.defaults(ctx);
     let start = null;
-    if (record && record.kind === "studio") start = Object.assign(base, clone(record.config), { designId: record.id });
-    else if (legacy) start = Object.assign(base, { photos: legacy.photos || {}, text: Object.assign(base.text, legacy.text || {}), sizeId: legacy.sizeId || base.sizeId });
-    else if (readDrafts()[draftKey]) start = Object.assign(base, clone(readDrafts()[draftKey].config));
+    if (record && record.kind === "studio")
+      start = Object.assign(base, clone(record.config), {
+        designId: record.id,
+      });
+    else if (legacy)
+      start = Object.assign(base, {
+        photos: legacy.photos || {},
+        text: Object.assign(base.text, legacy.text || {}),
+        sizeId: legacy.sizeId || base.sizeId,
+      });
+    else if (readDrafts()[draftKey])
+      start = Object.assign(base, clone(readDrafts()[draftKey].config));
     // Options chosen on the product page come along (normalize drops any this product doesn't offer).
     if (product) {
-      const pick = { size: "sizeId", print: "printMaterialId", cover: "protection" };
-      Object.entries(pick).forEach(([k, path]) => q(k) && ((start = start || base)[path] = q(k)));
+      const pick = {
+        size: "sizeId",
+        print: "printMaterialId",
+        cover: "protection",
+      };
+      Object.entries(pick).forEach(
+        ([k, path]) => q(k) && ((start = start || base)[path] = q(k)),
+      );
       if (q("color")) (start = start || base).frame.colorId = q("color");
     }
     cfg = engine.normalize(start || base, ctx);
@@ -584,13 +919,18 @@
           delete cfg.photos[slot];
           delete cfg.crop[slot];
         }
-      })
+      }),
     );
-    activeSlot = ctx.caps.photoSlots.find((s) => cfg.photos[s]) || ctx.caps.photoSlots[0];
+    activeSlot =
+      ctx.caps.photoSlots.find((s) => cfg.photos[s]) || ctx.caps.photoSlots[0];
   }
 
   function shell() {
-    const modeLabel = ctx.template ? `Template · ${esc(ctx.template.title)}` : ctx.product ? `Frame · ${esc(ctx.product.name)}` : "Your photo";
+    const modeLabel = ctx.template
+      ? `Template · ${esc(ctx.template.title)}`
+      : ctx.product
+        ? `Frame · ${esc(ctx.product.name)}`
+        : "Your photo";
     return `<div class="fs">
       <header class="fs-head">
         <div>
@@ -659,17 +999,38 @@
 
     const panel = $(".fs-panel", root);
     panel.addEventListener("change", onInput);
-    panel.addEventListener("input", (e) => e.target.type === "range" && onInput(e));
+    panel.addEventListener(
+      "input",
+      (e) => e.target.type === "range" && onInput(e),
+    );
     panel.addEventListener("click", (e) => {
       onClick(e);
       const go = e.target.closest("[data-goto]");
       if (go) goTo(go.dataset.goto);
     });
-    panel.addEventListener("toggle", (e) => e.target.matches("[data-section]") && (e.target.open ? openSections.add(e.target.dataset.section) : openSections.delete(e.target.dataset.section), $("#fs-preview").classList.toggle("is-adjusting", openSections.has("adjust"))), true);
-    $$("[data-add]", root).forEach((b) => b.addEventListener("click", addToCart));
+    panel.addEventListener(
+      "toggle",
+      (e) =>
+        e.target.matches("[data-section]") &&
+        (e.target.open
+          ? openSections.add(e.target.dataset.section)
+          : openSections.delete(e.target.dataset.section),
+        $("#fs-preview").classList.toggle(
+          "is-adjusting",
+          openSections.has("adjust"),
+        )),
+      true,
+    );
+    $$("[data-add]", root).forEach((b) =>
+      b.addEventListener("click", addToCart),
+    );
     $("[data-save]", root).addEventListener("click", () => saveDesign());
-    $("[data-reset]", root).addEventListener("click", (e) => reset(e.currentTarget));
-    $("[data-top]", root).addEventListener("click", () => $(".fs-stage").scrollIntoView({ behavior: "smooth", block: "center" }));
+    $("[data-reset]", root).addEventListener("click", (e) =>
+      reset(e.currentTarget),
+    );
+    $("[data-top]", root).addEventListener("click", () =>
+      $(".fs-stage").scrollIntoView({ behavior: "smooth", block: "center" }),
+    );
   }
 
   FrameX.studioPage = { init };

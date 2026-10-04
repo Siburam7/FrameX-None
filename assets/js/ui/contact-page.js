@@ -10,10 +10,17 @@
 
   const RULES = {
     name: (v) => (v.trim().length >= 2 ? "" : "Please enter your name."),
-    email: (v) => (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? "" : "Please enter a valid email address."),
-    phone: (v) => (!v.trim() || /^[+\d][\d\s\-()]{6,}$/.test(v.trim()) ? "" : "Please enter a valid phone number, or leave it empty."),
+    email: (v) =>
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim())
+        ? ""
+        : "Please enter a valid email address.",
+    phone: (v) =>
+      !v.trim() || /^[+\d][\d\s\-()]{6,}$/.test(v.trim())
+        ? ""
+        : "Please enter a valid phone number, or leave it empty.",
     subject: (v) => (v.trim().length >= 3 ? "" : "Please add a subject."),
-    message: (v) => (v.trim().length >= 10 ? "" : "Please write at least 10 characters.")
+    message: (v) =>
+      v.trim().length >= 10 ? "" : "Please write at least 10 characters.",
   };
 
   function setError(field, message) {
@@ -43,21 +50,37 @@
     const form = $("#contact-form");
     if (!form) return;
     let contact = {};
-    try { contact = (await FrameX.api.getSite()).contact || {}; } catch (e) { /* form still works */ }
+    try {
+      contact = (await FrameX.api.getSite()).contact || {};
+    } catch (e) {
+      /* form still works */
+    }
 
     const info = $("#contact-info");
     const rows = [
-      contact.email && `<li>${icon("mail")}<a href="mailto:${esc(contact.email)}">${esc(contact.email)}</a></li>`,
-      contact.phone && `<li>${icon("phone")}<a href="tel:${esc(contact.phone.replace(/[^\d+]/g, ""))}">${esc(contact.phone)}</a></li>`,
-      contact.whatsapp && `<li>${icon("phone")}<a href="https://wa.me/${esc(String(contact.whatsapp).replace(/\D/g, ""))}" target="_blank" rel="noopener noreferrer">WhatsApp ${esc(FrameX.contact.formatWhatsapp(contact.whatsapp))}</a></li>`
+      contact.email &&
+        `<li>${icon("mail")}<a href="mailto:${esc(contact.email)}">${esc(contact.email)}</a></li>`,
+      contact.phone &&
+        `<li>${icon("phone")}<a href="tel:${esc(contact.phone.replace(/[^\d+]/g, ""))}">${esc(contact.phone)}</a></li>`,
+      contact.whatsapp &&
+        `<li>${icon("phone")}<a href="https://wa.me/${esc(String(contact.whatsapp).replace(/\D/g, ""))}" target="_blank" rel="noopener noreferrer">WhatsApp ${esc(FrameX.contact.formatWhatsapp(contact.whatsapp))}</a></li>`,
     ].filter(Boolean);
     info.innerHTML = rows.length
       ? `<ul class="info-list">${rows.join("")}</ul>`
       : `<p class="contact-info__empty">FrameX hasn't published a phone number or email address yet. They will be listed here as soon as they are available.</p>`;
 
     $$("input, textarea", form).forEach((field) => {
-      field.addEventListener("blur", () => RULES[field.name] && setError(field, RULES[field.name](field.value)));
-      field.addEventListener("input", () => field.closest(".form-field").dataset.invalid === "true" && setError(field, RULES[field.name](field.value)));
+      field.addEventListener(
+        "blur",
+        () =>
+          RULES[field.name] && setError(field, RULES[field.name](field.value)),
+      );
+      field.addEventListener(
+        "input",
+        () =>
+          field.closest(".form-field").dataset.invalid === "true" &&
+          setError(field, RULES[field.name](field.value)),
+      );
     });
 
     form.addEventListener("submit", async (event) => {
@@ -75,9 +98,13 @@
       }
       const data = Object.fromEntries(fields.map((f) => [f.name, f.value]));
       const result = await sendMessage(data, contact);
-      status(form, "info", result === "mailto"
-        ? "Your email app should open with this message ready to send. Nothing has been sent yet."
-        : "Your message couldn't be sent from this page. Please reach us on WhatsApp or by email using the details on this page.");
+      status(
+        form,
+        "info",
+        result === "mailto"
+          ? "Your email app should open with this message ready to send. Nothing has been sent yet."
+          : "Your message couldn't be sent from this page. Please reach us on WhatsApp or by email using the details on this page.",
+      );
     });
   }
 

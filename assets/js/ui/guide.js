@@ -12,12 +12,20 @@
 
     const setOpen = (item, open) => {
       item.classList.toggle("is-open", open);
-      $(".guide-item__button", item).setAttribute("aria-expanded", String(open));
+      $(".guide-item__button", item).setAttribute(
+        "aria-expanded",
+        String(open),
+      );
     };
 
     const showFigure = (key) => {
       if (!figures.some((figure) => figure.dataset.guideFigure === key)) return;
-      figures.forEach((figure) => figure.classList.toggle("is-active", figure.dataset.guideFigure === key));
+      figures.forEach((figure) =>
+        figure.classList.toggle(
+          "is-active",
+          figure.dataset.guideFigure === key,
+        ),
+      );
     };
 
     items.forEach((item) => {

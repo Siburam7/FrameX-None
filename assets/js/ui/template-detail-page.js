@@ -35,10 +35,18 @@
     let categories = [];
     let options = { sizes: [] };
     try {
-      [t, categories, options] = await Promise.all([slug ? FrameX.api.getTemplate(slug) : null, FrameX.api.getTemplateCategories(), FrameX.api.getTemplateOptions()]);
+      [t, categories, options] = await Promise.all([
+        slug ? FrameX.api.getTemplate(slug) : null,
+        FrameX.api.getTemplateCategories(),
+        FrameX.api.getTemplateOptions(),
+      ]);
     } catch (error) {
       console.error("Template failed to load", error);
-      return FrameX.templates.showError(root, "This template couldn't be loaded.", init);
+      return FrameX.templates.showError(
+        root,
+        "This template couldn't be loaded.",
+        init,
+      );
     }
     if (!t) return notFound(root);
     if (FrameX.templateEngine.validate(t).length) {
@@ -50,7 +58,12 @@
     const sizes = options.sizes.filter((s) => (t.sizes || []).includes(s.id));
     $("#tpl-crumb").textContent = t.title;
 
-    const textList = (t.textFields || []).map((f) => `<li>${icon("check")}<span>${esc(f.label)}${f.defaultValue ? ` <span class="tpl-info__example">e.g. “${esc(f.defaultValue)}”</span>` : ""}</span></li>`).join("");
+    const textList = (t.textFields || [])
+      .map(
+        (f) =>
+          `<li>${icon("check")}<span>${esc(f.label)}${f.defaultValue ? ` <span class="tpl-info__example">e.g. “${esc(f.defaultValue)}”</span>` : ""}</span></li>`,
+      )
+      .join("");
     root.innerHTML = `<div class="tpl-detail">
       <div class="tpl-detail__preview">
         <div class="tpl-detail__canvas tpl-detail__canvas--${esc(t.orientation)}">
@@ -77,11 +90,17 @@
     // Related: same category first, then other trending designs.
     const related = $("#tpl-related-grid");
     if (related) {
-      const same = (await FrameX.api.getTemplates({ category: t.category, limit: 8 })).items.filter((x) => x.id !== t.id);
-      const more = (await FrameX.api.getTemplates({ trending: true, limit: 8 })).items.filter((x) => x.id !== t.id && !same.some((s) => s.id === x.id));
+      const same = (
+        await FrameX.api.getTemplates({ category: t.category, limit: 8 })
+      ).items.filter((x) => x.id !== t.id);
+      const more = (
+        await FrameX.api.getTemplates({ trending: true, limit: 8 })
+      ).items.filter((x) => x.id !== t.id && !same.some((s) => s.id === x.id));
       const list = same.concat(more).slice(0, 4);
       const names = new Map(categories.map((c) => [c.id, c.name]));
-      related.innerHTML = list.map((x) => templateUI.card(x, { categoryName: names.get(x.category) })).join("");
+      related.innerHTML = list
+        .map((x) => templateUI.card(x, { categoryName: names.get(x.category) }))
+        .join("");
       $("#tpl-related").hidden = !list.length;
     }
   }

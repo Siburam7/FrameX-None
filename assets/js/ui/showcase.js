@@ -38,7 +38,8 @@
     let lastFrame = 0;
     let frame = 0;
 
-    const wrap = (value) => (groupWidth ? ((value % groupWidth) + groupWidth) % groupWidth : 0);
+    const wrap = (value) =>
+      groupWidth ? ((value % groupWidth) + groupWidth) % groupWidth : 0;
     const render = () => {
       track.style.transform = `translate3d(${-offset}px, 0, 0)`;
     };
@@ -47,7 +48,9 @@
     };
 
     function build() {
-      $$(".showcase__group[data-clone]", track).forEach((node) => node.remove());
+      $$(".showcase__group[data-clone]", track).forEach((node) =>
+        node.remove(),
+      );
       groupWidth = group.getBoundingClientRect().width;
       if (!groupWidth) return;
       const copies = Math.ceil(viewport.clientWidth / groupWidth) + 1;
@@ -55,7 +58,9 @@
         const clone = group.cloneNode(true);
         clone.dataset.clone = "";
         clone.setAttribute("aria-hidden", "true");
-        $$("a, button, input", clone).forEach((el) => el.setAttribute("tabindex", "-1"));
+        $$("a, button, input", clone).forEach((el) =>
+          el.setAttribute("tabindex", "-1"),
+        );
         track.appendChild(clone);
       }
       offset = wrap(offset);
@@ -80,7 +85,12 @@
       }
       // Chain from the current target so quick repeated clicks add up.
       const remaining = glide ? glide.to - glide.at : 0;
-      glide = { from: offset, at: offset, to: offset + remaining + distance, start: performance.now() };
+      glide = {
+        from: offset,
+        at: offset,
+        to: offset + remaining + distance,
+        start: performance.now(),
+      };
     }
 
     function tick(now) {
@@ -106,7 +116,12 @@
       }
       fling = 0;
 
-      const auto = visible && !hovering && !focused && now > pausedUntil && !prefersReducedMotion();
+      const auto =
+        visible &&
+        !hovering &&
+        !focused &&
+        now > pausedUntil &&
+        !prefersReducedMotion();
       velocity += ((auto ? speed : 0) - velocity) * Math.min(1, dt * 3.5);
       if (Math.abs(velocity) < 0.05) return;
       offset = wrap(offset + velocity * dt);
@@ -133,7 +148,9 @@
       const card = event.target.closest(".showcase__group > *");
       if (!card || drag || !event.target.matches(":focus-visible")) return;
       focused = true;
-      const left = card.getBoundingClientRect().left - viewport.getBoundingClientRect().left;
+      const left =
+        card.getBoundingClientRect().left -
+        viewport.getBoundingClientRect().left;
       const overflow = left + card.offsetWidth - viewport.clientWidth;
       if (left < 0) glideBy(left - 16);
       else if (overflow > 0) glideBy(overflow + 16);
@@ -146,7 +163,13 @@
     /* Drag / swipe --------------------------------------------------------- */
     viewport.addEventListener("pointerdown", (event) => {
       if (event.pointerType === "mouse" && event.button !== 0) return;
-      drag = { id: event.pointerId, startX: event.clientX, lastX: event.clientX, lastT: event.timeStamp, moved: false };
+      drag = {
+        id: event.pointerId,
+        startX: event.clientX,
+        lastX: event.clientX,
+        lastT: event.timeStamp,
+        moved: false,
+      };
       glide = null;
       fling = 0;
       velocity = 0;
@@ -164,7 +187,7 @@
       const dx = event.clientX - drag.lastX;
       const dt = Math.max(1, event.timeStamp - drag.lastT);
       // Smoothed release velocity (px/s), opposite to the pointer direction.
-      fling = fling * 0.6 + ((-dx / dt) * 1000) * 0.4;
+      fling = fling * 0.6 + (-dx / dt) * 1000 * 0.4;
       drag.lastX = event.clientX;
       drag.lastT = event.timeStamp;
       offset = wrap(offset - dx);
@@ -201,7 +224,7 @@
         event.preventDefault();
         event.stopPropagation();
       },
-      true
+      true,
     );
     viewport.addEventListener("dragstart", (event) => event.preventDefault());
 
@@ -220,7 +243,7 @@
         lastWidth = window.innerWidth;
         glide = null;
         build();
-      }, 200)
+      }, 200),
     );
     // Card widths can settle after fonts/images load.
     window.addEventListener("load", build, { once: true });

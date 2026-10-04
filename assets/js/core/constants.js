@@ -5,7 +5,14 @@
    ========================================================================== */
 (function (FrameX) {
   /** Happy path, in order. */
-  const ORDER_FLOW = ["placed", "confirmed", "preparing", "ready", "out_for_delivery", "delivered"];
+  const ORDER_FLOW = [
+    "placed",
+    "confirmed",
+    "preparing",
+    "ready",
+    "out_for_delivery",
+    "delivered",
+  ];
 
   const ORDER_STATUS = {
     placed: { label: "Order placed" },
@@ -17,7 +24,7 @@
     // Terminal / exceptional states
     cancelled: { label: "Cancelled", terminal: true },
     refunded: { label: "Refunded", terminal: true },
-    failed: { label: "Failed", terminal: true }
+    failed: { label: "Failed", terminal: true },
   };
 
   /** Pickup orders skip "out for delivery" and use pickup wording. */
@@ -34,11 +41,36 @@
    * but are not offered to customers (FrameX does not assume its own riders).
    */
   const FULFILMENT_METHODS = {
-    pickup: { label: "Pickup", icon: "store", summary: "Collect your order from the shop you choose.", enabled: true },
-    shop_delivery: { label: "Shop delivery", icon: "truck", summary: "The shop delivers to you, where it offers delivery.", enabled: true },
-    delivery_partner: { label: "Delivery partner", icon: "package", summary: "A third-party courier brings it to your door, where offered.", enabled: true },
-    platform_delivery: { label: "FrameX delivery", icon: "truck", summary: "Delivered by a FrameX team.", enabled: false }
+    pickup: {
+      label: "Pickup",
+      icon: "store",
+      summary: "Collect your order from the shop you choose.",
+      enabled: true,
+    },
+    shop_delivery: {
+      label: "Shop delivery",
+      icon: "truck",
+      summary: "The shop delivers to you, where it offers delivery.",
+      enabled: true,
+    },
+    delivery_partner: {
+      label: "Delivery partner",
+      icon: "package",
+      summary: "A third-party courier brings it to your door, where offered.",
+      enabled: true,
+    },
+    platform_delivery: {
+      label: "FrameX delivery",
+      icon: "truck",
+      summary: "Delivered by a FrameX team.",
+      enabled: false,
+    },
   };
 
-  FrameX.constants = { ORDER_FLOW, ORDER_STATUS, orderStatusLabel, FULFILMENT_METHODS };
+  FrameX.constants = {
+    ORDER_FLOW,
+    ORDER_STATUS,
+    orderStatusLabel,
+    FULFILMENT_METHODS,
+  };
 })((window.FrameX = window.FrameX || {}));

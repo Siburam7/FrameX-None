@@ -4,12 +4,23 @@
    Modules that a page doesn't include are simply skipped.
    ========================================================================== */
 (function (FrameX) {
-  const call = (name, ...args) => (FrameX[name] && FrameX[name].init ? FrameX[name].init(...args) : undefined);
+  const call = (name, ...args) =>
+    FrameX[name] && FrameX[name].init ? FrameX[name].init(...args) : undefined;
 
   const PAGES = {
     home: async () => {
       FrameX.marquee.init(document.querySelector("#ticker"));
-      await Promise.all([call("site"), call("featured"), call("categories"), call("shops"), call("recommended"), call("reviews"), call("community"), call("guide"), call("trendingTemplates")]);
+      await Promise.all([
+        call("site"),
+        call("featured"),
+        call("categories"),
+        call("shops"),
+        call("recommended"),
+        call("reviews"),
+        call("community"),
+        call("guide"),
+        call("trendingTemplates"),
+      ]);
     },
     shop: async () => {
       const categories = await FrameX.api.getCategories();
@@ -27,7 +38,7 @@
     contact: () => call("contactPage"),
     faq: () => call("faq"),
     services: () => Promise.all([call("media"), call("orderInfo")]),
-    about: () => undefined
+    about: () => undefined,
   };
 
   async function start() {
@@ -44,6 +55,7 @@
     FrameX.reveal.observe();
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
+  if (document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", start);
   else start();
 })((window.FrameX = window.FrameX || {}));

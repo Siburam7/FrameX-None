@@ -3,16 +3,26 @@
    ========================================================================== */
 (function (FrameX) {
   const { escapeHtml: esc, icon } = FrameX.dom;
-  const { formatPrice, finalPrice, startingPrice, availability, hasSizeChoice } = FrameX.pricing;
+  const {
+    formatPrice,
+    finalPrice,
+    startingPrice,
+    availability,
+    hasSizeChoice,
+  } = FrameX.pricing;
   const { FULFILMENT_METHODS } = FrameX.constants;
   const { formatAddress, isOpenNow } = FrameX.shopUtils;
   const { config } = FrameX;
 
   function stockLabel(product) {
     const status = availability(product);
-    if (status === "out_of_stock") return { text: "Out of stock", className: "product-card__stock--out" };
+    if (status === "out_of_stock")
+      return { text: "Out of stock", className: "product-card__stock--out" };
     if (status === "low_stock") {
-      const text = typeof product.stock === "number" ? `Only ${product.stock} left` : "Low stock";
+      const text =
+        typeof product.stock === "number"
+          ? `Only ${product.stock} left`
+          : "Low stock";
       return { text, className: "product-card__stock--low" };
     }
     return { text: "In stock", className: "" };
@@ -20,8 +30,14 @@
 
   function priceBlock(product, { from = false } = {}) {
     const now = from ? startingPrice(product) : finalPrice(product);
-    const was = !from && product.discountPercent > 0 ? `<s class="price__was">${formatPrice(product.price)}</s>` : "";
-    const prefix = from && hasSizeChoice(product) ? `<span class="price__from">From</span> ` : "";
+    const was =
+      !from && product.discountPercent > 0
+        ? `<s class="price__was">${formatPrice(product.price)}</s>`
+        : "";
+    const prefix =
+      from && hasSizeChoice(product)
+        ? `<span class="price__from">From</span> `
+        : "";
     return `<p class="price">${prefix}<strong class="price__now">${formatPrice(now)}</strong>${was}</p>`;
   }
 
@@ -30,13 +46,22 @@
       colour is never the only way to tell the options apart. */
   function colorSwatchRow(product) {
     if (!Array.isArray(product.colors) || !product.colors.length) return "";
-    const palette = (FrameX.seed.frameColors || []).reduce((map, c) => ((map[c.id] = c), map), {});
+    const palette = (FrameX.seed.frameColors || []).reduce(
+      (map, c) => ((map[c.id] = c), map),
+      {},
+    );
     const dots = product.colors
       .map((id) => palette[id])
       .filter(Boolean)
-      .map((c) => `<span class="swatch-dot" style="--swatch:${c.hex}" title="${esc(c.name)}"></span>`)
+      .map(
+        (c) =>
+          `<span class="swatch-dot" style="--swatch:${c.hex}" title="${esc(c.name)}"></span>`,
+      )
       .join("");
-    const names = product.colors.map((id) => (palette[id] || {}).name).filter(Boolean).join(", ");
+    const names = product.colors
+      .map((id) => (palette[id] || {}).name)
+      .filter(Boolean)
+      .join(", ");
     return `<p class="product-card__colors"><span class="swatch-dot-row">${dots}</span><span class="visually-hidden">Colours: ${esc(names)}</span></p>`;
   }
 
@@ -51,14 +76,25 @@
     const stock = stockLabel(product);
     const unavailable = status === "out_of_stock";
     const badges = [];
-    if (product.discountPercent > 0 && !unavailable) badges.push(`<span class="badge badge--discount">${product.discountPercent}% off</span>`);
-    if (product.isNew && !unavailable) badges.push(`<span class="badge">New</span>`);
-    const needsChoice = hasSizeChoice(product) || (product.colors || []).length > 1;
+    if (product.discountPercent > 0 && !unavailable)
+      badges.push(
+        `<span class="badge badge--discount">${product.discountPercent}% off</span>`,
+      );
+    if (product.isNew && !unavailable)
+      badges.push(`<span class="badge">New</span>`);
+    const needsChoice =
+      hasSizeChoice(product) || (product.colors || []).length > 1;
     const sizeCount = FrameX.pricing.sizeOptions(product).length;
-    const sizeNote = sizeCount > 1 ? `<span class="product-card__size-note">${sizeCount} sizes</span>` : "";
+    const sizeNote =
+      sizeCount > 1
+        ? `<span class="product-card__size-note">${sizeCount} sizes</span>`
+        : "";
     const url = FrameX.qs.productUrl(product);
     // Products that open in FrameX Studio (see productModel.studioSupport); older data falls back to its frame design.
-    const customizable = product.customizable != null ? product.customizable : Boolean(product.frame && product.frame.shape !== "arch");
+    const customizable =
+      product.customizable != null
+        ? product.customizable
+        : Boolean(product.frame && product.frame.shape !== "arch");
 
     return `<article class="product-card${unavailable ? " is-unavailable" : ""}" data-product-id="${esc(product.id)}">
       <div class="product-card__media">
@@ -79,16 +115,20 @@
         <span class="${stock.className}">${stock.text}</span>
         <a class="btn btn--dark btn--sm product-card__add" href="${url}">View Product</a>
       </div>
-      ${customizable && !unavailable
-        ? `<a class="product-card__extra" href="studio.html?product=${encodeURIComponent(product.id)}">${icon("upload")} Try With Your Own Image</a>`
-        : !unavailable && !needsChoice
-          ? `<button class="product-card__extra" type="button" data-action="add-to-cart" data-product-id="${esc(product.id)}">${icon("bag")} Add to cart</button>`
-          : ""}
+      ${
+        customizable && !unavailable
+          ? `<a class="product-card__extra" href="studio.html?product=${encodeURIComponent(product.id)}">${icon("upload")} Try With Your Own Image</a>`
+          : !unavailable && !needsChoice
+            ? `<button class="product-card__extra" type="button" data-action="add-to-cart" data-product-id="${esc(product.id)}">${icon("bag")} Add to cart</button>`
+            : ""
+      }
     </article>`;
   }
 
   function frameCard(product) {
-    const price = hasSizeChoice(product) ? `From ${formatPrice(startingPrice(product))}` : formatPrice(finalPrice(product));
+    const price = hasSizeChoice(product)
+      ? `From ${formatPrice(startingPrice(product))}`
+      : formatPrice(finalPrice(product));
     return `<article class="frame-card" data-product-id="${esc(product.id)}">
       <div class="frame-card__media">
         <img class="frame-card__image" src="${esc(product.image)}" alt="${esc(product.name)}" width="520" height="650" loading="lazy" decoding="async" draggable="false">
@@ -103,13 +143,21 @@
   }
 
   const monogram = (name) =>
-    String(name).split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
+    String(name)
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0].toUpperCase())
+      .join("");
 
   function shopCard(shop) {
     const open = isOpenNow(shop);
     const methods = (shop.fulfilment || [])
       .filter((id) => FULFILMENT_METHODS[id] && FULFILMENT_METHODS[id].enabled)
-      .map((id) => `<span class="badge badge--muted">${esc(FULFILMENT_METHODS[id].label)}</span>`)
+      .map(
+        (id) =>
+          `<span class="badge badge--muted">${esc(FULFILMENT_METHODS[id].label)}</span>`,
+      )
       .join("");
     const rating = shop.rating
       ? `<span class="badge badge--muted">${icon("star", "icon--fill")} ${shop.rating.average.toFixed(1)} (${shop.rating.count})</span>`
@@ -119,11 +167,14 @@
         ? `<span class="badge badge--muted">${icon("pin")} ${FrameX.location.formatDistance(shop.distanceKm)} away</span>`
         : "";
     const openBadge =
-      open === null ? "" : `<span class="badge ${open ? "badge--open" : "badge--closed"}">${open ? "Open now" : "Closed now"}</span>`;
+      open === null
+        ? ""
+        : `<span class="badge ${open ? "badge--open" : "badge--closed"}">${open ? "Open now" : "Closed now"}</span>`;
     const logo = shop.logo
       ? `<img src="${esc(shop.logo)}" alt="" width="56" height="56">`
       : `<span aria-hidden="true">${esc(monogram(shop.name))}</span>`;
-    const count = shop.productCount === 1 ? "1 frame" : `${shop.productCount} frames`;
+    const count =
+      shop.productCount === 1 ? "1 frame" : `${shop.productCount} frames`;
 
     return `<article class="shop-card" data-shop-id="${esc(shop.id)}">
       <div class="shop-card__cover">
@@ -147,7 +198,10 @@
   }
 
   const skeletons = (count, className = "skeleton-card") =>
-    Array.from({ length: count }, () => `<div class="skeleton ${className}" aria-hidden="true"></div>`).join("");
+    Array.from(
+      { length: count },
+      () => `<div class="skeleton ${className}" aria-hidden="true"></div>`,
+    ).join("");
 
   /** Replace a container's content with an error + retry button. */
   function showError(container, message, retry) {
@@ -158,5 +212,16 @@
     if (button) button.addEventListener("click", retry, { once: true });
   }
 
-  FrameX.templates = { productCard, frameCard, shopCard, skeletons, showError, hasSizeChoice, stockLabel, priceBlock, colorSwatchRow, wishButton };
+  FrameX.templates = {
+    productCard,
+    frameCard,
+    shopCard,
+    skeletons,
+    showError,
+    hasSizeChoice,
+    stockLabel,
+    priceBlock,
+    colorSwatchRow,
+    wishButton,
+  };
 })((window.FrameX = window.FrameX || {}));

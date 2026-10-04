@@ -14,7 +14,9 @@
   function load() {
     try {
       const parsed = JSON.parse(localStorage.getItem(KEY) || "[]");
-      return Array.isArray(parsed) ? parsed.filter((l) => l && l.productId && l.qty > 0) : [];
+      return Array.isArray(parsed)
+        ? parsed.filter((l) => l && l.productId && l.qty > 0)
+        : [];
     } catch (error) {
       return [];
     }
@@ -29,18 +31,39 @@
   }
 
   function emit(detail) {
-    document.dispatchEvent(new CustomEvent("framex:cart-change", { detail: Object.assign({ count: count() }, detail) }));
+    document.dispatchEvent(
+      new CustomEvent("framex:cart-change", {
+        detail: Object.assign({ count: count() }, detail),
+      }),
+    );
   }
 
-  const lineKey = (productId, size, color, note) => `${productId}::${size || ""}::${color || ""}::${note || ""}`;
+  const lineKey = (productId, size, color, note) =>
+    `${productId}::${size || ""}::${color || ""}::${note || ""}`;
   const findLine = (key) => lines.find((l) => l.key === key);
 
   /** sizeId selects the priced size option (see services/pricing.js); `size`
       and `color` are the human-readable labels shown in the cart.
       `options` (e.g. ["Print: Matte Paper", "Front cover: Acrylic"]) and
       `unitPrice` come from the product page's pricingService.quote(). */
-  function add(product, { sizeId = null, size = null, color = null, qty = 1, note = "", options = [], unitPrice = null } = {}) {
-    const key = lineKey(product.id, size, [color].concat(options).filter(Boolean).join("|"), note);
+  function add(
+    product,
+    {
+      sizeId = null,
+      size = null,
+      color = null,
+      qty = 1,
+      note = "",
+      options = [],
+      unitPrice = null,
+    } = {},
+  ) {
+    const key = lineKey(
+      product.id,
+      size,
+      [color].concat(options).filter(Boolean).join("|"),
+      note,
+    );
     const existing = findLine(key);
     if (existing) {
       existing.qty = Math.min(existing.qty + qty, MAX_QTY);
@@ -56,8 +79,11 @@
         color,
         options,
         note,
-        unitPrice: typeof unitPrice === "number" ? unitPrice : pricing.priceForSize(product, sizeId),
-        qty: Math.min(qty, MAX_QTY)
+        unitPrice:
+          typeof unitPrice === "number"
+            ? unitPrice
+            : pricing.priceForSize(product, sizeId),
+        qty: Math.min(qty, MAX_QTY),
       });
     }
     persist();
@@ -90,9 +116,11 @@
       pricing: item.pricing || null,
       config: item.config,
       unitPrice: item.unitPrice,
-      qty: Math.min((existing ? existing.qty : 0) + 1, MAX_QTY)
+      qty: Math.min((existing ? existing.qty : 0) + 1, MAX_QTY),
     };
-    lines = existing ? lines.map((l) => (l.key === key ? line : l)) : lines.concat(line);
+    lines = existing
+      ? lines.map((l) => (l.key === key ? line : l))
+      : lines.concat(line);
     persist();
     emit({ type: "add", productId: line.productId });
   }
@@ -119,17 +147,36 @@
   }
 
   const count = () => lines.reduce((sum, l) => sum + l.qty, 0);
-  const subtotal = (subset = lines) => subset.reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
+  const subtotal = (subset = lines) =>
+    subset.reduce((sum, l) => sum + l.unitPrice * l.qty, 0);
 
   /** Lines grouped per shop: [{ shopId, shopName, lines, subtotal }] */
   function groupedByShop() {
     const groups = new Map();
     lines.forEach((l) => {
-      if (!groups.has(l.shopId)) groups.set(l.shopId, { shopId: l.shopId, shopName: l.shopName, lines: [] });
+      if (!groups.has(l.shopId))
+        groups.set(l.shopId, {
+          shopId: l.shopId,
+          shopName: l.shopName,
+          lines: [],
+        });
       groups.get(l.shopId).lines.push(l);
     });
-    return [...groups.values()].map((g) => Object.assign(g, { subtotal: subtotal(g.lines) }));
+    return [...groups.values()].map((g) =>
+      Object.assign(g, { subtotal: subtotal(g.lines) }),
+    );
   }
 
-  FrameX.cart = { add, addStudio, setQty, remove, clear, count, subtotal, groupedByShop, getLines: () => lines.map((l) => Object.assign({}, l)), MAX_QTY };
+  FrameX.cart = {
+    add,
+    addStudio,
+    setQty,
+    remove,
+    clear,
+    count,
+    subtotal,
+    groupedByShop,
+    getLines: () => lines.map((l) => Object.assign({}, l)),
+    MAX_QTY,
+  };
 })((window.FrameX = window.FrameX || {}));

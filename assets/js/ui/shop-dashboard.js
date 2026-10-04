@@ -25,21 +25,44 @@
     ["orders", "Orders", "bag"],
     ["inventory", "Inventory", "package"],
     ["profile", "Profile", "store"],
-    ["settings", "Settings", "settings"]
+    ["settings", "Settings", "settings"],
   ];
-  const FILTERS = [["all", "All"], ["draft", "Drafts"], ["pending_review", "Pending review"], ["published", "Published"], ["unpublished", "Unpublished"]];
+  const FILTERS = [
+    ["all", "All"],
+    ["draft", "Drafts"],
+    ["pending_review", "Pending review"],
+    ["published", "Published"],
+    ["unpublished", "Unpublished"],
+  ];
 
   let root, shop;
   let listState = { status: "all", q: "" };
 
-  const monogram = (name) => String(name || "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join("");
-  const statusBadge = (s) => `<span class="sd-status sd-status--${esc(s)}">${esc((M().STATUS[s] || { label: s }).label)}</span>`;
-  const when = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }) : "");
+  const monogram = (name) =>
+    String(name || "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0].toUpperCase())
+      .join("");
+  const statusBadge = (s) =>
+    `<span class="sd-status sd-status--${esc(s)}">${esc((M().STATUS[s] || { label: s }).label)}</span>`;
+  const when = (iso) =>
+    iso
+      ? new Date(iso).toLocaleDateString(undefined, {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : "";
 
   function parse() {
     const h = location.hash.replace(/^#/, "") || "/products";
     const [path, query] = h.split("?");
-    return { parts: path.split("/").filter(Boolean), params: new URLSearchParams(query || "") };
+    return {
+      parts: path.split("/").filter(Boolean),
+      params: new URLSearchParams(query || ""),
+    };
   }
 
   /* ---------------------------------------------------------------- Shop choice */
@@ -49,7 +72,10 @@
       <h1 class="sd-title">Shop dashboard</h1>
       <p class="sd-lead">Shop sign-in arrives with the FrameX backend. On this device, choose the shop you manage. Products you create are saved in this browser until then.</p>
       <ul class="sd-choose__list">${items
-        .map((s) => `<li><button class="sd-choose__shop" type="button" data-pick="${esc(s.id)}"><span class="sd-logo">${esc(monogram(s.name))}</span><span><strong>${esc(s.name)}</strong><small>${esc(FrameX.shopUtils.formatAddress(s))}${s.isSample ? " · Sample shop" : ""}</small></span>${icon("chev-right")}</button></li>`)
+        .map(
+          (s) =>
+            `<li><button class="sd-choose__shop" type="button" data-pick="${esc(s.id)}"><span class="sd-logo">${esc(monogram(s.name))}</span><span><strong>${esc(s.name)}</strong><small>${esc(FrameX.shopUtils.formatAddress(s))}${s.isSample ? " · Sample shop" : ""}</small></span>${icon("chev-right")}</button></li>`,
+        )
         .join("")}</ul></div>`;
     root.onclick = (e) => {
       const b = e.target.closest("[data-pick]");
@@ -82,9 +108,16 @@
   async function productsView(main) {
     main.innerHTML = `<div class="sd-loading"><div class="skeleton" style="height:84px"></div><div class="skeleton" style="height:84px"></div><div class="skeleton" style="height:84px"></div></div>`;
     const all = await svc().forShop(shop.id);
-    const counts = all.reduce((m, p) => ((m[p.status] = (m[p.status] || 0) + 1), m), {});
+    const counts = all.reduce(
+      (m, p) => ((m[p.status] = (m[p.status] || 0) + 1), m),
+      {},
+    );
     const q = listState.q.toLowerCase();
-    const shown = all.filter((p) => (listState.status === "all" || p.status === listState.status) && (!q || (p.name || "").toLowerCase().includes(q)));
+    const shown = all.filter(
+      (p) =>
+        (listState.status === "all" || p.status === listState.status) &&
+        (!q || (p.name || "").toLowerCase().includes(q)),
+    );
 
     main.innerHTML = `<header class="sd-head">
         <div><h1 class="sd-title">Products</h1><p class="sd-lead">${all.length} ${all.length === 1 ? "product" : "products"} · ${counts.published || 0} published</p></div>
@@ -94,19 +127,28 @@
         <label class="field sd-search"><span class="visually-hidden">Search products</span>${icon("search")}<input class="input" type="search" data-q value="${esc(listState.q)}" placeholder="Search your products"></label>
         <div class="chip-scroll" role="group" aria-label="Filter by status">${FILTERS.map(([id, label]) => `<button class="chip" type="button" data-filter="${id}" aria-pressed="${listState.status === id}">${label}${id === "all" ? ` (${all.length})` : counts[id] ? ` (${counts[id]})` : ""}</button>`).join("")}</div>
       </div>
-      ${shown.length
-        ? `<ul class="sd-list">${shown.map(itemHtml).join("")}</ul>`
-        : `<div class="sd-empty">${icon("frame")}<strong>${all.length ? "No products match" : "No products yet"}</strong><span>${all.length ? "Try another filter." : "Add your first product. It takes a few minutes and you can save as you go."}</span>${all.length ? "" : `<a class="btn btn--primary btn--sm" href="#/products/new">Add product</a>`}</div>`}`;
+      ${
+        shown.length
+          ? `<ul class="sd-list">${shown.map(itemHtml).join("")}</ul>`
+          : `<div class="sd-empty">${icon("frame")}<strong>${all.length ? "No products match" : "No products yet"}</strong><span>${all.length ? "Try another filter." : "Add your first product. It takes a few minutes and you can save as you go."}</span>${all.length ? "" : `<a class="btn btn--primary btn--sm" href="#/products/new">Add product</a>`}</div>`
+      }`;
 
-    $$("[data-thumb-ref]", main).forEach((img) => FrameX.mediaService.resolve(img.dataset.thumbRef, { thumb: true }).then((u) => (img.src = u || M().FALLBACK_IMAGE)));
-    $("[data-q]", main).addEventListener("input", FrameX.dom.debounce((e) => {
-      listState.q = e.target.value.trim();
-      productsView(main).then(() => {
-        const box = $("[data-q]", main);
-        box.focus();
-        box.setSelectionRange(box.value.length, box.value.length);
-      });
-    }, 250));
+    $$("[data-thumb-ref]", main).forEach((img) =>
+      FrameX.mediaService
+        .resolve(img.dataset.thumbRef, { thumb: true })
+        .then((u) => (img.src = u || M().FALLBACK_IMAGE)),
+    );
+    $("[data-q]", main).addEventListener(
+      "input",
+      FrameX.dom.debounce((e) => {
+        listState.q = e.target.value.trim();
+        productsView(main).then(() => {
+          const box = $("[data-q]", main);
+          box.focus();
+          box.setSelectionRange(box.value.length, box.value.length);
+        });
+      }, 250),
+    );
     main.onclick = async (e) => {
       const f = e.target.closest("[data-filter]");
       if (f) {
@@ -115,7 +157,9 @@
       }
       const btn = e.target.closest("[data-item-act]");
       if (!btn) return;
-      const product = all.find((p) => p.id === btn.closest("[data-item]").dataset.item);
+      const product = all.find(
+        (p) => p.id === btn.closest("[data-item]").dataset.item,
+      );
       await itemAction(btn, product, main);
     };
   }
@@ -124,7 +168,12 @@
     const main = M().mainView(p);
     const thumb = p.listingImage || (main ? main.thumb || main.url : "");
     const sizes = (p.sizes || []).length;
-    const source = p.source === "catalogue" ? (p.hasLocalChanges ? "From the catalogue file, edited on this device" : "From the catalogue file (js/edit.js)") : "Created in this dashboard";
+    const source =
+      p.source === "catalogue"
+        ? p.hasLocalChanges
+          ? "From the catalogue file, edited on this device"
+          : "From the catalogue file (js/edit.js)"
+        : "Created in this dashboard";
     const live = p.status === "published";
     return `<li class="sd-item" data-item="${esc(p.id)}">
       <img class="sd-item__img" ${/^media:/.test(thumb) ? `data-thumb-ref="${esc(thumb)}" src="${M().FALLBACK_IMAGE}"` : `src="${esc(thumb || M().FALLBACK_IMAGE)}"`} alt="" width="72" height="72" loading="lazy">
@@ -149,15 +198,34 @@
     try {
       if (a === "duplicate") {
         const copy = await svc().duplicate(product);
-        FrameX.toast.show(`Created “${copy.name}” as a draft.`, { action: { label: "Edit", onClick: () => (location.hash = `#/products/${encodeURIComponent(copy.id)}/edit`) } });
+        FrameX.toast.show(`Created “${copy.name}” as a draft.`, {
+          action: {
+            label: "Edit",
+            onClick: () =>
+              (location.hash = `#/products/${encodeURIComponent(copy.id)}/edit`),
+          },
+        });
       }
       if (a === "publish") {
         const r = await svc().publish(product);
         if (!r.ok) {
-          FrameX.toast.show(`“${product.name || "This product"}” is missing information.`, { action: { label: "Fix it", onClick: () => (location.hash = `#/products/${encodeURIComponent(product.id)}/edit?step=publish`) } });
+          FrameX.toast.show(
+            `“${product.name || "This product"}” is missing information.`,
+            {
+              action: {
+                label: "Fix it",
+                onClick: () =>
+                  (location.hash = `#/products/${encodeURIComponent(product.id)}/edit?step=publish`),
+              },
+            },
+          );
           return;
         }
-        FrameX.toast.show(r.status === "pending_review" ? "Submitted for review." : "Published.");
+        FrameX.toast.show(
+          r.status === "pending_review"
+            ? "Submitted for review."
+            : "Published.",
+        );
       }
       if (a === "unpublish") {
         await svc().unpublish(product);
@@ -167,15 +235,24 @@
         if (!btn.classList.contains("is-confirming")) {
           btn.classList.add("is-confirming");
           btn.textContent = "Tap again to confirm";
-          setTimeout(() => btn.isConnected && btn.classList.remove("is-confirming"), 4000);
+          setTimeout(
+            () => btn.isConnected && btn.classList.remove("is-confirming"),
+            4000,
+          );
           return;
         }
         await svc().remove(product);
-        FrameX.toast.show(product.source === "catalogue" ? "Your changes were discarded." : "Product deleted.");
+        FrameX.toast.show(
+          product.source === "catalogue"
+            ? "Your changes were discarded."
+            : "Product deleted.",
+        );
       }
     } catch (error) {
       console.error("Product action failed", error);
-      FrameX.toast.show(error.friendly || "That didn't work. Please try again.");
+      FrameX.toast.show(
+        error.friendly || "That didn't work. Please try again.",
+      );
     }
     productsView(main);
   }
@@ -184,20 +261,38 @@
   async function inventoryView(main) {
     const all = await svc().forShop(shop.id);
     main.innerHTML = `<header class="sd-head"><div><h1 class="sd-title">Inventory</h1><p class="sd-lead">Stock and availability for every product. Changes save when you press Save on that row.</p></div></header>
-      ${all.length ? `<div class="sd-table-wrap"><table class="sd-table"><thead><tr><th scope="col">Product</th><th scope="col">Status</th><th scope="col">Availability</th><th scope="col">Stock</th><th scope="col"><span class="visually-hidden">Save</span></th></tr></thead><tbody>
+      ${
+        all.length
+          ? `<div class="sd-table-wrap"><table class="sd-table"><thead><tr><th scope="col">Product</th><th scope="col">Status</th><th scope="col">Availability</th><th scope="col">Stock</th><th scope="col"><span class="visually-hidden">Save</span></th></tr></thead><tbody>
         ${all
-          .map((p) => `<tr data-row="${esc(p.id)}"><th scope="row">${esc(p.name || "Untitled")}</th><td>${statusBadge(p.status)}</td>
-            <td><select class="select" data-inv="status" aria-label="Availability of ${esc(p.name)}">${M().AVAILABILITY.map((a) => `<option value="${a.id}"${p.availability.status === a.id ? " selected" : ""}>${a.name}</option>`).join("")}</select></td>
+          .map(
+            (
+              p,
+            ) => `<tr data-row="${esc(p.id)}"><th scope="row">${esc(p.name || "Untitled")}</th><td>${statusBadge(p.status)}</td>
+            <td><select class="select" data-inv="status" aria-label="Availability of ${esc(p.name)}">${M()
+              .AVAILABILITY.map(
+                (a) =>
+                  `<option value="${a.id}"${p.availability.status === a.id ? " selected" : ""}>${a.name}</option>`,
+              )
+              .join("")}</select></td>
             <td><input class="input" type="number" min="0" step="1" data-inv="stock" value="${p.availability.stock ?? ""}" placeholder="—" aria-label="Stock of ${esc(p.name)}"></td>
-            <td><button class="iu-btn" type="button" data-inv-save>Save</button></td></tr>`)
-          .join("")}</tbody></table></div>` : `<div class="sd-empty">${icon("package")}<strong>No products yet</strong><a class="btn btn--primary btn--sm" href="#/products/new">Add product</a></div>`}`;
+            <td><button class="iu-btn" type="button" data-inv-save>Save</button></td></tr>`,
+          )
+          .join("")}</tbody></table></div>`
+          : `<div class="sd-empty">${icon("package")}<strong>No products yet</strong><a class="btn btn--primary btn--sm" href="#/products/new">Add product</a></div>`
+      }`;
     main.onclick = async (e) => {
       const btn = e.target.closest("[data-inv-save]");
       if (!btn) return;
       const row = btn.closest("[data-row]");
-      const p = M().sanitizeShopInput(all.find((x) => x.id === row.dataset.row));
+      const p = M().sanitizeShopInput(
+        all.find((x) => x.id === row.dataset.row),
+      );
       const stock = $("[data-inv='stock']", row).value;
-      p.availability = Object.assign({}, p.availability, { status: $("[data-inv='status']", row).value, stock: stock === "" ? null : Math.max(0, Number(stock)) });
+      p.availability = Object.assign({}, p.availability, {
+        status: $("[data-inv='status']", row).value,
+        stock: stock === "" ? null : Math.max(0, Number(stock)),
+      });
       if (p.availability.stock === 0) p.availability.status = "out_of_stock";
       try {
         await svc().save(p);
@@ -223,7 +318,13 @@
       ["Address", FrameX.shopUtils.formatAddress(shop)],
       ["Phone", shop.phone],
       ["About", shop.description],
-      ["Pickup & delivery", (shop.fulfilment || []).map((id) => (FULFILMENT_METHODS[id] || {}).label).filter(Boolean).join(", ")]
+      [
+        "Pickup & delivery",
+        (shop.fulfilment || [])
+          .map((id) => (FULFILMENT_METHODS[id] || {}).label)
+          .filter(Boolean)
+          .join(", "),
+      ],
     ];
     main.innerHTML = `<header class="sd-head"><div><h1 class="sd-title">Profile</h1><p class="sd-lead">What customers see about your shop.</p></div><a class="btn btn--outline btn--sm" href="${FrameX.qs.shopUrl(shop.id)}">View public page</a></header>
       <dl class="sd-profile">${rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v ? esc(v) : `<span class="pp-muted">Not added yet</span>`}</dd></div>`).join("")}</dl>
@@ -239,8 +340,23 @@
       </div>`;
     main.onclick = async (e) => {
       if (e.target.closest("[data-export]")) {
-        const list = (await svc().forShop(shop.id)).filter((p) => p.hasLocalChanges);
-        const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), shopId: shop.id, products: list }, null, 2)], { type: "application/json" });
+        const list = (await svc().forShop(shop.id)).filter(
+          (p) => p.hasLocalChanges,
+        );
+        const blob = new Blob(
+          [
+            JSON.stringify(
+              {
+                exportedAt: new Date().toISOString(),
+                shopId: shop.id,
+                products: list,
+              },
+              null,
+              2,
+            ),
+          ],
+          { type: "application/json" },
+        );
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download = `framex-products-${shop.id}.json`;
@@ -281,7 +397,11 @@
         const box = document.createElement("div");
         main.appendChild(box);
         root.classList.add("is-editing");
-        await FrameX.productWizard.open(box, { productId: parts[1] === "new" ? null : decodeURIComponent(parts[1]), shopId: shop.id, step: params.get("step") || "basic" });
+        await FrameX.productWizard.open(box, {
+          productId: parts[1] === "new" ? null : decodeURIComponent(parts[1]),
+          shopId: shop.id,
+          step: params.get("step") || "basic",
+        });
         document.title = `${parts[1] === "new" ? "New product" : "Edit product"} · ${shop.name} — FrameX`;
         return;
       }

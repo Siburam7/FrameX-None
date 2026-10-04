@@ -3,8 +3,9 @@
   const { $, escapeHtml: esc, icon } = FrameX.dom;
 
   const stars = (n) =>
-    `<div class="review-card__stars" role="img" aria-label="${n} out of 5 stars">${Array.from({ length: 5 }, (_, i) =>
-      icon("star", i < n ? "icon--fill" : "")
+    `<div class="review-card__stars" role="img" aria-label="${n} out of 5 stars">${Array.from(
+      { length: 5 },
+      (_, i) => icon("star", i < n ? "icon--fill" : ""),
     ).join("")}</div>`;
 
   const card = (r) => `<article class="review-card">

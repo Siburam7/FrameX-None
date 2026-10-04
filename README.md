@@ -6,19 +6,19 @@ because every link and asset path is **relative**.
 
 ## Pages
 
-| File | Purpose |
-|---|---|
-| `index.html` | Home: hero, featured-frames showcase (auto-scroll + arrows + drag), category gallery, shops preview, custom-frame section, how it works, community + reviews (sample), frame guide |
-| `shop.html` | All shops + full product catalogue (search, category, sort, in-stock, load more). Supports `?category=` `?q=` `?shop=` |
-| `shop-detail.html?id=<shopId>` | One shop: profile, hours, services, its frames |
-| `product.html?slug=<slug>` (or `?id=`) | **Product page** built from the product data: gallery (front / side / back / close-up… views, zoom, fullscreen, optional 360°), size / colour / print / cover options with live price, Customize This Product (FrameX Studio), and only the sections the shop filled in: Frame Components (exploded view), Print Materials, Quality, Back View, Product Views, Specifications, Customization, Video, Shop, Reviews |
-| `about.html` `services.html` `gallery.html` `contact.html` `faq.html` | Content pages |
-| `templates.html` `template.html?t=<slug>` | Personalised templates: browse and details. Data in `js/templates.js` |
-| `studio.html` | FrameX Studio: customise a template, a single photo or a listed frame (frame, colour, border, mat, size, finish, crop, text) with live preview and price. Options and prices in `js/studio.js` |
-| `shop-dashboard.html` | **Shop dashboard** for local framing shops: product list (edit, preview, duplicate, publish / unpublish, delete), 9-step product wizard with image uploads, inventory, orders, profile, settings. Saves in the browser until a backend exists |
-| `customer-gallery.html` | Customer photos + reviews, and a share form (saved in the visitor's browser only until a backend exists) |
-| `our-story.html` | Brand story, philosophy, team/development credit |
-| `terms-of-use.html` `privacy-notice.html` | Legal pages with a table of contents (draft — see disclaimers on each page) |
+| File                                                                  | Purpose                                                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `index.html`                                                          | Home: hero, featured-frames showcase (auto-scroll + arrows + drag), category gallery, shops preview, custom-frame section, how it works, community + reviews (sample), frame guide                                                                                                                                                                                                                                 |
+| `shop.html`                                                           | All shops + full product catalogue (search, category, sort, in-stock, load more). Supports `?category=` `?q=` `?shop=`                                                                                                                                                                                                                                                                                             |
+| `shop-detail.html?id=<shopId>`                                        | One shop: profile, hours, services, its frames                                                                                                                                                                                                                                                                                                                                                                     |
+| `product.html?slug=<slug>` (or `?id=`)                                | **Product page** built from the product data: gallery (front / side / back / close-up… views, zoom, fullscreen, optional 360°), size / colour / print / cover options with live price, Customize This Product (FrameX Studio), and only the sections the shop filled in: Frame Components (exploded view), Print Materials, Quality, Back View, Product Views, Specifications, Customization, Video, Shop, Reviews |
+| `about.html` `services.html` `gallery.html` `contact.html` `faq.html` | Content pages                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `templates.html` `template.html?t=<slug>`                             | Personalised templates: browse and details. Data in `js/templates.js`                                                                                                                                                                                                                                                                                                                                              |
+| `studio.html`                                                         | FrameX Studio: customise a template, a single photo or a listed frame (frame, colour, border, mat, size, finish, crop, text) with live preview and price. Options and prices in `js/studio.js`                                                                                                                                                                                                                     |
+| `shop-dashboard.html`                                                 | **Shop dashboard** for local framing shops: product list (edit, preview, duplicate, publish / unpublish, delete), 9-step product wizard with image uploads, inventory, orders, profile, settings. Saves in the browser until a backend exists                                                                                                                                                                      |
+| `customer-gallery.html`                                               | Customer photos + reviews, and a share form (saved in the visitor's browser only until a backend exists)                                                                                                                                                                                                                                                                                                           |
+| `our-story.html`                                                      | Brand story, philosophy, team/development credit                                                                                                                                                                                                                                                                                                                                                                   |
+| `terms-of-use.html` `privacy-notice.html`                             | Legal pages with a table of contents (draft — see disclaimers on each page)                                                                                                                                                                                                                                                                                                                                        |
 
 Header, footer, cart drawer and toasts are rendered from **one template** (`assets/js/ui/chrome.js`),
 so navigation is never copy-pasted between pages. Each page only sets `<body data-page="...">`.
@@ -46,7 +46,7 @@ shop has coordinates).
 ## Not connected (labelled as such on the site)
 
 - **Checkout, payments, orders, accounts, reviews submission** - show "coming soon" / "not connected".
-- **Contact form** - validates, then opens the visitor's email app *only if* an email is set in
+- **Contact form** - validates, then opens the visitor's email app _only if_ an email is set in
   `site.seed.js`; otherwise says plainly the message was **not** sent. It never fakes success.
 - **Photo upload** - the product page previews a photo on the visitor's device only; nothing is uploaded,
   saved, or added to the cart (stated on the page). Needs a backend (file storage + order attachment).
@@ -57,16 +57,16 @@ shop has coordinates).
 
 ## Where to change things
 
-| Change | Edit |
-|---|---|
-| Products, prices, stock, sizes, colours, images | `js/edit.js` → PRODUCTS (each field is explained in the comment above the list) |
-| Frame colour palette (hex + finish) | `js/edit.js` → FRAME COLOURS |
-| Shops (address, hours, coordinates, ratings, logo) | `js/edit.js` → SHOPS |
-| Shops, products, categories, frame colours, home page lists | `js/edit.js` (the one file to edit) |
-| Phone / WhatsApp / email, social links, hero numbers | `assets/data/site.seed.js` |
-| FAQ, gallery, reviews, community tiles | `faq.seed.js`, `gallery.seed.js`, `reviews.seed.js`, `community.seed.js` |
-| Colours, fonts, spacing | `assets/css/tokens.css` |
-| Switch to a real backend | `assets/js/config.js` -> `dataMode: "api"` (see `docs/ARCHITECTURE.md`) |
+| Change                                                      | Edit                                                                            |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Products, prices, stock, sizes, colours, images             | `js/edit.js` → PRODUCTS (each field is explained in the comment above the list) |
+| Frame colour palette (hex + finish)                         | `js/edit.js` → FRAME COLOURS                                                    |
+| Shops (address, hours, coordinates, ratings, logo)          | `js/edit.js` → SHOPS                                                            |
+| Shops, products, categories, frame colours, home page lists | `js/edit.js` (the one file to edit)                                             |
+| Phone / WhatsApp / email, social links, hero numbers        | `assets/data/site.seed.js`                                                      |
+| FAQ, gallery, reviews, community tiles                      | `faq.seed.js`, `gallery.seed.js`, `reviews.seed.js`, `community.seed.js`        |
+| Colours, fonts, spacing                                     | `assets/css/tokens.css`                                                         |
+| Switch to a real backend                                    | `assets/js/config.js` -> `dataMode: "api"` (see `docs/ARCHITECTURE.md`)         |
 
 ## Placeholders needing real business information
 

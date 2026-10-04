@@ -23,16 +23,23 @@
     [/wall/i, "WALL_PREVIEW"],
     [/room|life|interior/i, "LIFESTYLE"],
     [/pack|box/i, "PACKAGING"],
-    [/front/i, "FRONT"]
+    [/front/i, "FRONT"],
   ];
 
   function guessType(name, used) {
     const hit = GUESS.find(([re]) => re.test(name));
     if (hit) return hit[1];
-    return ["FRONT", "SIDE", "BACK", "CORNER", "DETAIL"].find((t) => !used.includes(t)) || "DETAIL";
+    return (
+      ["FRONT", "SIDE", "BACK", "CORNER", "DETAIL"].find(
+        (t) => !used.includes(t),
+      ) || "DETAIL"
+    );
   }
 
-  function mount(el, { items = [], onChange = () => {}, productName = () => "" } = {}) {
+  function mount(
+    el,
+    { items = [], onChange = () => {}, productName = () => "" } = {},
+  ) {
     let list = items.map((v, i) => Object.assign({}, v, { sortOrder: i }));
     const pending = new Map(); // temp id -> { name, progress }
     let errors = [];
@@ -57,11 +64,20 @@
         <ol class="iu-grid" aria-label="Product images">
           ${list
             .map(
-              (v, i) => `<li class="iu-card${v.isMain ? " is-main" : ""}" draggable="true" data-id="${esc(v.id)}">
+              (
+                v,
+                i,
+              ) => `<li class="iu-card${v.isMain ? " is-main" : ""}" draggable="true" data-id="${esc(v.id)}">
               <div class="iu-card__media"><img data-src="${esc(v.thumb || v.url)}" alt=""><span class="iu-card__pos">${i + 1}</span>${v.isMain ? `<span class="iu-card__main">Main image</span>` : ""}</div>
               <div class="iu-card__fields">
                 <label class="iu-field"><span>View</span><select class="select" data-field="type">
-                  ${types.concat(v.type === "PHOTO" ? [M().viewType("PHOTO")] : []).map((t) => `<option value="${t.id}"${t.id === v.type ? " selected" : ""}>${esc(t.label)}</option>`).join("")}</select></label>
+                  ${types
+                    .concat(v.type === "PHOTO" ? [M().viewType("PHOTO")] : [])
+                    .map(
+                      (t) =>
+                        `<option value="${t.id}"${t.id === v.type ? " selected" : ""}>${esc(t.label)}</option>`,
+                    )
+                    .join("")}</select></label>
                 <label class="iu-field"><span>Alt text <em>(describes the photo)</em></span><input class="input" data-field="alt" maxlength="140" value="${esc(v.alt || "")}" placeholder="e.g. Walnut frame, front view"></label>
               </div>
               <div class="iu-card__actions">
@@ -70,14 +86,18 @@
                 <button class="iu-btn iu-btn--icon" type="button" data-act="down" aria-label="Move later" ${i === list.length - 1 ? "disabled" : ""}>${icon("chev-right")}</button>
                 <button class="iu-btn iu-btn--danger" type="button" data-act="delete" aria-label="Delete this image">${icon("close")} Delete</button>
               </div>
-            </li>`
+            </li>`,
             )
             .join("")}
           ${[...pending.entries()].map(([id, p]) => `<li class="iu-card iu-card--pending" data-pending="${esc(id)}"><div class="iu-card__media"><span class="iu-progress"><i style="width:${p.progress}%"></i></span></div><p class="iu-card__name">${esc(p.name)}</p></li>`).join("")}
         </ol>
         ${list.length ? `<p class="iu-hint">The main image is shown first and on product cards. Drag cards or use the arrows to change the order customers see.</p>` : ""}
       </div>`;
-      $$("[data-src]", el).forEach((img) => media().resolve(img.dataset.src, { thumb: true }).then((u) => (img.src = u)));
+      $$("[data-src]", el).forEach((img) =>
+        media()
+          .resolve(img.dataset.src, { thumb: true })
+          .then((u) => (img.src = u)),
+      );
     }
 
     async function addFiles(files) {
@@ -91,15 +111,35 @@
           const out = await media().prepare(file, "view", (n) => {
             const p = pending.get(tmp);
             if (p) p.progress = n;
-            const bar = el.querySelector(`[data-pending="${tmp}"] .iu-progress i`);
+            const bar = el.querySelector(
+              `[data-pending="${tmp}"] .iu-progress i`,
+            );
             if (bar) bar.style.width = n + "%";
           });
-          const type = guessType(file.name, list.map((v) => v.type));
+          const type = guessType(
+            file.name,
+            list.map((v) => v.type),
+          );
           const name = productName() || "Product";
-          list.push({ id: out.id, type, url: out.url, thumb: out.thumb, alt: `${name}, ${M().viewType(type).label.toLowerCase()}`, sortOrder: list.length, isMain: !list.length, width: out.width, height: out.height });
+          list.push({
+            id: out.id,
+            type,
+            url: out.url,
+            thumb: out.thumb,
+            alt: `${name}, ${M().viewType(type).label.toLowerCase()}`,
+            sortOrder: list.length,
+            isMain: !list.length,
+            width: out.width,
+            height: out.height,
+          });
         } catch (error) {
-          errors.push(error instanceof media().MediaError ? error.message : `“${file.name}” couldn't be added. Please try again.`);
-          if (!(error instanceof media().MediaError)) console.error("Image upload failed", error);
+          errors.push(
+            error instanceof media().MediaError
+              ? error.message
+              : `“${file.name}” couldn't be added. Please try again.`,
+          );
+          if (!(error instanceof media().MediaError))
+            console.error("Image upload failed", error);
         } finally {
           pending.delete(tmp);
         }
@@ -116,7 +156,9 @@
       [list[i], list[j]] = [list[j], list[i]];
       render();
       emit();
-      const btn = el.querySelector(`[data-id="${CSS.escape(id)}"] [data-act="${delta < 0 ? "up" : "down"}"]`);
+      const btn = el.querySelector(
+        `[data-id="${CSS.escape(id)}"] [data-act="${delta < 0 ? "up" : "down"}"]`,
+      );
       if (btn && !btn.disabled) btn.focus();
     }
 
@@ -145,7 +187,9 @@
       if (act === "down") move(id, 1);
       if (act === "main") {
         list.forEach((v) => (v.isMain = v.id === id));
-        list = list.filter((v) => v.id === id).concat(list.filter((v) => v.id !== id));
+        list = list
+          .filter((v) => v.id === id)
+          .concat(list.filter((v) => v.id !== id));
         render();
         emit();
       }
@@ -153,7 +197,13 @@
         if (!btn.classList.contains("is-confirming")) {
           btn.classList.add("is-confirming");
           btn.innerHTML = `${icon("close")} Tap again to delete`;
-          setTimeout(() => btn.isConnected && (btn.classList.remove("is-confirming"), (btn.innerHTML = `${icon("close")} Delete`)), 3500);
+          setTimeout(
+            () =>
+              btn.isConnected &&
+              (btn.classList.remove("is-confirming"),
+              (btn.innerHTML = `${icon("close")} Delete`)),
+            3500,
+          );
           return;
         }
         list = list.filter((v) => v.id !== id);
@@ -186,7 +236,8 @@
     el.addEventListener("drop", (e) => {
       e.preventDefault();
       const zone = e.target.closest("[data-drop]");
-      if (zone && e.dataTransfer.files.length) return addFiles(e.dataTransfer.files);
+      if (zone && e.dataTransfer.files.length)
+        return addFiles(e.dataTransfer.files);
       const target = e.target.closest("[data-id]");
       if (dragId && target && target.dataset.id !== dragId) {
         const from = list.findIndex((v) => v.id === dragId);
@@ -203,7 +254,15 @@
   }
 
   /** One optional image. */
-  function single(el, { value = "", kind = "material", label = "Image", onChange = () => {} } = {}) {
+  function single(
+    el,
+    {
+      value = "",
+      kind = "material",
+      label = "Image",
+      onChange = () => {},
+    } = {},
+  ) {
     let current = value;
     let error = "";
     function render(progress) {
@@ -219,7 +278,10 @@
           ${error ? `<p class="iu-errors" role="alert">${icon("alert")} ${esc(error)}</p>` : ""}
         </div></div>`;
       const img = el.querySelector("[data-src]");
-      if (img) media().resolve(img.dataset.src, { thumb: true }).then((u) => (img.src = u));
+      if (img)
+        media()
+          .resolve(img.dataset.src, { thumb: true })
+          .then((u) => (img.src = u));
     }
     el.addEventListener("change", async (e) => {
       if (!e.target.matches("[data-single]")) return;
@@ -234,7 +296,10 @@
         current = out.url;
         onChange(current, out);
       } catch (err) {
-        error = err instanceof media().MediaError ? err.message : "That image couldn't be added. Please try again.";
+        error =
+          err instanceof media().MediaError
+            ? err.message
+            : "That image couldn't be added. Please try again.";
       }
       render();
     });
