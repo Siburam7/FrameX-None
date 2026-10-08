@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="assets/css/overlays.css">
   <link rel="stylesheet" href="assets/css/footer-faq.css">
   <link rel="stylesheet" href="assets/css/pages.css">
+  <link rel="stylesheet" href="assets/css/mobile.css">
   <script>document.documentElement.classList.add("js");</script>
 </head>
 
@@ -32,12 +33,13 @@
   <div id="site-header-root"></div>
 
   <main id="main">
-    <section class="page-banner" aria-labelledby="page-title">
+    <section class="page-hero" aria-labelledby="page-title">
       <div class="container">
-        <nav class="page-banner__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
+        <nav class="page-hero__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
             aria-hidden="true">/</span> <span aria-current="page">About</span></nav>
-        <h1 class="page-banner__title" id="page-title">About FrameX</h1>
-        <p class="page-banner__lead">A marketplace that brings local photo-frame shops and the people who need frames
+        <p class="eyebrow">About us</p>
+        <h1 class="page-hero__title" id="page-title">About <span>FrameX</span></h1>
+        <p class="page-hero__lead">A marketplace that brings local photo-frame shops and the people who need frames
           together.</p>
       </div>
     </section>
@@ -57,7 +59,7 @@
       </div>
     </section>
 
-    <section class="section section--tight-top" aria-labelledby="why-title">
+    <section class="section section--warm" aria-labelledby="why-title">
       <div class="container">
         <div class="section-head" data-reveal>
           <h2 class="section-title" id="why-title">Why use FrameX</h2>
@@ -85,7 +87,7 @@
       </div>
     </section>
 
-    <section class="section section--tight-top" aria-labelledby="market-title">
+    <section class="section" aria-labelledby="market-title">
       <div class="container split split--2">
         <div class="prose" data-reveal>
           <h2 id="market-title">How the local shop marketplace works</h2>
@@ -98,15 +100,15 @@
               </svg><span>You browse, pick a size and build a cart.</span></li>
             <li><svg class="icon" aria-hidden="true">
                 <use href="#i-check"></use>
-              </svg><span>You send your order on WhatsApp; the shop prepares it for pickup or delivery.</span></li>
+              </svg><span>You add your photo, check out and choose how to pay; the shop prepares your order for
+                pickup or delivery.</span></li>
           </ol>
-          <p><span class="placeholder-note">Online checkout and payment: coming soon</span></p>
         </div>
         <div class="prose" data-reveal>
           <h2>Quality and customization</h2>
           <p>Every shop sets its own materials, finishes and sizes, shown on each product page. On a product page you
-            can already choose a frame colour and size and preview your own photo inside that frame. Sending your photo
-            with your order online and custom sizes are coming soon.</p>
+            choose a frame colour and size and add your own photo. It is uploaded with your order and printed in the
+            same original quality you provide: FrameX does not enhance or change it. Custom sizes are coming soon.</p>
           <a class="btn btn--dark" href="services.html">See our services <svg class="icon icon--nudge"
               aria-hidden="true">
               <use href="#i-arrow-right"></use>
@@ -122,8 +124,8 @@
           <p class="final-cta__text">Why FrameX exists, and how we think about memories and the frames that hold them.
           </p>
           <p class="story-credit">Created &amp; Developed by <strong>Cbuxrn</strong></p>
-          <div class="final-cta__actions"><a class="btn btn--dark" href="our-story.html">Read our story</a><a
-              class="btn btn--outline" href="shop.html">Shop Frames</a></div>
+          <div class="final-cta__actions"><a class="btn btn--primary" href="our-story.html">Read our story</a><a
+              class="btn btn--light" href="shop.html">Shop Frames</a></div>
         </div>
       </div>
     </section>
@@ -161,6 +163,7 @@
   <script src="assets/js/ui/nav.js" defer></script>
   <script src="assets/js/ui/chrome.js" defer></script>
   <script src="assets/js/ui/cart-drawer.js" defer></script>
+  <script src="assets/js/ui/auth-gate.js" defer></script>
   <script src="assets/js/ui/actions.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </body>

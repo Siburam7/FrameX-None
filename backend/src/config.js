@@ -4,6 +4,7 @@
    ========================================================================== */
 import crypto from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -45,6 +46,10 @@ function devSecret() {
   }
 }
 
+// Where uploaded files are kept. Tests and in-memory runs get a throw-away folder of their own.
+const uploadDir = env.UPLOAD_DIR ? path.resolve(env.UPLOAD_DIR) : isTest || inMemory ? path.join(os.tmpdir(), `framex-uploads-${process.pid}`) : path.join(dataDir, "uploads");
+const megabytes = (v, fallback, max) => Math.min(max, Math.max(1, int(v, fallback))) * 1024 * 1024;
+
 const placeholderSecret = !env.AUTH_SECRET || /replace-with/i.test(env.AUTH_SECRET);
 const radiusOptions = list(env.NEARBY_RADIUS_OPTIONS_KM)
   .map(Number)
@@ -56,6 +61,11 @@ const emailKey = env.EMAIL_PROVIDER_API_KEY || env.EMAIL_PROVIDER_KEY || "";
 const emailProvider = (env.EMAIL_PROVIDER || (emailKey ? "brevo" : env.GMAIL_APP_PASSWORD ? "gmail" : "none")).toLowerCase();
 
 export const EMAIL_PROVIDERS = ["brevo", "resend", "gmail", "smtp", "dev", "none"];
+export const PAYMENT_PROVIDERS = ["cashfree", "razorpay", "none"];
+export const RAZORPAY_API = "https://api.razorpay.com";
+// Cashfree Payments: the sandbox for PAYMENT_MODE=test, the live API for PAYMENT_MODE=live.
+export const CASHFREE_API = { test: "https://sandbox.cashfree.com/pg", live: "https://api.cashfree.com/pg" };
+const money = (v, fallback) => Math.max(0, Math.round(int(v, fallback)));
 export const SMS_PROVIDERS = ["fast2sms", "2factor", "twilio", "dev", "none"];
 
 export const config = {
@@ -82,8 +92,12 @@ export const config = {
   frontendUrl: (env.FRONTEND_URL || `http://localhost:${port}`).replace(/\/+$/, ""),
   // false = FRONTEND_URL wasn't set: links in messages then point back at the (allowed) site the request came from.
   frontendUrlSet: Boolean(env.FRONTEND_URL),
+  // The backend's own public address (https://api.example.com). Only needed so a payment gateway can be told where to send webhooks.
+  publicApiUrl: (env.PUBLIC_API_URL || "").replace(/\/+$/, ""),
   corsOrigins: list(env.CORS_ORIGINS || (isProd ? "" : "http://localhost:5500,http://127.0.0.1:5500")),
   serveFrontend: bool(env.SERVE_FRONTEND, !isProd),
+  // Folder that holds the website's catalogue files (js/edit.js, js/templates.js, js/studio.js, assets/js/services/...).
+  catalogDir: path.resolve(env.CATALOG_DIR || PROJECT_ROOT),
   trustProxy: int(env.TRUST_PROXY, 0),
 
   // Email. Nothing is sent unless a provider is configured: there is no silent fallback.
@@ -129,6 +143,84 @@ export const config = {
     maxResults: 50
   },
 
+  // Online payments. Nothing can be paid online until a gateway is configured;
+  // the secret and the webhook secret never leave the server.
+  payments: {
+    provider: (env.PAYMENT_PROVIDER || "none").toLowerCase(),
+    mode: (env.PAYMENT_MODE || "test").toLowerCase(), // test | live
+    razorpay: {
+      keyId: (env.RAZORPAY_KEY_ID || "").trim(),
+      keySecret: (env.RAZORPAY_KEY_SECRET || "").trim(),
+      webhookSecret: (env.RAZORPAY_WEBHOOK_SECRET || "").trim(),
+      // Tests point this at a stand-in gateway. Production always uses Razorpay's own address.
+      apiBase: (env.RAZORPAY_API_BASE || RAZORPAY_API).replace(/\/+$/, "")
+    },
+    cashfree: {
+      clientId: (env.CASHFREE_CLIENT_ID || "").trim(),
+      clientSecret: (env.CASHFREE_CLIENT_SECRET || "").trim(),
+      apiVersion: (env.CASHFREE_API_VERSION || "2025-01-01").trim(),
+      // Cashfree signs webhooks with the API secret unless a separate webhook secret was set up.
+      webhookSecret: (env.CASHFREE_WEBHOOK_SECRET || "").trim(),
+      // Tests point this at a stand-in gateway. Production always uses Cashfree's own address.
+      apiBase: (env.CASHFREE_API_BASE || CASHFREE_API[(env.PAYMENT_MODE || "test").toLowerCase() === "live" ? "live" : "test"]).replace(/\/+$/, "")
+    },
+    // An order waiting for an online payment keeps its stock this long, then is cancelled.
+    pendingMinutes: Math.max(5, int(env.PAYMENT_PENDING_MINUTES, 30)),
+    brandName: env.PAYMENT_BRAND_NAME || "FrameX"
+  },
+
+  // What the server adds to an order. All amounts in whole rupees.
+  checkout: {
+    taxPercent: Math.min(100, Math.max(0, Number(env.TAX_PERCENT) || 0)), // added on top of item prices; 0 = prices already include tax
+    shippingFee: money(env.SHIPPING_FEE, 0),
+    freeShippingAbove: money(env.SHIPPING_FREE_ABOVE, 0), // 0 = the shipping fee always applies
+    cod: {
+      enabled: bool(env.COD_ENABLED, true),
+      fee: money(env.COD_FEE, 0),
+      maxOrderValue: money(env.COD_MAX_ORDER_VALUE, 0), // 0 = no upper limit
+      blockedPincodes: list(env.COD_BLOCKED_PINCODES), // full PIN codes or prefixes, e.g. "7590,110001"
+      blockedShops: list(env.COD_BLOCKED_SHOPS), // catalogue shop ids
+      blockedProducts: list(env.COD_BLOCKED_PRODUCTS), // product ids
+      allowCustomDesigns: bool(env.COD_ALLOW_CUSTOM_DESIGNS, true)
+    },
+    // Gift wrapping: an optional extra for the whole order, shown before the customer pays.
+    giftWrap: {
+      enabled: bool(env.GIFT_WRAP_ENABLED, true),
+      fee: money(env.GIFT_WRAP_FEE, 49),
+      blockedShops: list(env.GIFT_WRAP_BLOCKED_SHOPS), // catalogue shop ids or Shop IDs that don't gift wrap
+      blockedProducts: list(env.GIFT_WRAP_BLOCKED_PRODUCTS) // product ids that can't be gift wrapped
+    }
+  },
+
+  // Custom paintings: the part of the price paid before the artist starts (the rest is paid when the painting is finished).
+  paintings: {
+    advancePercent: Math.min(99, Math.max(1, Math.round(int(env.CUSTOM_PAINTING_ADVANCE_PERCENT, 40)))),
+    maxReferencePhotos: 5,
+    // An accepted request waits this long for its advance before it is closed.
+    advanceDays: Math.max(1, int(env.CUSTOM_PAINTING_ADVANCE_DAYS, 7))
+  },
+  // FrameX's share of a sale, in percent. Recorded for reports; payouts to sellers are not automated.
+  platform: { commissionPercent: Math.min(90, Math.max(0, Number(env.PLATFORM_COMMISSION_PERCENT) || 0)) },
+  // Customer photos (the originals that are printed). Private: only served through
+  // short-lived signed links made for the customer, FrameX staff or the shop that makes the order.
+  uploads: {
+    dir: uploadDir,
+    maxBytes: megabytes(env.UPLOAD_MAX_MB, 50, 200), // one photo; a 4K photo is usually 3 to 25 MB
+    maxSide: 30000, // pixels on the longest side
+    linkSeconds: Math.min(3600, Math.max(30, int(env.UPLOAD_LINK_SECONDS, 300))), // how long a download link works
+    maxWaitingPerUser: Math.max(10, int(env.UPLOAD_MAX_WAITING, 80)), // photos not yet part of an order
+    unusedDays: Math.max(1, int(env.UPLOAD_UNUSED_DAYS, 30)) // a photo that never reached an order is removed after this
+  },
+
+  // Product pictures uploaded by shops (public: they are shown on product pages).
+  media: { maxBytes: megabytes(env.MEDIA_MAX_MB, 12, 40), maxPerShop: Math.max(50, int(env.MEDIA_MAX_PER_SHOP, 600)) },
+
+  // true = a shop's "Publish" becomes "Submit for review" until a FrameX admin approves the product.
+  catalog: { productModeration: bool(env.PRODUCT_MODERATION, false) },
+
+  // Cart limits. The quantity one line may hold also depends on the product's stock.
+  cart: { maxLines: 50, noteMaxLength: 300 },
+
   tokens: { passwordResetMinutes: 60, accountSetupHours: 72 },
   rateLimit: { enabled: bool(env.RATE_LIMIT_ENABLED, true) }
 };
@@ -147,6 +239,10 @@ export function assertConfig() {
   if (isProd && config.sms.provider === "dev") problems.push('SMS_PROVIDER "dev" is not allowed in production.');
   if (!EMAIL_PROVIDERS.includes(config.email.provider)) problems.push(`EMAIL_PROVIDER must be one of: ${EMAIL_PROVIDERS.join(", ")}.`);
   if (!SMS_PROVIDERS.includes(config.sms.provider)) problems.push(`SMS_PROVIDER must be one of: ${SMS_PROVIDERS.join(", ")}.`);
+  if (!PAYMENT_PROVIDERS.includes(config.payments.provider)) problems.push(`PAYMENT_PROVIDER must be one of: ${PAYMENT_PROVIDERS.join(", ")}.`);
+  if (!["test", "live"].includes(config.payments.mode)) problems.push("PAYMENT_MODE must be test or live.");
+  if (isProd && config.payments.razorpay.apiBase !== RAZORPAY_API) problems.push("RAZORPAY_API_BASE must not be set in production.");
+  if (isProd && !Object.values(CASHFREE_API).includes(config.payments.cashfree.apiBase)) problems.push("CASHFREE_API_BASE must not be set in production.");
   // Missing email / SMS credentials do not stop the server: accounts keep working, the start-up
   // banner and "npm run doctor" say what is missing, and the API answers "... service is not configured."
   if (isProd && !config.corsOrigins.length && !config.serveFrontend) problems.push("CORS_ORIGINS must list the website's origin.");
@@ -165,6 +261,31 @@ export function emailProblems() {
   if (e.provider === "gmail" && (!e.gmail.user || !e.gmail.appPassword)) out.push('GMAIL_USER and GMAIL_APP_PASSWORD are not set (run "npm run email:setup").');
   if (e.provider === "smtp" && !e.smtp.host) out.push("SMTP_HOST is not set.");
   if (e.provider === "smtp" && !e.from) out.push("EMAIL_FROM is not set.");
+  return out;
+}
+
+/** What is missing before online payments can be taken (empty = ready). */
+export function paymentProblems() {
+  const p = config.payments;
+  const out = [];
+  if (p.provider === "cashfree") {
+    const c = p.cashfree;
+    if (!c.clientId) out.push("CASHFREE_CLIENT_ID is not set.");
+    if (!c.clientSecret) out.push("CASHFREE_CLIENT_SECRET is not set.");
+    // Sandbox credentials in live mode (or the other way round) are a setup mistake: refuse rather than guess.
+    const testKey = /^TEST/i.test(c.clientId) || /_test_/i.test(c.clientSecret);
+    const liveKey = /_prod_/i.test(c.clientSecret);
+    if (c.clientId && c.clientSecret && p.mode === "live" && testKey) out.push('PAYMENT_MODE is "live" but the Cashfree credentials are sandbox (test) credentials.');
+    if (c.clientId && c.clientSecret && p.mode === "test" && liveKey) out.push('PAYMENT_MODE is "test" but the Cashfree credentials are production credentials.');
+    return out;
+  }
+  if (p.provider !== "razorpay") return out;
+  const r = p.razorpay;
+  if (!r.keyId) out.push("RAZORPAY_KEY_ID is not set.");
+  if (!r.keySecret) out.push("RAZORPAY_KEY_SECRET is not set.");
+  // A test key in live mode (or the other way round) is a setup mistake: refuse rather than guess.
+  if (r.keyId && p.mode === "test" && !r.keyId.startsWith("rzp_test_")) out.push('PAYMENT_MODE is "test" but RAZORPAY_KEY_ID is not a test key (rzp_test_...).');
+  if (r.keyId && p.mode === "live" && !r.keyId.startsWith("rzp_live_")) out.push('PAYMENT_MODE is "live" but RAZORPAY_KEY_ID is not a live key (rzp_live_...).');
   return out;
 }
 

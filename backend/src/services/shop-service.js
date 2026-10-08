@@ -32,6 +32,7 @@ export function publicShop(row) {
     distanceKm: row.distance_km === undefined || row.distance_km === null ? null : Math.round(Number(row.distance_km) * 100) / 100,
     fulfilment: row.fulfilment || [],
     openingHours: row.opening_hours || null,
+    giftWrap: row.gift_wrap !== false, // false = this shop doesn't gift wrap what it sells
     status: shopStatus(row),
     isDemo: row.is_demo
   };
@@ -438,6 +439,7 @@ export async function updateOwnShop(shopId, changes, actor, ip) {
   if (changes.phone !== undefined) sets.push(`phone = $${params.push(changes.phone || null)}`);
   if (changes.description !== undefined) sets.push(`description = $${params.push(changes.description || null)}`);
   if (changes.fulfilment !== undefined) sets.push(`fulfilment = $${params.push(JSON.stringify(changes.fulfilment))}::jsonb`);
+  if (changes.giftWrap !== undefined) sets.push(`gift_wrap = $${params.push(Boolean(changes.giftWrap))}`);
   if (sets.length) {
     params.push(shopId);
     await db.tx(async (q) => {

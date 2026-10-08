@@ -151,8 +151,15 @@
       const t360 = $("[data-open-360]", root);
       if (t360) t360.setAttribute("aria-selected", String(mode === "360"));
       const active = $(`[data-thumb="${index}"]`, root);
-      if (active && mode === "photos")
-        active.scrollIntoView({ block: "nearest", inline: "nearest" });
+      // Keep the chosen thumbnail in view inside its strip. Only the strip moves:
+      // scrollIntoView would also scroll the page (it jumped down on load).
+      const strip = active && mode === "photos" ? active.parentElement : null;
+      if (strip) {
+        const a = active.getBoundingClientRect();
+        const s = strip.getBoundingClientRect();
+        if (a.left < s.left) strip.scrollLeft -= s.left - a.left;
+        else if (a.right > s.right) strip.scrollLeft += a.right - s.right;
+      }
     }
 
     async function show(i, dir = 0) {

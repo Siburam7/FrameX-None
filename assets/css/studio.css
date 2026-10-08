@@ -5,6 +5,12 @@
    sections and a sticky price bar on phones. Shared tokens only.
    ========================================================================== */
 
+/* A task screen: warm page, white cards (as on the wall-art customiser, checkout and the account) */
+.fs-crumbs,
+.fs-section {
+  background: var(--ivory);
+}
+
 .fs-section {
   padding-top: clamp(8px, 2vw, 16px);
 }
@@ -30,24 +36,13 @@
   margin-bottom: clamp(16px, 3vw, 28px);
 }
 
-.fs-brand {
-  font-family: var(--font-display);
-  font-size: clamp(1.3rem, 1rem + 1.4vw, 2rem);
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  line-height: 1.1;
-}
-
 .fs-brand span {
   color: var(--amber-strong);
 }
 
 .fs-tagline {
-  margin-top: 4px;
+  margin-top: 6px;
   color: var(--taupe);
-  font-family: "Playfair Display", Georgia, serif;
-  font-size: clamp(0.95rem, 0.9rem + 0.3vw, 1.1rem);
-  font-style: italic;
 }
 
 .fs-mode {
@@ -57,7 +52,7 @@
   padding: 8px 14px;
   border: 1px solid var(--line-warm);
   border-radius: var(--radius-pill);
-  background: var(--ivory);
+  background: var(--white);
   color: var(--umber);
   font-size: var(--text-sm);
   font-weight: 600;
@@ -91,7 +86,7 @@
   place-items: center;
   min-height: clamp(300px, 52vw, 640px);
   padding: clamp(20px, 5vw, 56px);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   background:
     radial-gradient(ellipse at 50% 30%, rgba(255, 255, 255, 0.65), transparent 65%),
     linear-gradient(180deg, #efe6d8, #e3d6c2);
@@ -302,9 +297,6 @@
 
 .fs-config {
   padding: 16px clamp(14px, 2.4vw, 20px);
-  border: 1px solid var(--line-warm);
-  border-radius: var(--radius-lg);
-  background: var(--ivory);
 }
 
 .fs-config__head {
@@ -312,13 +304,6 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-}
-
-.fs-title {
-  font-family: var(--font-display);
-  font-size: clamp(1.25rem, 1.1rem + 0.7vw, 1.6rem);
-  font-weight: 600;
-  line-height: 1.2;
 }
 
 .fs-total strong {
@@ -355,9 +340,6 @@
 
 /* Sections (accordion) */
 .sc-section {
-  border: 1px solid var(--line-warm);
-  border-radius: var(--radius-lg);
-  background: var(--ivory);
   overflow: hidden;
 }
 
@@ -781,9 +763,6 @@
 /* Price */
 .fs-price {
   padding: 16px clamp(14px, 2.4vw, 20px);
-  border: 1px solid var(--line-warm);
-  border-radius: var(--radius-lg);
-  background: var(--white);
 }
 
 .fs-price__title {
@@ -908,4 +887,32 @@
 
 .pdp-studio-link {
   margin-top: 10px;
+}
+
+/* Uploading the originals when the design is ordered */
+.fs-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brown-deep);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.fs-status[hidden] {
+  display: none;
+}
+
+.fs-status .icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.fs-quality {
+  margin-top: 10px;
+}
+
+.fs-quality + .fs-hint {
+  margin-top: 8px;
 }

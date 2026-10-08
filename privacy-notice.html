@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="assets/css/overlays.css">
   <link rel="stylesheet" href="assets/css/footer-faq.css">
   <link rel="stylesheet" href="assets/css/pages.css">
+  <link rel="stylesheet" href="assets/css/mobile.css">
   <script>document.documentElement.classList.add("js");</script>
 </head>
 
@@ -31,12 +32,13 @@
   <div id="site-header-root"></div>
 
   <main id="main">
-    <section class="page-banner" aria-labelledby="page-title">
+    <section class="page-hero" aria-labelledby="page-title">
       <div class="container">
-        <nav class="page-banner__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
+        <nav class="page-hero__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
             aria-hidden="true">/</span> <span aria-current="page">Privacy Notice</span></nav>
-        <h1 class="page-banner__title" id="page-title">Privacy Notice</h1>
-        <p class="page-banner__lead">How FrameX handles information, today and as the site grows.</p>
+        <p class="eyebrow">Legal</p>
+        <h1 class="page-hero__title" id="page-title">Privacy <span>Notice</span></h1>
+        <p class="page-hero__lead">How FrameX handles information, today and as the site grows.</p>
       </div>
     </section>
     <section class="section legal" aria-labelledby="legal-heading">
@@ -66,14 +68,14 @@
             <h2>1. Information we may handle</h2>
             <p>Depending on how you use the site, this may include: your name, email address and phone number (if you
               use the Contact form); your address and order information (once ordering is connected); a photo you choose
-              to preview inside a frame; general device and browser information (such as screen size, used to make the
-              site responsive); and small amounts of data saved in your browser's local storage, such as your cart and
-              wishlist.</p>
+              for a product that is made from your own photo; general device and browser information (such as screen size, used to make the
+              site responsive); small amounts of data saved in your browser's local storage, such as your wishlist and
+              saved designs; and, if you have an account, the contents of your cart.</p>
           </section>
           <section class="legal-section" id="s2">
             <h2>2. Why we collect it</h2>
             <p>Information is collected only to provide the features you use: responding to a message you send,
-              remembering what's in your cart between visits, and &mdash; in future &mdash; processing and delivering an
+              keeping your cart with your account so it is there on any device, and &mdash; in future &mdash; processing and delivering an
               order. We don't collect information for unrelated purposes.</p>
           </section>
           <section class="legal-section" id="s3">
@@ -85,10 +87,16 @@
           <section class="legal-section" id="s4">
             <h2>4. What this site stores on your device</h2>
             <ul>
-              <li><strong>Your cart and wishlist</strong> are saved in your browser's local storage, on your device
-                only. They are not sent to a server and are not visible to FrameX or any shop.</li>
-              <li><strong>Photo previews</strong> you choose on a product page stay in your browser's memory for that
-                page view and are discarded when you leave or refresh the page. They are not uploaded anywhere.</li>
+              <li><strong>Your wishlist and saved designs</strong> are kept in your browser's local storage, on your
+                device only. They are not sent to a server and are not visible to FrameX or any shop.</li>
+              <li><strong>Your cart is not stored on your device.</strong> It is kept with your FrameX account
+                (see section 9). While you are logging in to add an item, that one item waits in your browser tab
+                and is removed as soon as it has been added or you close the login.</li>
+              <li><strong>Photos you choose</strong> for a product that is made from your own photo are kept in your
+                browser's storage (the file you chose and a small preview copy), so your choice survives a page reload
+                or a visit to the login page. They leave your device only when you are logged in to a FrameX account:
+                see &ldquo;Your photos&rdquo; in section 9. A photo that nothing on this site uses any more is removed
+                from your browser's storage automatically.</li>
               <li><strong>The contact form</strong> does not submit to a server. If an email address is configured for
                 FrameX, submitting the form opens your own email app with the message pre-filled, for you to send
                 yourself &mdash; FrameX does not receive it automatically.</li>
@@ -102,8 +110,9 @@
           </section>
           <section class="legal-section" id="s6">
             <h2>6. Data retention</h2>
-            <p>Local-storage data (cart, wishlist) stays on your device until you clear it yourself, for example by
-              clearing your browser's site data. FrameX has no way to delete it remotely because it is never sent to us.
+            <p>Local-storage data (wishlist, saved designs) stays on your device until you clear it yourself, for
+              example by clearing your browser's site data. FrameX has no way to delete it remotely because it is never
+              sent to us. Your cart is kept with your account until you remove the items or your account is deleted.
             </p>
           </section>
           <section class="legal-section" id="s7">
@@ -129,6 +138,33 @@
               <li><strong>Your account.</strong> If you create an account, FrameX stores your name, email address and
                 phone number (if you give one). Your password is stored only as a one-way hash; FrameX staff cannot
                 read it. You can see and edit your details on your account page.</li>
+              <li><strong>Your orders and addresses.</strong> When you check out, FrameX stores the delivery
+                addresses you save and, for each order, what you bought, the price you paid, the delivery address and
+                contact details you gave, and the order's history. Orders are kept as business records and are
+                shared with the shop that fulfils them. We email you about your order (placed, payment, shipped,
+                delivered, cancelled, refunds) through our email delivery provider.</li>
+              <li><strong>Payments.</strong> Online payments are handled by a payment gateway (Cashfree Payments) in its own
+                secure window. Your card number, CVV, UPI PIN and bank login go to the gateway, not to FrameX, and
+                FrameX never stores them. To open the payment the gateway receives the amount, your order number and
+                your name, email and phone number. FrameX keeps only the gateway's payment reference, the amount, the
+                method used (for example &ldquo;UPI&rdquo; or &ldquo;card&rdquo;) and whether the payment succeeded,
+                failed or was refunded.</li>
+              <li><strong>Your cart.</strong> You can browse without an account. To add something to a cart you
+                log in, and the cart is then stored with your account on the FrameX server: the products, the options
+                and quantity you chose, any note you wrote and, for a product made from your own photo (a photo frame,
+                a FrameX Studio design, a wall-art set), the design's settings, its text, a small preview picture and
+                the photos you uploaded for it (see &ldquo;Your photos&rdquo; below). Prices in your
+                cart are worked out by the server from the catalogue. Only you can see or change your cart.</li>
+              <li><strong>Your photos.</strong> A product that is made from your own photo needs that photo to be
+                printed. When you are logged in and choose a photo, or when you log in to order, the original file is
+                uploaded to the FrameX server and stored exactly as you sent it: it is not resized, re-compressed,
+                enhanced or edited. With it FrameX keeps the file's name, its type, its size in pixels and its file
+                size. Your photos are private. They have no public address and are only sent through links that work
+                for a few minutes, to you, to FrameX staff handling your order, and to the shop that makes the item the
+                photo belongs to. Another shop or another customer cannot open them, and each download by FrameX staff
+                or a shop is recorded. A photo that is part of an order is kept with that order as part of its record.
+                A photo that never becomes part of an order, and is not in your cart, is deleted automatically after
+                about 30 days. Your photos are used only to make your order.</li>
               <li><strong>Staying logged in.</strong> A session cookie keeps you logged in. It contains a random
                 code, not your password, and cannot be read by scripts on the page. Logging out ends the session.</li>
               <li><strong>Nearby shops.</strong> If you press &ldquo;Use my location&rdquo;, your browser asks your
@@ -143,7 +179,8 @@
               <li><strong>Password emails.</strong> If you ask to reset your password by email, FrameX sends a one-time code
                 and link to the address on your account through an email delivery provider.</li>
             </ul>
-            <p>To have your account or application removed, contact us using the details below.</p>
+            <p>To have your account, an application or a photo you uploaded removed, contact us using the details
+              below.</p>
           </section>
           <section class="legal-section" id="s10">
             <h2>10. Contact us</h2>
@@ -189,6 +226,7 @@
   <script src="assets/js/ui/nav.js" defer></script>
   <script src="assets/js/ui/chrome.js" defer></script>
   <script src="assets/js/ui/cart-drawer.js" defer></script>
+  <script src="assets/js/ui/auth-gate.js" defer></script>
   <script src="assets/js/ui/actions.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </body>

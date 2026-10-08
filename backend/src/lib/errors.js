@@ -27,7 +27,7 @@ export function notFoundHandler(req, res) {
 export function errorHandler(err, req, res, next) {
   if (err instanceof HttpError) {
     if (err.retryAfterSeconds) res.set("Retry-After", String(err.retryAfterSeconds));
-    return res.status(err.status).json({ error: { code: err.code, message: err.message, ...(err.fields ? { fields: err.fields } : {}), ...(err.retryAfterSeconds ? { retryAfterSeconds: err.retryAfterSeconds } : {}) } });
+    return res.status(err.status).json({ error: { code: err.code, message: err.message, ...(err.fields ? { fields: err.fields } : {}), ...(err.details ? { details: err.details } : {}), ...(err.retryAfterSeconds ? { retryAfterSeconds: err.retryAfterSeconds } : {}) } });
   }
   // Malformed JSON / oversized body from express.json()
   if (err && (err.type === "entity.parse.failed" || err.type === "entity.too.large")) {

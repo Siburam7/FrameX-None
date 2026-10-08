@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="assets/css/footer-faq.css">
   <link rel="stylesheet" href="assets/css/pages.css">
   <link rel="stylesheet" href="assets/css/templates.css">
+  <link rel="stylesheet" href="assets/css/mobile.css">
   <script>document.documentElement.classList.add("js");</script>
 </head>
 
@@ -57,7 +58,7 @@
           <ol class="tpl-how__steps">
             <li><span>1</span><strong>Add your photos</strong>Drop them into each photo space.</li>
             <li><span>2</span><strong>Personalise the text</strong>Names, dates and messages, your way.</li>
-            <li><span>3</span><strong>Pick a size and order</strong>Add it to your cart and send your order on WhatsApp.
+            <li><span>3</span><strong>Pick a size and order</strong>Add it to your cart and check out. We'll ask for your photos after you order.
             </li>
           </ol>
         </div>
@@ -67,13 +68,13 @@
     <section class="section section--tight-top" id="tpl-related" aria-labelledby="tpl-related-title" hidden>
       <div class="container">
         <div class="section-head">
-          <h2 class="section-title" id="tpl-related-title">More designs you might like</h2><a
+          <h2 class="section-title section-title--sm" id="tpl-related-title">More designs you might like</h2><a
             class="btn btn--outline btn--sm" href="templates.html">All templates <svg class="icon icon--nudge"
               aria-hidden="true">
               <use href="#i-arrow-right"></use>
             </svg></a>
         </div>
-        <div class="tpl-grid" id="tpl-related-grid"></div>
+        <div class="product-grid product-grid--related" id="tpl-related-grid"></div>
       </div>
     </section>
   </main>
@@ -111,6 +112,7 @@
   <script src="assets/js/ui/nav.js" defer></script>
   <script src="assets/js/ui/chrome.js" defer></script>
   <script src="assets/js/ui/cart-drawer.js" defer></script>
+  <script src="assets/js/ui/auth-gate.js" defer></script>
   <script src="assets/js/ui/actions.js" defer></script>
   <script src="assets/js/services/template-engine.js" defer></script>
   <script src="assets/js/services/upload-service.js" defer></script>

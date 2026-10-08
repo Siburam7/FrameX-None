@@ -5,11 +5,12 @@
   async function init() {
     const rail = $("#recommended-rail");
     if (!rail) return;
-    rail.innerHTML = FrameX.templates.skeletons(5);
+    const limit = Number(rail.dataset.limit) || 4;
+    rail.innerHTML = FrameX.templates.skeletons(Math.min(limit, 5));
     try {
       const { items } = await FrameX.api.getProducts({
         isRecommended: true,
-        limit: 5,
+        limit,
       });
       if (!items.length) {
         rail.closest("section").hidden = true;
@@ -18,6 +19,7 @@
       rail.innerHTML = items.map(FrameX.templates.productCard).join("");
       rail.setAttribute("data-reveal-stagger", "");
       FrameX.reveal.observe(rail);
+      if (FrameX.railNav) FrameX.railNav.attach(rail);
     } catch (error) {
       console.error("Recommended products failed to load", error);
       FrameX.templates.showError(

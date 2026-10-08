@@ -43,13 +43,16 @@
     apiBaseUrl: "/api/v1",
     currency: "INR",
     locale: "en-IN",
-    productPageSize: 10,
+    productPageSize: 12,
     lowStockThreshold: 5,
     // true = a shop's "Publish" becomes "Submit for review" (status pending_review)
     // until FrameX approves it. Needs the backend moderation queue.
     productModeration: false,
     storageKeys: {
-      cart: "framex.cart.v1",
+      // The cart is NOT kept in the browser: it lives in the backend, tied to the
+      // logged-in account (store/cart.js). This is only the name of the old
+      // on-device cart, so it can be deleted from browsers that still have one.
+      legacyCart: "framex.cart.v1",
       wishlist: "framex.wishlist.v1",
       shopProducts: "framex.shopProducts.v1", // products created / edited in the shop dashboard (this device)
       shopEditor: "framex.shopEditor.v1", // unsaved edits to published products

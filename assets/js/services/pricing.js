@@ -72,6 +72,13 @@
     return Math.round((base * (100 - clampPercent(product))) / 100);
   }
 
+  /** The lowest list price across all sizes, before the discount: the struck-through
+      price beside "From ₹X" on a card. Display only. */
+  function startingListPrice(product) {
+    const cheapest = sizeOptions(product).reduce((min, o) => Math.min(min, Number(o.priceDelta) || 0), 0);
+    return Math.max(Number(product.price) + cheapest, 0);
+  }
+
   /** "in_stock" | "low_stock" | "out_of_stock" */
   function availability(product) {
     if (product.isAvailable === false) return "out_of_stock";
@@ -86,6 +93,7 @@
     formatPrice,
     finalPrice,
     startingPrice,
+    startingListPrice,
     priceForSize,
     sizeOptions,
     hasSizeChoice,

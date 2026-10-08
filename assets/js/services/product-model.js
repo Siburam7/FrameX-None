@@ -10,6 +10,13 @@
    {
      schema: 2, id, slug, name, description, category, categoryIds[], tags[],
      shopId, status: "draft" | "pending_review" | "published" | "unpublished",
+     productType:  what is sold (PRODUCT_TYPES): photo-frame, custom-frame, template,
+                   personalized, home-decor, wall-art, multi-panel, other
+     personalization: { photos, panels }   how many photos the customer adds (within what
+                   the type allows) and, for a multi-panel set, how many frames
+     giftWrap:     false = this product can't be gift wrapped
+     included[]:   what the customer receives ("Frame", "Your photo, printed and fitted", ...)
+     care[]:       care instructions, one per line
      pricing:      { basePrice, currency, discountPercent },
      frame:        { type, material, color, colors[], finish, width, depth, weight, shape },
                    width / depth in millimetres. `type` is a FrameX Studio frame
@@ -162,8 +169,8 @@
   const CUSTOMIZATION_OPTIONS = [
     {
       id: "photoUpload",
-      label: "Customer photo",
-      hint: "Customers upload their own photo in FrameX Studio",
+      label: "Design in FrameX Studio",
+      hint: "Customers can also build it in FrameX Studio around their photo, with a live preview",
     },
     {
       id: "crop",
@@ -192,6 +199,97 @@
       hint: "Portrait or landscape, from the orientations you offer",
     },
   ];
+
+  /* What a shop sells, and what FrameX requires of each kind.
+     A shop chooses the type and, where the type allows a choice, how many
+     photos the customer adds. The rules themselves (which types need the
+     customer's photo, and the limits) belong to the platform: the backend loads
+     this same file and applies them again, so no shop setting can switch them off.
+       photos   min / max the customer must add, and the number a new product starts with
+       frame    true = frame details (type, material) are part of the product
+       panels   multi-panel sets: how many frames a set may have */
+  const PRODUCT_TYPES = [
+    {
+      id: "photo-frame",
+      name: "Photo Frame",
+      summary: "A frame delivered with the customer's own photo printed and fitted.",
+      photos: { min: 1, max: 12, initial: 1 },
+      frame: true,
+    },
+    {
+      id: "custom-frame",
+      name: "Custom Frame",
+      summary: "Customers build it in FrameX Studio around their photo: crop, colour, border and mat.",
+      photos: { min: 1, max: 1, initial: 1 },
+      frame: true,
+      studio: true,
+    },
+    {
+      id: "template",
+      name: "Template-based Product",
+      summary: "A fixed design with several photo spaces. The customer adds one photo for each space.",
+      photos: { min: 2, max: 12, initial: 3 },
+      frame: true,
+    },
+    {
+      id: "personalized",
+      name: "Personalized Product",
+      summary: "Made from the customer's photo: a printed gift, a keepsake, a photo print.",
+      photos: { min: 1, max: 12, initial: 1 },
+      frame: false,
+    },
+    {
+      id: "home-decor",
+      name: "Home Decor",
+      summary: "A ready-made piece for the home. The customer uploads nothing.",
+      photos: { min: 0, max: 0, initial: 0 },
+      frame: false,
+    },
+    {
+      id: "wall-art",
+      name: "Wall Art",
+      summary: "Ready-made framed art or prints. The customer uploads nothing.",
+      photos: { min: 0, max: 0, initial: 0 },
+      frame: true,
+    },
+    {
+      id: "multi-panel",
+      name: "Multi-Panel Set",
+      summary: "One design across 2 to 5 frames: ready-made, or with one customer photo per frame.",
+      photos: { min: 0, max: 5, initial: 0 },
+      frame: true,
+      panels: { min: 2, max: 5 },
+    },
+    {
+      id: "other",
+      name: "Other",
+      summary: "Accessories and anything else: stands, hooks, mounts.",
+      photos: { min: 0, max: 0, initial: 0 },
+      frame: false,
+    },
+    // An artist's finished work (Art & Artists). Artists list it from their own dashboard and FrameX
+    // approves it; a shop can't choose this type.
+    {
+      id: "artwork",
+      name: "Artwork",
+      summary: "An artist's finished work. The customer uploads nothing.",
+      photos: { min: 0, max: 0, initial: 0 },
+      frame: false,
+      artistOnly: true,
+    },
+  ];
+
+  /* The words customers read about their photo. One place, used by every page and by the backend. */
+  const PHOTO_TEXT = {
+    quality:
+      "Your uploaded image will be printed in the same original quality you provide. We do not artificially enhance or improve the image quality. For the best print result, please upload a high-quality image.",
+    missingOne:
+      "Please upload your photo to continue. Your photo is required to create this personalized frame.",
+    missingMany: (count) =>
+      `Please upload all ${count} required photos to continue.`,
+    unsupported: "Please upload a supported image format.",
+    failed: "We couldn't upload your image. Please try again.",
+  };
 
   const ORIENTATIONS = [
     { id: "portrait", name: "Portrait" },
@@ -275,6 +373,11 @@
       tags: [],
       shopId: shopId || null,
       status: "draft",
+      productType: "",
+      personalization: { photos: null, panels: null },
+      giftWrap: true,
+      included: [],
+      care: [],
       pricing: {
         basePrice: null,
         currency: (FrameX.config && FrameX.config.currency) || "INR",
@@ -363,8 +466,12 @@
       "quality",
       "availability",
       "seo",
+      "personalization",
     ].forEach((k) => (out[k] = Object.assign({}, base[k], p[k] || {})));
+    out.giftWrap = p.giftWrap !== false;
     [
+      "included",
+      "care",
       "categoryIds",
       "tags",
       "sizes",
@@ -419,6 +526,12 @@
       currency: raw.currency || "INR",
       discountPercent: Number(raw.discountPercent) || 0,
     };
+    // What the catalogue file says about the customer's photo (see js/edit.js).
+    out.productType = raw.productType || "";
+    out.personalization = { photos: num(raw.photos), panels: null };
+    out.giftWrap = raw.giftWrap !== false;
+    out.included = Array.isArray(raw.included) ? raw.included : [];
+    out.care = Array.isArray(raw.care) ? raw.care : [];
     // Only what the data actually says. `type` stays empty unless edit.js names it;
     // the Studio still gets a matching moulding through studioType.
     out.frame = Object.assign({}, f || {}, {
@@ -449,6 +562,8 @@
         height: d.height,
         unit: d.unit,
         price: (Number(raw.price) || 0) + (Number(o.priceDelta) || 0),
+        // A set sold in several sizes can need a different number of photos per size.
+        ...(num(o.photos) !== null ? { photos: num(o.photos) } : {}),
       };
     });
     out.orientations =
@@ -542,7 +657,11 @@
   }
 
   function listingFields(p) {
-    if (p.legacy) return { customizable: studioSupport(p).ok };
+    if (p.legacy)
+      return {
+        customizable: studioSupport(p).ok,
+        photosRequired: photoRequirement(p).count,
+      };
     const base = num(p.pricing.basePrice) || 0;
     const pal = palette();
     const views = sortedViews(p);
@@ -584,6 +703,7 @@
       isVisible: p.status === "published",
       isNew: created > 0 && Date.now() - created < 30 * 86400000,
       customizable: studioSupport(p).ok,
+      photosRequired: photoRequirement(p).count,
     };
   }
 
@@ -596,6 +716,142 @@
         ? fillDefaults(clone(raw))
         : fromLegacy(raw);
     return Object.assign(p, listingFields(p));
+  }
+
+  /* ---------------------------------------------------------------- Product type + the customer's photo
+     ONE definition of "does this product need the customer's photo, and how
+     many". The product page, FrameX Studio, the shop dashboard and the backend
+     (cart, Buy Now, checkout) all ask photoRequirement(). */
+  const clamp = (n, min, max) => Math.min(max, Math.max(min, n));
+
+  /** The product's type. Older catalogue entries without one are photo frames; wall art says so itself. */
+  function productTypeOf(p) {
+    const named = byId(PRODUCT_TYPES, p && p.productType);
+    if (named) return named;
+    if (p && p.decor)
+      return byId(
+        PRODUCT_TYPES,
+        p.decor.panelCount > 1 ? "multi-panel" : "wall-art",
+      );
+    return byId(PRODUCT_TYPES, "photo-frame");
+  }
+
+  /**
+   * How many photos the customer has to add to order this product.
+   * sel.sizeId matters for a set whose sizes hold different numbers of photos.
+   * -> { type, typeName, count, required, slots: ["photo1", ...] }
+   */
+  function photoRequirement(p, sel = {}) {
+    const type = productTypeOf(p);
+    let count;
+    if (p.decor) count = p.decor.customPhoto ? 1 : 0; // Home Decor: ready-made, except "your photo" sets
+    else {
+      const size =
+        byId(p.sizes || [], sel.sizeId) || byId(p.sizes || [], defaultSizeId(p));
+      const asked =
+        size && num(size.photos) !== null
+          ? num(size.photos)
+          : num(p.personalization && p.personalization.photos);
+      count = clamp(
+        asked === null ? type.photos.initial : Math.round(asked),
+        type.photos.min,
+        type.photos.max,
+      );
+    }
+    return {
+      type: type.id,
+      typeName: type.name,
+      count,
+      required: count > 0,
+      slots: Array.from({ length: count }, (_, i) => `photo${i + 1}`),
+    };
+  }
+
+  /** What to tell a customer who hasn't added every photo yet ("" when nothing is missing). */
+  function photoProblem(count, have) {
+    if (have >= count) return "";
+    return count === 1 ? PHOTO_TEXT.missingOne : PHOTO_TEXT.missingMany(count);
+  }
+
+  /**
+   * The photos a browser sent for a line, reduced to what the product needs:
+   *   input   { photo1: "<upload id>" } or [{ slot, uploadId, placement }]
+   * -> [{ slot, uploadId, placement }] in slot order. Unknown slots are dropped;
+   * placement (where the customer put the photo) is clamped to sane numbers.
+   */
+  function cleanPhotos(slots, input) {
+    const given = new Map();
+    const take = (slot, uploadId, placement) => {
+      if (typeof slot !== "string" || typeof uploadId !== "string") return;
+      if (!/^[0-9a-f-]{36}$/i.test(uploadId)) return;
+      given.set(slot, { uploadId: uploadId.toLowerCase(), placement });
+    };
+    if (Array.isArray(input))
+      input.forEach((e) => e && take(e.slot, e.uploadId, e.placement));
+    else if (input && typeof input === "object")
+      Object.entries(input).forEach(([slot, v]) =>
+        typeof v === "string"
+          ? take(slot, v, null)
+          : v && take(slot, v.uploadId, v.placement),
+      );
+    const unit = (v, fallback) =>
+      Number.isFinite(Number(v)) ? clamp(Number(v), 0, 1) : fallback;
+    return slots
+      .filter((slot) => given.has(slot))
+      .map((slot) => {
+        const { uploadId, placement } = given.get(slot);
+        const at =
+          placement && typeof placement === "object"
+            ? {
+                x: Math.round(unit(placement.x, 0.5) * 1000) / 1000,
+                y: Math.round(unit(placement.y, 0.5) * 1000) / 1000,
+                zoom:
+                  Math.round(
+                    (Number.isFinite(Number(placement.zoom))
+                      ? clamp(Number(placement.zoom), 1, 4)
+                      : 1) * 100,
+                  ) / 100,
+              }
+            : null;
+        return { slot, uploadId, placement: at };
+      });
+  }
+
+  /**
+   * The platform's rules for a product of its type, applied to a shop's record:
+   * the photo count is brought inside what the type allows, a custom frame
+   * always opens in FrameX Studio, and a ready-made product has no photo options.
+   */
+  function applyTypeRules(p) {
+    p.giftWrap = p.giftWrap !== false;
+    const type = byId(PRODUCT_TYPES, p.productType);
+    // A draft without a type yet stays without one (it can't be published until one is chosen).
+    if (!type || type.artistOnly) {
+      p.productType = "";
+      return p;
+    }
+    const asked = num(p.personalization && p.personalization.photos);
+    const photos = clamp(
+      asked === null ? type.photos.initial : Math.round(asked),
+      type.photos.min,
+      type.photos.max,
+    );
+    const panels = type.panels
+      ? clamp(
+          Math.round(num(p.personalization && p.personalization.panels) || 3),
+          type.panels.min,
+          type.panels.max,
+        )
+      : null;
+    p.personalization = { photos, panels };
+    p.customization = p.customization || {};
+    if (type.studio) p.customization.photoUpload = true;
+    if (!photos) {
+      p.customization.photoUpload = false;
+      p.customization.crop = false;
+    }
+    p.giftWrap = p.giftWrap !== false;
+    return p;
   }
 
   /* ---------------------------------------------------------------- FrameX Studio support */
@@ -778,9 +1034,10 @@
     const colors = (
       f.colors && f.colors.length ? f.colors : f.color ? [f.color] : []
     ).map(colorName);
-    // Older catalogue items only count as framed when they carry a frame design.
+    // Older catalogue items count as framed when they carry a frame design, or
+    // are a frame by type and name their material (an accessory is neither).
     const framed = p.legacy
-      ? Boolean(f.studioType)
+      ? Boolean(f.studioType) || (productTypeOf(p).frame && has(f.material))
       : Boolean(f.type) && f.type !== "none";
     if (framed && (f.material || f.type)) {
       out.push({
@@ -1009,7 +1266,16 @@
     delete out.verified;
     delete out.rating;
     delete out.reviews;
-    return out;
+    delete out.decor; // Home Decor's own catalogue entries are FrameX's
+    const lines = (list) =>
+      (Array.isArray(list) ? list : [])
+        .map((x) => String(x || "").trim())
+        .filter(Boolean)
+        .slice(0, 12)
+        .map((x) => x.slice(0, 160));
+    out.included = lines(out.included);
+    out.care = lines(out.care);
+    return applyTypeRules(out);
   }
 
   /* ---------------------------------------------------------------- Validation */
@@ -1056,16 +1322,31 @@
     if (!has(p.name)) add("basic", "Add a product name");
     else if (p.name.trim().length < 3)
       add("basic", "The product name is too short");
+    if (!byId(PRODUCT_TYPES, p.productType))
+      add("basic", "Choose what you are selling (the product type)");
+    const type = productTypeOf(p);
     if (!has(p.category)) add("basic", "Choose a category");
     if (!(num(p.pricing.basePrice) > 0)) add("sizes", "Add a base price");
     if (!(p.views || []).some((v) => v && v.url))
       add("images", "Add at least one product image");
-    if (!has(p.frame.type)) add("frame", "Choose the frame type");
-    else if (
-      !["none", "canvas"].includes(p.frame.type) &&
-      !has(p.frame.material)
-    )
-      add("frame", "Add the frame material");
+    // Frame details are part of a framed product; a ready-made piece or an accessory may have none.
+    if (type.frame) {
+      if (!has(p.frame.type)) add("frame", "Choose the frame type");
+      else if (
+        !["none", "canvas"].includes(p.frame.type) &&
+        !has(p.frame.material)
+      )
+        add("frame", "Add the frame material");
+    }
+    if (type.studio)
+      studioSupport(
+        Object.assign({}, p, {
+          customization: Object.assign({}, p.customization, {
+            photoUpload: true,
+          }),
+          availability: { status: "in_stock" },
+        }),
+      ).reasons.forEach((r) => add("frame", r));
     if (!(p.sizes || []).length)
       add("sizes", "Add at least one available size");
     (p.sizes || []).forEach((s, i) => {
@@ -1086,7 +1367,7 @@
         add("images", `Image ${i + 1} needs a short description (alt text)`),
     );
     const c = p.customization || {};
-    if (c.photoUpload)
+    if (c.photoUpload && !type.studio)
       studioSupport(
         Object.assign({}, p, { availability: { status: "in_stock" } }),
       ).reasons.forEach((r) => add("customize", r));
@@ -1150,6 +1431,88 @@
     return slug;
   }
 
+  /* ---------------------------------------------------------------- Cart rules
+     Shared by the website and the FrameX backend, which loads this same file,
+     so a cart line is checked, described and priced by one piece of code.
+     The backend's answer is the one that counts: the website never sends a price. */
+  const MAX_CART_QTY = 20;
+
+  /** Can this product be ordered, and how many one cart line may hold. */
+  function orderLimits(p) {
+    const a = p.availability || {};
+    const orderable = p.status === "published" && a.status !== "out_of_stock";
+    const stock = typeof a.stock === "number" && a.stock > 0 ? a.stock : null;
+    return {
+      orderable,
+      maxQty: orderable
+        ? Math.min(MAX_CART_QTY, stock === null ? MAX_CART_QTY : stock)
+        : 0,
+    };
+  }
+
+  /**
+   * One cart line for a product and a selection of option ids
+   * ({ sizeId, colorId, printMaterialId, protection }).
+   * An option that is left out falls back to the product's default; an id the
+   * product doesn't offer is reported in `problems` and never priced.
+   * Returns the cleaned selection, the readable labels and the unit price.
+   */
+  function cartLine(p, sel = {}) {
+    const def = defaultSelection(p);
+    const problems = [];
+    const pick = (key, list, what) => {
+      if (!has(sel[key]) || sel[key] === def[key]) return def[key];
+      if (byId(list, sel[key])) return sel[key];
+      problems.push(`That ${what} isn't offered for this product.`);
+      return def[key];
+    };
+    const covers = protectionOptions(p);
+    const materials = p.print.materials || [];
+    const colors = (p.frame.colors || []).map((id) => ({ id }));
+    const selection = {
+      sizeId: pick("sizeId", p.sizes || [], "size"),
+      colorId:
+        colors.length > 1 ? pick("colorId", colors, "colour") : def.colorId,
+      printMaterialId: pick("printMaterialId", materials, "print material"),
+      protection: pick("protection", covers, "front cover"),
+    };
+    const q = quote(p, selection);
+    const size = byId(p.sizes, selection.sizeId);
+    const dims = size ? sizeDims(size) : "";
+    const options = q.lines.slice(1).map((l) => `${l.label}: ${l.detail}`);
+    const material = byId(materials, selection.printMaterialId);
+    if (
+      material &&
+      materials.length > 1 &&
+      !q.lines.some((l) => l.key === "print")
+    )
+      options.push(`Print: ${material.name}`);
+    const cover = byId(covers, selection.protection);
+    if (
+      cover &&
+      covers.length > 1 &&
+      !q.lines.some((l) => l.key === "protection")
+    )
+      options.push(`Front cover: ${cover.name}`);
+    return {
+      selection,
+      problems,
+      unitPrice: q.unit,
+      currency: q.currency,
+      size: size
+        ? size.label && dims && size.label !== dims
+          ? `${size.label} (${dims})`
+          : size.label || dims || null
+        : null,
+      color:
+        colors.length > 1 && selection.colorId
+          ? colorName(selection.colorId)
+          : null,
+      options,
+      quote: q,
+    };
+  }
+
   FrameX.productModel = {
     SCHEMA,
     VIEW_TYPES,
@@ -1159,6 +1522,8 @@
     COMPONENT_TYPES,
     QUALITY_FIELDS,
     CUSTOMIZATION_OPTIONS,
+    PRODUCT_TYPES,
+    PHOTO_TEXT,
     ORIENTATIONS,
     AVAILABILITY,
     FALLBACK_IMAGE,
@@ -1178,11 +1543,19 @@
     normalize,
     sortedViews,
     mainView,
+    productTypeOf,
+    photoRequirement,
+    photoProblem,
+    cleanPhotos,
+    applyTypeRules,
     studioSupport,
     studioOptions,
     protectionOptions,
     defaultSelection,
     quote,
+    MAX_CART_QTY,
+    orderLimits,
+    cartLine,
     deriveComponents,
     componentsOf,
     specGroups,

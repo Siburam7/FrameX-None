@@ -6,11 +6,18 @@
      1 Basic info   2 Frame   3 Print & quality   4 Sizes & pricing
      5 Customization   6 Images   7 Components   8 Preview   9 Publish
 
+   Step 1 starts with "What do you want to sell?" (productModel.PRODUCT_TYPES):
+   a photo frame, a custom frame, home decor, wall art, a multi-panel set, a
+   personalized product, a template-based product or something else. The type
+   decides which details are asked for, and whether (and how many) photos the
+   customer has to add. Those rules are the platform's: the shop picks inside
+   them, and the backend applies them again when the product is saved.
+
    State is one product-model object (product-model.js). Moving between steps
-   never loses data. Drafts save automatically; edits to a product that is
-   already live are kept aside (this device) until "Save changes", so
-   customers never see half-finished edits. The Preview step renders the
-   real customer ProductPage, not a copy of it.
+   never loses data. Drafts save automatically to the shop's account on the
+   FrameX backend; edits to a product that is already live are kept aside
+   (this browser) until "Save changes", so customers never see half-finished
+   edits. The Preview step renders the real customer ProductPage, not a copy.
 
      FrameX.productWizard.open(root, { productId?, shopId, step?, onExit })
    ========================================================================== */
@@ -127,6 +134,24 @@
         root.innerHTML = `<div class="sd-empty">${icon("alert")}<strong>That product isn't in this shop</strong><a class="btn btn--outline btn--sm" href="#/products">Back to products</a></div>`;
         return;
       }
+      // A product from the FrameX catalogue file is FrameX's to change. The shop can sell its own version of it.
+      if (found.source === "catalogue") {
+        root.innerHTML = `<div class="sd-empty">${icon("lock")}<strong>${esc(found.name)} is managed by FrameX</strong>
+          <span>This product comes from the FrameX catalogue, so its details and price are changed by FrameX. You can make your own copy of it and sell that with your own details, pictures and price.</span>
+          <div class="ad-actions"><button class="btn btn--primary btn--sm" type="button" data-copy>${icon("copy")} Make my own copy</button><a class="btn btn--outline btn--sm" href="product.html?slug=${encodeURIComponent(found.slug || found.id)}" target="_blank" rel="noopener">View it</a><a class="btn btn--outline btn--sm" href="#/products">Back to products</a></div></div>`;
+        $("[data-copy]", root).addEventListener("click", async (e) => {
+          e.currentTarget.disabled = true;
+          try {
+            const copy = await svc().duplicate(Object.assign({}, found, { productType: found.productType || M().productTypeOf(found).id }));
+            FrameX.toast.show(`Created “${copy.name}” as a draft in your shop.`);
+            location.hash = `#/products/${encodeURIComponent(copy.id)}/edit?step=basic`;
+          } catch (error) {
+            e.currentTarget.disabled = false;
+            FrameX.toast.show(error.friendly || "The copy couldn't be made. Please try again.");
+          }
+        });
+        return;
+      }
       draft = M().sanitizeShopInput(found);
       draft.source = found.source;
       const wip = readWip()[draft.id];
@@ -189,9 +214,27 @@
     /* ---- steps ---- */
     const issuesFor = (id) => M().validateForPublish(draft).issues.filter((i) => i.step === id);
 
+    /* ---- the product type and what the platform requires of it ---- */
+    const typeOf = () => M().PRODUCT_TYPES.find((t) => t.id === draft.productType) || null;
+    /** What the customer has to do for this product, in the shop's words. */
+    function photoRule() {
+      const type = typeOf();
+      if (!type) return "";
+      const need = M().photoRequirement(draft, {});
+      if (!type.photos.max) return "Ready-made: customers order it as it is. They are never asked for a photo.";
+      if (!need.count) return "Ready-made unless you ask for photos (step 5): right now customers upload nothing.";
+      const fixed = type.photos.min === type.photos.max;
+      return `Customers must upload ${need.count === 1 ? "their photo" : `${need.count} photos`} before they can add it to the cart or buy it. ${fixed ? "This is a FrameX rule for this product type." : `FrameX requires at least ${type.photos.min} for this product type; you choose how many in step 5.`}`;
+    }
+
     function stepBasic() {
       const cats = categories.map((c) => ({ id: c.id, name: c.name }));
-      return `${group("Product", `
+      const type = typeOf();
+      return `${group("What do you want to sell?", `
+        <div class="wz-cards wz-types" role="radiogroup" aria-label="Product type">${M().PRODUCT_TYPES.filter((t) => !t.artistOnly).map((t) => `<label class="wz-card wz-type"><input type="radio" name="wz-ptype" data-bind="productType" data-rerender value="${esc(t.id)}"${draft.productType === t.id ? " checked" : ""}><span><strong>${esc(t.name)}</strong><small>${esc(t.summary)}</small></span></label>`).join("")}</div>
+        ${type ? `<div class="wz-status is-ok">${icon(type.photos.max ? "image" : "check")}<div><strong>${esc(type.name)}</strong><span>${esc(photoRule())}</span></div></div>` : `<p class="wz-empty">Choose one to continue. It decides which details FrameX asks you for.</p>`}`,
+        "Pick the closest match. FrameX then shows only the details that matter for it, and applies its rules for customer photos.")}
+        ${group("Product", `
         ${field("Product name", input(draft, "name", { placeholder: "e.g. Classic Walnut Photo Frame", maxlength: 90 }), { required: true, hint: `Web address: <code data-slug>product.html?slug=${esc(draft.slug || M().slugify(draft.name) || "…")}</code>` })}
         ${field("Category", select(draft, "category", cats, { empty: "Choose a category" }), { required: true })}
         <div class="wz-field wz-field--wide"><span class="wz-label">Also show it in</span>${multi(draft, "categoryIds", cats.filter((c) => c.id !== draft.category))}</div>
@@ -209,8 +252,11 @@
       const covers = M().PROTECTION_TYPES;
       const opts = draft.protection.options || [];
       const framed = draft.frame.type && !["none"].includes(draft.frame.type);
-      return `${group("Frame", `
-        <div class="wz-field wz-field--wide"><span class="wz-label">Frame type <span class="wz-req">*</span></span>
+      const type = typeOf();
+      const needsFrame = !type || type.frame;
+      return `${needsFrame ? "" : `<p class="wz-note">${icon("check")} A ${esc(type.name.toLowerCase())} product doesn't need frame details. Fill in what applies to your product and leave the rest empty: only what you enter is shown to customers.</p>`}
+        ${group("Frame", `
+        <div class="wz-field wz-field--wide"><span class="wz-label">Frame type${needsFrame ? ` <span class="wz-req">*</span>` : ""}</span>
           <div class="wz-cards" role="radiogroup">${types.map((t) => `<label class="wz-card"><input type="radio" name="wz-type" data-bind="frame.type" data-rerender value="${esc(t.id)}"${draft.frame.type === t.id ? " checked" : ""}><span><strong>${esc(t.name)}</strong>${t.studio ? "" : `<small>Not in FrameX Studio yet</small>`}</span></label>`).join("")}</div></div>
         ${framed ? `${field("Frame material", input(draft, "frame.material", { list: "material", placeholder: "e.g. Teak wood" }), { required: draft.frame.type !== "canvas" })}
         ${field("Finish", input(draft, "frame.finish", { list: "finish", placeholder: "e.g. Matte" }))}
@@ -300,13 +346,37 @@
           ${field("Stock (pieces)", input(draft, "availability.stock", { type: "number", min: 0, step: "1", placeholder: "Leave empty if made to order" }))}
           ${field("Ready in", input(draft, "availability.leadTime", { placeholder: "e.g. 2–3 days" }))}
           <div class="wz-field wz-field--wide">${toggle(draft, "availability.pickup", "Pickup from the shop")}${toggle(draft, "availability.delivery", "Delivery")}</div>
-          ${draft.availability.delivery ? field("Delivery notes", input(draft, "availability.deliveryNotes", { placeholder: "e.g. Within Dhenkanal; fee confirmed when you order" }), { wide: true }) : ""}`)}`;
+          ${draft.availability.delivery ? field("Delivery notes", input(draft, "availability.deliveryNotes", { placeholder: "e.g. Within Dhenkanal; fee confirmed when you order" }), { wide: true }) : ""}`)}
+        ${group("Gift wrapping", `<div class="wz-field wz-field--wide">${toggle(draft, "giftWrap", "This product can be gift wrapped", "At checkout FrameX asks customers whether they want their order gift wrapped. Switch this off for a product that can't be wrapped (too large, fragile, sent in a tube): the option is then not offered for an order that contains it.")}</div>`,
+          "The gift-wrapping charge is set by FrameX and shown to the customer before they pay.")}`;
     }
+
+    /** How many photos the customer adds (and, for a set, how many frames): inside what the product type allows. */
+    function photosGroup() {
+      const type = typeOf();
+      if (!type) return group("Customer photos", `<p class="wz-empty">Choose what you are selling in step 1 first.</p>`);
+      const need = M().photoRequirement(draft, {});
+      const range = type.photos;
+      const body = !range.max
+        ? `<div class="wz-status">${icon("check")}<div><strong>No customer photo</strong><span>${esc(type.name)} is sold ready-made. Customers are not asked to upload anything, and this can't be switched on for this product type.</span></div></div>`
+        : `${
+            range.min === range.max
+              ? `<div class="wz-status is-ok">${icon("image")}<div><strong>${range.min === 1 ? "1 photo" : `${range.min} photos`}, always required</strong><span>${esc(photoRule())}</span></div></div>`
+              : `${field("Photos the customer adds", input(draft, "personalization.photos", { type: "number", min: range.min, max: range.max, step: "1", placeholder: String(range.initial), rerender: true }), { hint: `Between ${range.min} and ${range.max}. Customers see one upload space per photo: “Photo 1”, “Photo 2”…${range.min ? " They can't order until every space is filled." : " With 0, the product is sold ready-made."}` })}
+                 <div class="wz-status ${need.count ? "is-ok" : ""}">${icon(need.count ? "image" : "check")}<div><strong>${need.count ? `${need.count === 1 ? "1 photo" : `${need.count} photos`} required` : "No customer photo"}</strong><span>${esc(photoRule())}</span></div></div>`
+          }
+          ${type.panels ? field("Frames in the set", input(draft, "personalization.panels", { type: "number", min: type.panels.min, max: type.panels.max, step: "1", placeholder: "3", rerender: true }), { hint: `Between ${type.panels.min} and ${type.panels.max}.` }) : ""}`;
+      return group("Customer photos", body, "The customer's photo is uploaded on your product page and travels with the order. You download the original file from your Orders page; FrameX never resizes or enhances it.");
+    }
+
+    /** Is this product made from the customer's photo (as its type and settings stand now)? */
+    const photoBased = () => !typeOf() || M().photoRequirement(draft, {}).count > 0;
 
     function stepCustomize() {
       const support = M().studioSupport(draft);
       const extra = issuesFor("customize").filter((i) => !support.reasons.includes(i.message));
-      return `${group("What customers can personalise", `<div class="wz-toggles">${M().CUSTOMIZATION_OPTIONS.map((o) => toggle(draft, `customization.${o.id}`, o.label, o.hint)).join("")}</div>
+      return `${photosGroup()}
+        ${group("What customers can personalise", `<div class="wz-toggles">${M().CUSTOMIZATION_OPTIONS.filter((o) => photoBased() || !["photoUpload", "crop"].includes(o.id)).map((o) => toggle(draft, `customization.${o.id}`, o.label, o.hint)).join("")}</div>
           ${draft.customization.text ? field("Text field name", input(draft, "customization.textLabel", { placeholder: "e.g. Names and date", maxlength: 30 }), { hint: "Customers fill this in; it prints under the photo." }) : ""}`,
           "Only turn on what you actually offer. Options that are off never appear to customers.")}
         <div class="wz-status ${draft.customization.photoUpload ? (support.ok ? "is-ok" : "is-warn") : ""}">
@@ -314,7 +384,9 @@
             ? support.ok
               ? `${icon("check")}<div><strong>Ready for FrameX Studio</strong><span>Customers will see “Customize This Product” and only these options: ${esc(studioSummary())}.</span></div>`
               : `${icon("alert")}<div><strong>Not ready for FrameX Studio yet</strong><ul>${support.reasons.map((r) => `<li>${esc(r)}</li>`).join("")}</ul></div>`
-            : `${icon("frame")}<div><strong>FrameX Studio is off for this product</strong><span>Turn on “Customer photo” to let customers design it in FrameX Studio.</span></div>`}
+            : photoBased()
+              ? `${icon("frame")}<div><strong>FrameX Studio is off for this product</strong><span>Customers add their photo on the product page and order it there. Turn on “Design in FrameX Studio” to also let them crop it and choose a border or a mat with a live preview.</span></div>`
+              : `${icon("frame")}<div><strong>FrameX Studio isn't used for ready-made products</strong><span>The Studio builds a frame around the customer's photo. This product is sold as it is.</span></div>`}
         </div>
         ${extra.length ? `<ul class="wz-issues">${extra.map((i) => `<li>${icon("alert")} ${esc(i.message)}</li>`).join("")}</ul>` : ""}`;
     }
@@ -343,8 +415,7 @@
           <p class="wz-hint" data-360-status>${frames.length ? `${frames.length} photos in the 360° view.` : ""}</p>
           ${frames.length ? `<div class="wz-strip">${frames.slice(0, 12).map((f) => `<img data-src="${esc(f)}" alt="">`).join("")}${frames.length > 12 ? `<span>+${frames.length - 12}</span>` : ""}</div><button class="btn btn--outline btn--sm" type="button" data-act="clear-360">Remove 360° view</button>` : ""}`)}
         ${group("Product video (optional)", `
-          ${field("Video link", `<input class="input" id="__ID__" data-bind="media.video.url" data-type="video-url" value="${esc(/^media:/.test(video.url || "") ? "" : video.url || "")}" placeholder="YouTube, Vimeo or a direct .mp4 link">`, { hint: /^media:/.test(video.url || "") ? "A video file is uploaded. A link replaces it." : "Or upload a short clip below (MP4 or WebM, up to 60 MB)." })}
-          <div class="wz-field"><span class="wz-label">Video file</span><label class="btn btn--outline btn--sm">${icon("upload")} ${/^media:/.test(video.url || "") ? "Replace video file" : "Upload video file"}<input class="visually-hidden" type="file" accept="video/mp4,video/webm" data-video-file></label><small class="wz-hint" data-video-status></small></div>
+          ${field("Video link", `<input class="input" id="__ID__" data-bind="media.video.url" data-type="video-url" value="${esc(/^media:/.test(video.url || "") ? "" : video.url || "")}" placeholder="A YouTube or Vimeo link">`, { hint: "Put the video on YouTube or Vimeo and paste its link here. Video files can't be uploaded to FrameX." })}
           ${field("Duration (seconds)", `<input class="input" id="__ID__" type="number" min="0" data-bind="media.video.duration" data-type="video-num" value="${esc(video.duration || "")}">`)}
           <div class="wz-field wz-field--wide" data-video-thumb></div>`)}`;
     }
@@ -365,6 +436,9 @@
           .join("")}</div>
         <div class="wz-actions-row"><button class="btn btn--outline btn--sm" type="button" data-act="build-components">${icon("frame")} ${comps.length ? "Rebuild from my answers" : "Start from my answers"}</button>
           <button class="btn btn--outline btn--sm" type="button" data-act="add-component">${icon("plus")} Add part</button></div>`)}
+        ${group("What's included", `
+          ${field("In the box", `<textarea class="input wz-textarea" id="__ID__" data-bind="included" data-type="lines" rows="4" maxlength="2000" placeholder="One per line, for example:&#10;The frame&#10;Your photo, printed and fitted&#10;Hanging hook and wall screws">${esc((draft.included || []).join("\n"))}</textarea>`, { wide: true, hint: "One item per line (up to 12). Customers see this as a list." })}
+          ${field("Care instructions", `<textarea class="input wz-textarea" id="__ID__" data-bind="care" data-type="lines" rows="3" maxlength="2000" placeholder="One per line, for example:&#10;Wipe with a soft, dry cloth&#10;Keep out of direct sunlight">${esc((draft.care || []).join("\n"))}</textarea>`, { wide: true, hint: "One instruction per line (up to 12)." })}`)}
         ${group("Extra specifications", `
           <p class="wz-group__lead">Frame, print, size and back details already appear in the specification table. Add anything else here (e.g. Glazing thickness, Care instructions).</p>
           <div class="wz-rows">${specs.map((r, i) => `<div class="wz-row wz-row--spec">${field("Label", input(draft, `specifications.${i}.label`, { placeholder: "e.g. Care" }))}${field("Value", input(draft, `specifications.${i}.value`, { placeholder: "e.g. Wipe with a dry cloth" }))}${rowTools("specifications", i, specs.length)}</div>`).join("")}</div>
@@ -396,6 +470,9 @@
           <div><dt>Sizes</dt><dd>${(draft.sizes || []).length}</dd></div>
           <div><dt>Images</dt><dd>${(draft.views || []).length}</dd></div>
           <div><dt>FrameX Studio</dt><dd>${M().studioSupport(draft).ok ? "Yes" : "No"}</dd></div>
+          <div><dt>Product type</dt><dd>${esc((typeOf() || { name: "Not chosen" }).name)}</dd></div>
+          <div><dt>Customer photos</dt><dd>${typeOf() ? (M().photoRequirement(draft, {}).count ? `${M().photoRequirement(draft, {}).count} required` : "None") : "—"}</dd></div>
+          <div><dt>Gift wrapping</dt><dd>${draft.giftWrap === false ? "Not offered" : "Offered"}</dd></div>
         </dl>
         <div class="wz-publish__actions">
           ${draft.status === "draft" ? `<button class="btn btn--outline" type="button" data-act="save-draft">Save draft</button>` : `<button class="btn btn--outline" type="button" data-act="save-changes-publish">Save changes</button>`}
@@ -403,9 +480,9 @@
           ${draft.status === "published" ? `<button class="btn btn--outline" type="button" data-act="unpublish">Unpublish</button>` : ""}
           ${draft.status === "pending_review" ? `<button class="btn btn--outline" type="button" data-act="withdraw">Withdraw (back to draft)</button>` : ""}
           ${isNew ? "" : `<button class="btn btn--outline" type="button" data-act="duplicate">Duplicate</button>`}
-          ${isNew ? "" : `<button class="btn btn--outline sd-danger" type="button" data-act="delete">${draft.source === "catalogue" ? "Discard my changes" : "Delete product"}</button>`}
+          ${isNew ? "" : `<button class="btn btn--outline sd-danger" type="button" data-act="delete">Delete product</button>`}
         </div>
-        <p class="wz-note">${icon("alert")} ${moderation ? "FrameX reviews products before they go live. " : ""}Until the FrameX backend is connected, products are saved in this browser and appear on the FrameX site on this device only.</p>
+        <p class="wz-note">${icon("check")} ${moderation ? "FrameX reviews a product before it goes on sale for the first time. " : "A published product is on sale to customers straight away. "}Your products are saved in your shop's FrameX account, so they are the same on every device. FrameX can take a product off sale if it breaks the marketplace rules.</p>
       </div>`;
     }
 
@@ -513,6 +590,8 @@
       if (t === "number") return el.value === "" ? null : Number(el.value);
       if (t === "list") return el.value.split(",").map((x) => x.trim()).filter(Boolean);
       if (t === "falsy") return el.value || false;
+      // One item per line ("What's included", "Care").
+      if (t === "lines") return el.value.split(/\r?\n/).map((x) => x.trim()).filter(Boolean).slice(0, 12);
       return el.value;
     }
 
@@ -559,6 +638,12 @@
         if (t && t.id !== "other" && (!pm.name || M().PRINT_MATERIAL_TYPES.some((x) => x.name === pm.name))) pm.name = t.name;
       }
       if (path === "customization.photoUpload" && draft.customization.photoUpload && !draft.customization.crop) draft.customization.crop = true;
+      // Another product type: its own starting number of photos, then the platform's rules for that type.
+      if (path === "productType") draft.personalization = { photos: null, panels: null };
+      if (path === "productType" || path.startsWith("personalization.")) {
+        const kept = { source: draft.source };
+        Object.assign(draft, M().applyTypeRules(draft), kept);
+      }
     }
 
     /* ---- actions ---- */
@@ -633,14 +718,24 @@
       }
       if (a === "publish") return publish();
       if (a === "unpublish" || a === "withdraw") {
-        const saved = a === "unpublish" ? await svc().unpublish(draft) : await svc().save(draft, { status: "draft" });
+        let saved;
+        try {
+          saved = a === "unpublish" ? await svc().unpublish(draft) : await svc().save(draft, { status: "draft" });
+        } catch (error) {
+          return FrameX.toast.show(error.friendly || "That didn't work. Please try again.");
+        }
         Object.assign(draft, { status: saved.status, updatedAt: saved.updatedAt });
         clearWip(draft.id);
         FrameX.toast.show(a === "unpublish" ? "Unpublished. Customers can't see it now." : "Moved back to drafts.");
         return redraw();
       }
       if (a === "duplicate") {
-        const copy = await svc().duplicate(draft);
+        let copy;
+        try {
+          copy = await svc().duplicate(draft);
+        } catch (error) {
+          return FrameX.toast.show(error.friendly || "The copy couldn't be made. Please try again.");
+        }
         FrameX.toast.show(`Created “${copy.name}”. You're now editing the copy.`);
         location.hash = `#/products/${encodeURIComponent(copy.id)}/edit?step=basic`;
         return;
@@ -649,13 +744,17 @@
         if (!btn.classList.contains("is-confirming")) {
           btn.classList.add("is-confirming");
           btn.textContent = "Tap again to confirm";
-          setTimeout(() => btn.isConnected && (btn.classList.remove("is-confirming"), (btn.textContent = draft.source === "catalogue" ? "Discard my changes" : "Delete product")), 4000);
+          setTimeout(() => btn.isConnected && (btn.classList.remove("is-confirming"), (btn.textContent = "Delete product")), 4000);
           return;
         }
-        await svc().remove(draft);
+        try {
+          await svc().remove(draft);
+        } catch (error) {
+          return FrameX.toast.show(error.message || "The product couldn't be deleted. Please try again.");
+        }
         clearWip(draft.id);
         window.onbeforeunload = null;
-        FrameX.toast.show(draft.source === "catalogue" ? "Your changes were discarded." : "Product deleted.");
+        FrameX.toast.show("Product deleted.");
         location.hash = "#/products";
       }
     }
@@ -718,7 +817,7 @@
       const arr = Array.from(files).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
       const frames = [];
       for (let i = 0; i < arr.length; i++) {
-        status.textContent = `Preparing photo ${i + 1} of ${arr.length}…`;
+        status.textContent = `Uploading photo ${i + 1} of ${arr.length}…`;
         try {
           frames.push((await FrameX.mediaService.prepare(arr[i], "frame360")).url);
         } catch (error) {
@@ -730,28 +829,17 @@
       refresh();
     }
 
-    async function uploadVideo(file) {
-      const status = $("[data-video-status]", root);
-      status.textContent = "Preparing video…";
-      try {
-        const out = await FrameX.mediaService.prepare(file, "video");
-        Object.assign(video(), { url: out.url, duration: out.duration || video().duration });
-        refresh();
-      } catch (error) {
-        status.textContent = error.message || "That video couldn't be added.";
-      }
-    }
-
     /* ---- wire ---- */
     shell();
     renderStep();
     root.oninput = (e) => e.target.matches("input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea") && onField(e);
     root.onchange = (e) => {
       if (e.target.matches("[data-360-files]")) return upload360(e.target.files);
-      if (e.target.matches("[data-video-file]")) return e.target.files[0] && uploadVideo(e.target.files[0]);
       if (e.target.matches("[data-act='toggle-cover']")) return act(e.target);
       if (e.target.closest("[data-uploader], [data-mat-image], [data-comp-image], [data-video-thumb]")) return;
-      if (e.target.matches("select, input[type=checkbox], input[type=radio]")) onField(e);
+      if (e.target.matches("select, input[type=checkbox], input[type=radio]")) return onField(e);
+      // A number that the platform's rules may have corrected (photos per product, frames in a set): show what was kept.
+      if (e.target.matches("input[data-rerender]")) renderStep({ keepScroll: true });
     };
     root.onclick = (e) => {
       const btn = e.target.closest("button[data-act]");

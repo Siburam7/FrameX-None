@@ -10,7 +10,7 @@
 
   const card = (r) => `<article class="review-card">
       <div class="review-card__who">
-        <img class="review-card__avatar" src="${esc(r.avatar)}" alt="" width="56" height="56" loading="lazy" decoding="async">
+        ${r.avatar ? `<img class="review-card__avatar" src="${esc(r.avatar)}" alt="" width="56" height="56" loading="lazy" decoding="async">` : `<span class="review-card__avatar review-card__avatar--initials" aria-hidden="true">${esc(String(r.name || "?").slice(0, 1).toUpperCase())}</span>`}
         <div>
           <p class="review-card__name">${esc(r.name)}</p>
           ${r.isVerified ? `<span class="review-card__verified">${icon("badge-check")} Verified buyer</span>` : ""}
@@ -18,7 +18,7 @@
       </div>
       ${stars(r.rating)}
       <p class="review-card__text">${esc(r.text)}</p>
-      <p class="review-card__product">Ordered: <b>${esc(r.productName)}</b></p>
+      ${r.productName ? `<p class="review-card__product">Ordered: <b>${esc(r.productName)}</b></p>` : ""}
       <p class="review-card__date">${esc(r.dateLabel)}</p>
     </article>`;
 
@@ -26,7 +26,19 @@
     const rail = $("#review-rail");
     if (!rail) return;
     try {
-      const reviews = await FrameX.api.getReviews();
+      let reviews = await FrameX.api.getReviews();
+      // Reviews written by customers whose order or painting was delivered (the backend accepts no others).
+      if (FrameX.http && FrameX.http.enabled()) {
+        try {
+          const live = (await FrameX.http.get("/reviews/latest")).items.map((r) => ({
+            name: r.author, rating: r.rating, text: r.body, isVerified: true, productName: "",
+            dateLabel: new Date(r.createdAt).toLocaleDateString(undefined, { month: "long", year: "numeric" }),
+          }));
+          if (live.length) reviews = live;
+        } catch (error) {
+          /* the backend isn't reachable: whatever the site's own file has is shown */
+        }
+      }
       if (!reviews.length) {
         rail.classList.add("review-rail--empty");
         rail.innerHTML = `<div class="state-message"><strong>No reviews yet</strong>

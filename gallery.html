@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="assets/css/overlays.css">
   <link rel="stylesheet" href="assets/css/footer-faq.css">
   <link rel="stylesheet" href="assets/css/pages.css">
+  <link rel="stylesheet" href="assets/css/mobile.css">
   <script>document.documentElement.classList.add("js");</script>
 </head>
 
@@ -32,12 +33,13 @@
   <div id="site-header-root"></div>
 
   <main id="main">
-    <section class="page-banner" aria-labelledby="page-title">
+    <section class="page-hero" aria-labelledby="page-title">
       <div class="container">
-        <nav class="page-banner__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
+        <nav class="page-hero__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
             aria-hidden="true">/</span> <span aria-current="page">Gallery</span></nav>
-        <h1 class="page-banner__title" id="page-title">Gallery &amp; inspiration</h1>
-        <p class="page-banner__lead">Frame styles and ideas for every room and every memory. Filter by theme, open any
+        <p class="eyebrow">Inspiration</p>
+        <h1 class="page-hero__title" id="page-title">Gallery <span>&amp; inspiration</span></h1>
+        <p class="page-hero__lead">Frame styles and ideas for every room and every memory. Filter by theme, open any
           photo for a closer look, and jump straight to the frame.</p>
       </div>
     </section>
@@ -59,8 +61,8 @@
         <div class="final-cta" data-reveal>
           <h2 class="final-cta__title">Found a style you like?</h2>
           <p class="final-cta__text">Browse frames from local shops, or ask us about a custom frame.</p>
-          <div class="final-cta__actions"><a class="btn btn--dark" href="shop.html">Shop Frames</a><a
-              class="btn btn--outline" href="contact.html">Ask about a custom frame</a></div>
+          <div class="final-cta__actions"><a class="btn btn--primary" href="shop.html">Shop Frames</a><a
+              class="btn btn--light" href="contact.html">Ask about a custom frame</a></div>
         </div>
       </div>
     </section>
@@ -98,6 +100,7 @@
   <script src="assets/js/ui/nav.js" defer></script>
   <script src="assets/js/ui/chrome.js" defer></script>
   <script src="assets/js/ui/cart-drawer.js" defer></script>
+  <script src="assets/js/ui/auth-gate.js" defer></script>
   <script src="assets/js/ui/actions.js" defer></script>
   <script src="assets/js/ui/gallery-page.js" defer></script>
   <script src="assets/js/main.js" defer></script>

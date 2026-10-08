@@ -13,17 +13,33 @@
       );
     },
 
+    // Logged out: the login dialog opens first, then the product is added.
+    // A product made from the customer's photo can't be added from a card:
+    // the photo is added on its product page, so that is where this goes.
     "add-to-cart": async (el) => {
+      if (el.dataset.adding) return;
       const product = await FrameX.api.getProduct(el.dataset.productId);
       if (!product) return;
+      const toPhotoStep = () =>
+        (window.location.href = `${FrameX.qs.productUrl(product)}#your-photo`);
+      if (FrameX.templates.needsPhoto(product)) return void toPhotoStep();
       const only = FrameX.pricing.sizeOptions(product)[0];
-      FrameX.cart.add(product, {
-        sizeId: only ? only.id : null,
-        size: only ? only.label : null,
+      el.dataset.adding = "1";
+      const result = await FrameX.cart.add({
+        productId: product.id,
+        name: product.name,
+        selection: { sizeId: only ? only.id : null },
       });
-      FrameX.toast.show(`${product.name} added to cart.`, {
-        action: { label: "View cart", onClick: () => FrameX.cartDrawer.open() },
-      });
+      delete el.dataset.adding;
+      // The backend has the last word on what needs a photo.
+      if (!result.ok && result.code === "PHOTOS_REQUIRED") {
+        FrameX.toast.show(result.message, {
+          duration: 7000,
+          action: { label: "Add your photo", onClick: toPhotoStep },
+        });
+        return;
+      }
+      FrameX.cart.announce(result, `${product.name} added to cart.`);
     },
 
     // On the Shop page filter in place; everywhere else go to the Shop page.

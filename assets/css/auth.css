@@ -10,9 +10,9 @@
   background: var(--ivory);
 }
 
+/* Bottom spacing is the shared section rhythm (.section) */
 .auth-section {
   padding-top: 12px;
-  padding-bottom: clamp(48px, 7vw, 96px);
 }
 
 /* ---------------------------------------------------------------- Shared form bits */
@@ -77,13 +77,6 @@
   border-radius: var(--radius-xl);
   background: var(--white);
   box-shadow: var(--shadow-card);
-}
-
-.auth-card__title {
-  font-family: var(--font-display);
-  font-size: clamp(1.4rem, 1.15rem + 1.2vw, 1.85rem);
-  font-weight: 700;
-  line-height: 1.2;
 }
 
 .auth-card__lead {
@@ -192,9 +185,6 @@
 }
 
 .account__title {
-  font-family: var(--font-display);
-  font-size: clamp(1.3rem, 1.1rem + 1vw, 1.8rem);
-  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
@@ -217,18 +207,12 @@
   gap: 14px;
   min-width: 0;
   padding: clamp(16px, 3vw, 24px);
-  border: 1px solid var(--line-warm);
-  border-radius: var(--radius-lg);
-  background: var(--white);
 }
 
 .account-card h2 {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 700;
 }
 
 .account-card .btn {

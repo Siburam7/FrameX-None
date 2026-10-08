@@ -3,67 +3,43 @@
    ========================================================================== */
 (function (FrameX) {
   const { escapeHtml: esc, icon } = FrameX.dom;
-  const {
-    formatPrice,
-    finalPrice,
-    startingPrice,
-    availability,
-    hasSizeChoice,
-  } = FrameX.pricing;
+  const { formatPrice, finalPrice, startingPrice, startingListPrice, availability, hasSizeChoice } = FrameX.pricing;
   const { FULFILMENT_METHODS } = FrameX.constants;
   const { formatAddress, isOpenNow } = FrameX.shopUtils;
   const { config } = FrameX;
 
   function stockLabel(product) {
     const status = availability(product);
-    if (status === "out_of_stock")
-      return { text: "Out of stock", className: "product-card__stock--out" };
-    if (status === "low_stock") {
-      const text =
-        typeof product.stock === "number"
-          ? `Only ${product.stock} left`
-          : "Low stock";
-      return { text, className: "product-card__stock--low" };
-    }
-    return { text: "In stock", className: "" };
+    if (status === "out_of_stock") return { text: "Out of stock", low: false };
+    if (status === "low_stock") return { text: typeof product.stock === "number" ? `Only ${product.stock} left` : "Low stock", low: true };
+    return { text: "In stock", low: false };
   }
 
-  function priceBlock(product, { from = false } = {}) {
-    const now = from ? startingPrice(product) : finalPrice(product);
-    const was =
-      !from && product.discountPercent > 0
-        ? `<s class="price__was">${formatPrice(product.price)}</s>`
-        : "";
-    const prefix =
-      from && hasSizeChoice(product)
-        ? `<span class="price__from">From</span> `
-        : "";
-    return `<p class="price">${prefix}<strong class="price__now">${formatPrice(now)}</strong>${was}</p>`;
-  }
-
-  /** Small coloured dots showing which finishes a product offers. Text labels
-      are used alongside them (title attribute + visually-hidden summary) so
-      colour is never the only way to tell the options apart. */
+  /** Small coloured dots showing which finishes a product offers. The colour
+      names are read out (title + visually-hidden text), so colour is never the
+      only way to tell the options apart. */
   function colorSwatchRow(product) {
     if (!Array.isArray(product.colors) || !product.colors.length) return "";
-    const palette = (FrameX.seed.frameColors || []).reduce(
-      (map, c) => ((map[c.id] = c), map),
-      {},
-    );
-    const dots = product.colors
-      .map((id) => palette[id])
-      .filter(Boolean)
-      .map(
-        (c) =>
-          `<span class="swatch-dot" style="--swatch:${c.hex}" title="${esc(c.name)}"></span>`,
-      )
-      .join("");
-    const names = product.colors
-      .map((id) => (palette[id] || {}).name)
-      .filter(Boolean)
-      .join(", ");
-    return `<p class="product-card__colors"><span class="swatch-dot-row">${dots}</span><span class="visually-hidden">Colours: ${esc(names)}</span></p>`;
+    const palette = (FrameX.seed.frameColors || []).reduce((map, c) => ((map[c.id] = c), map), {});
+    const colors = product.colors.map((id) => palette[id]).filter(Boolean);
+    if (!colors.length) return "";
+    const dots = colors.map((c) => `<span class="swatch-dot" style="--swatch:${c.hex}" title="${esc(c.name)}"></span>`).join("");
+    return `<span class="swatch-dot-row">${dots}<span class="visually-hidden">Colours: ${esc(colors.map((c) => c.name).join(", "))}</span></span>`;
   }
+
+  /**
+   * Is this product made from the customer's own photo? The product model says
+   * so (photosRequired) on pages that load it; elsewhere the catalogue entry
+   * itself does: everything is a photo frame unless it is Home Decor or says
+   * it is ready-made.
+   */
+  function needsPhoto(product) {
+    if (product.photosRequired != null) return Number(product.photosRequired) > 0;
+    if (product.decor) return Boolean(product.decor.customPhoto);
+    return !["other", "home-decor", "wall-art"].includes(product.productType) && product.photos !== 0;
+  }
+  /** The product page, opened at "Your photo". */
+  const photoUrl = (product) => `${FrameX.qs.productUrl(product)}#your-photo`;
 
   function wishButton(product, extraClass = "") {
     const saved = FrameX.wishlist.has(product.id);
@@ -71,57 +47,59 @@
       aria-pressed="${saved}" aria-label="Save ${esc(product.name)} to wishlist">${icon("heart")}</button>`;
   }
 
+  /**
+   * One photo frame. Same card as wall art (decorUI.card): picture, a small
+   * label (the shop that sells it), name, price, one quiet line of facts
+   * (colours, sizes, low stock) and the actions.
+   */
   function productCard(product) {
     const status = availability(product);
     const stock = stockLabel(product);
     const unavailable = status === "out_of_stock";
+    const off = Number(product.discountPercent) || 0;
     const badges = [];
-    if (product.discountPercent > 0 && !unavailable)
-      badges.push(
-        `<span class="badge badge--discount">${product.discountPercent}% off</span>`,
-      );
-    if (product.isNew && !unavailable)
-      badges.push(`<span class="badge">New</span>`);
-    const needsChoice =
-      hasSizeChoice(product) || (product.colors || []).length > 1;
-    const sizeCount = FrameX.pricing.sizeOptions(product).length;
-    const sizeNote =
-      sizeCount > 1
-        ? `<span class="product-card__size-note">${sizeCount} sizes</span>`
-        : "";
+    if (off > 0 && !unavailable) badges.push(`<span class="badge badge--discount">${off}% off</span>`);
+    if (product.isNew && !unavailable) badges.push(`<span class="badge">New</span>`);
+    const choice = hasSizeChoice(product);
+    const needsChoice = choice || (product.colors || []).length > 1;
+    const sizes = FrameX.pricing.sizeOptions(product);
     const url = FrameX.qs.productUrl(product);
     // Products that open in FrameX Studio (see productModel.studioSupport); older data falls back to its frame design.
-    const customizable =
-      product.customizable != null
-        ? product.customizable
-        : Boolean(product.frame && product.frame.shape !== "arch");
+    const customizable = product.customizable != null ? product.customizable : Boolean(product.frame && product.frame.shape !== "arch");
+    const photo = needsPhoto(product);
+
+    const meta = [colorSwatchRow(product)];
+    if (sizes.length > 1) meta.push(`<span>${sizes.length} sizes</span>`);
+    else if (sizes.length === 1 && (sizes[0].dimensions || sizes[0].label)) meta.push(`<span>${esc(sizes[0].dimensions || sizes[0].label)}</span>`);
+    if (stock.low) meta.push(`<b>${esc(stock.text)}</b>`);
+
+    const second = unavailable
+      ? `<button class="btn btn--outline btn--sm" type="button" disabled>Out of stock</button>`
+      : customizable
+        ? `<a class="btn btn--outline btn--sm" href="studio.html?product=${encodeURIComponent(product.id)}" aria-label="Try ${esc(product.name)} with your own image">${icon("upload")} Try Your Photo</a>`
+        : photo
+          ? // Made from the customer's photo: it is added on the product page, where the photo is.
+            `<a class="btn btn--outline btn--sm" href="${photoUrl(product)}" aria-label="Add your photo to ${esc(product.name)}">${icon("upload")} Add Your Photo</a>`
+          : !needsChoice
+          ? `<button class="btn btn--outline btn--sm" type="button" data-action="add-to-cart" data-product-id="${esc(product.id)}">${icon("bag")} Add to Cart</button>`
+          : "";
 
     return `<article class="product-card${unavailable ? " is-unavailable" : ""}" data-product-id="${esc(product.id)}">
       <div class="product-card__media">
-        <img class="product-card__image" src="${esc(product.listingImage || product.image)}" alt="${esc(product.name)}" width="720" height="720" loading="lazy" decoding="async">
-        <a class="product-card__open" href="${url}" aria-label="View details for ${esc(product.name)}"></a>
+        <img src="${esc(product.listingImage || product.image)}" alt="${esc(product.name)}" width="800" height="1000" loading="lazy" decoding="async">
+        <a class="product-card__open" href="${url}" aria-label="View ${esc(product.name)}" tabindex="-1"></a>
         <div class="product-card__badges">${badges.join("")}</div>
         ${wishButton(product, "product-card__wish")}
       </div>
       <div class="product-card__body">
+        <p class="product-card__cat">${esc(product.shopName || "")}</p>
         <h3 class="product-card__title"><a href="${url}">${esc(product.name)}</a></h3>
-        <p class="product-card__shop">${icon("store")} ${esc(product.shopName)}</p>
-        ${product.description ? `<p class="product-card__desc">${esc(product.description)}</p>` : ""}
-        ${colorSwatchRow(product)}
-        ${priceBlock(product, { from: true })}
-        ${sizeNote}
+        <p class="product-card__price">${choice ? "<span>From</span>" : ""}<strong>${formatPrice(choice ? startingPrice(product) : finalPrice(product))}</strong>${
+          off > 0 ? `<s>${formatPrice(choice ? startingListPrice(product) : product.price)}</s><em>${off}% off</em>` : ""
+        }</p>
+        <p class="product-card__meta">${meta.filter(Boolean).join("")}</p>
       </div>
-      <div class="product-card__foot">
-        <span class="${stock.className}">${stock.text}</span>
-        <a class="btn btn--dark btn--sm product-card__add" href="${url}">View Product</a>
-      </div>
-      ${
-        customizable && !unavailable
-          ? `<a class="product-card__extra" href="studio.html?product=${encodeURIComponent(product.id)}">${icon("upload")} Try With Your Own Image</a>`
-          : !unavailable && !needsChoice
-            ? `<button class="product-card__extra" type="button" data-action="add-to-cart" data-product-id="${esc(product.id)}">${icon("bag")} Add to cart</button>`
-            : ""
-      }
+      <div class="product-card__actions"><a class="btn btn--dark btn--sm" href="${url}">View Product</a>${second}</div>
     </article>`;
   }
 
@@ -220,8 +198,8 @@
     showError,
     hasSizeChoice,
     stockLabel,
-    priceBlock,
     colorSwatchRow,
     wishButton,
+    needsPhoto,
   };
 })((window.FrameX = window.FrameX || {}));

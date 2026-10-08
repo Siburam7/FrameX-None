@@ -6,3 +6,10 @@ backend/.data/
 backend/node_modules/
 node_modules/
 *.log
+
+# Home Decor image build: downloaded source paintings and scratch files
+tools/decor/sources/
+tools/decor/.tmp/
+
+# Safety copies of the local database made before an upgrade (they hold real accounts and orders)
+backend/.data.backup-*/

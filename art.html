@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Art &amp; Artists — FrameX</title>
+  <meta name="description" content="Discover original art and meet the artists behind it. Buy finished artworks or ask an artist for a custom painting from your photo.">
+  <meta name="theme-color" content="#02030a">
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23050816'/%3E%3Crect x='7' y='8' width='18' height='16' rx='1.5' fill='none' stroke='%23ea780e' stroke-width='2.5'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@300;400;600;700;800&display=swap">
+
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/chrome.css">
+  <link rel="stylesheet" href="assets/css/catalog.css">
+  <link rel="stylesheet" href="assets/css/overlays.css">
+  <link rel="stylesheet" href="assets/css/footer-faq.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+  <link rel="stylesheet" href="assets/css/auth.css">
+  <link rel="stylesheet" href="assets/css/art.css">
+  <link rel="stylesheet" href="assets/css/mobile.css">
+  <script>document.documentElement.classList.add("js");</script>
+</head>
+
+<body data-page="art">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-header-root"></div>
+
+  <main id="main">
+    <section class="page-hero" aria-labelledby="page-title">
+      <div class="container page-hero__grid">
+        <div>
+          <nav class="page-hero__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span aria-hidden="true">/</span> <span aria-current="page">Art &amp; Artists</span></nav>
+          <p class="eyebrow">Art &amp; Artists</p>
+          <h1 class="page-hero__title" id="page-title">Discover original art. <span>Meet the artists.</span></h1>
+          <p class="page-hero__lead">Paintings, drawings and handmade artwork from artists you can get to know. Buy a finished piece, or ask an artist to paint one from your photo.</p>
+          <div class="page-hero__actions">
+            <a class="btn btn--primary" href="#browse">Find an artist <svg class="icon icon--nudge" aria-hidden="true"><use href="#i-arrow-right"></use></svg></a>
+            <a class="btn btn--light" href="#join">Join as an artist</a>
+          </div>
+        </div>
+        <div class="page-hero__wall" aria-hidden="true">
+          <span class="page-hero__piece"><img src="assets/img/art/hero-artist.webp" alt="" width="720" height="900" loading="eager"></span>
+          <span class="page-hero__piece"><img src="assets/img/art/hero-canvas.webp" alt="" width="720" height="900" loading="eager"></span>
+          <span class="page-hero__piece"><img src="assets/img/art/hero-brushes.webp" alt="" width="720" height="900" loading="eager"></span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="browse" aria-label="Artists and artworks">
+      <div class="container" id="art-root">
+        <div class="skeleton" style="height:360px"></div>
+      </div>
+    </section>
+
+    <section class="section section--warm" aria-labelledby="how-art-title">
+      <div class="container">
+        <div class="section-head"><div><p class="eyebrow">Custom paintings</p><h2 class="section-title" id="how-art-title">How a custom painting works</h2>
+          <p class="section-lead">You pay nothing to ask. Money is only taken in two steps, and only after the artist has said yes.</p></div></div>
+        <ol class="how-steps">
+          <li class="how-step"><div class="how-step__body"><h3>1. Choose and ask</h3><p>Pick an artist, a size and a type at a fixed price. Add your reference photo and send the request.</p></div></li>
+          <li class="how-step"><div class="how-step__body"><h3>2. The artist answers</h3><p>They accept or decline. If they decline, nothing is charged and the request closes.</p></div></li>
+          <li class="how-step"><div class="how-step__body"><h3>3. Pay the advance</h3><p>Once accepted, you pay the advance and the artist starts your painting.</p></div></li>
+          <li class="how-step"><div class="how-step__body"><h3>4. Pay the rest, then delivery</h3><p>When the painting is finished you pay the remaining amount, and it is sent to you.</p></div></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section" id="join" aria-labelledby="join-title">
+      <div class="container">
+        <div class="art-join">
+          <div>
+            <p class="eyebrow">For artists</p>
+            <h2 class="section-title" id="join-title">Join FrameX as an artist</h2>
+            <p class="section-lead">Show your finished work and take custom painting requests at prices you set.</p>
+            <ul class="check-list" style="margin-top:16px">
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg><span><strong>Your own profile and gallery.</strong> FrameX reviews each artwork before it is shown.</span></li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg><span><strong>You decide.</strong> Accept or decline every custom request.</span></li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg><span><strong>An advance before you start.</strong> The customer pays part of the price before you begin, and the rest before you send it.</span></li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg><span><strong>Your address stays private.</strong> Customers see your city, never your street.</span></li>
+            </ul>
+            <p class="section-lead" style="margin-top:16px">Already approved? <a href="login.html">Log in to your dashboard</a>.</p>
+          </div>
+          <div id="join-form"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer-root"></div>
+  <div id="overlay-root"></div>
+
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/js/core/dom.js" defer></script>
+  <script src="assets/js/core/qs.js" defer></script>
+  <script src="assets/js/core/constants.js" defer></script>
+  <script src="assets/js/services/pricing.js" defer></script>
+  <script src="assets/js/services/location.js" defer></script>
+  <script src="assets/js/services/shop-utils.js" defer></script>
+  <script src="assets/data/site.seed.js" defer></script>
+  <script src="js/edit.js" defer></script>
+  <script src="assets/data/reviews.seed.js" defer></script>
+  <script src="assets/data/community.seed.js" defer></script>
+  <script src="assets/data/faq.seed.js" defer></script>
+  <script src="assets/data/gallery.seed.js" defer></script>
+  <script src="assets/js/api/client.js" defer></script>
+  <script src="assets/js/store/auth.js" defer></script>
+  <script src="assets/js/api/seed-provider.js" defer></script>
+  <script src="assets/js/api/http-provider.js" defer></script>
+  <script src="assets/js/api/shop-directory.js" defer></script>
+  <script src="assets/js/api/api.js" defer></script>
+  <script src="assets/js/store/cart.js" defer></script>
+  <script src="assets/js/store/wishlist.js" defer></script>
+  <script src="assets/js/ui/icons.js" defer></script>
+  <script src="assets/js/ui/templates.js" defer></script>
+  <script src="assets/js/ui/toast.js" defer></script>
+  <script src="assets/js/ui/overlay.js" defer></script>
+  <script src="assets/js/ui/reveal.js" defer></script>
+  <script src="assets/js/ui/nav.js" defer></script>
+  <script src="assets/js/ui/chrome.js" defer></script>
+  <script src="assets/js/ui/cart-drawer.js" defer></script>
+  <script src="assets/js/ui/auth-gate.js" defer></script>
+  <script src="assets/js/ui/actions.js" defer></script>
+  <script src="assets/js/ui/forms.js" defer></script>
+  <script src="assets/js/ui/art-pages.js" defer></script>
+  <script src="assets/js/main.js" defer></script>
+</body>
+
+</html>

@@ -77,7 +77,39 @@
     });
   }
 
+  /**
+   * Blocks that should stand at exactly the same height carry the same
+   * data-match-height="<group>" (the home page's promo bands). The shorter
+   * ones grow to the tallest; measured again when the window, the fonts or the
+   * pictures change the layout.
+   */
+  function matchHeights() {
+    const groups = new Map();
+    $$("[data-match-height]").forEach((el) => {
+      const key = el.dataset.matchHeight;
+      groups.set(key, (groups.get(key) || []).concat(el));
+    });
+    const lists = [...groups.values()].filter((list) => list.length > 1);
+    if (!lists.length) return;
+    const apply = () =>
+      lists.forEach((list) => {
+        list.forEach((el) => (el.style.minHeight = ""));
+        const tallest = Math.max(...list.map((el) => el.getBoundingClientRect().height));
+        list.forEach((el) => (el.style.minHeight = Math.ceil(tallest) + "px"));
+      });
+    let frame = 0;
+    const later = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(apply);
+    };
+    apply();
+    window.addEventListener("resize", later);
+    window.addEventListener("load", later);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(later);
+  }
+
   async function init() {
+    matchHeights();
     try {
       const site = await FrameX.api.getSite();
       if (!site) return;

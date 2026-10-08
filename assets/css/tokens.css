@@ -1,15 +1,31 @@
 /* ==========================================================================
    FrameX — Design tokens
    Single source of truth for colour, type, spacing, radius, motion.
-   Values are taken from the Original design; do not add one-off values in
+   The type scale, spacing and card values are the ones Home Decor uses (the
+   visual reference for the whole site); do not add one-off values in
    component files — add a token here instead.
    ========================================================================== */
 
 :root {
   /* Brand colour ------------------------------------------------------- */
-  --ink: #050816;            /* dark surfaces, primary text */
+  --ink: #0d1b3e;            /* deep navy: primary text, dark buttons, selected states */
   --night: #02030a;          /* deepest surface (header when scrolled, museum) */
-  --charcoal: #2b2b2b;       /* footer */
+  --charcoal: #0d1b3e;       /* dark text and selected states in older components (same deep navy as --ink) */
+  --footer-bg: #33373f;      /* footer: a faded black (soft charcoal); text on it is light */
+  --accent: #1d4ed8;         /* the site's one colour beside orange: small labels, highlighted headline words */
+  --accent-deep: #1e3a8a;
+
+  /* Surfaces. The site is light: white, with a soft blue tint for every
+     second section, the hero and soft panels. Text on them is --ink. */
+  --surface-soft: #eef3fb;   /* a soft blue tint */
+  --hero-tint: #e2ecfb;      /* the hero: this colour, lighter towards the top */
+  --surface-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 100%), var(--hero-tint);
+
+  /* Soft colours of the three banner tiles on the home page */
+  --soft-mint: #eaf6f0;
+  --soft-peach: #fdf1e6;
+  --soft-indigo: #edf0fd;
+  --text-gradient: linear-gradient(90deg, #2563eb, #1e3a8a); /* highlighted words in a hero headline */
 
   --amber: #ea780e;          /* primary accent */
   --amber-strong: #de832e;   /* primary button fill */
@@ -27,7 +43,7 @@
   --tan: #a66a3f;
 
   /* Premium warm tones (showcase, category gallery, guide) -------------- */
-  --ivory: #faf6ee;          /* warm off-white surface */
+  --ivory: var(--surface-soft); /* soft surface (was a warm off-white; now the site's light grey) */
   --beige: #f0e7d8;          /* soft panel / media backdrop */
   --champagne: #ecdcbd;      /* active / selected surface */
   --gold-muted: #8f6c36;     /* fine accents, numerals, hairlines */
@@ -39,7 +55,7 @@
   --white: #ffffff;
   --stone: #e4e5e7;          /* card bodies */
   --stone-soft: #f1f2f3;
-  --mist: #adb0ba;           /* secondary text on dark */
+  --mist: #adb0ba;           /* secondary text on dark (footer, pictures) */
   --slate: #999da9;
   --muted: #5b5f6b;          /* secondary text on light (AA on white) */
   --star: #fbbc04;
@@ -54,23 +70,60 @@
   --line-on-dark: rgba(255, 255, 255, 0.16);
   --focus-ring: 0 0 0 3px rgba(234, 120, 14, 0.55);
 
-  /* Typography ---------------------------------------------------------- */
-  --font-display: "Sora", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
-  --font-body: "Plus Jakarta Sans", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  /* Typography ----------------------------------------------------------
+     The scale below is the one Home Decor uses; it is the reference for the
+     whole site. Every heading takes its size and weight from here: don't set
+     a heading size in a component file. */
+  --font-display: "Sora", "Trebuchet MS", "Segoe UI", system-ui, sans-serif;        /* headings, prices */
+  --font-body: "Plus Jakarta Sans", "Trebuchet MS", "Segoe UI", system-ui, sans-serif; /* everything else */
+  --font-family: var(--font-body);
 
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
+  --text-xs: 0.75rem;      /* labels, badges, fine print */
+  --text-sm: 0.875rem;     /* small text */
+  --text-base: 1rem;       /* body */
+  --text-lg: 1.125rem;     /* lead paragraph in a hero */
+  --text-label: 0.6875rem; /* uppercase label above a card title */
+  --text-card: 0.95rem;    /* product and card names */
+  --text-price: 1.1rem;    /* price on a card */
+  --text-price-lg: 1.95rem; /* price on a product or design screen */
+  --text-h4: 1.05rem;      /* panel and feature-card headings */
   --text-h3: clamp(1.125rem, 1.05rem + 0.4vw, 1.4rem);
-  --text-h2: clamp(1.75rem, 1.25rem + 2vw, 2.5rem);      /* section headings */
-  --text-display: clamp(2rem, 0.9rem + 4.6vw, 4.25rem); /* hero */
+  --text-h2: clamp(1.75rem, 1.25rem + 2vw, 2.5rem);     /* section headings */
+  --text-h2-sm: clamp(1.3rem, 1.1rem + 0.9vw, 1.75rem);  /* section heading inside a task screen */
+  --text-title-sm: clamp(1.4rem, 1.15rem + 1.2vw, 1.85rem); /* the same, inside a narrow card (log in, sign up) */
+  --text-title: clamp(1.5rem, 1.1rem + 1.8vw, 2.25rem); /* title of a task screen: product, checkout, account, studio */
+  --text-h1: clamp(1.9rem, 1.25rem + 2.9vw, 3.25rem);   /* page headline in a hero */
+
+  --weight-h1: 700;
+  --weight-title: 700;
+  --weight-h2: 600;
+  --weight-h3: 700;        /* small headings: blocks, panels, feature cards */
+  --weight-strong: 700;    /* card names, labels, prices */
+
+  --leading-h1: 1.08;
+  --leading-heading: 1.15;
+  --tracking-h1: -0.03em;
+  --tracking-heading: -0.01em;
+
+  /* Spacing ------------------------------------------------------------- */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 48px;
 
   /* Layout -------------------------------------------------------------- */
-  --gutter: clamp(16px, 4.5vw, 56px);
-  --container: 1320px;
+  --gutter: clamp(16px, 3.5vw, 64px);   /* side margin on phones and tablets; from 1000px the content uses 85% of the screen (below) */
+  --container: 2200px;                  /* only very wide screens are held back */
   --header-h: 68px;
-  --section-gap: clamp(48px, 7vw, 96px);
+  --section-gap: clamp(36px, 5.5vw, 72px);       /* space above and below a section */
+  --section-head-gap: clamp(18px, 3vw, 32px);    /* heading block to the content under it */
+  --hero-pad-top: clamp(28px, 5vw, 64px);        /* under the header, inside a hero */
+  --hero-pad-bottom: clamp(36px, 6vw, 80px);
+  --grid-gap: var(--space-md);                   /* card grids: 12px, 16px from 640px, 20px from 1000px */
+  --card-pad: var(--space-md);
 
   /* Shape --------------------------------------------------------------- */
   --radius-sm: 8px;
@@ -86,6 +139,7 @@
   /* Motion -------------------------------------------------------------- */
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1); /* settles with a small overshoot */
   --dur-fast: 160ms;
   --dur-base: 280ms;
   --dur-slow: 640ms;
@@ -95,4 +149,17 @@
   --z-overlay: 200;
   --z-drawer: 210;
   --z-toast: 300;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --grid-gap: var(--space-lg);
+  }
+}
+
+@media (min-width: 1000px) {
+  :root {
+    --grid-gap: 20px;
+    --gutter: 7.5vw; /* content = 85% of the screen */
+  }
 }

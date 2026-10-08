@@ -54,12 +54,6 @@
   border-bottom: 1px solid var(--line);
 }
 
-.drawer__title {
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-  font-weight: 600;
-}
-
 .drawer__close {
   display: grid;
   place-items: center;
@@ -277,4 +271,241 @@
   color: var(--gold);
   font-weight: 700;
   text-decoration: underline;
+}
+
+/* Cart: states the backend reports ------------------------------------------------ */
+.drawer.is-busy .qty__btn,
+.drawer.is-busy .cart-line__remove,
+.drawer.is-busy .cart-clear button {
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+.cart-line--unavailable .cart-line__image,
+.cart-line--unavailable .cart-line__name,
+.cart-line--unavailable .cart-line__meta {
+  opacity: 0.55;
+}
+
+.cart-line__flag {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 2px;
+  color: var(--brown-deep);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.cart-line__flag--error {
+  color: var(--danger);
+}
+
+.cart-line__flag .icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 1px;
+}
+
+.cart-line__edit {
+  color: var(--brown-deep);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.cart-notice {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: rgba(198, 40, 40, 0.08);
+  color: #8e1c1c;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.cart-notice:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.cart-notice .icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+}
+
+.cart-notice ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  list-style: disc;
+}
+
+.cart-notice p {
+  margin-top: 6px;
+}
+
+.cart-clear {
+  padding-top: 6px;
+  text-align: right;
+}
+
+.cart-clear button {
+  min-height: 44px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  text-decoration: underline;
+}
+
+.cart-clear button:hover,
+.cart-clear button[data-confirm] {
+  color: var(--wine);
+}
+
+.btn[aria-busy="true"] {
+  cursor: progress;
+  opacity: 0.75;
+}
+
+/* Login / sign-up dialog (ui/auth-gate.js) ---------------------------------------
+   Opens over the page when a visitor adds to the cart or opens the cart.
+   The forms inside are styled by auth.css, which is loaded with the dialog. */
+.auth-gate {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-drawer) + 10);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  visibility: hidden;
+  opacity: 0;
+  transition:
+    opacity var(--dur-base) var(--ease-out),
+    visibility 0s linear var(--dur-base);
+}
+
+.auth-gate.is-open {
+  visibility: visible;
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+.auth-gate__panel {
+  position: relative;
+  width: min(100%, 480px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  border-radius: var(--radius-xl);
+  background: var(--white);
+  box-shadow: var(--shadow-overlay);
+  transform: translateY(12px);
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+.auth-gate.is-open .auth-gate__panel {
+  transform: none;
+}
+
+.auth-gate__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--umber);
+  transition: background-color var(--dur-fast) var(--ease-out);
+}
+
+.auth-gate__close:hover {
+  background: rgba(5, 8, 22, 0.08);
+}
+
+.auth-gate__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 18px 60px 16px 24px;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  background: var(--cream);
+  color: var(--umber);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.auth-gate__notice .icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  color: var(--brown-deep);
+}
+
+.auth-gate__notice strong {
+  color: var(--ink);
+}
+
+/* The card is the dialog itself here: no second box, no second shadow. */
+.auth-gate__body .auth-card {
+  width: 100%;
+  padding: 20px 24px 24px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+@media (max-width: 480px) {
+  .auth-gate {
+    padding: 8px;
+    place-items: end center;
+  }
+
+  .auth-gate__panel {
+    max-height: calc(100dvh - 16px);
+  }
+
+  .auth-gate__notice {
+    padding-left: 18px;
+  }
+
+  .auth-gate__body .auth-card {
+    padding: 16px 18px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-gate,
+  .auth-gate__panel {
+    transition: none;
+  }
+}
+
+/* The customer's own photos on a cart line */
+.cart-line__photos {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  color: var(--brown-deep);
+  font-weight: 600;
+}
+
+.cart-line__photos .icon {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  margin-top: 2px;
+}
+
+.cart-line__photos span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }

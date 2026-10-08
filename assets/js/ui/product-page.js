@@ -75,6 +75,12 @@
         ? desc.slice(0, desc.lastIndexOf(" ", 220)) + "…"
         : desc;
     const support = M().studioSupport(p);
+    // Home Decor: a "your photo" set needs the photo first, so it is ordered from the customiser.
+    const decor = p.decor || null;
+    const customPhoto = Boolean(decor && decor.customPhoto && FrameX.decorUI);
+    // A product made from the customer's own photo: the photo is asked for here, before it can be ordered.
+    const need = M().photoRequirement(p, sel);
+    const asksPhoto = need.required && !customPhoto;
     const rating =
       p.rating && p.rating.count > 0
         ? `<p class="pp-rating">${icon("star", "icon--fill")} ${Number(p.rating.average).toFixed(1)} <span>(${p.rating.count} ${p.rating.count === 1 ? "review" : "reviews"})</span></p>`
@@ -120,26 +126,354 @@
       ${prints.length > 1 ? radioGroup("print", "Print", prints, sel.printMaterialId, (m) => `<strong>${esc(m.name)}</strong>${Number(m.priceModifier) ? `<em>+${formatPrice(Number(m.priceModifier))}</em>` : "<em>Included</em>"}`) : ""}
       ${covers.length > 1 ? radioGroup("cover", "Front cover", covers, sel.protection, (c) => `<strong>${esc(c.name)}</strong>${c.priceModifier ? `<em>+${formatPrice(c.priceModifier)}</em>` : "<em>Included</em>"}`) : ""}
 
+      ${asksPhoto ? photosHtml(need, { preview }) : ""}
+
       <details class="pp-note"><summary>Add a note for the shop <span>(optional)</span></summary>
         <div class="form-field"><textarea data-note maxlength="200" rows="2" placeholder="e.g. text to include, a size not listed"></textarea></div></details>
 
-      <div class="pp-buy">
+      ${
+        customPhoto
+          ? `<div class="pp-buy"><a class="btn btn--primary" href="${preview ? "#" : FrameX.decorUI.studioUrl(p, sel)}" data-decor-create>${icon("upload")} Customize &amp; Create</a>${preview ? "" : FrameX.templates.wishButton(p)}</div>
+             <p class="pp-hint">Upload one photo and see it split across the ${decor.panelCount} frames before you order. The size, frame colour and finish you pick here are carried over.</p>`
+          : ""
+      }
+      <div class="pp-buy"${customPhoto ? " hidden" : ""}>
         <div class="qty" role="group" aria-label="Quantity">
           <button class="qty__btn" type="button" data-qty="-1" aria-label="Decrease quantity" disabled>${icon("minus")}</button>
           <span class="qty__value" data-qty-value aria-live="polite">1</span>
           <button class="qty__btn" type="button" data-qty="1" aria-label="Increase quantity" ${out ? "disabled" : ""}>${icon("plus")}</button>
         </div>
         <button class="btn btn--primary" type="button" data-add ${out ? "disabled" : ""}>${out ? "Out of stock" : `${icon("bag")} Add to cart`}</button>
+        ${out ? "" : `<button class="btn btn--dark" type="button" data-buy>Buy Now</button>`}
         ${preview ? "" : FrameX.templates.wishButton(p)}
       </div>
       ${
         support.ok && !out
           ? `<a class="btn btn--outline btn--block pp-studio" href="${preview ? "#" : S().studioUrl(p, sel)}" data-customize>${icon("frame")} Customize This Product</a>
-           <p class="pp-hint">Upload your photo in FrameX Studio and see it in this frame, with only the options this product offers.</p>`
+           <p class="pp-hint">Want to crop it, add a border or a mat? Design it in FrameX Studio and see your photo in this frame, with only the options this product offers.</p>`
           : ""
       }
       <p class="pp-feedback" data-feedback role="status">${icon("check")}<span></span></p>
     </div>`;
+  }
+
+  /* ---------------------------------------------------------------- The customer's photos
+     A product that is made from the customer's own photo can't be ordered
+     without it. The pictures in the gallery are samples; this block is where
+     the customer adds their own: one tile per photo the product needs
+     (productModel.photoRequirement). The backend applies the same rule again
+     in the cart, in Buy Now and at checkout, so nothing here is the only check. */
+  const PHOTO_STORE = "framex.productPhotos.v1"; // which photos were chosen for which product (this tab)
+
+  function photosHtml(need, { preview }) {
+    const many = need.count > 1;
+    return `<section class="pp-photos" id="your-photo" data-photos aria-labelledby="pp-photos-title">
+      <div class="pp-photos__head">
+        <h2 class="pp-photos__title" id="pp-photos-title">${icon("image")}<span data-photos-title>${many ? "Your photos" : "Your photo"}</span><span class="badge badge--accent">Required</span></h2>
+        <span class="pp-photos__count" data-photos-count aria-live="polite"></span>
+      </div>
+      <p class="pp-photos__lead" data-photos-lead></p>
+      ${
+        preview
+          ? `<p class="pp-photos__sample">${icon("upload")}<span>Customers add their ${many ? `${need.count} photos` : "photo"} here. They can't order without ${many ? "them" : "it"}.</span></p>`
+          : `<div data-uploader></div>
+      <div class="pp-fit" data-fit hidden>
+        <div class="pp-fit__stage" data-fit-stage><div class="pp-fit__frame" data-fit-frame tabindex="0" role="img" aria-label="How your photo fits this size. Drag to move it."><img alt="" draggable="false"></div></div>
+        <div class="pp-fit__side">
+          <p class="pp-fit__title">How it fits <strong data-fit-size></strong></p>
+          <p class="pp-fit__hint">Drag the photo to choose what stays inside the frame.</p>
+          <label class="pp-fit__zoom"><span>Zoom</span><input type="range" min="1" max="3" step="0.01" value="1" data-fit-zoom aria-label="Zoom"></label>
+          <button class="btn btn--outline btn--sm" type="button" data-fit-reset>Centre</button>
+        </div>
+      </div>
+      <p class="pp-photos__status" data-photos-status role="status" hidden>${icon("upload")}<span></span></p>`
+      }
+      <p class="pp-photos__error" data-photos-error role="alert" hidden>${icon("alert")}<span></span></p>
+      <p class="pp-photos__quality">${icon("check")}<span>${esc(M().PHOTO_TEXT.quality)}</span></p>
+      <p class="pp-photos__formats" data-photos-formats>JPG, PNG or WebP. 4K and other high-resolution photos are welcome.</p>
+    </section>`;
+  }
+
+  /**
+   * The behaviour of the photo block. Returns what the page needs from it:
+   *   required()         does the product (at the chosen size) need photos?
+   *   check()            are all of them added? (shows what is missing)
+   *   forOrder(reason)   log in if needed, upload the originals
+   *                      -> { ok, photos: { slot: { uploadId, placement } }, thumbnail }
+   *   sync()             the chosen size changed
+   *   firstPhotoId()     the first photo, to carry into FrameX Studio
+   */
+  function mountPhotos(root, p, sel, { preview }) {
+    const box = $("[data-photos]", root);
+    if (!box)
+      return { required: () => false, check: () => true, forOrder: async () => ({ ok: true, photos: null, thumbnail: "" }), sync() {}, firstPhotoId: () => "", destroy() {} };
+    const svc = FrameX.uploadService;
+    const chosen = {}; // slot -> { id, url, width, height, x, y, zoom }
+    let need = null;
+    let uploader = null;
+    let onChange = () => {};
+
+    /* ---- remembered for this tab, so a reload or a login page doesn't lose the choice ---- */
+    function readSaved() {
+      try {
+        return (JSON.parse(sessionStorage.getItem(PHOTO_STORE) || "{}") || {})[p.id] || {};
+      } catch (error) {
+        return {};
+      }
+    }
+    function save() {
+      try {
+        const all = JSON.parse(sessionStorage.getItem(PHOTO_STORE) || "{}") || {};
+        all[p.id] = Object.fromEntries(Object.entries(chosen).map(([slot, c]) => [slot, { id: c.id, x: c.x, y: c.y, zoom: c.zoom }]));
+        if (!Object.keys(all[p.id]).length) delete all[p.id];
+        sessionStorage.setItem(PHOTO_STORE, JSON.stringify(all));
+      } catch (error) {
+        /* storage blocked: the choice lasts for this page view */
+      }
+    }
+
+    const added = () => need.slots.filter((slot) => chosen[slot]).length;
+
+    function showError(message) {
+      const el = $("[data-photos-error]", box);
+      el.hidden = !message;
+      $("span", el).textContent = message || "";
+      box.classList.toggle("has-error", Boolean(message));
+    }
+    function showStatus(message) {
+      const el = $("[data-photos-status]", box);
+      if (!el) return;
+      el.hidden = !message;
+      $("span", el).textContent = message || "";
+    }
+
+    function paintHead() {
+      const many = need.count > 1;
+      $("[data-photos-title]", box).textContent = many ? "Your photos" : "Your photo";
+      $("[data-photos-count]", box).textContent = preview ? "" : `${added()} of ${need.count} added`;
+      $("[data-photos-lead]", box).textContent = many
+        ? `This set is made with ${need.count} of your own photos, one for each frame. The pictures shown above are samples.`
+        : "This is made with your own photo. The picture shown above is a sample.";
+      box.classList.toggle("is-complete", !preview && added() === need.count);
+    }
+
+    /* ---- one photo: how it sits in the chosen size ---- */
+    const fit = $("[data-fit]", box);
+    function fitBox() {
+      const photo = need.count === 1 ? chosen[need.slots[0]] : null;
+      const size = (p.sizes || []).find((s) => s.id === sel.sizeId);
+      if (!photo || !size || !(size.width > 0) || !(size.height > 0)) return null;
+      let [w, h] = [Number(size.width), Number(size.height)];
+      // A frame the shop offers both ways round is turned to suit the photo (an arch or a round frame only hangs one way).
+      const turns = !["arch", "round"].includes((p.frame || {}).shape);
+      const offers = (o) => turns && (p.orientations || []).includes(o);
+      const wide = photo.width > photo.height * 1.08;
+      const tall = photo.height > photo.width * 1.08;
+      if ((wide && w < h && offers("landscape")) || (tall && w > h && offers("portrait"))) [w, h] = [h, w];
+      return { w, h, photo, label: `${M().sizeDims({ width: w, height: h, unit: size.unit })}` };
+    }
+    function paintFit() {
+      if (!fit) return;
+      const b = fitBox();
+      fit.hidden = !b;
+      if (!b) return;
+      const frame = $("[data-fit-frame]", fit);
+      const img = $("img", frame);
+      // The opening is drawn in the size's own proportions, as large as the space allows.
+      const stage = $("[data-fit-stage]", fit);
+      const room = { w: Math.max(60, stage.clientWidth - 12), h: 208 };
+      const fitScale = Math.min(room.w / b.w, room.h / b.h);
+      frame.style.width = Math.round(b.w * fitScale) + "px";
+      frame.style.height = Math.round(b.h * fitScale) + "px";
+      frame.style.borderColor = (M().palette()[sel.colorId] || {}).hex || "";
+      if (img.getAttribute("src") !== b.photo.url) img.src = b.photo.url;
+      $("[data-fit-size]", fit).textContent = b.label;
+      $("[data-fit-zoom]", fit).value = b.photo.zoom;
+      const W = frame.clientWidth;
+      const H = frame.clientHeight;
+      if (!W || !H) return;
+      // The photo always covers the opening; x / y are the point of the photo at its centre.
+      const scale = Math.max(W / b.photo.width, H / b.photo.height) * b.photo.zoom;
+      const dw = b.photo.width * scale;
+      const dh = b.photo.height * scale;
+      const left = Math.min(0, Math.max(W - dw, W / 2 - b.photo.x * dw));
+      const top = Math.min(0, Math.max(H - dh, H / 2 - b.photo.y * dh));
+      Object.assign(b.photo, { x: (W / 2 - left) / dw, y: (H / 2 - top) / dh });
+      Object.assign(img.style, { width: dw + "px", height: dh + "px", transform: `translate(${left}px, ${top}px)` });
+      frame._fit = { dw, dh, left, top, W, H };
+    }
+
+    function changed() {
+      save();
+      paintHead();
+      showError("");
+      paintFit();
+      onChange();
+    }
+
+    function mountTiles() {
+      if (preview) return;
+      if (uploader) uploader.destroy();
+      uploader = FrameX.photoUploader.mount($("[data-uploader]", box), {
+        slots: need.slots,
+        getPhoto: (slot) => chosen[slot] || null,
+        onPhoto(slot, photo) {
+          const old = chosen[slot];
+          chosen[slot] = { id: photo.id, url: photo.url, width: photo.width, height: photo.height, x: 0.5, y: 0.5, zoom: 1 };
+          if (old && old.id !== photo.id) svc.remove(old.id);
+          changed();
+        },
+        onRemove(slot) {
+          const old = chosen[slot];
+          delete chosen[slot];
+          if (old) svc.remove(old.id);
+          changed();
+        },
+      });
+    }
+
+    /** The number of photos can depend on the size (a set of 5 or of 9). */
+    function sync() {
+      const next = M().photoRequirement(p, sel);
+      const same = need && next.count === need.count;
+      need = next;
+      paintHead();
+      if (!same) mountTiles();
+      paintFit();
+    }
+
+    if (!preview && fit) {
+      const frame = $("[data-fit-frame]", fit);
+      let drag = null;
+      frame.addEventListener("pointerdown", (e) => {
+        const b = fitBox();
+        if (!b || !frame._fit || e.button > 0) return;
+        drag = { id: e.pointerId, x: e.clientX, y: e.clientY, left: frame._fit.left, top: frame._fit.top };
+        frame.setPointerCapture(e.pointerId);
+        frame.classList.add("is-dragging");
+        e.preventDefault();
+      });
+      frame.addEventListener("pointermove", (e) => {
+        const b = fitBox();
+        if (!drag || e.pointerId !== drag.id || !b) return;
+        const f = frame._fit;
+        b.photo.x = (f.W / 2 - (drag.left + e.clientX - drag.x)) / f.dw;
+        b.photo.y = (f.H / 2 - (drag.top + e.clientY - drag.y)) / f.dh;
+        paintFit();
+      });
+      const drop = (e) => {
+        if (!drag || e.pointerId !== drag.id) return;
+        drag = null;
+        frame.classList.remove("is-dragging");
+        save();
+      };
+      frame.addEventListener("pointerup", drop);
+      frame.addEventListener("pointercancel", drop);
+      // Arrow keys move the photo, + and - zoom, when the preview has focus.
+      frame.addEventListener("keydown", (e) => {
+        const b = fitBox();
+        if (!b) return;
+        const step = { ArrowLeft: [0.03, 0], ArrowRight: [-0.03, 0], ArrowUp: [0, 0.03], ArrowDown: [0, -0.03] }[e.key];
+        if (step) {
+          b.photo.x += step[0];
+          b.photo.y += step[1];
+        } else if (e.key === "+" || e.key === "=") b.photo.zoom = Math.min(3, b.photo.zoom + 0.1);
+        else if (e.key === "-") b.photo.zoom = Math.max(1, b.photo.zoom - 0.1);
+        else return;
+        e.preventDefault();
+        paintFit();
+        save();
+      });
+      $("[data-fit-zoom]", fit).addEventListener("input", (e) => {
+        const b = fitBox();
+        if (!b) return;
+        b.photo.zoom = Number(e.target.value) || 1;
+        paintFit();
+        save();
+      });
+      $("[data-fit-reset]", fit).addEventListener("click", () => {
+        const b = fitBox();
+        if (!b) return;
+        Object.assign(b.photo, { x: 0.5, y: 0.5, zoom: 1 });
+        paintFit();
+        save();
+      });
+      if ("ResizeObserver" in window) new ResizeObserver(() => paintFit()).observe($("[data-fit-stage]", fit));
+    }
+
+    sync();
+
+    // Photos chosen earlier in this tab come back from this browser's storage (only ones that can still be ordered).
+    const restored = preview
+      ? Promise.resolve()
+      : (async () => {
+          const saved = readSaved();
+          await Promise.all(
+            Object.entries(saved).map(async ([slot, s]) => {
+              if (!s || !s.id || !(await svc.has(s.id))) return;
+              const [url, known] = await Promise.all([svc.getUrl(s.id), svc.info(s.id)]);
+              if (!url || !known || chosen[slot]) return;
+              chosen[slot] = { id: s.id, url, width: known.width, height: known.height, x: Number(s.x) || 0.5, y: Number(s.y) || 0.5, zoom: Math.min(3, Math.max(1, Number(s.zoom) || 1)) };
+            }),
+          );
+          if (uploader) uploader.refresh();
+          paintHead();
+          paintFit();
+          onChange();
+          svc.limits().then(() => {
+            const el = $("[data-photos-formats]", box);
+            if (el) el.textContent = `JPG, PNG or WebP, up to ${svc.MAX_MB} MB each. 4K and other high-resolution photos are welcome.`;
+          });
+        })().catch((error) => console.error("Saved photos couldn't be restored", error));
+
+    return {
+      restored,
+      required: () => need.required,
+      set onChange(fn) {
+        onChange = fn;
+      },
+      sync,
+      firstPhotoId: () => (need.count === 1 && chosen[need.slots[0]] ? chosen[need.slots[0]].id : ""),
+      /** Every photo added? If not, say so in the customer's words and point at the empty tile. */
+      check() {
+        if (!need.required) return true;
+        const missing = need.slots.filter((slot) => !chosen[slot]);
+        if (!missing.length) return true;
+        showError(M().photoProblem(need.count, added()));
+        if (uploader) uploader.showMissing(missing, need.count > 1 ? "This photo is still needed." : "Add your photo here.");
+        else box.scrollIntoView({ block: "center" });
+        return false;
+      },
+      /** Log in if needed and send the originals. The preview copy is never what gets uploaded. */
+      async forOrder(reason) {
+        if (!need.required) return { ok: true, photos: null, thumbnail: "" };
+        const many = need.count > 1;
+        showError("");
+        const result = await svc.forOrder({
+          reason,
+          itemName: p.name,
+          photos: Object.fromEntries(need.slots.map((slot) => [slot, chosen[slot].id])),
+          onProgress: (percent) => showStatus(percent < 100 ? `Uploading your ${many ? "photos" : "photo"}… ${percent}%` : ""),
+        });
+        showStatus("");
+        if (uploader) uploader.refresh();
+        if (!result.ok) {
+          if (!result.cancelled) showError(result.message);
+          return result;
+        }
+        const placed = Boolean(fitBox());
+        return {
+          ok: true,
+          photos: Object.fromEntries(need.slots.map((slot) => [slot, { uploadId: result.uploadIds[slot], placement: placed ? { x: chosen[slot].x, y: chosen[slot].y, zoom: chosen[slot].zoom } : null }])),
+          thumbnail: await svc.thumbnail(chosen[need.slots[0]].id),
+        };
+      },
+      /** The server refused the photos after all (e.g. one was removed elsewhere): say why, here. */
+      refused: (message) => showError(message),
+      destroy() {
+        if (uploader) uploader.destroy();
+      },
+    };
   }
 
   /* ---------------------------------------------------------------- Page */
@@ -165,10 +499,12 @@
       S().views(p),
       S().specifications(p, ctx),
       S().customization(p, ctx),
+      S().personalization(p),
+      S().included(p),
       S().video(p),
       S().shop(p, shop),
       S().reviews(p),
-      S().delivery(),
+      S().delivery(p, shop),
     ].filter(Boolean);
     const navItems = sections.filter((s) => s.id !== "delivery");
 
@@ -179,8 +515,21 @@
       </div>
       ${navItems.length > 1 ? `<nav class="pp-nav" aria-label="Product sections"><ul>${navItems.map((s) => `<li><a href="#pp-${s.id}" data-nav="${s.id}">${esc(s.title)}</a></li>`).join("")}</ul></nav>` : ""}
       <div class="pp-sections">${sections.map((s) => s.html).join("")}</div>
-      ${preview ? "" : `<div class="pp-buybar" data-buybar aria-hidden="true"><div><strong data-price></strong><span>${esc(p.name)}</span></div><button class="btn btn--primary btn--sm" type="button" data-add tabindex="-1" ${stock(p)[0] === "out" ? "disabled" : ""}>Add to cart</button></div>`}
+      ${preview || (p.decor && p.decor.customPhoto && FrameX.decorUI) ? "" : `<div class="pp-buybar" data-buybar aria-hidden="true"><div><strong data-price></strong><span>${esc(p.name)}</span></div><button class="btn btn--primary btn--sm" type="button" data-add tabindex="-1" ${stock(p)[0] === "out" ? "disabled" : ""}>Add to cart</button>${stock(p)[0] === "out" ? "" : `<button class="btn btn--dark btn--sm" type="button" data-buy tabindex="-1">Buy Now</button>`}</div>`}
     </div>`;
+
+    // Reviews come from the backend, written by customers whose order of this product was delivered.
+    if (!preview && FrameX.http && FrameX.http.enabled() && !$("#pp-reviews", root))
+      FrameX.http
+        .get("/reviews", { targetType: "PRODUCT", targetId: p.id, limit: 10 })
+        .then((r) => {
+          if (!r.items.length || $("#pp-reviews", root)) return;
+          const made = S().reviews({ reviews: r.items.map((x) => ({ rating: x.rating, text: x.body || `Rated ${x.rating} out of 5.`, author: x.author })) });
+          const before = $("#pp-delivery", root);
+          if (made && before) before.insertAdjacentHTML("beforebegin", made.html);
+          else if (made) $(".pp-sections", root).insertAdjacentHTML("beforeend", made.html);
+        })
+        .catch(() => {});
 
     const gallery = FrameX.productGallery.mount($("[data-gallery]", root), {
       name: p.name,
@@ -188,8 +537,17 @@
       product360: p.product360,
     });
 
+    /* ---- the customer's own photos (products that are made from them) ---- */
+    const photos = mountPhotos(root, p, sel, { preview });
+    const studioLinks = () =>
+      $$("[data-customize]", root).forEach(
+        (a) => !preview && (a.href = S().studioUrl(p, sel, photos.firstPhotoId())),
+      );
+    photos.onChange = studioLinks; // a photo chosen here opens in FrameX Studio too
+
     /* ---- price + options ---- */
     function refresh() {
+      photos.sync(); // a set's size can change how many photos it needs
       const q = M().quote(p, sel);
       $$("[data-price]", root).forEach(
         (el) => (el.textContent = formatPrice(q.unit * sel.qty)),
@@ -245,8 +603,9 @@
       $$("[data-opt-value]", root).forEach(
         (el) => (el.textContent = values[el.dataset.optValue] || ""),
       );
-      $$("[data-customize]", root).forEach(
-        (a) => !preview && (a.href = S().studioUrl(p, sel)),
+      studioLinks();
+      $$("[data-decor-create]", root).forEach(
+        (a) => !preview && (a.href = FrameX.decorUI.studioUrl(p, sel)),
       );
       S().updateCompare(root, p, sel.sizeId);
     }
@@ -287,6 +646,7 @@
         return;
       }
       if (e.target.closest("[data-add]")) return addToCart();
+      if (e.target.closest("[data-buy]")) return buyNow();
       const custom = e.target.closest("[data-customize]");
       if (custom && preview) {
         e.preventDefault();
@@ -334,60 +694,88 @@
       next.click();
     });
 
-    function addToCart() {
-      if (stock(p)[0] === "out") return;
+    /* The page sends what was chosen (ids and a quantity). The backend checks
+       it against the catalogue, prices it and answers with the cart line.
+       A visitor who isn't logged in gets the login dialog first; their choice
+       stays on the page and is added as soon as they are in. */
+    const chosen = () => ({
+      productId: p.id,
+      quantity: sel.qty,
+      selection: {
+        sizeId: sel.sizeId,
+        colorId: sel.colorId,
+        printMaterialId: sel.printMaterialId,
+        protection: sel.protection,
+      },
+      note: ($("[data-note]", root).value || "").trim(),
+    });
+
+    /* "Buy Now": the same choice goes straight to checkout, for this item only.
+       The cart is not changed. A visitor who isn't logged in logs in first. */
+    let adding = false;
+    const hold = (selector, on) =>
+      $$(selector, root).forEach((b) =>
+        on ? b.setAttribute("aria-busy", "true") : b.removeAttribute("aria-busy"),
+      );
+
+    /* A product made from the customer's photo: every photo has to be added
+       first. Then the visitor logs in (if needed) and the ORIGINAL files are
+       uploaded; the order line carries their ids. The backend refuses the line
+       without them, whatever this page does. */
+    async function withPhotos(reason, item) {
+      if (!photos.required()) return item;
+      if (!photos.check()) return null;
+      const sent = await photos.forOrder(reason);
+      if (!sent.ok) return null;
+      return Object.assign(item, { photos: sent.photos, thumbnail: sent.thumbnail });
+    }
+
+    async function buyNow() {
+      if (adding || stock(p)[0] === "out") return;
+      if (preview) {
+        FrameX.toast.show(
+          "Preview: customers will order this product directly here.",
+        );
+        return;
+      }
+      adding = true;
+      hold("[data-buy]", true);
+      const item = await withPhotos("buy", chosen());
+      adding = false;
+      hold("[data-buy]", false);
+      if (item) FrameX.buyNow.start({ name: p.name, item });
+    }
+
+    async function addToCart() {
+      if (adding || stock(p)[0] === "out") return;
       if (preview) {
         FrameX.toast.show(
           "Preview: customers will add this product to their cart here.",
         );
         return;
       }
-      const q = M().quote(p, sel);
-      const size = (p.sizes || []).find((s) => s.id === sel.sizeId);
-      const sizeLabel = size
-        ? size.label && M().sizeDims(size) && size.label !== M().sizeDims(size)
-          ? `${size.label} (${M().sizeDims(size)})`
-          : size.label || M().sizeDims(size)
-        : null;
-      const colors = (p.frame.colors || []).length;
-      const options = q.lines.slice(1).map((l) => `${l.label}: ${l.detail}`);
-      const pm = (p.print.materials || []).find(
-        (m) => m.id === sel.printMaterialId,
-      );
-      if (
-        pm &&
-        !q.lines.some((l) => l.key === "print") &&
-        (p.print.materials || []).length > 1
-      )
-        options.push(`Print: ${pm.name}`);
-      const cover = M()
-        .protectionOptions(p)
-        .find((c) => c.id === sel.protection);
-      if (
-        cover &&
-        !q.lines.some((l) => l.key === "protection") &&
-        M().protectionOptions(p).length > 1
-      )
-        options.push(`Front cover: ${cover.name}`);
-      FrameX.cart.add(
-        Object.assign({}, p, { shopName: shop ? shop.name : p.shopName }),
-        {
-          sizeId: sel.sizeId,
-          size: sizeLabel,
-          color: colors > 1 && sel.colorId ? M().colorName(sel.colorId) : null,
-          qty: sel.qty,
-          note: ($("[data-note]", root).value || "").trim(),
-          options,
-          unitPrice: q.unit,
-        },
-      );
+      const qty = sel.qty;
+      adding = true;
+      hold("[data-add]", true);
+      const item = await withPhotos("add", chosen());
+      const result = item
+        ? await FrameX.cart.add(Object.assign({ name: p.name }, item))
+        : { ok: false, cancelled: true };
+      adding = false;
+      hold("[data-add]", false);
       const box = $("[data-feedback]", root);
+      if (!result.ok) {
+        box.classList.remove("is-visible");
+        // The server's own words about the photos belong next to the photos.
+        if (result.code === "PHOTOS_REQUIRED") photos.refused(result.message);
+        else FrameX.cart.announce(result);
+        return;
+      }
+      const size = result.item && result.item.size;
       $("span", box).textContent =
-        `${sel.qty} × ${p.name}${sizeLabel ? ` (${sizeLabel})` : ""} added to your cart.`;
+        `${qty} × ${p.name}${size ? ` (${size})` : ""} added to your cart.`;
       box.classList.add("is-visible");
-      FrameX.toast.show("Added to cart.", {
-        action: { label: "View cart", onClick: () => FrameX.cartDrawer.open() },
-      });
+      FrameX.cart.announce(result, "Added to cart.");
     }
 
     /* ---- behaviour: sections, scroll spy, mobile buy bar ---- */
@@ -425,7 +813,7 @@
           const show = !en.isIntersecting && en.boundingClientRect.top < 0;
           bar.classList.toggle("is-visible", show);
           bar.setAttribute("aria-hidden", String(!show));
-          $("[data-add]", bar).tabIndex = show ? 0 : -1;
+          $$("button", bar).forEach((b) => (b.tabIndex = show ? 0 : -1));
         });
         watch.observe(main);
         io.push(watch);
@@ -438,6 +826,7 @@
       destroy() {
         io.forEach((o) => o.disconnect());
         gallery.destroy();
+        photos.destroy();
         root.innerHTML = "";
       },
     };
@@ -540,16 +929,18 @@
     if (!box) return;
     $("#related-section").hidden = false;
     try {
+      const wallArt = Boolean(p.decor && FrameX.decorUI);
       const { items } = await FrameX.api.getProducts({
-        category: p.category,
-        limit: 12,
+        category: wallArt ? "hd-" + p.decor.collection : p.category,
+        limit: wallArt ? 60 : 12,
       });
       const related = items
-        .filter((x) => x.id !== p.id)
+        .filter((x) => x.id !== p.id && (!wallArt || !x.decor.customPhoto))
         .sort((a, b) => (b.shopId === p.shopId) - (a.shopId === p.shopId))
         .slice(0, 4);
+      if (wallArt) FrameX.decorUI.wire();
       box.innerHTML = related.length
-        ? related.map(FrameX.templates.productCard).join("")
+        ? related.map(wallArt ? FrameX.decorUI.card : FrameX.templates.productCard).join("")
         : `<div class="state-message"><strong>No related frames yet</strong><a class="btn btn--outline btn--sm" href="shop.html">Browse all frames</a></div>`;
     } catch (error) {
       console.error("Related products failed", error);
@@ -606,6 +997,28 @@
       );
 
     $("#pdp-crumb-name").textContent = product.name;
+    if (product.decor && FrameX.decorUI) {
+      const ui = FrameX.decorUI;
+      const shopCrumb = $('.page-banner__crumbs a[href="shop.html"]');
+      if (shopCrumb) {
+        shopCrumb.href = ui.PAGE;
+        shopCrumb.textContent = "Home Decor";
+        shopCrumb.insertAdjacentHTML(
+          "afterend",
+          ` <span aria-hidden="true">/</span> <a href="${ui.collectionUrl(product.decor.collection)}">${esc(ui.collectionName(product.decor.collection))}</a>`,
+        );
+      }
+      $$(".primary-nav__list a").forEach((a) =>
+        a.getAttribute("href") === ui.PAGE
+          ? a.setAttribute("aria-current", "page")
+          : a.removeAttribute("aria-current"),
+      );
+      const more = $("#related-section .section-head a");
+      if (more) {
+        more.href = ui.collectionUrl(product.decor.collection);
+        more.firstChild.textContent = `More ${ui.collectionName(product.decor.collection)} `;
+      }
+    }
     if (previewId) {
       root.insertAdjacentHTML(
         "beforebegin",
@@ -615,6 +1028,11 @@
     } else applySeo(product, shop, categories);
 
     render(root, product, shop, { preview: Boolean(previewId), categories });
+    // A card's "Add Your Photo" opens the page at the photo step (it exists only now, so the browser couldn't jump to it).
+    if (location.hash === "#your-photo") {
+      const step = $("#your-photo", root);
+      if (step) step.scrollIntoView({ block: "center" });
+    }
     if (!previewId) loadRelated(product);
   }
 

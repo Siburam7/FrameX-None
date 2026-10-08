@@ -160,51 +160,14 @@ button.tpl-slot__empty:hover {
   white-space: nowrap;
 }
 
-/* Template card ------------------------------------------------------------------ */
-.tpl-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-@media (min-width: 700px) {
-  .tpl-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 20px;
-  }
-}
-
-@media (min-width: 1100px) {
-  .tpl-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 24px;
-  }
-}
-
-.tpl-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--line-warm);
-  border-radius: var(--radius-lg);
-  background: var(--ivory);
-  overflow: hidden;
-  transition:
-    box-shadow 400ms var(--ease-out),
-    transform 400ms var(--ease-out);
-}
-
+/* Template card: the shared .product-card; this is only its picture area -------------
+   (the design keeps its own shape on a warm mat) */
 .tpl-card__media {
-  position: relative;
   display: grid;
   place-items: center;
-  aspect-ratio: 1 / 1;
   padding: clamp(12px, 3vw, 22px);
-  background: var(--beige);
-  overflow: hidden;
 }
 
-/* The design keeps its own shape inside the square card area */
 .tpl-card__media .tpl-canvas,
 .tpl-card__media > img {
   max-height: 100%;
@@ -224,29 +187,6 @@ button.tpl-slot__empty:hover {
   box-shadow: 0 10px 22px -12px rgba(74, 52, 28, 0.45);
 }
 
-.tpl-badge {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  background: var(--ivory);
-  color: var(--charcoal);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  box-shadow: 0 2px 6px rgba(43, 43, 43, 0.12);
-}
-
-.tpl-badge .icon {
-  width: 12px;
-  height: 12px;
-}
-
 .tpl-badge--trending .icon {
   color: var(--amber);
 }
@@ -255,119 +195,13 @@ button.tpl-slot__empty:hover {
   color: var(--rose-soft);
 }
 
-.tpl-badge--new {
-  background: var(--charcoal);
-  color: var(--champagne);
-}
-
-.tpl-card__body {
-  display: grid;
-  gap: 4px;
-  padding: 12px clamp(12px, 2vw, 16px) 14px;
-}
-
-.tpl-card__meta {
-  color: var(--taupe);
-  font-size: var(--text-xs);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
-.tpl-card__title {
-  font-family: var(--font-display);
-  font-size: clamp(0.95rem, 0.9rem + 0.25vw, 1.08rem);
-  font-weight: 600;
-  line-height: 1.3;
-}
-
-/* Whole card opens the template; the Customize button sits above that link */
-.tpl-card__title a::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-}
-
-.tpl-card__foot {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 6px;
-}
-
-.tpl-card__price {
-  color: var(--taupe);
-  font-size: var(--text-xs);
-}
-
-.tpl-card__price strong {
-  color: var(--charcoal);
-  font-size: var(--text-sm);
-}
-
-.tpl-card__cta {
-  position: relative;
-  z-index: 2;
-  min-height: 40px;
-  padding-inline: 16px;
-}
-
-@media (max-width: 420px) {
-  .tpl-card__cta {
-    width: 100%;
-  }
-}
-
 @media (hover: hover) {
-  .tpl-card:hover {
-    box-shadow: 0 22px 40px -22px rgba(74, 52, 28, 0.55);
-    transform: translateY(-3px);
-  }
-
   .tpl-card:hover .tpl-card__media .tpl-canvas {
     transform: scale(1.03);
   }
 }
 
-.tpl-card:focus-within {
-  box-shadow: var(--focus-ring);
-}
-
-/* Home page row: swipes sideways on small screens */
-@media (max-width: 1099px) {
-  .tpl-grid--rail {
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: 62%;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scroll-snap-type: x mandatory;
-    scrollbar-width: none;
-    padding-bottom: 8px;
-  }
-
-  .tpl-grid--rail::-webkit-scrollbar {
-    display: none;
-  }
-
-  .tpl-grid--rail > * {
-    scroll-snap-align: start;
-  }
-}
-
-@media (min-width: 640px) and (max-width: 1099px) {
-  .tpl-grid--rail {
-    grid-auto-columns: calc((100% - 40px) / 3);
-  }
-}
-
 /* Browse page ----------------------------------------------------------------------- */
-.tpl-banner {
-  background: linear-gradient(180deg, var(--cream), var(--ivory));
-}
-
 .tpl-browse {
   padding-top: clamp(24px, 4vw, 40px);
 }
@@ -537,12 +371,6 @@ button.tpl-slot__empty:hover {
   margin-top: clamp(36px, 6vw, 64px);
 }
 
-.tpl-saved__title {
-  font-family: var(--font-display);
-  font-size: var(--text-h3);
-  font-weight: 600;
-}
-
 .tpl-saved__lead {
   margin: 4px 0 16px;
   color: var(--taupe);
@@ -594,12 +422,6 @@ button.tpl-slot__empty:hover {
   border: 1px solid var(--line-warm);
   border-radius: var(--radius-xl);
   background: var(--ivory);
-}
-
-.tpl-how__title {
-  font-family: var(--font-display);
-  font-size: var(--text-h3);
-  font-weight: 600;
 }
 
 .tpl-how__lead {
@@ -694,13 +516,6 @@ button.tpl-slot__empty:hover {
   align-content: start;
 }
 
-.tpl-info__title {
-  font-family: var(--font-display);
-  font-size: clamp(1.7rem, 1.3rem + 1.6vw, 2.4rem);
-  font-weight: 600;
-  line-height: 1.15;
-}
-
 .tpl-info__desc {
   max-width: 54ch;
   color: var(--umber);
@@ -708,11 +523,6 @@ button.tpl-slot__empty:hover {
 
 .tpl-info__price {
   color: var(--taupe);
-}
-
-.tpl-info__price strong {
-  color: var(--charcoal);
-  font-size: 1.5rem;
 }
 
 .tpl-info__facts {
@@ -843,13 +653,6 @@ button.tpl-slot__empty:hover {
   gap: 18px;
 }
 
-.tpl-custom__title {
-  font-family: var(--font-display);
-  font-size: clamp(1.5rem, 1.2rem + 1.2vw, 2.1rem);
-  font-weight: 600;
-  line-height: 1.15;
-}
-
 .tpl-custom__price {
   margin-top: 4px;
   color: var(--taupe);
@@ -915,149 +718,7 @@ button.tpl-slot__empty:hover {
   line-height: 1.55;
 }
 
-/* Photo uploader */
-.uploader {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
-  gap: 10px;
-}
-
-.uploader__tile {
-  position: relative;
-  display: grid;
-  gap: 6px;
-  padding: 8px;
-  border: 1px dashed rgba(112, 69, 41, 0.35);
-  border-radius: var(--radius-md);
-  background: var(--white);
-  transition:
-    border-color var(--dur-base) var(--ease-out),
-    background-color var(--dur-base) var(--ease-out);
-}
-
-.uploader__tile.has-photo {
-  border-style: solid;
-  border-color: var(--line-warm);
-}
-
-.uploader__tile.is-dragover {
-  border-color: var(--amber);
-  background: var(--champagne);
-}
-
-.uploader__tile.is-missing {
-  border-color: var(--danger);
-}
-
-.uploader__tile:focus-within {
-  box-shadow: var(--focus-ring);
-}
-
-.uploader__drop {
-  display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  min-height: 56px;
-  cursor: pointer;
-}
-
-.uploader__thumb {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-sm);
-  background: var(--beige);
-  overflow: hidden;
-}
-
-.uploader__thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.uploader__text {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-  font-size: var(--text-sm);
-}
-
-.uploader__hint {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--taupe);
-  font-size: var(--text-xs);
-}
-
-.uploader__hint .icon {
-  width: 14px;
-  height: 14px;
-}
-
-.uploader__tile.has-photo .uploader__hint {
-  color: var(--success);
-}
-
-.uploader__progress {
-  height: 4px;
-  border-radius: 4px;
-  background: var(--beige);
-  overflow: hidden;
-}
-
-.uploader__progress span {
-  display: block;
-  width: 0;
-  height: 100%;
-  background: var(--gold-muted);
-  transition: width 200ms var(--ease-out);
-}
-
-.uploader__msg {
-  overflow: hidden;
-  color: var(--taupe);
-  font-size: 11px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.uploader__msg:empty {
-  display: none;
-}
-
-.uploader__msg--error {
-  color: var(--danger);
-  white-space: normal;
-}
-
-.uploader__actions {
-  display: flex;
-  gap: 4px;
-}
-
-.uploader__actions[hidden] {
-  display: none;
-}
-
-.uploader__action {
-  display: inline-flex;
-  align-items: center;
-  min-height: 36px;
-  padding: 0 10px;
-  border-radius: var(--radius-pill);
-  color: var(--brown-deep);
-  font-size: var(--text-xs);
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.uploader__action:hover {
-  background: var(--champagne);
-}
+/* The photo uploader tiles are shared components now: see components.css. */
 
 /* Text fields */
 .text-fields {

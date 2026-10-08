@@ -72,7 +72,7 @@
   }
 
   /** Where each role lands after logging in. */
-  const HOME = { CUSTOMER: "shop.html", SHOP: "shop-dashboard.html", ADMIN: "admin.html" };
+  const HOME = { CUSTOMER: "shop.html", SHOP: "shop-dashboard.html", ADMIN: "admin.html", ARTIST: "artist-dashboard.html" };
   const homeFor = (role) => HOME[role] || "index.html";
 
   /** Only same-site page names are accepted as a "next" address (no open redirects). */

@@ -1,9 +1,18 @@
 /* ==========================================================================
    FrameX — Components
-   Reusable building blocks. Section-specific layout lives in the other files.
+   The shared building blocks of the design system: buttons, chips, badges,
+   form controls, the page hero, collection card, product card and grid,
+   feature-card shell, panel shell, closing panel, shop card.
+   Their look comes from Home Decor, the visual reference for the whole site.
+   Page files only add layout that is really their own.
    ========================================================================== */
 
-/* Buttons ------------------------------------------------------------------ */
+/* Buttons ------------------------------------------------------------------
+   Primary   .btn--primary   the main action of a screen (amber)
+   Secondary .btn--dark      the main action of a card or a quieter screen (ink)
+   Outline   .btn--outline   the second action beside one of the above
+   Ghost     .btn--ghost     a low-key action inside a busy area
+   On dark surfaces: .btn--light (solid) and .btn--outline-dark (outline). */
 .btn {
   position: relative;
   display: inline-flex;
@@ -68,12 +77,12 @@
 }
 
 .btn--dark:hover:not(:disabled) {
-  background: #14182e;
+  background: #162a5c;
   box-shadow: 0 8px 22px rgba(5, 8, 22, 0.25);
 }
 
 .btn--outline-dark {
-  /* Outline button used over dark imagery (hero) */
+  /* Outline button used over pictures */
   background: rgba(5, 8, 22, 0.55);
   border-color: var(--mist);
   color: var(--mist);
@@ -96,34 +105,22 @@
   border-color: var(--ink);
 }
 
-.btn--rose {
-  background: var(--rose);
-  color: var(--white);
-  border-radius: var(--radius-sm);
+.btn--ghost {
+  color: var(--ink);
 }
 
-.btn--rose:hover {
-  background: #d61f50;
-}
-
-.btn--brown {
-  background: var(--brown);
-  color: var(--white);
-  border-color: #e8d2af;
-  border-radius: var(--radius-md);
-}
-
-.btn--brown:hover {
-  background: var(--brown-deep);
+.btn--ghost:hover:not(:disabled) {
+  background: var(--stone-soft);
 }
 
 .btn--light {
+  border-color: var(--line);
   background: var(--white);
   color: var(--ink);
 }
 
 .btn--light:hover {
-  background: var(--stone);
+  border-color: var(--ink);
 }
 
 /* Round icon button ---------------------------------------------------------- */
@@ -189,6 +186,41 @@
   color: var(--white);
 }
 
+.chip small {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.chip[aria-pressed="true"] small,
+.chip.is-active small {
+  color: var(--mist);
+}
+
+/* A row of chips that scrolls sideways on small screens */
+.chip-scroll {
+  display: flex;
+  gap: var(--space-sm);
+  padding-bottom: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chip-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.chip-scroll > * {
+  flex: none;
+}
+
+@media (min-width: 900px) {
+  .chip-scroll--wrap {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+}
+
 /* Small status pills -------------------------------------------------------- */
 .badge {
   display: inline-flex;
@@ -212,6 +244,18 @@
   background: rgba(5, 8, 22, 0.78);
   color: var(--white);
   backdrop-filter: blur(6px);
+}
+
+/* On a picture: dark glass, or the accent for a piece made from the customer's photo */
+.badge--dark {
+  background: rgba(5, 8, 22, 0.82);
+  color: var(--white);
+  backdrop-filter: blur(6px);
+}
+
+.badge--accent {
+  background: var(--amber-strong);
+  color: var(--white);
 }
 
 .badge--open {
@@ -323,25 +367,6 @@
   outline-offset: 3px;
 }
 
-/* Price ------------------------------------------------------------------- */
-.price {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 8px;
-}
-
-.price__now {
-  font-size: 1.1rem;
-  font-weight: 800;
-}
-
-.price__was {
-  color: var(--rose-soft);
-  font-size: var(--text-sm);
-  text-decoration: line-through;
-}
-
 /* Quantity stepper --------------------------------------------------------- */
 .qty {
   display: inline-flex;
@@ -394,144 +419,619 @@
 }
 
 /* ==========================================================================
-   Product card
+   Page hero
+   The light band that opens a page: breadcrumb, small label, headline, lead,
+   actions, and optionally a few facts and a wall of framed pieces.
    ========================================================================== */
+.page-hero {
+  position: relative;
+  isolation: isolate;
+  padding-top: calc(var(--header-h) + var(--hero-pad-top));
+  padding-bottom: var(--hero-pad-bottom);
+  background: var(--surface-gradient);
+  color: var(--ink);
+  overflow: hidden;
+}
+
+/* Two soft lights behind everything, drifting slowly */
+.page-hero::before,
+.page-hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: min(70vw, 760px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  filter: blur(40px);
+  pointer-events: none;
+}
+
+.page-hero::before {
+  top: -30%;
+  right: -10%;
+  background: radial-gradient(closest-side, var(--hero-glow, rgba(234, 120, 14, 0.14)), transparent);
+  animation: hero-drift 16s ease-in-out infinite alternate;
+}
+
+.page-hero::after {
+  bottom: -45%;
+  left: -15%;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, 0.7), transparent);
+  animation: hero-drift 20s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes hero-drift {
+  from {
+    transform: translate3d(-4%, -3%, 0) scale(1);
+  }
+
+  to {
+    transform: translate3d(6%, 5%, 0) scale(1.15);
+  }
+}
+
+.page-hero__grid {
+  display: grid;
+  gap: clamp(28px, 5vw, 64px);
+  align-items: center;
+}
+
+.page-hero__crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 18px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+/* A comfortable tap area; the padding of an inline link does not move anything */
+.page-hero__crumbs a,
+.was__crumbs a {
+  padding-block: 11px;
+}
+
+.page-hero__crumbs a:hover {
+  text-decoration: underline;
+}
+
+.page-hero__crumbs [aria-current] {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.page-hero .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--white);
+  color: var(--accent);
+  letter-spacing: 0.14em;
+}
+
+.page-hero .eyebrow::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--amber);
+  box-shadow: 0 0 0 4px rgba(234, 120, 14, 0.18);
+}
+
+.page-hero__title {
+  font-family: var(--font-display);
+  font-size: var(--text-h1);
+  font-weight: var(--weight-h1);
+  line-height: var(--leading-h1);
+  letter-spacing: var(--tracking-h1);
+  text-wrap: balance;
+}
+
+.page-hero__title span {
+  background: var(--text-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.page-hero__lead {
+  max-width: 54ch;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: var(--text-lg);
+  font-weight: 400;
+  line-height: 1.65;
+}
+
+.page-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.page-hero__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 28px;
+  margin-top: 30px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.page-hero__facts dd {
+  margin: 0;
+}
+
+.page-hero__facts strong {
+  display: block;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Three framed pieces, slightly fanned */
+.page-hero__wall {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(8px, 1.6vw, 18px);
+  align-items: center;
+}
+
+.page-hero__piece {
+  position: relative;
+  display: block;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid rgba(5, 8, 22, 0.06);
+  box-shadow: 0 26px 50px -22px rgba(5, 8, 22, 0.4);
+  aspect-ratio: 4 / 5;
+  background: var(--stone-soft);
+  transition:
+    transform var(--dur-slow) var(--ease-out),
+    box-shadow var(--dur-slow) var(--ease-out);
+  animation: piece-float var(--float-time, 6s) ease-in-out var(--float-delay, 0s) infinite;
+}
+
+/* A page's own hero: the pictures drop into place one after another.
+   (The home page's rotating hero times its own arrival, per slide.) */
+.page-hero:not(.home-hero) .page-hero__piece {
+  animation:
+    piece-in 900ms var(--ease-spring) var(--in-delay, 0s) backwards,
+    piece-float var(--float-time, 6s) ease-in-out var(--float-delay, 0s) infinite;
+}
+
+.page-hero__piece:nth-child(1) {
+  transform: translateY(18px) rotate(-3deg);
+  --in-turn: -12deg;
+  --in-delay: 120ms;
+  --float-time: 6.5s;
+}
+
+.page-hero__piece:nth-child(2) {
+  transform: translateY(-10px);
+  z-index: 1;
+  --in-turn: 0deg;
+  --in-delay: 260ms;
+  --float-time: 5.5s;
+  --float-delay: -2s;
+}
+
+.page-hero__piece:nth-child(3) {
+  transform: translateY(22px) rotate(3deg);
+  --in-turn: 12deg;
+  --in-delay: 400ms;
+  --float-time: 7s;
+  --float-delay: -4s;
+}
+
+/* A band of light crossing the glass now and then */
+.page-hero__piece::after {
+  content: "";
+  position: absolute;
+  inset: -20% -60%;
+  background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.34) 50%, transparent 58%);
+  translate: -100% 0;
+  pointer-events: none;
+  animation: piece-shine 7s ease-in-out calc(var(--in-delay, 0s) * 4 + 1.4s) infinite;
+}
+
+@keyframes piece-in {
+  from {
+    opacity: 0;
+    scale: 0.82;
+    rotate: var(--in-turn, 0deg);
+  }
+}
+
+@keyframes piece-float {
+  50% {
+    translate: 0 -12px;
+  }
+}
+
+@keyframes piece-shine {
+  0% {
+    translate: -100% 0;
+  }
+
+  22%,
+  100% {
+    translate: 100% 0;
+  }
+}
+
+.page-hero__piece img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (hover: hover) {
+  .page-hero__piece:hover {
+    transform: translateY(-8px) scale(1.04);
+    box-shadow: 0 36px 60px -22px rgba(5, 8, 22, 0.5);
+    animation-play-state: paused;
+    z-index: 2;
+  }
+}
+
+@media (min-width: 900px) {
+  .page-hero__grid {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  }
+}
+
+/* ==========================================================================
+   Collection card
+   A picture with its name over a dark fade: wall-art collections, frame
+   categories. Sits in .collection-grid.
+   ========================================================================== */
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.collection-card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: flex-end;
+  min-height: clamp(190px, 30vw, 300px);
+  padding: clamp(14px, 2vw, 22px);
+  border-radius: var(--radius-lg);
+  color: var(--white);
+  overflow: hidden;
+  text-align: left;
+  background: var(--ink);
+}
+
+.collection-card img {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 22%;
+  transition: transform 900ms var(--ease-out);
+}
+
+.collection-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(2, 3, 10, 0) 22%, rgba(2, 3, 10, 0.72) 62%, rgba(2, 3, 10, 0.94));
+}
+
+.collection-card__name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1.05rem, 0.9rem + 0.8vw, 1.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.collection-card__blurb {
+  display: none;
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: var(--text-sm);
+}
+
+.collection-card__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--champagne);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.collection-card__count .icon {
+  transition: transform var(--dur-base) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .collection-card:hover img {
+    transform: scale(1.06);
+  }
+
+  .collection-card:hover .collection-card__count .icon {
+    transform: translateX(4px);
+  }
+}
+
+@media (min-width: 640px) {
+  .collection-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .collection-card__blurb {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-hero__piece,
+  .collection-card img {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   Product card
+   One card for every product on the site (photo frames, wall art, related
+   products). Rendered by templates.productCard (frames) and decorUI.card
+   (wall art). The grid that holds them is .product-grid.
+   ========================================================================== */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--grid-gap);
+}
+
+@media (min-width: 640px) {
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1000px) {
+  .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Wide screens: a fifth column, so cards do not grow oversized */
+@media (min-width: 1800px) {
+  .product-grid:not(.product-grid--rail):not(.product-grid--related) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/* A short row of cards: swipes sideways below the desktop layout instead of wrapping */
+@media (max-width: 999px) {
+  .product-grid--rail {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 62%;
+    padding-bottom: 8px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .product-grid--rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .product-grid--rail > * {
+    scroll-snap-align: start;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 999px) {
+  .product-grid--rail {
+    grid-auto-columns: calc((100% - 2 * var(--grid-gap)) / 3);
+  }
+}
+
+/* Four related products: two by two until there is room for a row of four */
+@media (max-width: 999px) {
+  .product-grid--related {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .product-card {
   position: relative;
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--stone);
+  background: var(--white);
+  color: var(--ink);
   overflow: hidden;
   transition:
     transform var(--dur-base) var(--ease-out),
-    box-shadow var(--dur-base) var(--ease-out);
+    box-shadow var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
 }
 
 .product-card__media {
   position: relative;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 4 / 5;
+  background: var(--beige);
   overflow: hidden;
-  background: var(--stone-soft);
 }
 
-.product-card__media::after {
-  /* thin inner keyline, as in the Original */
-  content: "";
-  position: absolute;
-  inset: 0;
-  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.35);
-  pointer-events: none;
-}
-
-.product-card__image {
+.product-card__media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 700ms var(--ease-out);
+  transition: transform 800ms var(--ease-out);
 }
 
 .product-card__open {
   position: absolute;
   inset: 0;
   z-index: 1;
-  border-radius: inherit;
 }
 
 .product-card__badges {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 8px;
+  left: 8px;
   z-index: 2;
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  max-width: calc(100% - 60px);
   pointer-events: none;
 }
 
 .product-card__wish {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 4px;
+  right: 4px;
   z-index: 2;
 }
 
 .product-card__body {
   display: grid;
-  gap: 4px;
-  padding: 14px 14px 10px;
+  gap: var(--space-xs);
+  padding: var(--card-pad) var(--card-pad) var(--space-sm);
+}
+
+/* Uppercase label above the name: the collection (wall art) or the shop (frames) */
+.product-card__cat {
+  color: var(--gold-muted);
+  font-size: var(--text-label);
+  font-weight: var(--weight-strong);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .product-card__title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  line-height: 1.35;
   display: -webkit-box;
+  min-height: 2.6em;
+  font-size: var(--text-card);
+  font-weight: var(--weight-strong);
+  line-height: 1.3;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: 2.7em;
 }
 
-.product-card__shop {
-  display: flex;
+.product-card__title a:hover {
+  text-decoration: underline;
+}
+
+.product-card__rating {
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   color: var(--muted);
   font-size: var(--text-xs);
 }
 
-.product-card__foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: auto;
-  padding: 10px 14px 14px;
-  border-top: 1px solid rgba(8, 35, 52, 0.12);
-  color: var(--muted);
-  font-size: var(--text-xs);
+.product-card__rating .icon {
+  width: 14px;
+  height: 14px;
+  color: var(--star);
 }
 
-.product-card__stock--low {
+.product-card__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin-top: 2px;
+}
+
+.product-card__price strong {
+  font-family: var(--font-display);
+  font-size: var(--text-price);
+  font-weight: var(--weight-strong);
+}
+
+.product-card__price s,
+.product-card__price span {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+.product-card__price em {
   color: var(--wine);
-  font-weight: 700;
-}
-
-.product-card__stock--out {
-  color: var(--muted);
-  font-weight: 700;
-}
-
-.product-card__add {
-  position: relative;
-  z-index: 2;
-}
-
-/* Secondary action under the card footer (try your own photo / quick add) */
-.product-card__extra {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 44px;
-  padding: 6px 12px;
-  border-top: 1px solid rgba(8, 35, 52, 0.12);
-  color: var(--brown-deep);
   font-size: var(--text-xs);
-  font-weight: 700;
-  text-align: center;
-  transition: background-color var(--dur-base) var(--ease-out);
+  font-style: normal;
+  font-weight: var(--weight-strong);
 }
 
-.product-card__extra:hover {
-  background: var(--champagne);
+/* Sizes, colours, stock: one quiet line */
+.product-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  color: var(--muted);
+  font-size: var(--text-xs);
 }
 
-.product-card.is-unavailable .product-card__image {
+.product-card__meta b {
+  color: var(--wine);
+  font-weight: var(--weight-strong);
+}
+
+.swatch-dot-row {
+  display: inline-flex;
+  gap: 5px;
+}
+
+.swatch-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: 0 0 0 1px rgba(5, 8, 22, 0.15);
+}
+
+.product-card__actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* a long label never widens the card */
+  gap: 6px;
+  margin-top: auto;
+  padding: 6px var(--card-pad) var(--card-pad);
+}
+
+.product-card__actions .btn {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  min-height: 40px;
+  padding-inline: 8px;
+  font-size: 0.8125rem;
+}
+
+.product-card.is-unavailable .product-card__media img {
   filter: grayscale(0.85);
   opacity: 0.75;
 }
@@ -539,12 +1039,148 @@
 @media (hover: hover) {
   .product-card:hover {
     transform: translateY(-4px);
+    border-color: transparent;
     box-shadow: var(--shadow-lift);
   }
 
-  .product-card:hover .product-card__image {
-    transform: scale(1.06);
+  .product-card:hover .product-card__media img {
+    transform: scale(1.05);
   }
+}
+
+/* The narrowest phones: two cards a row leaves room for the words only */
+@media (max-width: 359px) {
+  .product-card__actions .btn .icon {
+    display: none;
+  }
+}
+
+@media (min-width: 1200px) {
+  .product-card__actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .product-card__actions > :only-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-card,
+  .product-card__media img {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   Feature card
+   The shell every other card shares with the product card: white, a hairline
+   border, the card radius. Each card adds its own layout in its own file.
+   ========================================================================== */
+.service-card,
+.method-card,
+.how-step,
+.journey__step,
+.review-card,
+.community-card,
+.cg-card,
+.shop-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--white);
+}
+
+/* Cards that lead somewhere lift the same way the product card does */
+.service-card,
+.method-card,
+.shop-card {
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .service-card:hover,
+  .method-card:hover,
+  .shop-card:hover {
+    transform: translateY(-4px);
+    border-color: transparent;
+    box-shadow: var(--shadow-lift);
+  }
+}
+
+/* Round icon tile at the top of a feature card or beside a short fact */
+.service-card__icon,
+.method-card__icon,
+.trust__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--champagne);
+  color: var(--brown-deep);
+}
+
+/* ==========================================================================
+   Panel
+   A white box on a warm task screen: the wall-art customiser, FrameX Studio,
+   checkout, orders and the account all use this one shell.
+   ========================================================================== */
+.was-card,
+.fs-config,
+.sc-section,
+.fs-price,
+.co-card,
+.od-row,
+.od-hero,
+.od-summary,
+.account-card {
+  border: 1px solid var(--line-warm);
+  border-radius: var(--radius-md);
+  background: var(--white);
+}
+
+/* ==========================================================================
+   Closing panel
+   The soft box that ends a page with one or two actions.
+   ========================================================================== */
+.final-cta {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding: clamp(40px, 7vw, 72px) clamp(20px, 5vw, 48px);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--line);
+  background:
+    radial-gradient(90% 120% at 85% 0%, rgba(234, 120, 14, 0.08), transparent 60%),
+    var(--surface-soft);
+  color: var(--ink);
+  text-align: center;
+}
+
+.final-cta__title {
+  max-width: 20ch;
+}
+
+.final-cta__text {
+  max-width: 48ch;
+  color: var(--muted);
+}
+
+.final-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+.final-cta .story-credit,
+.final-cta .story-credit strong {
+  color: var(--muted);
 }
 
 /* ==========================================================================
@@ -553,13 +1189,7 @@
 .shop-card {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--white);
   overflow: hidden;
-  transition:
-    transform var(--dur-base) var(--ease-out),
-    box-shadow var(--dur-base) var(--ease-out);
 }
 
 .shop-card__cover {
@@ -615,12 +1245,6 @@
   object-fit: cover;
 }
 
-.shop-card__name {
-  font-family: var(--font-display);
-  font-size: 1.15rem;
-  font-weight: 600;
-}
-
 .shop-card__address {
   display: flex;
   gap: 6px;
@@ -653,11 +1277,6 @@
 }
 
 @media (hover: hover) {
-  .shop-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lift);
-  }
-
   .shop-card:hover .shop-card__cover img {
     transform: scale(1.05);
   }
@@ -671,58 +1290,297 @@
 
 .skeleton-card--shop {
   aspect-ratio: 4 / 3.2;
-  border-radius: var(--radius-lg);
 }
 
-/* Added by product-card description / colour / size-note (Step 1) ------------------- */
-.product-card__desc {
-  color: var(--muted);
-  font-size: var(--text-xs);
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+/* Customer photo tiles ----------------------------------------------------------
+   One tile per photo a product needs ("Photo 1", "Photo 2", …): the product
+   page, FrameX Studio and templates all use these (ui/photo-uploader.js). */
+.uploader {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 10px;
+}
+
+.uploader--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.uploader__tile {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px dashed rgba(112, 69, 41, 0.35);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  transition:
+    border-color var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out);
+}
+
+.uploader__tile.has-photo {
+  border-style: solid;
+  border-color: var(--line-warm);
+}
+
+.uploader__tile.is-dragover {
+  border-color: var(--amber);
+  background: var(--champagne);
+}
+
+.uploader__tile.is-missing {
+  border-color: var(--danger);
+  background: #fdf3f2;
+}
+
+.uploader__tile:focus-within {
+  box-shadow: var(--focus-ring);
+}
+
+.uploader__drop {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  cursor: pointer;
+}
+
+.uploader__thumb {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  background: var(--beige);
+  color: var(--gold-muted);
   overflow: hidden;
 }
 
-.product-card__colors {
+.uploader__thumb .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.uploader__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.uploader__thumb img:not([hidden]) + .icon {
+  display: none;
+}
+
+.uploader__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--text-sm);
+}
+
+.uploader__hint {
   display: flex;
   align-items: center;
+  gap: 4px;
+  color: var(--taupe);
+  font-size: var(--text-xs);
 }
 
-.swatch-dot-row {
-  display: flex;
-  gap: 5px;
-}
-
-.swatch-dot {
+.uploader__hint .icon {
+  flex: none;
   width: 14px;
   height: 14px;
-  border-radius: 50%;
-  background: var(--swatch);
-  box-shadow: 0 0 0 1px rgba(5, 8, 22, 0.15);
 }
 
-.product-card__size-note {
-  justify-self: start;
-  color: var(--muted);
+.uploader__tile.has-photo .uploader__hint {
+  color: var(--success);
+  font-weight: 700;
+}
+
+/* The file's own facts: name, pixel size, file size. */
+.uploader__facts {
+  overflow: hidden;
+  color: var(--taupe);
   font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.uploader__facts[hidden] {
+  display: none;
+}
+
+.uploader__progress {
+  height: 4px;
+  border-radius: 4px;
+  background: var(--beige);
+  overflow: hidden;
+}
+
+.uploader__progress[hidden] {
+  display: none;
+}
+
+.uploader__progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--amber);
+  transition: width 200ms var(--ease-out);
+}
+
+.uploader__msg {
+  color: var(--taupe);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.uploader__msg:empty {
+  display: none;
+}
+
+.uploader__msg--error {
+  color: var(--danger);
   font-weight: 600;
 }
 
-.price__from {
-  color: var(--muted);
+.uploader__actions {
+  display: flex;
+  gap: 4px;
+}
+
+.uploader__actions[hidden] {
+  display: none;
+}
+
+.uploader__action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  color: var(--brown-deep);
   font-size: var(--text-xs);
-  font-weight: 600;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-/* Product cards use the same warm surface as the rest of the site */
-.product-card {
-  border: 1px solid var(--line-warm);
-  background: var(--ivory);
+.uploader__action:hover {
+  background: var(--champagne);
 }
 
-.product-card__foot,
-.product-card__extra {
-  border-top-color: var(--line-warm);
+/* "Printed in the same original quality you provide": the statement shown wherever a photo is added. */
+.photo-quality,
+.pp-photos__quality,
+.fs-quality,
+.was-upload__quality {
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  color: var(--umber);
+  font-size: var(--text-xs);
+  line-height: 1.55;
+}
+
+.photo-quality .icon,
+.pp-photos__quality .icon,
+.fs-quality .icon,
+.was-upload__quality .icon {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  margin-top: 2px;
+  color: var(--success);
+}
+
+/* ==========================================================================
+   Promo band
+   A dark band that introduces another part of FrameX: the words on one side
+   (eyebrow, title, lead, two buttons), a wall of four pictures on the other.
+   Every promo band on a page has the same layout, and bands that carry the
+   same data-match-height stand at the same height (ui/site.js): the shorter
+   one gets the spare room above and below, its own spacing stays the same.
+   Home page: "Home Decor & Wall Art" and "Premium wall art for every room.".
+   A wide picture can say which part to show: style="--focus: 76% 50%".
+
+     <section class="section section--dark">
+       <div class="container promo-band__grid" data-match-height="promo">
+         <div class="promo-band__copy"> eyebrow, .section-title, .section-lead, .page-hero__actions </div>
+         <div class="promo-band__wall"> 4 x <a><img><span>label</span></a> </div>
+       </div>
+     </section>
+   ========================================================================== */
+.promo-band__grid {
+  display: grid;
+  gap: clamp(24px, 4vw, 56px);
+  align-items: center;
+  align-content: center;
+}
+
+.promo-band__copy {
+  min-width: 0;
+}
+
+.promo-band__wall {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.promo-band__wall a {
+  position: relative;
+  display: block;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  background: var(--stone-soft);
+}
+
+.promo-band__wall img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--focus, 50% 50%);
+  transition: transform 800ms var(--ease-out);
+}
+
+.promo-band__wall span {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: rgba(5, 8, 22, 0.78);
+  color: var(--white);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+@media (hover: hover) {
+  .promo-band__wall a:hover img {
+    transform: scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promo-band__wall img {
+    transition: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .promo-band__wall {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1000px) {
+  .promo-band__grid {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  }
 }

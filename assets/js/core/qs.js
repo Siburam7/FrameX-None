@@ -8,12 +8,17 @@
     about: "about.html",
     services: "services.html",
     shop: "shop.html",
+    decor: "home-decor.html",
+    wallArtStudio: "wall-art-studio.html",
     templates: "templates.html",
     studio: "studio.html",
     shopDashboard: "shop-dashboard.html",
     login: "login.html",
     signup: "signup.html",
     account: "account.html",
+    checkout: "checkout.html",
+    orders: "orders.html",
+    order: "order.html",
     partner: "partner.html",
     admin: "admin.html",
     gallery: "gallery.html",
@@ -23,6 +28,13 @@
     story: "our-story.html",
     terms: "terms-of-use.html",
     privacy: "privacy-notice.html",
+    art: "art.html",
+    artist: "artist.html",
+    artwork: "artwork.html",
+    paintings: "paintings.html",
+    painting: "painting.html",
+    artistDashboard: "artist-dashboard.html",
+    search: "search.html",
   };
 
   /** product.html?slug=<slug> for a product object with a slug, else ?id=<id>.
@@ -41,5 +53,9 @@
     return "shop.html" + (s ? "?" + s : "");
   };
 
-  FrameX.qs = { param, pages, productUrl, shopUrl, shopListUrl };
+  const artistUrl = (a) => `artist.html?artist=${encodeURIComponent(typeof a === "string" ? a : a.username || a.artistCode)}`;
+  const artworkUrl = (w) => `artwork.html?id=${encodeURIComponent(typeof w === "string" ? w : w.id)}`;
+  const paintingUrl = (n) => `painting.html?id=${encodeURIComponent(n)}`;
+
+  FrameX.qs = { param, pages, productUrl, shopUrl, shopListUrl, artistUrl, artworkUrl, paintingUrl };
 })((window.FrameX = window.FrameX || {}));

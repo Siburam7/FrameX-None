@@ -35,10 +35,13 @@ export function cors(req, res, next) {
   if (origin && isAllowedOrigin(origin, req)) {
     res.set("Access-Control-Allow-Origin", origin);
     res.set("Access-Control-Allow-Credentials", "true");
+    // The file name of a download (a customer's photo) may be read by the website's own code.
+    res.set("Access-Control-Expose-Headers", "Content-Disposition");
     res.set("Vary", "Origin");
     if (req.method === "OPTIONS") {
       res.set("Access-Control-Allow-Methods", "GET,POST,PATCH,PUT,DELETE,OPTIONS");
-      res.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-FrameX-Client");
+      // X-File-Name: the name of an uploaded photo or product picture (its bytes are the request body).
+      res.set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-FrameX-Client, X-File-Name");
       res.set("Access-Control-Max-Age", "600");
       return res.status(204).end();
     }

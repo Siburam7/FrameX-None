@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="assets/css/overlays.css">
   <link rel="stylesheet" href="assets/css/footer-faq.css">
   <link rel="stylesheet" href="assets/css/pages.css">
+  <link rel="stylesheet" href="assets/css/mobile.css">
   <script>document.documentElement.classList.add("js");</script>
 </head>
 
@@ -31,12 +32,13 @@
   <div id="site-header-root"></div>
 
   <main id="main">
-    <section class="story-hero" aria-labelledby="story-title">
+    <section class="page-hero" aria-labelledby="story-title">
       <div class="container">
-        <nav class="page-banner__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
+        <nav class="page-hero__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
             aria-hidden="true">/</span> <span aria-current="page">Our Story</span></nav>
-        <h1 class="story-hero__title" id="story-title">Memories deserve more than a place in a phone gallery.</h1>
-        <p class="story-hero__lead">FrameX is a project built around a simple idea: the photos that matter most should
+        <p class="eyebrow">Our story</p>
+        <h1 class="page-hero__title" id="story-title">Memories deserve more than <span>a place in a phone gallery.</span></h1>
+        <p class="page-hero__lead">FrameX is a project built around a simple idea: the photos that matter most should
           be somewhere you can actually see them.</p>
       </div>
     </section>
@@ -118,7 +120,7 @@
       </div>
     </section>
 
-    <section class="section section--tight-top" aria-labelledby="philosophy-title">
+    <section class="section section--warm" aria-labelledby="philosophy-title">
       <div class="container">
         <div class="section-head" data-reveal>
           <h2 class="section-title" id="philosophy-title">Our philosophy</h2>
@@ -149,14 +151,14 @@
       </div>
     </section>
 
-    <section class="section section--tight-top" id="team" aria-labelledby="team-title">
+    <section class="section" id="team" aria-labelledby="team-title">
       <div class="container">
         <div class="final-cta" data-reveal>
           <h2 class="final-cta__title" id="team-title">The people behind it</h2>
           <p class="final-cta__text">There is no large team to introduce yet. As the marketplace grows with real shops
             and shop owners, this page will grow with it.</p>
           <p class="story-credit">Created &amp; Developed by <strong>Cbuxrn</strong></p>
-          <div class="final-cta__actions"><a class="btn btn--dark" href="shop.html">Shop Frames <svg
+          <div class="final-cta__actions"><a class="btn btn--primary" href="shop.html">Shop Frames <svg
                 class="icon icon--nudge" aria-hidden="true">
                 <use href="#i-arrow-right"></use>
               </svg></a></div>
@@ -197,6 +199,7 @@
   <script src="assets/js/ui/nav.js" defer></script>
   <script src="assets/js/ui/chrome.js" defer></script>
   <script src="assets/js/ui/cart-drawer.js" defer></script>
+  <script src="assets/js/ui/auth-gate.js" defer></script>
   <script src="assets/js/ui/actions.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </body>

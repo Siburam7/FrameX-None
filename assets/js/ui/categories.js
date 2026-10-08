@@ -8,13 +8,11 @@
   const url = (c) => FrameX.qs.shopListUrl({ category: c.id }) + "#collection";
   const count = (n) => (n === 1 ? "1 frame" : `${n} frames`);
 
-  const card = (c) => `<a class="category-card" href="${esc(url(c))}">
-      <img class="category-card__image" src="${esc(c.image)}" alt="" width="720" height="720" loading="lazy" decoding="async">
-      <span class="category-card__body">
-        <span class="category-card__count">${count(c.productCount)}</span>
-        <span class="category-card__title">${esc(c.name)}</span>
-        <span class="category-card__cta">Explore Collection ${icon("arrow-right")}</span>
-      </span>
+  // The shared collection card (components.css), as on Home Decor.
+  const card = (c) => `<a class="collection-card" href="${esc(url(c))}">
+      <img src="${esc(c.image)}" alt="" width="720" height="720" loading="lazy" decoding="async">
+      <span><span class="collection-card__name">${esc(c.name)}</span>
+      <span class="collection-card__count">${count(c.productCount)} ${icon("arrow-right")}</span></span>
     </a>`;
 
   async function init() {
@@ -34,11 +32,11 @@
         ? `<p class="category-more" data-reveal><span class="category-more__label">Or shop by occasion</span>${others
             .map(
               (c) =>
-                `<a class="category-more__link" href="${esc(url(c))}">${esc(c.name)}</a>`,
+                `<a class="chip" href="${esc(url(c))}">${esc(c.name)}</a>`,
             )
             .join("")}</p>`
         : "";
-      row.innerHTML = `<div class="category-gallery" data-reveal-stagger>${styles.map(card).join("")}</div>${more}`;
+      row.innerHTML = `<div class="collection-grid" data-reveal-stagger>${styles.map(card).join("")}</div>${more}`;
       FrameX.reveal.observe(row);
       return categories;
     } catch (error) {

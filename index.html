@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet"
     href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@300;400;600;700;800&family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Great+Vibes&display=swap">
-  <link rel="preload" as="image" href="assets/img/ui/hero.webp" fetchpriority="high">
+  <link rel="preload" as="image" href="assets/img/products/signature-frame.webp" fetchpriority="high">
   <link rel="stylesheet" href="assets/css/tokens.css">
   <link rel="stylesheet" href="assets/css/base.css">
   <link rel="stylesheet" href="assets/css/components.css">
@@ -26,6 +26,8 @@
   <link rel="stylesheet" href="assets/css/pages.css">
   <link rel="stylesheet" href="assets/css/layout-hero.css">
   <link rel="stylesheet" href="assets/css/templates.css">
+  <link rel="stylesheet" href="assets/css/art.css">
+  <link rel="stylesheet" href="assets/css/mobile.css">
   <script>document.documentElement.classList.add("js");</script>
 </head>
 
@@ -34,43 +36,65 @@
   <div id="site-header-root"></div>
 
   <main id="main">
-    <section class="hero" id="home" aria-labelledby="hero-title">
-      <div class="hero__media"><img src="assets/img/ui/hero.webp"
-          alt="A framed family photo standing on a wooden table in a bright living room" width="1376" height="768"
-          fetchpriority="high"></div>
-      <div class="hero__inner">
-        <div class="hero__copy">
-          <h1 class="hero__title" id="hero-title" style="--i:0"><span class="hero__line">Preserve</span><span
-              class="hero__line">Your Memories in</span><span class="hero__line">Premium <em
-                class="hero__accent">Frames.</em></span></h1>
-          <p class="hero__lead" style="--i:1">Premium photo frames from local framing shops. Choose your frame, see your
-            own photo inside it, then collect it or have it delivered.</p>
-          <div class="hero__actions" style="--i:2">
-            <a class="btn btn--primary" href="shop.html">Shop Frames <svg class="icon icon--nudge" aria-hidden="true">
-                <use href="#i-arrow-right"></use>
-              </svg></a>
-            <a class="btn btn--outline-dark" href="studio.html?mode=photo">Create Your Frame</a>
+    <!-- Hero: one slide per part of the catalogue. The first slide is written here; ui/hero.js adds the
+         others from assets/data/site.seed.js (heroSlides) and moves between them. -->
+    <section class="page-hero home-hero" id="home" data-hero aria-roledescription="carousel"
+      aria-label="What you can find on FrameX">
+      <div class="container">
+        <h1 class="visually-hidden">FrameX: photo frames, wall art and personalised designs</h1>
+        <div class="home-hero__stage" data-hero-stage>
+          <div class="home-hero__slide page-hero__grid is-active" role="group" aria-roledescription="slide"
+            aria-label="Photo Frames" data-slide="frames">
+            <div class="home-hero__copy">
+              <p class="eyebrow">Photo frames from local shops</p>
+              <h2 class="page-hero__title">Frames made for <span>your photos.</span></h2>
+              <p class="page-hero__lead">Choose a frame from a local framing shop, see your own photo inside it, then
+                collect it or have it delivered.</p>
+              <div class="page-hero__actions">
+                <a class="btn btn--primary" href="shop.html">Shop Frames <svg class="icon icon--nudge"
+                    aria-hidden="true">
+                    <use href="#i-arrow-right"></use>
+                  </svg></a>
+                <a class="btn btn--light" href="studio.html?mode=photo">Create Your Frame</a>
+              </div>
+            </div>
+            <div class="page-hero__wall">
+              <a class="page-hero__piece" href="product.html?id=p-004" aria-label="Signature Frame"><img
+                  src="assets/img/products/signature-frame.webp" alt="" width="800" height="1000" fetchpriority="high"
+                  decoding="async"></a>
+              <a class="page-hero__piece" href="product.html?id=p-001" aria-label="Ace of Us"><img
+                  src="assets/img/products/ace-of-us.webp" alt="" width="800" height="1000" decoding="async"></a>
+              <a class="page-hero__piece" href="product.html?id=p-002" aria-label="Classic Square"><img
+                  src="assets/img/products/classic-square.webp" alt="" width="800" height="1000" decoding="async"></a>
+            </div>
           </div>
         </div>
-        <div class="hero__bar">
-          <div class="hero__side">
-            <nav class="hero__links" aria-label="Quick links">
-              <a class="hero__link" href="#categories">Shop by category</a>
-              <a class="hero__link" href="#shops">Nearby shops</a>
-              <a class="hero__link" href="#how-it-works">How it works</a>
-            </nav>
-            <div class="hero__socials"><span class="hero__socials-label">Follow us</span>
-              <a class="hero__social" data-social="facebook" aria-label="Facebook"><svg class="icon" aria-hidden="true">
-                  <use href="#i-facebook"></use>
-                </svg></a>
-              <a class="hero__social" data-social="instagram" aria-label="Instagram"><svg class="icon"
-                  aria-hidden="true">
-                  <use href="#i-instagram"></use>
-                </svg></a>
-              <a class="hero__social" data-social="linkedin" aria-label="LinkedIn"><svg class="icon" aria-hidden="true">
-                  <use href="#i-linkedin"></use>
-                </svg></a>
-            </div>
+        <div class="home-hero__bar" data-hero-bar hidden>
+          <div class="home-hero__tabs chip-scroll" data-hero-tabs role="group" aria-label="Choose what to see"></div>
+          <div class="home-hero__controls">
+            <button class="home-hero__control" type="button" data-hero-prev aria-label="Previous slide"><svg
+                class="icon" aria-hidden="true">
+                <use href="#i-chev-left"></use>
+              </svg></button>
+            <button class="home-hero__control" type="button" data-hero-next aria-label="Next slide"><svg class="icon"
+                aria-hidden="true">
+                <use href="#i-chev-right"></use>
+              </svg></button>
+            <button class="home-hero__control" type="button" data-hero-toggle aria-pressed="false"
+              aria-label="Pause slides"><svg class="icon" aria-hidden="true">
+                <use href="#i-pause"></use>
+              </svg></button>
+          </div>
+          <div class="hero__socials"><span class="hero__socials-label">Follow us</span>
+            <a class="hero__social" data-social="facebook" aria-label="Facebook"><svg class="icon" aria-hidden="true">
+                <use href="#i-facebook"></use>
+              </svg></a>
+            <a class="hero__social" data-social="instagram" aria-label="Instagram"><svg class="icon" aria-hidden="true">
+                <use href="#i-instagram"></use>
+              </svg></a>
+            <a class="hero__social" data-social="linkedin" aria-label="LinkedIn"><svg class="icon" aria-hidden="true">
+                <use href="#i-linkedin"></use>
+              </svg></a>
           </div>
         </div>
       </div>
@@ -86,30 +110,6 @@
         </div>
       </div>
     </div>
-
-    <section class="showcase" id="featured-rail" data-speed="30" aria-labelledby="showcase-title">
-      <div class="container showcase__head">
-        <div>
-          <p class="eyebrow">The showcase</p>
-          <h2 class="showcase__title" id="showcase-title">Featured frame styles</h2>
-        </div>
-        <div class="showcase__nav">
-          <button class="showcase__arrow" type="button" data-showcase-prev aria-label="Previous frames"><svg
-              class="icon" aria-hidden="true">
-              <use href="#i-chev-left"></use>
-            </svg></button>
-          <button class="showcase__arrow" type="button" data-showcase-next aria-label="Next frames"><svg class="icon"
-              aria-hidden="true">
-              <use href="#i-chev-right"></use>
-            </svg></button>
-        </div>
-      </div>
-      <div class="showcase__viewport">
-        <div class="showcase__track">
-          <div class="showcase__group"></div>
-        </div>
-      </div>
-    </section>
 
     <section class="trust" aria-label="Why FrameX">
       <div class="container">
@@ -133,242 +133,302 @@
       </div>
     </section>
 
-    <section class="section" id="categories" aria-labelledby="categories-title">
+    <section class="section shelf-section" id="categories" aria-labelledby="categories-title">
       <div class="container">
-        <div class="section-head" data-reveal>
-          <h2 class="section-title" id="categories-title">Shop by category</h2>
-        </div>
-        <div class="category-row" id="category-row"></div>
-      </div>
-    </section>
-
-    <section class="section section--tight-top" id="trending-templates" aria-labelledby="tt-title">
-      <div class="container">
-        <div class="section-head" data-reveal>
-          <div>
-            <p class="eyebrow">New · Personalised frames</p>
-            <h2 class="section-title" id="tt-title">Trending Templates</h2>
-            <p class="section-lead">Personalise your memories with designs people are loving right now.</p>
-          </div>
-          <div class="section-head__tools">
-            <div class="rail-arrows" data-rail-arrows="home-templates" role="group" aria-label="Scroll templates"
-              hidden>
-              <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon"
-                  aria-hidden="true">
-                  <use href="#i-chev-left"></use>
-                </svg></button>
-              <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon"
-                  aria-hidden="true">
-                  <use href="#i-chev-right"></use>
-                </svg></button>
+        <div class="shelf shelf--cats">
+          <div class="section-head" data-reveal>
+            <div>
+              <h2 class="section-title" id="categories-title">Shop by category</h2>
+              <p class="section-lead">Frame styles from local shops. Pick one to see every frame in it.</p>
             </div>
-            <a class="btn btn--outline btn--sm" href="templates.html">View all templates <svg class="icon icon--nudge"
+            <a class="btn btn--outline btn--sm" href="shop.html">Shop all frames <svg class="icon icon--nudge"
                 aria-hidden="true">
                 <use href="#i-arrow-right"></use>
               </svg></a>
           </div>
+          <div class="category-row" id="category-row"></div>
         </div>
-        <div class="tpl-grid tpl-grid--rail" id="home-templates" data-limit="4"></div>
       </div>
     </section>
 
-    <section class="section section--tight-top" id="shops" aria-labelledby="shops-title">
+    <section class="section shelf-section" id="recommended" aria-labelledby="recommended-title">
       <div class="container">
-        <div class="section-head" data-reveal>
-          <div>
-            <h2 class="section-title" id="shops-title">Photo-frame shops near you</h2>
-            <p class="section-lead">Choose a shop, browse its frames and order for pickup or delivery.</p>
+        <div class="shelf shelf--stack">
+          <div class="section-head" data-reveal>
+            <div>
+              <h2 class="section-title" id="recommended-title">Highly recommended frames</h2>
+            </div>
+            <div class="section-head__tools">
+              <div class="rail-arrows" data-rail-arrows="recommended-rail" role="group" aria-label="Scroll frames" hidden>
+                <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon"
+                    aria-hidden="true">
+                    <use href="#i-chev-left"></use>
+                  </svg></button>
+                <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon"
+                    aria-hidden="true">
+                    <use href="#i-chev-right"></use>
+                  </svg></button>
+              </div>
+              <a class="btn btn--outline btn--sm" href="shop.html">Shop all frames <svg class="icon icon--nudge"
+                aria-hidden="true">
+                <use href="#i-arrow-right"></use>
+              </svg></a>
+            </div>
           </div>
-          <a class="btn btn--outline btn--sm" href="shop.html#shops">Browse all shops</a>
-        </div>
-        <div class="shops-toolbar" id="shops-toolbar">
-          <button class="btn btn--dark btn--sm" type="button" id="shops-locate"><svg class="icon" aria-hidden="true">
-              <use href="#i-pin"></use>
-            </svg> Use my location</button>
-          <div class="segmented" role="group" aria-label="Sort shops">
-            <button class="chip" type="button" data-shop-sort="recommended" aria-pressed="true">Recommended</button>
-            <button class="chip" type="button" data-shop-sort="nearest" aria-pressed="false" disabled>Nearest</button>
-            <button class="chip" type="button" data-shop-sort="rating" aria-pressed="false" disabled>Top rated</button>
-          </div>
-          <p class="shops-toolbar__status" id="shops-status" role="status" aria-live="polite"></p>
-        </div>
-        <div class="shop-grid" id="shop-grid" data-limit="3" aria-busy="true"></div>
-      </div>
-    </section>
-
-    <section class="section section--tight-top" id="recommended" aria-labelledby="recommended-title">
-      <div class="container">
-        <div class="section-head" data-reveal>
-          <h2 class="section-title" id="recommended-title">Highly recommended frames</h2>
-          <a class="btn btn--outline btn--sm" href="shop.html">Shop all frames <svg class="icon icon--nudge"
-              aria-hidden="true">
+          <div class="product-grid product-grid--rail" id="recommended-rail" data-limit="10"></div>
+          <div class="shelf__more"><a class="btn btn--dark" href="shop.html">Shop all frames <svg class="icon icon--nudge" aria-hidden="true">
               <use href="#i-arrow-right"></use>
-            </svg></a>
+            </svg></a></div>
         </div>
-        <div class="recommended-rail" id="recommended-rail"></div>
       </div>
     </section>
 
-    <section class="section section--tight-top" id="custom-frame" aria-labelledby="custom-title">
+    <!-- Three ways to make it yours. #custom-frame is linked from the frame guide below. -->
+    <section class="section shelf-section" aria-label="Make it yours">
+      <div class="container promo-tiles" data-reveal>
+        <a class="promo-tile" id="custom-frame" href="studio.html?mode=photo">
+          <span class="promo-tile__body">
+            <span class="promo-tile__label">FrameX Studio</span>
+            <strong class="promo-tile__title">A frame made around your photo</strong>
+            <span class="promo-tile__text">Colour, size, crop, border and mat, with a live preview and the price.</span>
+            <span class="btn btn--primary btn--sm">Open FrameX Studio</span>
+          </span>
+          <img src="assets/img/products/luxury-hd.webp" alt="" width="900" height="600" loading="lazy" decoding="async">
+        </a>
+        <a class="promo-tile promo-tile--peach" href="templates.html">
+          <span class="promo-tile__body">
+            <span class="promo-tile__label">Personalised templates</span>
+            <strong class="promo-tile__title">Ready designs for your photos</strong>
+            <span class="promo-tile__text">Birthday, anniversary, wedding and family designs. Add your photos and order.</span>
+            <span class="btn btn--primary btn--sm">Browse templates</span>
+          </span>
+          <img src="assets/img/products/wedding-anniversary.webp" alt="" width="720" height="964" loading="lazy" decoding="async">
+        </a>
+        <a class="promo-tile promo-tile--mint" href="wall-art-studio.html?product=hd-custom-split-3">
+          <span class="promo-tile__body">
+            <span class="promo-tile__label">Multi-panel wall art</span>
+            <strong class="promo-tile__title">One photo across several frames</strong>
+            <span class="promo-tile__text">Split one of your own photos across two to five frames.</span>
+            <span class="btn btn--primary btn--sm">Create from your photo</span>
+          </span>
+          <img src="assets/img/decor/hd-mp-cherry-tree-3.webp" alt="" width="800" height="1000" loading="lazy" decoding="async">
+        </a>
+      </div>
+    </section>
+
+    <section class="section shelf-section" id="trending-templates" aria-labelledby="tt-title">
       <div class="container">
-        <div class="custom-frame" data-reveal>
-          <div class="custom-frame__media"><img src="assets/img/products/luxury-hd.webp"
-              alt="Assorted premium framed photos displayed on a white shelf" width="900" height="600" loading="lazy">
-          </div>
-          <div class="custom-frame__body">
-            <p class="custom-frame__eyebrow">FrameX Studio</p>
-            <h2 class="custom-frame__title" id="custom-title">A frame made around your photo</h2>
-            <p class="custom-frame__text">Pick a frame style from a local shop, then see your own photo inside that
-              exact
-              frame. Choose the colour and size that suit your wall and add a note for the shop.</p>
-            <ul class="check-list">
-              <li><svg class="icon" aria-hidden="true">
-                  <use href="#i-check"></use>
-                </svg><span><strong>Available now:</strong> preview your own photo in the frame, choose its colour and
-                  size, and add a note for the shop</span>
-              </li>
-              <li><svg class="icon" aria-hidden="true">
-                  <use href="#i-clock"></use>
-                </svg><span><strong>Coming soon:</strong> send your photo with your order, and custom sizes</span></li>
-            </ul>
-            <div class="custom-frame__actions">
-              <a class="btn btn--primary" href="studio.html?mode=photo">Open FrameX Studio <svg class="icon icon--nudge"
+        <div class="shelf shelf--stack">
+          <div class="section-head" data-reveal>
+            <div>
+              <h2 class="section-title" id="tt-title">Trending Templates</h2>
+              <p class="section-lead">Personalise your memories with designs people are loving right now.</p>
+            </div>
+            <div class="section-head__tools">
+              <div class="rail-arrows" data-rail-arrows="home-templates" role="group" aria-label="Scroll templates"
+                hidden>
+                <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon"
+                    aria-hidden="true">
+                    <use href="#i-chev-left"></use>
+                  </svg></button>
+                <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon"
+                    aria-hidden="true">
+                    <use href="#i-chev-right"></use>
+                  </svg></button>
+              </div>
+              <a class="btn btn--outline btn--sm" href="templates.html">View all templates <svg class="icon icon--nudge"
                   aria-hidden="true">
                   <use href="#i-arrow-right"></use>
                 </svg></a>
-              <a class="btn btn--outline-dark" href="shop.html">Shop Frames</a>
             </div>
           </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="poster" aria-labelledby="poster-title">
-      <div class="poster__media"><img src="assets/img/ui/poster.webp" alt="" width="1584" height="672" loading="lazy">
-      </div>
-      <div class="container">
-        <div class="poster__copy" data-reveal>
-          <h2 class="poster__title" id="poster-title"><span class="poster__line">Premium wall art</span><span
-              class="poster__line poster__accent">for every room.</span></h2>
-          <p class="poster__offer">From a single portrait to a full gallery wall, find the frames that finish the room.
-          </p>
-          <a class="btn btn--primary poster__cta" href="gallery.html">See inspiration <svg class="icon icon--nudge"
-              aria-hidden="true">
+          <div class="product-grid product-grid--rail" id="home-templates" data-limit="8"></div>
+          <div class="shelf__more"><a class="btn btn--dark" href="templates.html">View all templates <svg class="icon icon--nudge" aria-hidden="true">
               <use href="#i-arrow-right"></use>
-            </svg></a>
+            </svg></a></div>
         </div>
       </div>
     </section>
 
-    <section class="section" id="how-it-works" aria-labelledby="how-title">
+    <!-- Home Decor & Wall Art (its own page: home-decor.html) -->
+    <section class="section shelf-section" id="home-decor" aria-labelledby="hd-promo-title">
       <div class="container">
-        <div class="section-head" data-reveal>
-          <div>
-            <h2 class="section-title" id="how-title">Turn your memories into premium wall art</h2>
-            <p class="section-lead">From choosing a frame to hanging it on your wall, in four steps.</p>
+        <div class="shelf">
+          <div class="section-head" data-reveal>
+            <div>
+              <h2 class="section-title" id="hd-promo-title">Home Decor &amp; Wall Art</h2>
+              <p class="section-lead">Framed quotes, landscapes, gaming and anime-style art, museum classics and
+                multi-panel sets.</p>
+            </div>
+            <a class="btn btn--outline btn--sm" href="home-decor.html">Explore wall art <svg class="icon icon--nudge"
+                aria-hidden="true">
+                <use href="#i-arrow-right"></use>
+              </svg></a>
+          </div>
+          <div class="promo-band__wall">
+            <a href="home-decor.html?c=multi-panel#browse"><img src="assets/img/decor/hd-mp-cherry-tree-3.webp"
+                alt="A cherry tree picture split across three frames above a sofa" width="800" height="1000"
+                loading="lazy" decoding="async"><span>Multi-panel</span></a>
+            <a href="home-decor.html?c=motivational#browse"><img src="assets/img/decor/hd-never-give-up.webp"
+                alt="Framed poster reading Never Give Up" width="800" height="1000" loading="lazy"
+                decoding="async"><span>Motivational</span></a>
+            <a href="home-decor.html?c=anime#browse"><img src="assets/img/decor/hd-moonlit-wanderer.webp"
+                alt="Framed art of a lone figure under a large moon" width="800" height="1000" loading="lazy"
+                decoding="async"><span>Anime</span></a>
+            <a href="home-decor.html?c=luxury#browse"><img src="assets/img/decor/hd-grande-jatte.webp"
+                alt="A classic painting in a gold frame" width="800" height="1000" loading="lazy"
+                decoding="async"><span>Premium</span></a>
           </div>
         </div>
-        <ol class="how-steps" data-reveal>
-          <li class="how-step">
-            <div class="how-step__media"><img src="assets/img/steps/step-2.webp" alt="A wall of framed family photos"
-                width="720" height="540" loading="lazy"><span class="how-step__num">01</span></div>
-            <div class="how-step__body">
-              <h3>Choose your frame</h3>
-              <p>Browse styles from local shops and pick the size and colour that suit your space.</p>
-            </div>
-          </li>
-          <li class="how-step">
-            <div class="how-step__media"><img src="assets/img/steps/step-1.webp"
-                alt="A woman choosing a photo on her phone" width="720" height="540" loading="lazy"><span
-                class="how-step__num">02</span></div>
-            <div class="how-step__body">
-              <h3>Add your photo</h3>
-              <p>Preview it inside the frame, then share it with the shop on WhatsApp or by email.</p>
-            </div>
-          </li>
-          <li class="how-step">
-            <div class="how-step__media"><img src="assets/img/steps/step-3.webp"
-                alt="A craftsman assembling a frame in a workshop" width="720" height="540" loading="lazy"><span
-                class="how-step__num">03</span></div>
-            <div class="how-step__body">
-              <h3>The shop prepares it</h3>
-              <p>Your local shop prints and assembles your frame with the materials it lists.</p>
-            </div>
-          </li>
-          <li class="how-step">
-            <div class="how-step__media"><img src="assets/img/steps/step-4.webp" alt="A framed print packed securely"
-                width="720" height="540" loading="lazy"><span class="how-step__num">04</span></div>
-            <div class="how-step__body">
-              <h3>Collect or receive it</h3>
-              <p>Pick it up from the shop, or have it delivered where the shop offers delivery.</p>
-            </div>
-          </li>
-        </ol>
-        <div class="section-more"><a class="btn btn--dark" href="shop.html">Shop Frames <svg class="icon icon--nudge"
-              aria-hidden="true">
-              <use href="#i-arrow-right"></use>
-            </svg></a><a class="btn btn--outline" href="services.html#journey">See the full process</a></div>
       </div>
     </section>
 
-    <section class="section section--tight-top" id="community" aria-labelledby="community-title">
+    <!-- Art & Artists (its own section: art.html). The row of artists is filled from the server and hidden when there are none. -->
+    <section class="section shelf-section" id="art-artists" aria-labelledby="art-home-title">
       <div class="container">
-        <div class="section-head" data-reveal>
-          <div>
-            <h2 class="section-title" id="community-title">From our community</h2>
-            <p class="section-lead">Frame styles to inspire your next project. <span class="placeholder-note">Style
-                samples</span></p>
-          </div>
-          <div class="section-head__tools">
-            <div class="rail-arrows" data-rail-arrows="community-rail" role="group" aria-label="Scroll community photos"
-              hidden>
-              <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon"
-                  aria-hidden="true">
-                  <use href="#i-chev-left"></use>
-                </svg></button>
-              <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon"
-                  aria-hidden="true">
-                  <use href="#i-chev-right"></use>
-                </svg></button>
+        <div class="shelf">
+          <div class="section-head" data-reveal>
+            <div>
+              <h2 class="section-title" id="art-home-title">Art &amp; Artists</h2>
+              <p class="section-lead">Discover original art. Meet artists. Find artwork made with passion.</p>
             </div>
+            <a class="btn btn--outline btn--sm" href="art.html">Explore Art &amp; Artists <svg class="icon icon--nudge"
+                aria-hidden="true">
+                <use href="#i-arrow-right"></use>
+              </svg></a>
           </div>
-        </div>
-        <div class="community-rail" id="community-rail"></div>
-        <div class="section-more">
-          <a class="btn btn--dark" href="gallery.html">View gallery <svg class="icon icon--nudge" aria-hidden="true">
-              <use href="#i-arrow-right"></use>
-            </svg></a>
-          <a class="btn btn--outline" href="customer-gallery.html#share">Share your photo</a>
+          <div class="promo-tiles promo-tiles--two" data-reveal>
+            <a class="promo-tile promo-tile--lilac" href="art.html?view=artworks">
+              <span class="promo-tile__body">
+                <span class="promo-tile__label">Original artwork</span>
+                <strong class="promo-tile__title">Paintings and drawings, ready to hang</strong>
+                <span class="promo-tile__text">Finished pieces from artists, each one reviewed by FrameX before it is shown.</span>
+                <span class="btn btn--primary btn--sm">See artworks</span>
+              </span>
+              <img src="assets/img/art/hero-canvas.webp" alt="" width="720" height="900" loading="lazy" decoding="async">
+            </a>
+            <a class="promo-tile promo-tile--peach" href="art.html#browse">
+              <span class="promo-tile__body">
+                <span class="promo-tile__label">Custom painting</span>
+                <strong class="promo-tile__title">A painting made from your photo</strong>
+                <span class="promo-tile__text">Choose an artist and a size at a fixed price. You pay only after the artist accepts.</span>
+                <span class="btn btn--primary btn--sm">Find an artist</span>
+              </span>
+              <img src="assets/img/art/hero-artist.webp" alt="" width="720" height="900" loading="lazy" decoding="async">
+            </a>
+          </div>
+          <div class="artist-grid" id="home-artists" style="margin-top:16px" hidden></div>
         </div>
       </div>
     </section>
 
-    <section class="section section--tight-top" id="reviews" aria-labelledby="reviews-title">
+    <section class="section shelf-section" id="shops" aria-labelledby="shops-title">
       <div class="container">
-        <div class="section-head" data-reveal>
-          <div>
-            <h2 class="section-title" id="reviews-title">Customer stories &amp; feedback</h2>
-            <p class="section-lead">Reviews from customers who have ordered through FrameX.</p>
-          </div>
-          <div class="section-head__tools">
-            <div class="rail-arrows" data-rail-arrows="review-rail" role="group" aria-label="Scroll reviews" hidden>
-              <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon"
-                  aria-hidden="true">
-                  <use href="#i-chev-left"></use>
-                </svg></button>
-              <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon"
-                  aria-hidden="true">
-                  <use href="#i-chev-right"></use>
-                </svg></button>
+        <div class="shelf">
+          <div class="section-head" data-reveal>
+            <div>
+              <h2 class="section-title" id="shops-title">Photo-frame shops near you</h2>
+              <p class="section-lead">Choose a shop, browse its frames and order for pickup or delivery.</p>
             </div>
-            <a class="btn btn--outline btn--sm" href="customer-gallery.html">Customer gallery</a>
+            <a class="btn btn--outline btn--sm" href="shop.html#shops">Browse all shops</a>
           </div>
+          <div class="shops-toolbar" id="shops-toolbar">
+            <button class="btn btn--dark btn--sm" type="button" id="shops-locate"><svg class="icon" aria-hidden="true">
+                <use href="#i-pin"></use>
+              </svg> Use my location</button>
+            <div class="segmented" role="group" aria-label="Sort shops">
+              <button class="chip" type="button" data-shop-sort="recommended" aria-pressed="true">Recommended</button>
+              <button class="chip" type="button" data-shop-sort="nearest" aria-pressed="false" disabled>Nearest</button>
+              <button class="chip" type="button" data-shop-sort="rating" aria-pressed="false" disabled>Top rated</button>
+            </div>
+            <p class="shops-toolbar__status" id="shops-status" role="status" aria-live="polite"></p>
+          </div>
+          <div class="shop-grid" id="shop-grid" data-limit="3" aria-busy="true"></div>
         </div>
-        <div class="review-rail" id="review-rail"></div>
       </div>
     </section>
 
-    <section class="section section--tight-top" id="faq" aria-labelledby="faq-title">
+    <section class="section shelf-section" id="how-it-works" aria-labelledby="how-title">
+      <div class="container">
+        <div class="shelf">
+          <div class="section-head" data-reveal>
+            <div>
+              <h2 class="section-title" id="how-title">Turn your memories into premium wall art</h2>
+              <p class="section-lead">From choosing a frame to hanging it on your wall, in four steps.</p>
+            </div>
+          </div>
+          <ol class="how-steps" data-reveal>
+            <li class="how-step">
+              <div class="how-step__media"><img src="assets/img/steps/how-choose.webp" alt="A woman choosing between framed prints"
+                  width="720" height="540" loading="lazy"><span class="how-step__num">01</span></div>
+              <div class="how-step__body">
+                <h3>Choose your frame</h3>
+                <p>Browse styles from local shops and pick the size and colour that suit your space.</p>
+              </div>
+            </li>
+            <li class="how-step">
+              <div class="how-step__media"><img src="assets/img/steps/how-photo.webp"
+                  alt="A smiling woman looking at a photo on her phone" width="720" height="540" loading="lazy"><span
+                  class="how-step__num">02</span></div>
+              <div class="how-step__body">
+                <h3>Add your photo</h3>
+                <p>Upload it and preview it inside the frame. It goes to the shop with your order, in its original quality.</p>
+              </div>
+            </li>
+            <li class="how-step">
+              <div class="how-step__media"><img src="assets/img/steps/how-make.webp"
+                  alt="Hands assembling picture frames on a work table" width="720" height="540" loading="lazy"><span
+                  class="how-step__num">03</span></div>
+              <div class="how-step__body">
+                <h3>The shop prepares it</h3>
+                <p>Your local shop prints and assembles your frame with the materials it lists.</p>
+              </div>
+            </li>
+            <li class="how-step">
+              <div class="how-step__media"><img src="assets/img/steps/how-receive.webp" alt="A delivery person handing a box to a customer at the door"
+                  width="720" height="540" loading="lazy"><span class="how-step__num">04</span></div>
+              <div class="how-step__body">
+                <h3>Collect or receive it</h3>
+                <p>Pick it up from the shop, or have it delivered where the shop offers delivery.</p>
+              </div>
+            </li>
+          </ol>
+          <div class="section-more"><a class="btn btn--dark" href="shop.html">Shop Frames <svg class="icon icon--nudge"
+                aria-hidden="true">
+                <use href="#i-arrow-right"></use>
+              </svg></a><a class="btn btn--outline" href="services.html#journey">See the full process</a></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section shelf-section" id="reviews" aria-labelledby="reviews-title">
+      <div class="container">
+        <div class="shelf">
+          <div class="section-head" data-reveal>
+            <div>
+              <h2 class="section-title" id="reviews-title">Customer stories &amp; feedback</h2>
+              <p class="section-lead">Reviews from customers who have ordered through FrameX.</p>
+            </div>
+            <div class="section-head__tools">
+              <div class="rail-arrows" data-rail-arrows="review-rail" role="group" aria-label="Scroll reviews" hidden>
+                <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon"
+                    aria-hidden="true">
+                    <use href="#i-chev-left"></use>
+                  </svg></button>
+                <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon"
+                    aria-hidden="true">
+                    <use href="#i-chev-right"></use>
+                  </svg></button>
+              </div>
+              <a class="btn btn--outline btn--sm" href="customer-gallery.html">Customer gallery</a>
+            </div>
+          </div>
+          <div class="review-rail" id="review-rail"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section shelf-section" id="faq" aria-labelledby="faq-title">
       <div class="container">
         <div class="guide" id="guide" data-reveal>
           <div class="guide__head">
@@ -465,9 +525,10 @@
                     </svg></span></button></h3>
               <div class="guide-item__panel" id="guide-panel-3" role="region" aria-labelledby="guide-btn-3">
                 <div>
-                  <p>Pick a sharp, well-lit photo — the larger the frame, the more the detail matters. On a product
-                    page, "Try With Your Own Image" shows how your photo sits in that frame. The preview stays private
-                    on your device. To send the photo for printing, share it with the shop on WhatsApp or by email.</p>
+                  <p>Pick a sharp, well-lit photo — the larger the frame, the more the detail matters. Add it under
+                    "Your photo" on the product page to see how it sits in that frame. It is uploaded with your order,
+                    kept private, and printed in the same original quality you provide: FrameX does not enhance or
+                    change it.</p>
                   <a class="guide-item__link" href="contact.html">Get in touch <svg class="icon" aria-hidden="true">
                       <use href="#i-arrow-right"></use>
                     </svg></a>
@@ -483,9 +544,9 @@
                     </svg></span></button></h3>
               <div class="guide-item__panel" id="guide-panel-4" role="region" aria-labelledby="guide-btn-4">
                 <div>
-                  <p>Frame styles and sizes are set by each shop. Today you can choose a size and finish and add a note
-                    for the shop with your order. Custom sizes and personalised frames are coming soon; for now, ask us
-                    on WhatsApp or by email</p>
+                  <p>Frame styles and sizes are set by each shop. Choose a size and finish on the product page, or
+                    open FrameX Studio to crop your photo and add a border, a mat or text with a live preview. Custom
+                    sizes are coming soon; for now, ask us on WhatsApp or by email</p>
                   <a class="guide-item__link" href="#custom-frame">About custom frames <svg class="icon"
                       aria-hidden="true">
                       <use href="#i-arrow-right"></use>
@@ -502,10 +563,10 @@
                     </svg></span></button></h3>
               <div class="guide-item__panel" id="guide-panel-5" role="region" aria-labelledby="guide-btn-5">
                 <div>
-                  <p>Build your cart here, then send your order to us on WhatsApp; online checkout and payment are
-                    coming soon. Each shop
-                    chooses whether it offers pickup, its own delivery or a delivery partner, and sets its own fees and
-                    times, confirmed at checkout. Orders can be cancelled or changed only before production begins.</p>
+                  <p>Log in, build your cart, then check out: enter your delivery address, see the total and pay with
+                    one of the options shown (online payment or Cash on Delivery, where available). You get an order
+                    number and can follow the order in your account. Orders can be cancelled only before production
+                    begins.</p>
                   <a class="guide-item__link" href="services.html#journey">How ordering works <svg class="icon"
                       aria-hidden="true">
                       <use href="#i-arrow-right"></use>
@@ -539,14 +600,15 @@
       </div>
     </section>
 
-    <section class="section section--tight-top" aria-labelledby="cta-title">
+    <section class="section shelf-section" aria-labelledby="cta-title">
       <div class="container">
         <div class="final-cta" data-reveal>
           <h2 class="final-cta__title" id="cta-title">Ready to frame your memories?</h2>
-          <p class="final-cta__text">Browse frames from local shops, or message us if you're looking for something
-            specific.</p>
-          <div class="final-cta__actions"><a class="btn btn--dark" href="shop.html">Shop Frames</a><a
-              class="btn btn--outline" href="contact.html">Contact us</a></div>
+          <p class="final-cta__text">Browse frames from local shops, explore wall art for every room, or message us if
+            you're looking for something specific.</p>
+          <div class="final-cta__actions"><a class="btn btn--primary" href="shop.html">Shop Frames</a><a
+              class="btn btn--light" href="home-decor.html">Explore wall art</a><a class="btn btn--outline"
+              href="contact.html">Contact us</a></div>
         </div>
       </div>
     </section>
@@ -584,11 +646,13 @@
   <script src="assets/js/ui/nav.js" defer></script>
   <script src="assets/js/ui/chrome.js" defer></script>
   <script src="assets/js/ui/cart-drawer.js" defer></script>
+  <script src="assets/js/ui/auth-gate.js" defer></script>
   <script src="assets/js/ui/actions.js" defer></script>
   <script src="assets/js/ui/marquee.js" defer></script>
   <script src="assets/js/ui/showcase.js" defer></script>
   <script src="assets/js/ui/rail-nav.js" defer></script>
   <script src="assets/js/ui/site.js" defer></script>
+  <script src="assets/js/ui/hero.js" defer></script>
   <script src="assets/js/ui/featured.js" defer></script>
   <script src="assets/js/ui/categories.js" defer></script>
   <script src="assets/js/services/template-engine.js" defer></script>
@@ -601,6 +665,7 @@
   <script src="assets/js/ui/reviews.js" defer></script>
   <script src="assets/js/ui/community.js" defer></script>
   <script src="assets/js/ui/guide.js" defer></script>
+  <script src="assets/js/ui/art-pages.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </body>
 

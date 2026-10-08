@@ -8,6 +8,11 @@
      #/shops[?status=]          shops: view, activate / deactivate
      #/shops/new                add a shop without an application
      #/shops/<id>               shop details, location, status, login credentials
+     #/orders[?status=]         customer orders (ui/admin-orders.js)
+     #/orders/<FX-number>       one order: move it forward, cancel, refund,
+                                download the customer's original photos
+     #/products[?status=]       products shops created: approve one that waits
+                                for review, or take one off sale
      #/activity                 audit log of admin actions
 
    The page is only a view. Every request goes to /api/admin/*, where the
@@ -23,8 +28,19 @@
     ["overview", "Overview", "frame"],
     ["applications", "Applications", "mail"],
     ["shops", "Shops", "store"],
+    ["orders", "Orders", "receipt"],
+    ["products", "Shop products", "image"],
+    ["artists", "Artists", "users"],
+    ["artworks", "Artworks", "frame"],
+    ["paintings", "Custom paintings", "edit"],
+    ["reviews", "Reviews", "star"],
+    ["users", "Accounts", "user"],
+    ["settings", "Settings", "settings"],
     ["activity", "Activity", "clock"],
   ];
+  const LISTING = { draft: "Draft", pending_review: "Waiting for review", published: "Published", unpublished: "Off sale" };
+  const LISTING_FILTERS = [["", "All"], ["pending_review", "Waiting for review"], ["published", "Published"], ["unpublished", "Off sale"], ["draft", "Drafts"]];
+  const PRODUCT_TYPE = { "photo-frame": "Photo Frame", "custom-frame": "Custom Frame", template: "Template-based", personalized: "Personalized", "home-decor": "Home Decor", "wall-art": "Wall Art", "multi-panel": "Multi-Panel Set", other: "Other" };
   const APP_STATUS = { PENDING: "Pending", UNDER_REVIEW: "Under review", APPROVED: "Approved", REJECTED: "Rejected" };
   const SHOP_STATUS = { PENDING: "Pending approval", ACTIVE: "Active", INACTIVE: "Inactive", REJECTED: "Rejected" };
   const ACCOUNT_STATUS = { ACTIVE: "Active", PENDING_SETUP: "Waiting for password setup", DISABLED: "Disabled" };
@@ -35,6 +51,16 @@
     SHOP_APPROVED: "Shop approved", SHOP_CREATED: "Shop created", SHOP_REJECTED: "Shop rejected", SHOP_UPDATED: "Shop details updated", SHOP_ACTIVATED: "Shop activated",
     SHOP_DEACTIVATED: "Shop deactivated", SHOP_ACCOUNT_CREATED: "Shop login created", SHOP_CREDENTIALS_ISSUED: "New password link issued", SHOP_ACCOUNT_DISABLED: "Shop login disabled",
     SHOP_ACCOUNT_ENABLED: "Shop login enabled", SHOP_PROFILE_UPDATED: "Shop edited its profile", PASSWORD_RESET: "Password reset", ACCOUNT_SETUP_COMPLETED: "Shop set its password",
+    ORDER_STATUS_CHANGED: "Order status changed", ORDER_CANCELLED: "Order cancelled", ORDER_REFUNDED: "Order refunded",
+    ORDER_PHOTO_ACCESSED: "Customer photo downloaded", ORDER_ITEM_FULFILMENT_CHANGED: "Shop updated an order item",
+    SHOP_PRODUCT_SAVED: "Shop saved a product", SHOP_PRODUCT_DELETED: "Shop deleted a product", PRODUCT_MODERATED: "Product listing changed by FrameX",
+    SETTINGS_CHANGED: "Platform settings changed", USER_STATUS_CHANGED: "Account switched on or off",
+    ARTIST_APPLICATION_SUBMITTED: "Artist application submitted", ARTIST_APPLICATION_REJECTED: "Artist application rejected", ARTIST_APPROVED: "Artist approved", ARTIST_CREATED: "Artist created",
+    ARTIST_UPDATED: "Artist details updated", ARTIST_STATUS_CHANGED: "Artist listed or unlisted", ARTIST_ACCOUNT_CREATED: "Artist login created", ARTIST_PROFILE_UPDATED: "Artist edited their profile",
+    ARTWORK_SUBMITTED: "Artwork submitted for review", ARTWORK_APPROVED: "Artwork approved", ARTWORK_REJECTED: "Artwork rejected", ARTWORK_STATUS_CHANGED: "Artwork shown, paused or withdrawn",
+    PAINTING_SERVICE_SAVED: "Artist changed their price list", PAINTING_REQUESTED: "Custom painting requested", PAINTING_ACCEPTED: "Artist accepted a painting request",
+    PAINTING_DECLINED: "Artist declined a painting request", PAINTING_STATUS_CHANGED: "Custom painting moved on", PAINTING_CANCELLED: "Custom painting cancelled",
+    PAINTING_PAYMENT_VERIFIED: "Painting payment verified", PAINTING_REFERENCE_ACCESSED: "Reference photo downloaded", PAINTING_REFUND_RECORDED: "Painting refund recorded", REVIEW_MODERATED: "Review hidden or shown",
   };
 
   let root, admin;
@@ -81,6 +107,14 @@
         ${tile(o.shops.active, "Active shops (listed)", "#/shops?status=ACTIVE")}
         ${tile(o.shops.inactive, "Inactive shops (hidden)", "#/shops?status=INACTIVE")}
       </div>
+      <h2 class="ad-subtitle">Orders</h2>
+      <div class="ad-tiles">
+        ${tile(o.orders.placed, "New orders to confirm", "#/orders?status=PLACED", o.orders.placed ? "ad-tile--alert" : "")}
+        ${tile(o.orders.inProgress, "Orders in progress", "#/orders")}
+        ${tile(o.orders.awaitingPayment, "Waiting for payment", "#/orders?status=PENDING_PAYMENT")}
+        ${tile(o.orders.delivered, "Delivered", "#/orders?status=DELIVERED")}
+      </div>
+      ${FrameX.adminArt ? FrameX.adminArt.overviewTiles(o) : ""}
       <h2 class="ad-subtitle">Waiting for review</h2>
       ${apps.items.length ? `<ul class="sd-list">${apps.items.slice(0, 5).map(applicationRow).join("")}</ul>` : `<div class="sd-empty">${icon("check")}<strong>No applications waiting</strong><span>New shop applications from the “Partner With FrameX” page appear here.</span></div>`}`;
   }
@@ -422,12 +456,67 @@
     }
   }
 
+  /* ---------------------------------------------------------------- Shop products
+     Shops decide what they sell. The platform keeps the last word: a product
+     that waits for review is approved here, and any product can be taken off
+     sale. The backend checks that a product is complete before it publishes it. */
+  async function products(main, params) {
+    const status = params.get("status") || "";
+    const { items } = await http().get("/admin/products", { status });
+    const tone = { draft: "draft", pending_review: "pending_review", published: "published", unpublished: "unpublished" };
+    main.innerHTML = `${head("Shop products", "Products that shops created in their dashboards. Approve one that is waiting for review, or take a product off sale. Catalogue-file products are not listed here.")}
+      <div class="sd-toolbar"><div class="chip-scroll" role="group" aria-label="Filter by listing">${LISTING_FILTERS.map(([id, label]) => `<a class="chip" href="#/products${id ? `?status=${id}` : ""}" aria-pressed="${status === id}">${esc(label)}</a>`).join("")}</div></div>
+      ${
+        items.length
+          ? `<div class="sd-table-wrap"><table class="sd-table"><thead><tr><th scope="col">Product</th><th scope="col">Shop</th><th scope="col">Listing</th><th scope="col">Updated</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead><tbody>
+          ${items
+            .map(
+              (p) => `<tr data-product="${esc(p.id)}">
+              <td><div class="ad-product">${p.image ? `<img src="${esc(http().asset(p.image))}" alt="" width="48" height="48" loading="lazy">` : ""}<div><strong>${esc(p.name)}</strong><br><span class="sd-item__meta">${esc(PRODUCT_TYPE[p.productType] || "Type not chosen")}</span></div></div></td>
+              <td><a href="#/shops">${esc(p.shopName)}</a><br><span class="sd-item__meta"><code>${esc(p.shopCode)}</code></span></td>
+              <td><span class="sd-status sd-status--${tone[p.status] || "draft"}">${esc(LISTING[p.status] || p.status)}</span><br><span class="sd-item__meta">${p.onSale ? "On sale" : "Not on sale"}</span></td>
+              <td>${esc(when(p.updatedAt))}</td>
+              <td><div class="sd-item__actions">
+                ${p.status === "published" ? `<a class="iu-btn" href="product.html?slug=${encodeURIComponent(p.slug)}" target="_blank" rel="noopener">${icon("eye")} View</a><button class="iu-btn iu-btn--danger" type="button" data-listing="unpublished">Take off sale</button>` : ""}
+                ${p.status === "pending_review" ? `<button class="iu-btn iu-btn--go" type="button" data-listing="published">${icon("check")} Approve</button><button class="iu-btn iu-btn--danger" type="button" data-listing="unpublished">Decline</button>` : ""}
+                ${p.status === "unpublished" ? `<button class="iu-btn iu-btn--go" type="button" data-listing="published">Put back on sale</button>` : ""}
+              </div></td>
+            </tr>`,
+            )
+            .join("")}
+        </tbody></table></div>`
+          : `<div class="sd-empty">${icon("image")}<strong>${status ? "No product matches this filter" : "No shop has created a product yet"}</strong><span>Products appear here as soon as a shop saves one in its dashboard.</span></div>`
+      }`;
+    main.onclick = async (e) => {
+      const btn = e.target.closest("[data-listing]");
+      if (!btn) return;
+      const to = btn.dataset.listing;
+      // Taking something off sale asks twice.
+      if (to === "unpublished" && !btn.classList.contains("is-confirming")) {
+        btn.classList.add("is-confirming");
+        btn.dataset.label = btn.textContent;
+        btn.textContent = "Tap again to confirm";
+        setTimeout(() => btn.isConnected && (btn.classList.remove("is-confirming"), (btn.textContent = btn.dataset.label)), 4000);
+        return;
+      }
+      btn.disabled = true;
+      try {
+        await http().post(`/admin/products/${encodeURIComponent(btn.closest("[data-product]").dataset.product)}/listing`, { status: to });
+        FrameX.toast.show(to === "published" ? "Published. The product is on sale if its shop is listed." : "Taken off sale.");
+      } catch (error) {
+        const issues = error.details && error.details.issues;
+        FrameX.toast.show(issues && issues.length ? `${error.message} ${issues.map((i) => i.message).join(". ")}.` : error.message, { duration: 7000 });
+      }
+      products(main, params);
+    };
+  }
+
   /* ---------------------------------------------------------------- Activity */
   async function activity(main) {
     const { items } = await http().get("/admin/audit", { limit: 150 });
     main.innerHTML = `${head("Activity", "Who approved, rejected or changed what. Entries can't be edited.")}
       ${items.length ? `<div class="sd-table-wrap"><table class="sd-table"><thead><tr><th scope="col">When</th><th scope="col">Action</th><th scope="col">On</th><th scope="col">By</th></tr></thead><tbody>
-        ${items.map((l) => `<tr><td>${esc(when(l.at))}</td><td>${esc(ACTIONS[l.action] || l.action)}</td><td>${esc(l.targetType === "shop" ? l.targetId : l.targetType.replace("_", " "))}</td><td>${l.actor ? `${esc(l.actor.name)} <span class="pp-muted">(${esc(l.actor.role.toLowerCase())})</span>` : `<span class="pp-muted">Public form</span>`}</td></tr>`).join("")}
+        ${items.map((l) => `<tr><td>${esc(when(l.at))}</td><td>${esc(ACTIONS[l.action] || l.action)}</td><td>${esc(["shop", "order", "artist", "artwork", "painting_request", "settings"].includes(l.targetType) ? l.targetId : l.targetType.replace("_", " "))}</td><td>${l.actor ? `${esc(l.actor.name)} <span class="pp-muted">(${esc(l.actor.role.toLowerCase())})</span>` : `<span class="pp-muted">Public form</span>`}</td></tr>`).join("")}
       </tbody></table></div>` : `<div class="sd-empty">${icon("clock")}<strong>No activity yet</strong></div>`}`;
   }
 
@@ -443,7 +532,16 @@
       if (section === "overview") await overview(main);
       if (section === "applications") await (parts[1] ? application(main, parts[1]) : applications(main, params));
       if (section === "shops") await (parts[1] === "new" ? newShop(main) : parts[1] ? shop(main, parts[1]) : shops(main, params));
+      if (section === "orders") await (parts[1] ? FrameX.adminOrders.detail(main, parts[1], { head }) : FrameX.adminOrders.list(main, params, { head }));
+      if (section === "products") await products(main, params);
       if (section === "activity") await activity(main);
+      const art = FrameX.adminArt;
+      if (section === "artists") await art.artists(main, params, { head });
+      if (section === "artworks") await art.artworks(main, params, { head });
+      if (section === "paintings") await (parts[1] ? art.painting(main, parts[1], { head }) : art.paintings(main, params, { head }));
+      if (section === "reviews") await art.reviews(main, params, { head });
+      if (section === "users") await art.users(main, params, { head });
+      if (section === "settings") await art.settings(main, params, { head });
     } catch (error) {
       // The session ended or the role changed: the API said no, so leave.
       if (error.status === 401) return window.location.replace(FrameX.auth.loginUrl());

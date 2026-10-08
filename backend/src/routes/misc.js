@@ -5,8 +5,10 @@ import { db } from "../db/index.js";
 import { geocoderEnabled, searchPlaces } from "../lib/geocoder.js";
 import { devOutbox, emailDelivery } from "../lib/mailer.js";
 import { smsDelivery } from "../lib/sms.js";
+import { paymentStatus } from "../payments/index.js";
 import { rateLimit } from "../lib/rate-limit.js";
 import { v, validate } from "../lib/validate.js";
+import { SEARCH_KINDS, searchAll } from "../services/search-service.js";
 
 const router = Router();
 
@@ -25,8 +27,16 @@ router.get("/config", (req, res) => {
       devMailbox: config.devMailbox,
       // "real" = messages are really sent by a provider; "dev" = development mailbox only; "none" = not configured.
       emailDelivery: emailDelivery(),
-      smsDelivery: smsDelivery()
-    }
+      smsDelivery: smsDelivery(),
+      // Whether customers can pay online here, and whether the gateway is in test mode. No key is in this answer.
+      payments: (({ ready, provider, mode }) => ({ online: ready, provider: ready ? provider : null, mode: ready ? mode : null, cod: config.checkout.cod.enabled }))(paymentStatus()),
+      productModeration: config.catalog.productModeration
+    },
+    // What a customer photo may be (the website checks the same before sending; the server checks again).
+    uploads: { maxBytes: config.uploads.maxBytes, formats: ["jpeg", "png", "webp"], maxSide: config.uploads.maxSide },
+    giftWrap: { enabled: config.checkout.giftWrap.enabled, fee: config.checkout.giftWrap.fee },
+    // Custom paintings: how the price is split, and how many reference photos a request may carry.
+    paintings: { advancePercent: config.paintings.advancePercent, maxReferencePhotos: config.paintings.maxReferencePhotos }
   });
 });
 
@@ -44,6 +54,13 @@ router.get("/geo/search", rateLimit("geo", { windowMs: 60_000, max: 20 }), async
     console.error("[geo] place search failed:", error.message);
     res.json({ available: false, results: [] });
   }
+});
+
+/** One search across products, templates, shops, artists and artworks. kinds: a comma-separated list to narrow it. */
+router.get("/search", rateLimit("search", { windowMs: 60_000, max: 90 }), async (req, res) => {
+  const { q, kinds, limit } = validate(req.query, { q: v.string({ max: 80, label: "Search" }), kinds: v.string({ max: 80 }), limit: v.number({ min: 1, max: 12, required: false }) });
+  const wanted = kinds ? kinds.split(",").map((k) => k.trim()).filter((k) => SEARCH_KINDS.includes(k)) : SEARCH_KINDS;
+  res.json(await searchAll({ q, kinds: wanted.length ? wanted : SEARCH_KINDS, limit: limit || 5 }));
 });
 
 const escapeHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);

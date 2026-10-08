@@ -6,11 +6,23 @@ services:
   - type: web
     name: framex-api
     runtime: node
-    rootDir: backend
-    buildCommand: npm ci
-    startCommand: npm start
+    # No rootDir: the backend reads the website's catalogue files (js/, assets/js/)
+    # for products and prices, so the whole repository is deployed.
+    buildCommand: cd backend && npm ci
+    startCommand: cd backend && npm start
     healthCheckPath: /api/health
+    # Customer photos and shop product pictures are FILES. They must be on a disk that survives restarts and
+    # redeploys, or every uploaded photo is lost (orders that need them could not be printed). Uncomment this
+    # block (persistent disks need a paid Render plan) and keep UPLOAD_DIR below pointing at the same path.
+    # disk:
+    #   name: framex-uploads
+    #   mountPath: /var/data
+    #   sizeGB: 10
     envVars:
+      # Where uploaded files are kept: a folder on the persistent disk above, e.g. /var/data/uploads.
+      # Left empty, files go to the service's own (temporary) disk and are lost on a restart.
+      - key: UPLOAD_DIR
+        sync: false
       - key: NODE_ENV
         value: production
       - key: SERVE_FRONTEND
@@ -49,6 +61,43 @@ services:
         sync: false
       - key: SMS_TEMPLATE_ID
         sync: false
+      # Online payments: Cashfree. Start in test mode; switch PAYMENT_MODE to "live" with production keys when ready.
+      # Webhook to add at Cashfree:  https://<this service's address>/api/payments/webhook/cashfree
+      - key: PAYMENT_PROVIDER
+        value: cashfree
+      - key: PAYMENT_MODE
+        value: test
+      - key: CASHFREE_CLIENT_ID
+        sync: false
+      - key: CASHFREE_CLIENT_SECRET
+        sync: false
+      - key: CASHFREE_API_VERSION
+        value: "2025-01-01"
+      - key: CASHFREE_WEBHOOK_SECRET
+        sync: false
+      # This service's own public address, so Cashfree is told where to send webhooks.
+      - key: PUBLIC_API_URL
+        sync: false
+      # Custom paintings: the part paid before the artist starts (an admin can change it in the dashboard).
+      - key: CUSTOM_PAINTING_ADVANCE_PERCENT
+        value: "40"
+      # Your delivery charge, tax and Cash on Delivery rules (see backend/.env.example).
+      - key: SHIPPING_FEE
+        value: "0"
+      - key: TAX_PERCENT
+        value: "0"
+      - key: COD_ENABLED
+        value: "true"
+      - key: COD_FEE
+        value: "0"
+      # Gift wrapping at checkout: your charge per order, in whole rupees.
+      - key: GIFT_WRAP_ENABLED
+        value: "true"
+      - key: GIFT_WRAP_FEE
+        value: "49"
+      # true = a shop's first "Publish" waits until a FrameX admin approves the product.
+      - key: PRODUCT_MODERATION
+        value: "false"
       - key: GEOCODER_PROVIDER
         value: nominatim
       - key: GEOCODER_CONTACT_EMAIL

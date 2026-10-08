@@ -19,10 +19,17 @@
     seed().shops.filter((shop) => shop.isActive !== false);
   const shopById = (id) => activeShops().find((shop) => shop.id === id);
 
-  /* ---- Products created or edited in the shop dashboard (this device only) ----
-     Stored as complete product records (assets/js/services/product-model.js).
-     A record with the same id as a js/edit.js product overrides it once
-     published (or hides it when unpublished); drafts never reach customers. */
+  /* ---- Products that shops create in their dashboard ----
+     They live in the FrameX backend. api/shop-directory.js fetches the ones on
+     sale (GET /api/catalog/shop-products) and hands them over with
+     setShopProducts(); from then on they are listed, searched and filtered
+     like the products of the catalogue file.
+
+     Older versions kept dashboard products in this browser's localStorage
+     ("this device only"). Those records are no longer shown to customers:
+     the cart and checkout never knew them. The shop dashboard offers to move
+     them into the shop's account (localRecords / forgetLocal below). */
+  let shopProducts = [];
   const SHOP_PRODUCTS =
     (config.storageKeys && config.storageKeys.shopProducts) ||
     "framex.shopProducts.v1";
@@ -49,21 +56,11 @@
   const normalize = (p) =>
     FrameX.productModel ? FrameX.productModel.normalize(p) : clone(p);
 
-  /** Catalogue products with this device's published shop changes applied. */
+  /** The catalogue file's products plus the ones shops have on sale (from the backend). */
   function allProducts() {
-    const local = localRecords();
-    const overrides = new Map(local.map((r) => [r.id, r]));
     const catalogueIds = new Set(seed().products.map((p) => p.id));
-    const fromCatalogue = seed()
-      .products.map((p) => {
-        const o = overrides.get(p.id);
-        if (!o || o.status === "draft" || o.status === "pending_review")
-          return p;
-        return o.status === "published" ? o : null;
-      })
-      .filter(Boolean);
-    return fromCatalogue.concat(
-      local.filter((r) => !catalogueIds.has(r.id) && r.status === "published"),
+    return seed().products.concat(
+      shopProducts.filter((p) => !catalogueIds.has(p.id)),
     );
   }
 
@@ -75,14 +72,17 @@
         (p) =>
           p.isVisible !== false &&
           (p.schema !== 2 || p.status === "published") &&
-          shopIds.has(p.shopId),
+          // A shop product the backend lists is already known to belong to an approved, active shop.
+          (p.source === "shop" || shopIds.has(p.shopId)),
       )
       .map(normalize);
   }
 
   function withShopName(product) {
     const shop = shopById(product.shopId);
-    return Object.assign(clone(product), { shopName: shop ? shop.name : "" });
+    return Object.assign(clone(product), {
+      shopName: shop ? shop.name : product.shopName || "",
+    });
   }
 
   const lower = (v) =>
@@ -423,8 +423,55 @@
       };
     },
 
-    /* ---- Shop workspace (dashboard). With a backend these become
-       authenticated /shop/products endpoints; here they use this device. ---- */
+    /* ---- Products from the backend (see the note at the top of this file) ---- */
+
+    /** The products listed shops have on sale: complete product records. */
+    setShopProducts(list) {
+      shopProducts = (Array.isArray(list) ? list : [])
+        .filter((p) => p && p.id)
+        .map((p) => Object.assign({}, p, { source: "shop" }));
+    },
+
+    /** How many visible products each shop has: { shopId: count }. */
+    countByShop() {
+      const counts = {};
+      visibleProducts().forEach(
+        (p) => (counts[p.shopId] = (counts[p.shopId] || 0) + 1),
+      );
+      return counts;
+    },
+
+    /** The catalogue file's own products of one shop (FrameX manages these; a shop sees them read-only). */
+    async getCatalogueProducts(shopId) {
+      return clone(
+        seed()
+          .products.filter((p) => p.shopId === shopId)
+          .map((p) =>
+            Object.assign(normalize(p), {
+              source: "catalogue",
+              hasLocalChanges: false,
+            }),
+          ),
+      );
+    },
+
+    /** Dashboard products an older version kept in this browser only: [{ record, isCatalogueEdit }]. */
+    localRecords(shopId) {
+      const catalogueIds = new Set(seed().products.map((p) => p.id));
+      return localRecords()
+        .filter((r) => !shopId || r.shopId === shopId)
+        .map((record) => ({
+          record: clone(record),
+          isCatalogueEdit: catalogueIds.has(record.id),
+        }));
+    },
+    forgetLocal(id) {
+      writeLocal(localRecords().filter((r) => r.id !== id));
+    },
+
+    /* ---- Shop workspace without a backend. api/shop-directory.js replaces
+       these with the shop's own account on the backend; they remain only so
+       the provider's interface stays complete. ---- */
 
     /** Every product of one shop, any status: catalogue items plus dashboard records. */
     async getShopProducts(shopId) {

@@ -9,14 +9,22 @@
 
   const NAV = [
     ["home", "Home"],
-    ["about", "About"],
+    ["art", "Art & Artists"],
     ["services", "Services"],
     ["shop", "Shop"],
+    ["decor", "Home Decor"],
     ["templates", "Templates"],
-    ["gallery", "Gallery"],
     ["contact", "Contact"],
     ["faq", "FAQ"],
   ];
+
+  /* The header's main button follows the section the visitor is in: [label, link]. */
+  const CTA = {
+    art: ["Explore Art", `${pages.art}?view=artworks`],
+    decor: ["Shop Decor", `${pages.decor}#browse`],
+    templates: ["All Templates", pages.templates],
+  };
+  const CTA_DEFAULT = ["Shop Frames", pages.shop];
 
   const locationChip = `<button class="location-chip" type="button" data-action="use-location">
       ${icon("pin")}<span><small>Nearby shops</small><strong data-location-label>Set your location</strong></span></button>`;
@@ -39,7 +47,7 @@
     const user = s.user;
     const href = user ? (user.role === "CUSTOMER" ? pages.account : FrameX.auth.homeFor(user.role)) : pages.login;
     const first = user ? String(user.role === "SHOP" && user.shop ? user.shop.name : user.name).split(/\s+/)[0] : "";
-    const text = user ? (user.role === "SHOP" ? "Dashboard" : user.role === "ADMIN" ? "Admin" : first) : "Log in";
+    const text = user ? (user.role === "SHOP" || user.role === "ARTIST" ? "Dashboard" : user.role === "ADMIN" ? "Admin" : first) : "Log in";
     document.querySelectorAll("[data-account], [data-account-mobile]").forEach((a) => {
       a.href = href;
       a.classList.toggle("is-authed", Boolean(user));
@@ -56,27 +64,36 @@
       {
         "shop-detail": "shop",
         product: "shop",
+        "home-decor": "decor",
+        "wall-art-studio": "decor",
         "customer-gallery": "gallery",
         template: "templates",
         studio: "templates",
+        artist: "art",
+        artwork: "art",
+        painting: "art",
+        paintings: "art",
       }[current] || current;
     const links = NAV.map(
       ([key, label]) =>
         `<li><a href="${pages[key]}"${key === section ? ' aria-current="page"' : ""}>${label}</a></li>`,
     ).join("");
     const solid = current === "home" ? "" : " site-header--solid";
+    const [ctaLabel, ctaHref] = CTA[section] || CTA_DEFAULT;
 
     return `<header class="site-header${solid}" data-site-header>
       <div class="site-header__bar">
-        <a class="brand" href="${pages.home}" aria-label="FrameX home"><img src="assets/img/ui/logo-framex.png" alt="FrameX" width="116" height="24"></a>
+        <a class="brand" href="${pages.home}" aria-label="FrameX home"><img src="assets/img/ui/logo-framex.png" alt="FrameX" width="150" height="32"></a>
         <nav class="primary-nav" id="primary-nav" aria-label="Primary">
           <ul class="primary-nav__list">${links}</ul>
           <div class="primary-nav__mobile-extras">${locationChip}
             ${accountLink()}
-            <a class="btn btn--primary" href="${pages.shop}">Shop Frames</a></div>
+            <a class="btn btn--light" href="${pages.search}">${icon("search")} Search</a>
+            <a class="btn btn--primary" href="${ctaHref}">${ctaLabel}</a></div>
         </nav>
         <div class="site-header__actions">${locationChip}
-          <a class="btn signup-btn" href="${pages.shop}">Shop Frames</a>
+          <a class="btn signup-btn" href="${ctaHref}">${ctaLabel}</a>
+          <a class="search-btn" href="${pages.search}" aria-label="Search FrameX">${icon("search")}</a>
           ${accountBtn()}
           <button class="cart-btn" type="button" data-action="open-cart" aria-label="Open cart, 0 items">${icon("bag")}<span class="cart-btn__count" hidden>0</span></button>
           <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open menu"><span class="nav-toggle__bars"></span></button>
@@ -124,7 +141,7 @@
     return `<footer class="site-footer">
       <div class="container site-footer__top">
         <div class="site-footer__brand">
-          <a class="brand" href="${pages.home}" aria-label="FrameX home"><img src="assets/img/ui/logo-framex.png" alt="FrameX" width="116" height="24" loading="lazy"></a>
+          <a class="brand" href="${pages.home}" aria-label="FrameX home"><img src="assets/img/ui/logo-framex.png" alt="FrameX" width="150" height="32" loading="lazy"></a>
           <p>Premium photo frames from local framing shops. Choose your frame, preview your own photo in it, then collect it or have it delivered.</p>
           ${contactLinks()}
         </div>
@@ -136,6 +153,8 @@
         ])}
         ${col("Shop", [
           ["All Frames", pages.shop],
+          ["Home Decor & Wall Art", pages.decor],
+          ["Art & Artists", pages.art],
           ["Templates", pages.templates],
           ["FrameX Studio", pages.studio + "?mode=photo"],
           ["Custom Frames", pages.home + "#custom-frame"],
@@ -146,6 +165,7 @@
           ["FAQ", pages.faq],
           ["How It Works", pages.services + "#journey"],
           ["Partner With FrameX", pages.partner],
+          ["Join as an Artist", pages.art + "#join"],
           ["Shop Login", pages.login + "?type=shop"],
         ])}
         ${col("Legal", [
@@ -170,7 +190,7 @@
       <div class="drawer__body" id="cart-body"></div>
       <div class="drawer__foot" id="cart-foot" hidden>
         <div class="summary-row"><span>Subtotal</span><strong id="cart-subtotal"></strong></div>
-        <div class="summary-row"><small>Delivery fee</small><small>Confirmed by the shop</small></div>
+        <div class="summary-row"><small>Delivery and taxes</small><small>Calculated at checkout</small></div>
         <p class="drawer__note" id="cart-shop-note" hidden>Items from different shops are ordered separately.</p>
         <button class="btn btn--primary btn--block" type="button" id="cart-checkout">Checkout</button>
         <button class="btn btn--outline btn--block" type="button" id="cart-continue">Continue shopping</button>

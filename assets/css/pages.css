@@ -4,11 +4,11 @@
    contact / faq. Section-specific home styles stay in story.css / catalog.css.
    ========================================================================== */
 
-/* Page banner (secondary hero used on every inner page) -------------------- */
+/* Breadcrumb row at the top of a task screen (product, checkout, account, ...).
+   Pages that open with a headline use the shared .page-hero instead. */
 .page-banner {
   padding-top: calc(var(--header-h) + clamp(28px, 6vw, 56px));
-  padding-bottom: clamp(28px, 5vw, 48px);
-  background: var(--cream);
+  padding-bottom: var(--space-sm);
 }
 
 .page-banner__crumbs {
@@ -16,7 +16,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 4px;
-  margin-bottom: 14px;
   color: var(--muted);
   font-size: var(--text-sm);
 }
@@ -28,20 +27,6 @@
 .page-banner__crumbs [aria-current] {
   color: var(--ink);
   font-weight: 600;
-}
-
-.page-banner__title {
-  max-width: 24ch;
-  font-family: var(--font-display);
-  font-size: var(--text-h2);
-  font-weight: 300;
-  line-height: 1.15;
-}
-
-.page-banner__lead {
-  max-width: 60ch;
-  margin-top: 10px;
-  color: var(--muted);
 }
 
 /* Generic content layout ---------------------------------------------------- */
@@ -58,9 +43,6 @@
 
 .prose h2 {
   margin-top: 8px;
-  font-family: var(--font-display);
-  font-size: var(--text-h3);
-  font-weight: 700;
 }
 
 .split {
@@ -126,8 +108,8 @@
   margin-top: 2px;
   padding: 3px;
   border-radius: 50%;
-  background: var(--cream);
-  color: var(--amber-strong);
+  background: var(--champagne);
+  color: var(--brown-deep);
 }
 
 /* Journey steps (Services page) --------------------------------------------- */
@@ -148,9 +130,6 @@
   display: grid;
   gap: 8px;
   padding: 18px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--white);
 }
 
 .journey__num {
@@ -164,11 +143,6 @@
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 0.85rem;
-}
-
-.journey__step h3 {
-  font-size: 0.98rem;
-  font-weight: 700;
 }
 
 .journey__step p {
@@ -218,29 +192,10 @@
   align-content: start;
   gap: 8px;
   padding: 22px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--white);
-  transition:
-    transform var(--dur-base) var(--ease-out),
-    box-shadow var(--dur-base) var(--ease-out);
 }
 
 .service-card__icon {
-  display: grid;
-  place-items: center;
-  width: 46px;
-  height: 46px;
   margin-bottom: 4px;
-  border-radius: var(--radius-md);
-  background: var(--cream);
-  color: var(--amber-strong);
-}
-
-.service-card h3 {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 600;
 }
 
 .service-card p {
@@ -251,13 +206,6 @@
 .service-card__tag {
   justify-self: start;
   margin-top: 4px;
-}
-
-@media (hover: hover) {
-  .service-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-card);
-  }
 }
 
 /* Forms ----------------------------------------------------------------------- */
@@ -418,9 +366,6 @@
 
 .faq-group__title {
   margin-bottom: 14px;
-  font-family: var(--font-display);
-  font-size: 1.2rem;
-  font-weight: 700;
 }
 
 /* Gallery (ui/gallery-page.js): filters + photo mosaic + full-screen viewer ------ */
@@ -727,12 +672,6 @@
   background: var(--ivory);
 }
 
-.gallery-promo h2 {
-  font-family: var(--font-display);
-  font-size: var(--text-h3);
-  font-weight: 600;
-}
-
 .gallery-promo p {
   max-width: 56ch;
   margin-top: 4px;
@@ -773,9 +712,6 @@
 .cg-card {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--line-warm);
-  border-radius: var(--radius-lg);
-  background: var(--ivory);
   overflow: hidden;
 }
 
@@ -969,16 +905,17 @@
 .custom-frame {
   display: grid;
   gap: 0;
+  border: 1px solid var(--line);
   border-radius: var(--radius-xl);
-  background: var(--ink);
-  color: var(--white);
+  background: var(--surface-soft);
+  color: var(--ink);
   overflow: hidden;
 }
 
 .custom-frame__media {
   position: relative;
   aspect-ratio: 4 / 3;
-  background: var(--night);
+  background: var(--stone-soft);
 }
 
 .custom-frame__media img {
@@ -995,23 +932,16 @@
 }
 
 .custom-frame__eyebrow {
-  color: var(--gold);
+  color: var(--accent);
   font-size: var(--text-sm);
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.custom-frame__title {
-  font-family: var(--font-display);
-  font-size: clamp(1.6rem, 1.2rem + 1.8vw, 2.3rem);
-  font-weight: 700;
-  line-height: 1.15;
-}
-
 .custom-frame__text {
   max-width: 46ch;
-  color: var(--mist);
+  color: var(--muted);
 }
 
 .custom-frame__actions {
@@ -1038,37 +968,6 @@
   margin-top: 28px;
 }
 
-/* Final CTA (home) --------------------------------------------------------------- */
-.final-cta {
-  display: grid;
-  justify-items: center;
-  gap: 14px;
-  padding: clamp(40px, 7vw, 72px) clamp(20px, 5vw, 48px);
-  border-radius: var(--radius-xl);
-  background: var(--cream);
-  text-align: center;
-}
-
-.final-cta__title {
-  max-width: 20ch;
-  font-family: var(--font-display);
-  font-size: clamp(1.6rem, 1.1rem + 2vw, 2.4rem);
-  font-weight: 700;
-}
-
-.final-cta__text {
-  max-width: 48ch;
-  color: var(--muted);
-}
-
-.final-cta__actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 6px;
-}
-
 /* Not-found state (product / shop detail) ---------------------------------------- */
 .not-found {
   display: grid;
@@ -1082,16 +981,6 @@
   width: 46px;
   height: 46px;
   color: var(--slate);
-}
-
-/* Slim banner: breadcrumb only (product + shop detail pages) */
-.page-banner--slim {
-  padding-bottom: 8px;
-  background: transparent;
-}
-
-.page-banner--slim .page-banner__crumbs {
-  margin-bottom: 0;
 }
 
 /* Home: "How it works" steps ------------------------------------------------------- */
@@ -1117,9 +1006,6 @@
 .how-step {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
-  background: var(--white);
   overflow: hidden;
 }
 
@@ -1160,12 +1046,6 @@
   padding: 18px;
 }
 
-.how-step__body h3 {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  font-weight: 600;
-}
-
 .how-step__body p {
   color: var(--muted);
   font-size: var(--text-sm);
@@ -1203,21 +1083,8 @@
   min-height: 320px;
 }
 
-.product-grid--related {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-@media (min-width: 900px) {
-  .product-grid--related {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-}
-
 .order-options__subtitle {
   margin-bottom: 20px;
-  font-family: var(--font-display);
-  font-size: var(--text-h3);
-  font-weight: 600;
 }
 
 .form-field__error .icon {
@@ -1331,9 +1198,6 @@
 
 .legal-section h2 {
   margin-bottom: 8px;
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 700;
 }
 
 .legal-section ul {
@@ -1363,27 +1227,6 @@
 }
 
 /* Our Story page ------------------------------------------------------------------------ */
-.story-hero {
-  padding: calc(var(--header-h) + clamp(28px, 6vw, 56px)) 0
-    clamp(28px, 5vw, 48px);
-  background: var(--cream);
-}
-
-.story-hero__title {
-  max-width: 20ch;
-  font-family: var(--font-display);
-  font-size: var(--text-h2);
-  font-weight: 300;
-  line-height: 1.15;
-}
-
-.story-hero__lead {
-  max-width: 60ch;
-  margin-top: 14px;
-  color: var(--muted);
-  font-size: 1.05rem;
-}
-
 .story-credit {
   margin-top: -4px;
   color: var(--muted);
@@ -1450,7 +1293,7 @@
 .chapter__num {
   font-family: var(--font-display);
   font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.4rem);
-  font-weight: 300;
+  font-weight: var(--weight-h2);
   letter-spacing: -0.02em;
   line-height: 1;
 }
@@ -1465,12 +1308,6 @@
 
 .chapter__title {
   color: var(--ink);
-  font-family: var(--font-display);
-  font-size: clamp(1.5rem, 1.15rem + 1.5vw, 2.25rem);
-  font-weight: 300;
-  letter-spacing: -0.01em;
-  line-height: 1.15;
-  text-wrap: balance;
 }
 
 @media (min-width: 900px) {
@@ -1541,10 +1378,6 @@
     padding: 12px 14px;
   }
 
-  .how-step__body h3 {
-    font-size: 0.98rem;
-  }
-
   .how-step__body p {
     font-size: 0.82rem;
     line-height: 1.5;
@@ -1565,10 +1398,6 @@
 
   .custom-frame__eyebrow {
     font-size: var(--text-xs);
-  }
-
-  .custom-frame__title {
-    font-size: 1.4rem;
   }
 
   .custom-frame__text {

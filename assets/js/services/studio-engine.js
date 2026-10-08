@@ -506,11 +506,15 @@
         )
       : [];
     const issues = [];
+    // The same words everywhere a photo is missing (product-model.js → PHOTO_TEXT).
+    const words = FrameX.productModel && FrameX.productModel.photoProblem;
+    const slots = ctx.caps.photoSlots.length;
     if (missingPhotos.length)
       issues.push({
         section: "photos",
-        message:
-          missingPhotos.length === 1 && ctx.caps.photoSlots.length === 1
+        message: words
+          ? words(slots, slots - missingPhotos.length)
+          : missingPhotos.length === 1 && slots === 1
             ? "Add your photo"
             : `Add ${missingPhotos.length} more ${missingPhotos.length === 1 ? "photo" : "photos"}`,
       });

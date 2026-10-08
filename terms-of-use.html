@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="assets/css/overlays.css">
   <link rel="stylesheet" href="assets/css/footer-faq.css">
   <link rel="stylesheet" href="assets/css/pages.css">
+  <link rel="stylesheet" href="assets/css/mobile.css">
   <script>document.documentElement.classList.add("js");</script>
 </head>
 
@@ -31,12 +32,13 @@
   <div id="site-header-root"></div>
 
   <main id="main">
-    <section class="page-banner" aria-labelledby="page-title">
+    <section class="page-hero" aria-labelledby="page-title">
       <div class="container">
-        <nav class="page-banner__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
+        <nav class="page-hero__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
             aria-hidden="true">/</span> <span aria-current="page">Terms of Use</span></nav>
-        <h1 class="page-banner__title" id="page-title">Terms of Use</h1>
-        <p class="page-banner__lead">Please read these terms before using the FrameX website.</p>
+        <p class="eyebrow">Legal</p>
+        <h1 class="page-hero__title" id="page-title">Terms <span>of Use</span></h1>
+        <p class="page-hero__lead">Please read these terms before using the FrameX website.</p>
       </div>
     </section>
     <section class="section legal" aria-labelledby="legal-heading">
@@ -79,37 +81,66 @@
               sizes and availability can change and are not guaranteed until an order is confirmed by a shop.</p>
           </section>
           <section class="legal-section" id="s3">
-            <h2>3. Custom photo uploads</h2>
-            <p>The product page lets you preview a photo of your own inside a frame mock-up, entirely in your browser.
-              <strong>As of this version of the site, uploaded photos are not sent to FrameX, a shop, or any
-                server</strong> &mdash; the preview exists only on your device and disappears when you leave or refresh
-              the page. Do not rely on this feature to send your photo to a shop; use the Contact page or the shop's own
-              contact details instead, until upload functionality is connected.</p>
+            <h2>3. Your photos</h2>
+            <p>A product that is made from your own photo (a photo frame, a FrameX Studio design, a wall-art set, a
+              template) can only be ordered with that photo: the product page asks for it before you can add the item
+              to your cart or buy it, and a product that needs several photos needs all of them.</p>
+            <p><strong>Your uploaded image is printed in the same original quality you provide. FrameX does not
+                artificially enhance or improve the image quality.</strong> The file is stored exactly as you uploaded
+              it and is not resized, sharpened or retouched. For the best print result, upload a high-quality image:
+              FrameX and the shop are not responsible for a print that looks soft, dark or pixelated because the photo
+              itself was.</p>
+            <p>The pictures shown on product pages and in previews are samples and on-screen approximations. Where a
+              page lets you position or crop your photo, the print follows the position you chose as closely as the
+              frame allows.</p>
+            <p>Your photo is uploaded when you order (or as soon as you choose it, if you are logged in), is kept
+              private, and is shared only with FrameX and the shop that makes your order. See the <a
+                href="privacy-notice.html">Privacy Notice</a> for how it is stored and for how long.</p>
           </section>
           <section class="legal-section" id="s4">
             <h2>4. Customer responsibilities</h2>
             <p>You're responsible for the accuracy of any information you submit (for example, through the contact
-              form), for any photo you choose to share with a shop outside this site, and for having the right to use
+              form), for any photo you upload or choose to share with a shop, and for having the right to use
               and reproduce any photo you ask a shop to print. Don't submit content that is unlawful, infringes someone
               else's rights, or that you don't have permission to use.</p>
           </section>
           <section class="legal-section" id="s5">
             <h2>5. Orders</h2>
-            <p>FrameX does not currently process orders or payments online. Items you add to your cart are saved only on
-              your own device and are not sent to a shop. To place an order today, please contact the shop directly.
-              Once online ordering is connected, these terms will be updated to describe that process.</p>
+            <p>You can browse without an account. To add items to a cart and to order you log in; your cart is saved
+              with your FrameX account. A cart is not an order.</p>
+            <p><strong>Placing an order.</strong> At checkout you give a delivery address and choose a way to pay. The
+              prices, any delivery charge, tax or Cash on Delivery fee and the total are calculated by FrameX and shown
+              before you pay or place the order. Prices and availability are checked again at that moment; if something
+              changed, you are shown the new total first.</p>
+            <p><strong>Paying.</strong> Online payments are made through a payment gateway in its own secure window.
+              FrameX does not see or store your card number, CVV or UPI PIN. An order paid online is placed only after
+              the payment gateway has confirmed the payment; until then it is held for a short time and you can retry
+              the payment. Cash on Delivery, where offered, is paid in cash when the order is delivered.</p>
+            <p><strong>Cancelling and refunds.</strong> You can cancel an order from its page before production
+              begins. If you paid online, the refund is sent to the payment method you used; how quickly it appears
+              depends on your bank or payment provider. FrameX or the shop may cancel an order that cannot be
+              fulfilled, with a full refund of anything paid.</p>
+            <p><strong>Personalised products.</strong> The photos for a personalised product are uploaded with your
+              order (see section 3). Because it is made for you, a personalised product can be cancelled only before
+              production begins.</p>
+            <p><strong>Gift wrapping.</strong> At checkout you can ask for your order to be gift wrapped, where every
+              item in it can be. The charge is shown as its own line in the price before you pay or place the order.
+              If an order that was gift wrapped is cancelled and refunded in full, the gift-wrapping charge is refunded
+              with it.</p>
           </section>
           <section class="legal-section" id="s6">
             <h2>6. Pricing</h2>
             <p>Prices shown are set by each shop and are displayed in Indian Rupees (INR). Prices may include size-based
-              adjustments shown on the product page. Delivery fees, where applicable, are set by the shop and are not
-              calculated on this site today.</p>
+              adjustments shown on the product page. Any delivery charge, tax, gift-wrapping charge and Cash on Delivery
+              fee is calculated at checkout and shown before you pay or place the order.</p>
           </section>
           <section class="legal-section" id="s7">
             <h2>7. Payments</h2>
-            <p>FrameX does not currently accept payments of any kind. No payment gateway is connected to this site. Any
-              future payment processing will be handled by a licensed payment provider and described in an updated
-              version of these terms before it goes live.</p>
+            <p>Where online payment is switched on, payments are made through a licensed payment gateway (Cashfree Payments)
+              in its own secure window. FrameX never sees or stores your card number, CVV or UPI PIN, and an order is
+              treated as paid only when the gateway has confirmed the payment. Where online payment is not switched on,
+              checkout offers Cash on Delivery only, where that is available. While checkout shows &ldquo;Test
+              mode&rdquo;, online payments are not real and no money is taken.</p>
           </section>
           <section class="legal-section" id="s8">
             <h2>8. Custom products</h2>
@@ -191,6 +222,7 @@
   <script src="assets/js/ui/nav.js" defer></script>
   <script src="assets/js/ui/chrome.js" defer></script>
   <script src="assets/js/ui/cart-drawer.js" defer></script>
+  <script src="assets/js/ui/auth-gate.js" defer></script>
   <script src="assets/js/ui/actions.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </body>

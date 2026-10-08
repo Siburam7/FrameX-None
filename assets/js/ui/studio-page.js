@@ -7,7 +7,8 @@
    The page holds no option or price logic of its own:
      options + prices  js/studio.js          (catalogue data)
      rules             services/studio-engine.js
-     photos            services/upload-service.js + ui/template-components.js (uploader)
+     photos            services/upload-service.js (keeps the original, uploads it)
+                       + ui/photo-uploader.js (one tile per photo space)
      text inputs       ui/template-components.js (text customizer)
      controls          ui/studio-controls.js
      saved designs     store/designs.js        cart  store/cart.js → addStudio()
@@ -137,7 +138,9 @@
       summary: () =>
         `${ctx.caps.photoSlots.filter((s) => cfg.photos[s]).length} of ${ctx.caps.photoSlots.length} added`,
       body: () =>
-        `<div id="fs-uploader"></div><p class="fs-hint">JPG, PNG or WebP, up to ${FrameX.uploadService.MAX_MB} MB. Photos stay on this device for the preview; when you order, you'll send them to us on WhatsApp.</p>`,
+        `<div id="fs-uploader"></div>
+        <p class="fs-quality">${icon("check")}<span>${esc(FrameX.uploadService.qualityText)}</span></p>
+        <p class="fs-hint">JPG, PNG or WebP, up to ${FrameX.uploadService.MAX_MB} MB${ctx.caps.photoSlots.length > 1 ? " each" : ""}. 4K and other high-resolution photos are welcome. FrameX prints from your original file: it is uploaded exactly as it is and kept private. What you see here is a preview copy.</p>`,
     },
     adjust: {
       title: () => "Position & crop",
@@ -451,9 +454,10 @@
 
   /* ---------------------------------------------------------------- Photos + text */
   function mountUploader() {
+    if (uploader) uploader.destroy();
     uploader = FrameX.photoUploader.mount($("#fs-uploader"), {
       slots: ctx.caps.photoSlots,
-      getPhotoUrl: (slot) => photoUrls[slot] || null,
+      getPhoto: (slot) => (cfg.photos[slot] && photoUrls[slot] ? { id: cfg.photos[slot], url: photoUrls[slot] } : null),
       onPhoto(slot, photo) {
         photoUrls[slot] = photo.url;
         cfg.photos[slot] = photo.id;
@@ -696,7 +700,7 @@
     box.innerHTML = `${icon("alert")}<div><strong>A few things before we can make this</strong><ul>${result.issues.map((i) => `<li><button type="button" data-goto="${esc(i.section)}">${esc(i.message)}</button></li>`).join("")}</ul></div>`;
     const first = result.issues[0];
     goTo(first.section);
-    if (first.section === "photos") uploader.showMissing(result.missingPhotos);
+    if (first.section === "photos") uploader.showMissing(result.missingPhotos, ctx.caps.photoSlots.length > 1 ? "This photo is still needed." : "Add your photo here.");
     if (first.section === "text" && texts)
       texts.showMissing(result.missingText);
   }
@@ -780,40 +784,87 @@
     return saved;
   }
 
-  async function addToCart() {
+  /** One problem that isn't about a missing field (an upload that failed, the server's answer). */
+  function showNotice(message) {
+    const box = $("#fs-problems");
+    box.hidden = !message;
+    if (message) box.innerHTML = `${icon("alert")}<div><strong>${esc(message)}</strong></div>`;
+  }
+
+  let ordering = false;
+  function setOrdering(on, text = "") {
+    ordering = on;
+    $$("[data-add], [data-buy]").forEach((b) => (on ? b.setAttribute("aria-busy", "true") : b.removeAttribute("aria-busy")));
+    const status = $("#fs-status");
+    status.hidden = !text;
+    $("span", status).textContent = text;
+  }
+
+  /**
+   * What both "Add to cart" and "Buy Now" need first: a complete design, saved,
+   * with the ORIGINAL of every photo uploaded. A visitor who isn't logged in
+   * gets the login dialog; the design stays open here meanwhile.
+   * -> { saved, photos: { slot: uploadId } } or null (something is missing, or the login was dismissed)
+   */
+  async function prepareOrder(reason) {
+    if (ordering) return null;
     const result = engine.validate(cfg, ctx);
     showProblems(result);
-    if (!result.ok) return;
+    if (!result.ok) return null;
+    setOrdering(true);
     const saved = await saveDesign({ quiet: true });
-    if (!saved) return;
-    const pricing = engine.price(cfg, ctx);
-    const shop = ctx.product
-      ? await FrameX.api.getShop(ctx.product.shopId)
-      : null;
-    FrameX.cart.addStudio({
-      design: saved,
-      productType:
-        ctx.mode === "template"
-          ? "template"
-          : ctx.mode === "product"
-            ? "product-frame"
-            : "simple-photo",
-      name: title(),
-      productId: ctx.product ? ctx.product.id : null,
-      templateId: cfg.templateId,
-      shopId: shop ? shop.id : "framex-studio",
-      shopName: shop ? shop.name : "FrameX custom designs",
-      thumbnail: saved.thumbnail,
-      sizeLabel: engine.summary(cfg, ctx).find((l) => l.key === "size").value,
-      summary: engine.summary(cfg, ctx).map((l) => `${l.label}: ${l.value}`),
-      customText: ctx.caps.text ? Object.assign({}, cfg.text) : {},
-      photoCount: Object.keys(cfg.photos).length,
-      unitPrice: pricing.total,
-      pricing,
-      config: clone(cfg),
+    if (!saved) return setOrdering(false), null;
+    const many = ctx.caps.photoSlots.length > 1;
+    const sent = await FrameX.uploadService.forOrder({
+      reason,
+      itemName: title(),
+      photos: Object.fromEntries(ctx.caps.photoSlots.map((slot) => [slot, cfg.photos[slot]])),
+      onProgress: (percent) => setOrdering(true, percent < 100 ? `Uploading your ${many ? "photos" : "photo"}… ${percent}%` : ""),
     });
-    FrameX.toast.show(`${title()} added to your cart.`, {
-      action: { label: "View cart", onClick: () => FrameX.cartDrawer.open() },
+    if (uploader) uploader.refresh();
+    if (!sent.ok) {
+      setOrdering(false);
+      if (!sent.cancelled) {
+        showNotice(sent.message);
+        goTo("photos");
+      }
+      return null;
+    }
+    return { saved, photos: sent.uploadIds };
+  }
+
+  async function addToCart() {
+    const order = await prepareOrder("add");
+    if (!order) return;
+    // The complete design and the ids of its uploaded photos go to the backend,
+    // which checks every option, checks the photos belong to this account and
+    // works out the price itself.
+    const added = await FrameX.cart.addStudio({
+      design: { id: order.saved.id, config: clone(cfg), thumbnail: order.saved.thumbnail },
+      photos: order.photos,
+      name: title(),
+    });
+    setOrdering(false);
+    if (!added.ok && !added.cancelled && added.code === "PHOTOS_REQUIRED") {
+      showNotice(added.message);
+      return goTo("photos");
+    }
+    FrameX.cart.announce(added, `${title()} added to your cart.`);
+  }
+
+  /** "Buy Now": this design goes straight to checkout, on its own. The cart is not changed. */
+  async function buyNow() {
+    const order = await prepareOrder("buy");
+    if (!order) return;
+    setOrdering(false);
+    await FrameX.buyNow.start({
+      name: title(),
+      item: {
+        kind: "studio",
+        quantity: 1,
+        design: { id: order.saved.id, config: clone(cfg), thumbnail: order.saved.thumbnail },
+        photos: order.photos,
+      },
     });
   }
 
@@ -908,15 +959,27 @@
       );
       if (q("color")) (start = start || base).frame.colorId = q("color");
     }
+    // A photo already chosen on the product page comes along.
+    const carried = product ? q("photo") : "";
+    if (carried && /^ph-[a-z0-9]+$/.test(carried)) {
+      const known = await FrameX.uploadService.info(carried);
+      if (known && (await FrameX.uploadService.has(carried))) {
+        start = start || base;
+        start.photos = Object.assign({}, start.photos, { photo1: carried });
+        start.photoMeta = Object.assign({}, start.photoMeta, { photo1: { w: known.width, h: known.height } });
+      }
+    }
     cfg = engine.normalize(start || base, ctx);
 
-    // Photos come back from this device's storage; drop any that are gone.
+    // Photos come back from this browser's storage. One whose original is no
+    // longer here (and was never uploaded) can't be printed: it has to be added again.
     await Promise.all(
       Object.entries(cfg.photos).map(async ([slot, id]) => {
-        const url = await FrameX.uploadService.getUrl(id);
+        const url = (await FrameX.uploadService.has(id)) ? await FrameX.uploadService.getUrl(id) : null;
         if (url) photoUrls[slot] = url;
         else {
           delete cfg.photos[slot];
+          delete cfg.photoMeta[slot];
           delete cfg.crop[slot];
         }
       }),
@@ -934,7 +997,7 @@
     return `<div class="fs">
       <header class="fs-head">
         <div>
-          <p class="fs-brand">FRAME X <span>STUDIO</span></p>
+          <p class="fs-brand">FrameX <span>Studio</span></p>
           <p class="fs-tagline">Design your frame. Your way.</p>
         </div>
         <p class="fs-mode">${icon(ctx.template ? "image" : ctx.product ? "frame" : "upload")} ${modeLabel}</p>
@@ -959,8 +1022,10 @@
             <p class="fs-hint">Prices are confirmed with you before your frame is made.</p>
           </div>
           <div class="tpl-problems" id="fs-problems" role="alert" hidden></div>
+          <p class="fs-status" id="fs-status" role="status" hidden>${icon("upload")}<span></span></p>
           <div class="fs-actions">
             <button class="btn btn--primary btn--block" type="button" data-add>${icon("bag")} Add to cart · <span data-total></span></button>
+            <button class="btn btn--dark btn--block" type="button" data-buy>Buy Now · <span data-total></span></button>
             <div class="fs-actions__row">
               <button class="btn btn--outline" type="button" data-save>Save design</button>
               <button class="btn btn--outline fs-reset" type="button" data-reset>Reset customization</button>
@@ -981,6 +1046,7 @@
     if (!root) return;
     cat = engine.catalog();
     try {
+      await FrameX.uploadService.limits(); // the largest photo the server takes
       await load();
     } catch (error) {
       if (!error.friendly) console.error("Studio failed to start", error);
@@ -1024,6 +1090,7 @@
     $$("[data-add]", root).forEach((b) =>
       b.addEventListener("click", addToCart),
     );
+    $$("[data-buy]", root).forEach((b) => b.addEventListener("click", buyNow));
     $("[data-save]", root).addEventListener("click", () => saveDesign());
     $("[data-reset]", root).addEventListener("click", (e) =>
       reset(e.currentTarget),

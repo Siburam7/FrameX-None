@@ -160,15 +160,22 @@ export async function checkEmailProvider() {
 }
 
 /* ---------------------------------------------------------------- Messages */
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const plainFooter = "\n\n— FrameX\nIf you didn't ask for this, you can ignore this email. Your password stays the same.";
 
 /**
  * FrameX email layout: dark brand bar, heading, paragraphs, an optional large
  * code, an optional button (with the plain link under it), and a security note.
  * Table layout and inline styles, so it renders in Gmail, Outlook and phones.
+ *
+ * Order emails add `tables`: [{ title?, rows: [[left, right, bold?]] }] with
+ * already-escaped HTML in the cells, and `account: false` (no password advice).
  */
-function htmlEmail({ preview = "", heading, paragraphs = [], code = "", codeNote = "", button = null, notice = "" }) {
+export function htmlEmail({ preview = "", heading, paragraphs = [], code = "", codeNote = "", button = null, notice = "", tables = [], account = true }) {
+  const table = (t) => `<tr><td style="padding:10px 28px 4px">${t.title ? `<div style="font-size:13px;font-weight:bold;color:#5b5f6b;padding-bottom:6px">${esc(t.title)}</div>` : ""}
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.5;color:#2b2b2b">${t.rows
+        .map(([left, right, bold]) => `<tr><td style="padding:5px 0;border-top:1px solid #f1f2f3;vertical-align:top${bold ? ";font-weight:bold" : ""}">${left}</td><td align="right" style="padding:5px 0 5px 12px;border-top:1px solid #f1f2f3;vertical-align:top;white-space:nowrap${bold ? ";font-weight:bold" : ""}">${right}</td></tr>`)
+        .join("")}</table></td></tr>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(heading)}</title></head>
 <body style="margin:0;padding:0;background:#faf6ee;font-family:Arial,Helvetica,sans-serif;color:#050816">
 <span style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(preview)}</span>
@@ -179,10 +186,11 @@ function htmlEmail({ preview = "", heading, paragraphs = [], code = "", codeNote
     ${paragraphs.map((p) => `<tr><td style="padding:6px 28px;font-size:15px;line-height:1.6;color:#2b2b2b">${p}</td></tr>`).join("")}
     ${code ? `<tr><td style="padding:14px 28px 4px"><div style="display:inline-block;padding:14px 22px;border-radius:12px;background:#faf6ee;border:1px solid #ecdcbd;font-family:'Courier New',monospace;font-size:30px;font-weight:bold;letter-spacing:8px;color:#050816">${esc(code)}</div></td></tr>
     <tr><td style="padding:4px 28px 6px;font-size:13px;line-height:1.5;color:#5b5f6b">${esc(codeNote)}</td></tr>` : ""}
+    ${tables.map(table).join("")}
     ${button ? `<tr><td style="padding:16px 28px 6px"><a href="${esc(button.url)}" style="display:inline-block;background:#de832e;color:#ffffff;text-decoration:none;font-size:15px;font-weight:bold;padding:14px 28px;border-radius:999px">${esc(button.label)}</a></td></tr>
     <tr><td style="padding:4px 28px 6px;font-size:12px;line-height:1.5;color:#5b5f6b;word-break:break-all">${esc(button.note || "")} If the button doesn't work, copy this address into your browser:<br>${esc(button.url)}</td></tr>` : ""}
     <tr><td style="padding:18px 28px 26px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #e4e5e7;padding-top:16px;font-size:12px;line-height:1.6;color:#5b5f6b">
-      ${esc(notice || "If you didn't ask for this, you can ignore this email.")}<br>FrameX will never ask you for your password or this code by phone, WhatsApp or email.</td></tr></table></td></tr>
+      ${esc(notice || "If you didn't ask for this, you can ignore this email.")}<br>${account ? "FrameX will never ask you for your password or this code by phone, WhatsApp or email." : "FrameX will never ask you for your card number, CVV, UPI PIN or password by phone, WhatsApp or email."}</td></tr></table></td></tr>
   </table>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px"><tr><td style="padding:14px 28px;font-size:11px;color:#8f8f8f;text-align:center">FrameX · premium photo frames from local framing shops</td></tr></table>
 </td></tr></table></body></html>`;

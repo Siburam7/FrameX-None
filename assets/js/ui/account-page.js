@@ -26,7 +26,7 @@
     root.innerHTML = `<div class="account">
       <header class="account__head">
         <span class="account__avatar" aria-hidden="true">${esc(user.name.split(/\s+/).slice(0, 2).map((w) => w[0].toUpperCase()).join(""))}</span>
-        <div><h1 class="account__title">${esc(user.name)}</h1><p class="account__role">${{ CUSTOMER: "Customer account", SHOP: "Local shop account", ADMIN: "FrameX admin" }[user.role]}</p></div>
+        <div><h1 class="account__title">${esc(user.name)}</h1><p class="account__role">${{ CUSTOMER: "Customer account", SHOP: "Local shop account", ADMIN: "FrameX admin", ARTIST: "Artist account" }[user.role]}</p></div>
         <button class="btn btn--outline btn--sm" type="button" data-logout>${icon("logout")} Log out</button>
       </header>
 
@@ -41,6 +41,35 @@
         <a class="btn btn--dark btn--sm" href="shop-dashboard.html">Open shop dashboard</a>
       </section>` : ""}
       ${user.role === "ADMIN" ? `<section class="account-card"><h2>${icon("shield")} Administration</h2><p class="account-card__lead">Review shop applications and manage shops.</p><a class="btn btn--dark btn--sm" href="admin.html">Open admin dashboard</a></section>` : ""}
+
+      ${user.role === "ARTIST" && user.artist ? `<section class="account-card account-card--shop" aria-labelledby="acc-artist">
+        <h2 id="acc-artist">${icon("image")} Your artist profile</h2>
+        <dl class="account-list">
+          <div><dt>Artist ID</dt><dd><code>${esc(user.artist.artistCode)}</code></dd></div>
+          <div><dt>Name</dt><dd>${esc(user.artist.name)}</dd></div>
+          <div><dt>Username</dt><dd>@${esc(user.artist.username)}</dd></div>
+          <div><dt>Status</dt><dd>${user.artist.status === "ACTIVE" ? "Listed on FrameX" : "Not listed"}</dd></div>
+        </dl>
+        <a class="btn btn--dark btn--sm" href="artist-dashboard.html">Open artist dashboard</a>
+      </section>` : ""}
+
+      <section class="account-card" aria-labelledby="acc-paintings">
+        <h2 id="acc-paintings">${icon("image")} Custom paintings</h2>
+        <p class="account-card__lead">Requests you sent to artists: see the artist's answer, pay the advance, and follow the painting until it arrives.</p>
+        <a class="btn btn--dark btn--sm" href="paintings.html">View your painting requests</a>
+      </section>
+
+      <section class="account-card" aria-labelledby="acc-news">
+        <h2 id="acc-news">${icon("mail")} Notifications <span class="acc-news__count" data-news-count hidden></span></h2>
+        <ul class="acc-news" data-news><li class="acc-news__empty">Loading…</li></ul>
+        <button class="btn btn--outline btn--sm" type="button" data-news-read hidden>Mark all as read</button>
+      </section>
+
+      <section class="account-card" aria-labelledby="acc-orders">
+        <h2 id="acc-orders">${icon("receipt")} Your orders</h2>
+        <p class="account-card__lead">See what you ordered, follow its status, pay for an order that is waiting, or cancel one.</p>
+        <a class="btn btn--dark btn--sm" href="orders.html">View your orders</a>
+      </section>
 
       <div class="account__grid">
         <section class="account-card" aria-labelledby="acc-details">
@@ -71,6 +100,7 @@
       ${user.role === "CUSTOMER" ? `<div class="account__links"><a class="btn btn--primary" href="shop.html">Browse frames</a><a class="btn btn--outline" href="shop.html#shops">Find shops near you</a></div>` : ""}
     </div>`;
 
+    loadNews(root);
     $("[data-logout]", root).addEventListener("click", async () => {
       await auth().logout();
       window.location.href = "index.html";
@@ -95,10 +125,34 @@
     });
   }
 
+  /** The newest notifications of this account. */
+  async function loadNews(root) {
+    const list = $("[data-news]", root);
+    if (!list) return;
+    const ago = (iso) => new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+    try {
+      const r = await FrameX.http.get("/notifications", { limit: 8 });
+      list.innerHTML = r.items.length
+        ? r.items.map((n) => `<li class="acc-news__item${n.read ? "" : " is-unread"}">${n.link ? `<a href="${esc(n.link)}">` : "<div>"}<strong>${esc(n.title)}</strong><span>${esc(n.body)}</span><small>${esc(ago(n.createdAt))}</small>${n.link ? "</a>" : "</div>"}</li>`).join("")
+        : `<li class="acc-news__empty">Nothing yet. Order updates and answers from artists appear here.</li>`;
+      const count = $("[data-news-count]", root);
+      count.hidden = !r.unread;
+      count.textContent = r.unread ? `${r.unread} new` : "";
+      const read = $("[data-news-read]", root);
+      read.hidden = !r.unread;
+      read.onclick = async () => {
+        await FrameX.http.post("/notifications/read");
+        loadNews(root);
+      };
+    } catch (error) {
+      list.innerHTML = `<li class="acc-news__empty">Notifications couldn't be loaded.</li>`;
+    }
+  }
+
   async function init() {
     const root = $("#account-root");
     if (!root) return;
-    const user = await auth().guard(["CUSTOMER", "SHOP", "ADMIN"]);
+    const user = await auth().guard(["CUSTOMER", "SHOP", "ADMIN", "ARTIST"]);
     if (!user) return;
     document.title = `${user.name} — FrameX account`;
     render(root, user);

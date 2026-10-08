@@ -7,6 +7,7 @@
      requireAuth                 any logged-in user
      requireRole("ADMIN")        that role only
      requireOwnShop              SHOP user AND the :shopCode in the URL is their own shop
+     requireArtist               ARTIST user (the artist they act for comes from their session, never from the request)
    ========================================================================== */
 import { config } from "../config.js";
 import { db } from "../db/index.js";
@@ -32,10 +33,11 @@ export async function attachSession(req, res, next) {
   const { rows } = await db.query(
     `SELECT s.id AS session_id, s.last_seen_at,
             u.id, u.name, u.email, u.phone, u.role, u.status, u.shop_id, u.created_at,
-            sh.shop_code, sh.name AS shop_name, sh.approval_status, sh.active_status
+            u.artist_id, sh.shop_code, sh.name AS shop_name, sh.approval_status, sh.active_status, ar.artist_code
        FROM sessions s
        JOIN users u ON u.id = s.user_id
        LEFT JOIN shops sh ON sh.id = u.shop_id
+       LEFT JOIN artists ar ON ar.id = u.artist_id
       WHERE s.token_hash = $1 AND s.revoked_at IS NULL AND s.expires_at > now()`,
     [hashToken(found.token)]
   );
@@ -57,6 +59,8 @@ export async function attachSession(req, res, next) {
       status: row.status,
       shopId: row.shop_id,
       shopCode: row.shop_code,
+      artistId: row.artist_id,
+      artistCode: row.artist_code,
       createdAt: row.created_at
     }
   };
@@ -82,6 +86,14 @@ export const requireRole = (...roles) => (req, res, next) => {
  * The shop in the URL must be the logged-in user's own shop. Changing the code
  * in the URL to another shop's is refused here, before any handler runs.
  */
+/** Artist-only routes (/api/artist/...). Which artist is always the one behind the session. */
+export function requireArtist(req, res, next) {
+  if (!req.auth) throw errors.unauthorized();
+  const { user } = req.auth;
+  if (user.role !== "ARTIST" || !user.artistId) throw errors.forbidden();
+  next();
+}
+
 export function requireOwnShop(req, res, next) {
   if (!req.auth) throw errors.unauthorized();
   const { user } = req.auth;

@@ -5,30 +5,15 @@
                       (save, publish, unpublish, duplicate, remove)
      shopService      shops (the logged-in shop comes from FrameX.auth)
 
-   They sit on FrameX.api (seed provider today, HTTP provider later), the
-   product model (rules, validation) and the media service (uploaded files),
-   so no page talks to storage directly.
+   They sit on FrameX.api and the product model (rules, validation). A shop's
+   own products are saved in its account on the FrameX backend
+   (api/shop-directory.js): the backend rebuilds every record with the
+   platform's rules and is the one that decides whether it can be published,
+   so what this file checks first is only there to answer quickly.
    ========================================================================== */
 (function (FrameX) {
   const model = () => FrameX.productModel;
   const api = () => FrameX.api;
-
-  async function listingImageFor(p, previous) {
-    const main = model().mainView(p);
-    if (!main) return { listingImage: "", listingImageFor: "" };
-    if (!FrameX.mediaService || !FrameX.mediaService.isMedia(main.url))
-      return { listingImage: "", listingImageFor: main.url };
-    if (
-      previous &&
-      previous.listingImageFor === main.url &&
-      previous.listingImage
-    )
-      return { listingImage: previous.listingImage, listingImageFor: main.url };
-    return {
-      listingImage: await FrameX.mediaService.listingThumb(main.url),
-      listingImageFor: main.url,
-    };
-  }
 
   const productService = {
     /** A published product by id or slug, as the full product model. */
@@ -42,71 +27,101 @@
     facets: () => api().getProductFacets(),
 
     /* ---- Shop side ---- */
+    /** Every product of the shop: its own (source "dashboard") and its catalogue-file products (source "catalogue", read-only). */
     forShop: (shopId) => api().getShopProducts(shopId),
     async getForEditing(id) {
       const p = await api().getShopProduct(id);
-      return p ? model().normalize(p) : null;
+      return p
+        ? Object.assign(model().normalize(p), { source: p.source, onSale: p.onSale })
+        : null;
     },
 
-    /** Save as-is (any status). Shop input is sanitised: no verification claims. */
+    /**
+     * Save as-is (any status). Shop input is sanitised: no verification claims,
+     * and the product type's rules (required customer photos) are applied.
+     * Throws an error with `.friendly` when the backend refuses it.
+     */
     async save(product, { status } = {}) {
       const m = model();
       const p = m.sanitizeShopInput(product);
-      const now = new Date().toISOString();
       if (status) p.status = status;
-      const taken = (await api().getProductSlugs())
-        .filter((x) => x.id !== p.id)
-        .map((x) => x.slug);
-      const wanted = m.slugify(p.slug || p.name);
-      p.slug =
-        wanted && !taken.includes(wanted)
-          ? wanted
-          : m.uniqueSlug(p.name || "product", taken);
-      p.updatedAt = now;
-      if (p.status === "published" && !p.publishedAt) p.publishedAt = now;
-      Object.assign(p, await listingImageFor(p, product));
-      // The stored record carries the listing fields too, so pages without the
-      // product model (home page cards, cart) can still show it.
-      return api().saveShopProduct(m.normalize(p));
+      p.slug = m.slugify(p.slug || p.name); // the backend makes it unique
+      const saved = await api().saveShopProduct(m.normalize(p));
+      return Object.assign(m.normalize(saved), { source: saved.source, onSale: saved.onSale });
     },
 
-    /** Publish (or submit for review when moderation is on) only a complete product. */
+    /**
+     * Publish only a complete product. With moderation on, the backend keeps a
+     * product FrameX hasn't approved yet as "pending_review".
+     * -> { ok: true, status, product } | { ok: false, issues }
+     */
     async publish(product) {
       const check = model().validateForPublish(product);
       if (!check.ready) return { ok: false, issues: check.issues };
-      const status = FrameX.config.productModeration
-        ? "pending_review"
-        : "published";
-      return {
-        ok: true,
-        status,
-        product: await productService.save(product, { status }),
-      };
+      try {
+        const saved = await productService.save(product, { status: "published" });
+        return { ok: true, status: saved.status, product: saved };
+      } catch (error) {
+        if (error.issues) return { ok: false, issues: error.issues };
+        throw error;
+      }
     },
 
     unpublish: (product) =>
       productService.save(product, { status: "unpublished" }),
 
     async duplicate(product) {
-      const taken = (await api().getProductSlugs()).map((x) => x.slug);
-      const copy = model().duplicate(product, taken);
-      copy.listingImage = product.listingImage || "";
-      copy.listingImageFor = product.listingImageFor || "";
+      const copy = model().duplicate(product, []);
       return productService.save(copy);
     },
 
-    /** Delete a dashboard product, or drop this device's changes to a catalogue product. */
+    /** Remove one of the shop's own products. Orders and carts that already hold it keep their record of it. */
     async remove(product) {
       await api().deleteShopProduct(product.id);
-      if (FrameX.mediaService && FrameX.config.dataMode !== "api") {
-        const shops = await api().getShops({ limit: 1000 });
-        const all = (
-          await Promise.all(shops.items.map((s) => api().getShopProducts(s.id)))
-        ).flat();
-        const refs = all.flatMap((p) => mediaRefs(p));
-        FrameX.mediaService.collectGarbage(refs);
-      }
       return true;
+    },
+
+    /* ---- Products an older version kept in this browser only ---- */
+
+    /** [{ record, isCatalogueEdit }] for this shop. */
+    localOnly: (shopId) => (FrameX.seedProvider && FrameX.seedProvider.localRecords ? FrameX.seedProvider.localRecords(shopId) : []),
+
+    /**
+     * Move one browser-only product into the shop's account: its pictures are
+     * uploaded, then the record is saved (as a draft unless it is complete).
+     * -> the saved product
+     */
+    async adoptLocal(record) {
+      const m = model();
+      const p = m.sanitizeShopInput(m.normalize(record));
+      const media = FrameX.mediaService;
+      const move = async (holder, key) => {
+        if (holder && media.isLegacy(holder[key])) holder[key] = await media.adopt(holder[key]);
+      };
+      for (const v of p.views || []) {
+        const thumbWasLegacy = media.isLegacy(v.thumb);
+        await move(v, "url");
+        if (thumbWasLegacy) v.thumb = v.url ? `${v.url}:thumb` : "";
+      }
+      p.views = (p.views || []).filter((v) => v && v.url);
+      if (p.product360 && Array.isArray(p.product360.frames)) {
+        for (let i = 0; i < p.product360.frames.length; i++) await move(p.product360.frames, i);
+        p.product360.frames = p.product360.frames.filter(Boolean);
+        if (!p.product360.frames.length) p.product360 = null;
+      }
+      for (const item of p.media || []) {
+        // Video files were never uploaded anywhere: only a link can be kept.
+        if (media.isLegacy(item.url)) item.url = "";
+        await move(item, "thumbnail");
+      }
+      p.media = (p.media || []).filter((item) => item && item.url);
+      for (const mat of (p.print && p.print.materials) || []) await move(mat, "image");
+      for (const part of p.components || []) await move(part, "image");
+      p.id = m.newId();
+      const wanted = record.status === "published" && m.validateForPublish(p).ready ? "published" : "draft";
+      const saved = await productService.save(p, { status: wanted });
+      FrameX.seedProvider.forgetLocal(record.id);
+      return saved;
     },
   };
 

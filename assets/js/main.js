@@ -12,6 +12,7 @@
       FrameX.marquee.init(document.querySelector("#ticker"));
       await Promise.all([
         call("site"),
+        call("homeHero"),
         call("featured"),
         call("categories"),
         call("shops"),
@@ -20,6 +21,7 @@
         call("community"),
         call("guide"),
         call("trendingTemplates"),
+        call("homeArt"),
       ]);
     },
     shop: async () => {
@@ -28,6 +30,8 @@
       if (FrameX.qs.param("locate")) FrameX.shops.useLocation();
     },
     "shop-detail": () => call("shopDetailPage"),
+    "home-decor": () => call("decorPage"),
+    "wall-art-studio": () => call("decorStudio"),
     product: () => call("productPage"),
     gallery: () => call("galleryPage"),
     templates: () => call("templatesPage"),
@@ -39,6 +43,9 @@
     "forgot-password": () => call("authPages"),
     "reset-password": () => call("authPages"),
     account: () => call("accountPage"),
+    checkout: () => call("checkoutPage"),
+    orders: () => call("ordersPage"),
+    order: () => call("orderPage"),
     partner: () => call("partnerPage"),
     admin: () => call("adminPage"),
     "customer-gallery": () => call("customerGalleryPage"),
@@ -46,6 +53,13 @@
     faq: () => call("faq"),
     services: () => Promise.all([call("media"), call("orderInfo")]),
     about: () => undefined,
+    art: () => call("artPage"),
+    artist: () => call("artistPage"),
+    artwork: () => call("artworkPage"),
+    paintings: () => call("paintingsPage"),
+    painting: () => call("paintingPage"),
+    "artist-dashboard": () => call("artistDashboard"),
+    search: () => call("searchPage"),
   };
 
   async function start() {
@@ -56,6 +70,8 @@
     FrameX.cartDrawer.init();
     // Who is logged in (one request; pages that need it await FrameX.auth.ready).
     if (FrameX.auth) FrameX.auth.init();
+    // The cart belongs to the account: it is loaded once we know who is logged in.
+    FrameX.cart.init();
     try {
       await (PAGES[document.body.dataset.page] || PAGES.about)();
     } catch (error) {

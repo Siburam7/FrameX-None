@@ -325,7 +325,7 @@
   flex: 1;
   font-family: var(--font-display);
   font-size: clamp(1rem, 0.94rem + 0.3vw, 1.2rem);
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1.3;
   transition: transform 320ms var(--ease-out);
 }
@@ -451,14 +451,9 @@
   gap: 16px 24px;
   padding: clamp(20px, 3vw, 32px);
   margin-top: clamp(32px, 5vw, 56px);
+  border: 1px solid var(--line-warm);
   border-radius: var(--radius-lg);
-  background: var(--cream);
-}
-
-.contact-strip h3 {
-  font-family: var(--font-display);
-  font-size: var(--text-h3);
-  font-weight: 600;
+  background: var(--ivory);
 }
 
 .contact-strip p {
@@ -468,7 +463,7 @@
 
 /* Footer ----------------------------------------------------------------------- */
 .site-footer {
-  background: var(--charcoal);
+  background: var(--footer-bg);
   color: var(--stone);
 }
 
@@ -503,7 +498,7 @@
 }
 
 .site-footer li a:hover {
-  color: rgba(228, 229, 231, 0.65);
+  color: var(--white);
   text-decoration: underline;
 }
 
@@ -514,7 +509,7 @@
   justify-content: center;
   gap: 6px 0;
   padding-block: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   font-size: 13px;
 }
 
@@ -530,7 +525,7 @@
 }
 
 .site-footer__bottom a {
-  border-left: 1px solid rgba(228, 229, 231, 0.4);
+  border-left: 1px solid rgba(228, 229, 231, 0.3);
   transition: color var(--dur-fast) var(--ease-out);
 }
 
@@ -575,7 +570,6 @@
   overflow-wrap: anywhere;
 }
 
-
 /* Footer brand block: logo, one-line description, email + WhatsApp */
 .site-footer__brand {
   grid-column: 1 / -1;
@@ -585,7 +579,7 @@
 }
 
 .site-footer__brand p {
-  color: rgba(228, 229, 231, 0.75);
+  color: rgba(228, 229, 231, 0.78);
   font-size: var(--text-sm);
   line-height: 1.6;
 }

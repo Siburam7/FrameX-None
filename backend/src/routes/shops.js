@@ -75,7 +75,8 @@ router.patch("/:shopCode/profile", requireOwnShop, async (req, res) => {
   const data = validate(req.body, {
     phone: v.optional(v.phone()),
     description: v.optional(v.string({ max: 1000, label: "Description" })),
-    fulfilment: v.optional(v.listOf(shops.FULFILMENT, { label: "Pickup & delivery" }))
+    fulfilment: v.optional(v.listOf(shops.FULFILMENT, { label: "Pickup & delivery" })),
+    giftWrap: v.optional(v.boolean())
   });
   res.json({ shop: await shops.updateOwnShop(req.auth.user.shopId, data, req.auth.user, req.ip) });
 });

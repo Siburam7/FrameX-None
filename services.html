@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="assets/css/overlays.css">
   <link rel="stylesheet" href="assets/css/footer-faq.css">
   <link rel="stylesheet" href="assets/css/pages.css">
+  <link rel="stylesheet" href="assets/css/mobile.css">
   <script>document.documentElement.classList.add("js");</script>
 </head>
 
@@ -32,12 +33,13 @@
   <div id="site-header-root"></div>
 
   <main id="main">
-    <section class="page-banner" aria-labelledby="page-title">
+    <section class="page-hero" aria-labelledby="page-title">
       <div class="container">
-        <nav class="page-banner__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
+        <nav class="page-hero__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
             aria-hidden="true">/</span> <span aria-current="page">Services</span></nav>
-        <h1 class="page-banner__title" id="page-title">What FrameX offers</h1>
-        <p class="page-banner__lead">Everything FrameX and its partner shops offer, from choosing a frame to collecting
+        <p class="eyebrow">Services</p>
+        <h1 class="page-hero__title" id="page-title">What FrameX <span>offers</span></h1>
+        <p class="page-hero__lead">Everything FrameX and its partner shops offer, from choosing a frame to collecting
           it.</p>
       </div>
     </section>
@@ -87,7 +89,7 @@
                 <use href="#i-truck"></use>
               </svg></span>
             <h3>Pickup and delivery options</h3>
-            <p>See each shop's pickup and delivery options, then send your order to us on WhatsApp.</p><span
+            <p>See each shop's pickup and delivery options, then check out with your delivery address.</p><span
               class="badge badge--open service-card__tag">Available</span>
           </article>
           <article class="service-card"><span class="service-card__icon"><svg class="icon" aria-hidden="true">
@@ -115,7 +117,7 @@
       </div>
     </section>
 
-    <section class="section section--tight-top" id="journey" aria-labelledby="journey-title">
+    <section class="section section--warm" id="journey" aria-labelledby="journey-title">
       <div class="container">
         <div class="section-head" data-reveal>
           <div>
@@ -145,8 +147,8 @@
             </svg>
           </li>
           <li class="journey__step"><span class="journey__num">4</span>
-            <h3>Send your order</h3>
-            <p>Send your cart to us on WhatsApp, with your photo. Online checkout is coming soon.</p><svg
+            <h3>Check out</h3>
+            <p>Enter your address, see the total and pay online or by Cash on Delivery, where available.</p><svg
               class="icon journey__arrow" aria-hidden="true">
               <use href="#i-arrow-right"></use>
             </svg>
@@ -163,7 +165,7 @@
       </div>
     </section>
 
-    <section class="section section--tight-top" id="delivery" aria-labelledby="order-options-title">
+    <section class="section" id="delivery" aria-labelledby="order-options-title">
       <div class="container order-options" id="order-options">
         <div>
           <div class="section-head" data-reveal>
@@ -178,8 +180,8 @@
         <div data-reveal>
           <h3 class="order-options__subtitle">How an order will be followed</h3>
           <ol class="tracker" id="order-tracker"></ol>
-          <p class="tracker__note">Live order tracking is coming soon. Pickup orders skip “Out for delivery”, and an
-            order can also be cancelled or refunded.</p>
+          <p class="tracker__note">Follow your order under “Your orders” in your account. An order can also be
+            cancelled or refunded.</p>
         </div>
       </div>
     </section>
@@ -267,6 +269,7 @@
   <script src="assets/js/ui/nav.js" defer></script>
   <script src="assets/js/ui/chrome.js" defer></script>
   <script src="assets/js/ui/cart-drawer.js" defer></script>
+  <script src="assets/js/ui/auth-gate.js" defer></script>
   <script src="assets/js/ui/actions.js" defer></script>
   <script src="assets/js/ui/media.js" defer></script>
   <script src="assets/js/ui/order-info.js" defer></script>

@@ -7,6 +7,8 @@
      the backend where to look; the role always comes from the backend.
    - Passwords go straight to the backend over the API and are never stored
      in the browser.
+   - The login and sign-up forms are also shown inside the login dialog
+     (ui/auth-gate.js) through mount(): same code, same backend calls.
    ========================================================================== */
 (function (FrameX) {
   const { $, $$, escapeHtml: esc, icon } = FrameX.dom;
@@ -16,8 +18,9 @@
   const PASSWORD_HINT = "At least 8 characters, with a letter and a number.";
 
   function shell(root, title, lead, body) {
+    const heading = root.dataset.embedded ? `<h2 class="auth-card__title" id="auth-gate-title">${title}</h2>` : `<h1 class="auth-card__title">${title}</h1>`;
     root.innerHTML = `<div class="auth-card">
-      <h1 class="auth-card__title">${title}</h1>
+      ${heading}
       ${lead ? `<p class="auth-card__lead">${lead}</p>` : ""}
       ${body}
     </div>`;
@@ -31,8 +34,8 @@
       "Accounts aren't available right now",
       s.available
         ? "We can't reach the FrameX server at the moment. Please try again in a little while."
-        : "FrameX accounts haven't been switched on for this site yet. You can still browse frames and order on WhatsApp.",
-      `<div class="auth-card__actions"><a class="btn btn--dark" href="shop.html">Browse frames</a>${s.available ? `<button class="btn btn--outline" type="button" data-reload>Try again</button>` : ""}</div>`,
+        : "FrameX accounts haven't been switched on for this site yet, and the cart needs an account. You can still browse every frame, and order by messaging us.",
+      `<div class="auth-card__actions"><a class="btn btn--dark" href="shop.html">Browse frames</a>${s.available ? `<button class="btn btn--outline" type="button" data-reload>Try again</button>` : `<a class="btn btn--outline" href="contact.html">Contact us</a>`}</div>`,
     );
     const again = $("[data-reload]", root);
     if (again) again.addEventListener("click", () => window.location.reload());
@@ -45,8 +48,15 @@
     window.location.href = next && allowed ? next : auth().homeFor(user.role);
   };
 
-  /* ---------------------------------------------------------------- Login */
-  function login(root) {
+  /** Keeps "?next=…" when moving between the login and sign-up pages, so the visitor still returns where they were. */
+  const carryNext = () => {
+    const next = auth().safeNext(FrameX.qs.param("next"));
+    return next ? "?next=" + encodeURIComponent(next) : "";
+  };
+
+  /* ---------------------------------------------------------------- Login
+     onSuccess(user) replaces the usual "go to the next page" (the login dialog uses it). */
+  function login(root, { onSuccess = after } = {}) {
     let type = FrameX.qs.param("type") === "shop" ? "shop" : "customer";
     const copy = {
       customer: { label: "Email or phone", placeholder: "you@example.com", autocomplete: "username" },
@@ -67,7 +77,7 @@
         <div class="form-status" role="status" aria-live="polite"></div>
         <button class="btn btn--primary btn--block" type="submit">Log in</button>
       </form>
-      <p class="auth-card__alt" data-for="customer">New to FrameX? <a href="signup.html">Create an account</a></p>
+      <p class="auth-card__alt" data-for="customer">New to FrameX? <a href="signup.html${carryNext()}" data-auth-view="signup">Create an account</a></p>
       <p class="auth-card__alt" data-for="shop">Shop logins are created by FrameX after your shop is approved. <a href="partner.html">Partner with FrameX</a></p>`,
     );
 
@@ -100,13 +110,13 @@
     forms().handle(form, {
       busyLabel: "Logging in…",
       send: (v) => auth().login(v.identifier.trim(), v.password, type),
-      onSuccess: after,
+      onSuccess,
     });
     form.elements.identifier.focus();
   }
 
   /* ---------------------------------------------------------------- Sign up (customers only) */
-  function signup(root) {
+  function signup(root, { onSuccess = after } = {}) {
     shell(
       root,
       "Create your FrameX account",
@@ -121,7 +131,7 @@
         <button class="btn btn--primary btn--block" type="submit">Create account</button>
         <p class="auth-card__fine">By creating an account you agree to the <a href="terms-of-use.html">Terms of Use</a> and <a href="privacy-notice.html">Privacy Notice</a>.</p>
       </form>
-      <p class="auth-card__alt">Already have an account? <a href="login.html">Log in</a></p>
+      <p class="auth-card__alt">Already have an account? <a href="login.html${carryNext()}" data-auth-view="login">Log in</a></p>
       <p class="auth-card__alt">Own a framing shop? <a href="partner.html">Partner with FrameX</a></p>`,
     );
     const form = $("#signup-form", root);
@@ -132,7 +142,7 @@
         // Only these fields are sent. The backend always creates a CUSTOMER.
         return auth().signup({ name: v.name, email: v.email, phone: v.phone, password: v.password, confirmPassword: v.confirmPassword });
       },
-      onSuccess: after,
+      onSuccess,
     });
     form.elements.name.focus();
   }
@@ -344,5 +354,8 @@
     ({ login, signup, "forgot-password": forgot, "reset-password": reset })[page](root);
   }
 
-  FrameX.authPages = { init };
+  /** Show the login or sign-up form inside `root` (the login dialog). view: "login" | "signup" */
+  const mount = (root, view, options) => (view === "signup" ? signup : login)(root, options);
+
+  FrameX.authPages = { init, mount, unavailable };
 })((window.FrameX = window.FrameX || {}));

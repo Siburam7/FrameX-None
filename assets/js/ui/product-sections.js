@@ -10,6 +10,9 @@
      ProductViews         views()           every view as a labelled tile
      SpecificationTable   specifications()  grouped rows, only filled fields
      Customization        customization()   what can be personalised + Studio link
+     Personalization      personalization() products made from the customer's photo: how many,
+                                            that it is printed as provided, that it is private
+     Included + care      included()        what the customer receives, and how to look after it
      ShopSection          shop()            the shop that made it
      VideoSection         video()           only when a video was added
      Reviews              reviews()         only when real reviews exist
@@ -44,7 +47,13 @@
     $$("[data-media-bg]", root).forEach((el) => {
       const ref = el.getAttribute("data-media-bg");
       el.removeAttribute("data-media-bg");
-      const set = (u) => u && el.style.setProperty("--print", `url("${u}")`);
+      // An absolute address: inside a CSS variable, a relative one would be read from the stylesheet's folder.
+      const set = (u) =>
+        u &&
+        el.style.setProperty(
+          "--print",
+          `url("${new URL(u, document.baseURI).href}")`,
+        );
       FrameX.mediaService && /^media:/.test(ref)
         ? FrameX.mediaService.resolve(ref, { thumb: true }).then(set)
         : set(ref);
@@ -345,14 +354,42 @@
            ? `<div class="pz-cta"><div><strong>Design it in FrameX Studio</strong><span>Upload your photo, pick from this product's options and see a live preview with the final price.</span></div>
              <a class="btn btn--primary" href="${preview ? "#" : studioUrl(p)}" data-customize>${icon("frame")} Customize This Product</a></div>`
            : c.photoUpload
-             ? `<p class="pp-muted">Send your photo to the shop on WhatsApp after you order.</p>`
+             ? `<p class="pp-muted">Add your photo on this page before you order. It is uploaded with your order.</p>`
              : ""
        }`,
     );
   }
 
-  function studioUrl(p, sel) {
+  /* ---------------------------------------------------------------- Personalization (the customer's photo) */
+  function personalization(p) {
+    const need = M().photoRequirement(p, M().defaultSelection(p));
+    if (!need.required) return null;
+    // A set whose sizes hold different numbers of photos says so instead of naming one number.
+    const counts = Array.from(new Set((p.sizes || []).map((s) => M().photoRequirement(p, { sizeId: s.id }).count))).sort((a, b) => a - b);
+    const how = counts.length > 1 ? `${counts.join(" or ")} photos, depending on the size you choose` : need.count === 1 ? "one photo" : `${need.count} photos, one for each frame or space`;
+    const text = M().PHOTO_TEXT;
+    const rows = [
+      [need.count === 1 && counts.length < 2 ? "Made with your own photo" : "Made with your own photos", `You add ${how} on this page before you order. The pictures shown here are samples: your order is made from the ${need.count === 1 && counts.length < 2 ? "photo" : "photos"} you upload.`],
+      ["Printed as you provide it", text.quality],
+      ["High-resolution photos welcome", "JPG, PNG or WebP. 4K and camera originals are accepted, and the file is kept exactly as you upload it: it is never resized or re-compressed."],
+      ["Kept private", "Your photo is used only to make your order. Only you, FrameX and the shop that makes your order can open it."],
+    ];
+    return section("personalization", "Personalization", `<ul class="pz-list pz-list--wide">${rows.map(([title, body]) => `<li>${icon("check")}<div><strong>${esc(title)}</strong><span>${esc(body)}</span></div></li>`).join("")}</ul>`, { lead: "This product is personalised with your own photo." });
+  }
+
+  /* ---------------------------------------------------------------- What's included + care */
+  function included(p) {
+    const items = (p.included || []).filter(has);
+    const care = (p.care || []).filter(has);
+    if (!items.length && !care.length) return null;
+    const list = (title, ic, rows) => (rows.length ? `<div class="pi-col"><h3 class="pi-col__title">${icon(ic)} ${esc(title)}</h3><ul class="pi-list">${rows.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>` : "");
+    return section("included", items.length ? "What's included" : "Care", `<div class="pi">${list("In the box", "package", items)}${list("Care instructions", "shield", care)}</div>`);
+  }
+
+  /** photoId: a photo already chosen on the product page (it opens in the Studio too). */
+  function studioUrl(p, sel, photoId) {
     const q = new URLSearchParams({ product: p.id });
+    if (photoId) q.set("photo", photoId);
     if (sel)
       Object.entries({
         size: sel.sizeId,
@@ -474,12 +511,18 @@
   }
 
   /* ---------------------------------------------------------------- Delivery + returns */
-  function delivery() {
+  /** p / shop: what this product and its shop say about getting it to the customer. */
+  function delivery(p = null, shop = null) {
+    const a = (p && p.availability) || {};
+    const ready = has(a.leadTime) ? ` This product is usually ready in ${esc(a.leadTime)}.` : "";
+    const notes = has(a.deliveryNotes) ? ` ${esc(a.deliveryNotes)}` : "";
+    const canWrap = !p || (p.giftWrap !== false && !(shop && shop.giftWrap === false));
     return section(
       "delivery",
       "Pickup, delivery & returns",
       `<div class="pp-accordion">
-        <details><summary>Pickup and delivery</summary><p>Choose pickup or delivery when you order. Delivery fees and timing are set by the shop and confirmed with you before your order is prepared.</p></details>
+        <details><summary>Pickup and delivery</summary><p>The delivery charge is shown at checkout before you pay. Delivery timing is confirmed by the shop when it prepares your order.${ready}${notes}</p></details>
+        <details><summary>Gift wrapping</summary><p>${canWrap ? "At checkout you are asked whether you would like your order gift wrapped. The charge is shown as its own line in the price before you pay." : "Gift wrapping is not available for this product. If it is in your order, the gift-wrapping option is switched off at checkout."}</p></details>
         <details><summary>Cancellation and returns</summary><p>Orders can be cancelled or changed only before production begins. If a frame arrives damaged or incorrect, contact us within 7 days. See the <a href="faq.html#faq-cancellation">FAQ</a> for details.</p></details>
       </div>`,
     );
@@ -494,6 +537,8 @@
     views,
     specifications,
     customization,
+    personalization,
+    included,
     shop,
     video,
     reviews,

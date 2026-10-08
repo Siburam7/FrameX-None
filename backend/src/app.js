@@ -8,11 +8,21 @@ import { requestContext } from "./lib/context.js";
 import { rateLimit } from "./lib/rate-limit.js";
 import { cors, csrfGuard, securityHeaders } from "./lib/security.js";
 import { attachSession } from "./middleware/auth.js";
+import addressRoutes from "./routes/addresses.js";
 import adminRoutes from "./routes/admin.js";
+import { artistDashboardRoutes, artistRoutes, artworkRoutes } from "./routes/artists.js";
 import authRoutes from "./routes/auth.js";
+import cartRoutes from "./routes/cart.js";
+import checkoutRoutes from "./routes/checkout.js";
 import miscRoutes, { devRoutes } from "./routes/misc.js";
+import orderRoutes from "./routes/orders.js";
+import paintingRoutes, { notificationRoutes, reviewRoutes } from "./routes/paintings.js";
+import shopDashboardRoutes, { catalogRoutes } from "./routes/shop-dashboard.js";
 import shopRoutes from "./routes/shops.js";
+import uploadRoutes, { fileRoutes } from "./routes/uploads.js";
 import userRoutes from "./routes/users.js";
+import { handleWebhook } from "./services/payment-service.js";
+import { sendMedia } from "./services/shop-product-service.js";
 
 export function createApp() {
   const app = express();
@@ -20,9 +30,20 @@ export function createApp() {
   app.set("trust proxy", config.trustProxy);
   app.use(securityHeaders);
 
+  /* ---- Payment gateway webhooks ----
+     Called by the gateway's servers, not by a browser: no session, no CORS, no
+     CSRF header. What makes a call trustworthy is its signature, checked over
+     the exact bytes received, so the body is read raw (before express.json). */
+  app.post("/api/payments/webhook/:provider", rateLimit("webhook", { windowMs: 60_000, max: 600 }), express.raw({ type: () => true, limit: "512kb" }), async (req, res) => {
+    res.json(await handleWebhook(String(req.params.provider).toLowerCase(), req.body, req.headers));
+  });
+
   /* ---- API ---- */
   app.use("/api", cors);
   app.use("/api", rateLimit("api", { windowMs: 60_000, max: 300 }));
+  // A shop's product record (text, sizes, components) is larger than other requests.
+  app.use("/api/shops/:shopCode/products", express.json({ limit: "400kb" }));
+  // Uploaded files are not JSON: their bytes are read as a stream by the upload routes.
   app.use("/api", express.json({ limit: "64kb" }));
   app.use("/api", csrfGuard);
   app.use("/api", requestContext);
@@ -30,11 +51,29 @@ export function createApp() {
 
   app.use("/api/auth", authRoutes);
   app.use("/api/users", userRoutes);
+  app.use("/api/shops", shopDashboardRoutes); // a shop's own orders and products
   app.use("/api/shops", shopRoutes);
+  app.use("/api/catalog", catalogRoutes);
+  app.use("/api/uploads", uploadRoutes); // customer photos (private)
+  app.use("/api/files", fileRoutes); // signed, short-lived links to them
+  app.use("/api/cart", cartRoutes);
+  app.use("/api/addresses", addressRoutes);
+  app.use("/api/checkout", checkoutRoutes);
+  app.use("/api/orders", orderRoutes);
+  app.use("/api/artists", artistRoutes); // Art & Artists: the directory and profiles
+  app.use("/api/artworks", artworkRoutes); // approved artworks
+  app.use("/api/artist", artistDashboardRoutes); // an artist's own dashboard
+  app.use("/api/paintings", paintingRoutes); // a customer's custom painting requests and their payments
+  app.use("/api/notifications", notificationRoutes);
+  app.use("/api/reviews", reviewRoutes);
   app.use("/api/admin", adminRoutes);
   app.use("/api", miscRoutes);
   devRoutes(app); // development mailbox; registers nothing in production
   app.use("/api", notFoundHandler);
+
+  /* ---- Product pictures uploaded by shops (public, like the pictures on any product page) ---- */
+  app.get("/media/:id", sendMedia);
+  app.get("/media/:id/:variant", sendMedia);
 
   /* ---- Website files (local development, or a single-server deployment) ----
      Only the public site is served: root *.html, /assets and /js.

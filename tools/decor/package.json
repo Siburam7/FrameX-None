@@ -1,0 +1,14 @@
+{
+  "name": "framex-decor-art",
+  "private": true,
+  "type": "module",
+  "description": "Builds the product images for FrameX Home Decor & Wall Art from the designs in js/decor.js.",
+  "scripts": {
+    "build": "node build.mjs",
+    "sheet": "node build.mjs --sheet",
+    "sources": "node sources.mjs"
+  },
+  "dependencies": {
+    "puppeteer-core": "^24.0.0"
+  }
+}

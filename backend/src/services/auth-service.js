@@ -22,8 +22,9 @@ const GENERIC_LOGIN_ERROR = "Those details don't match an account. Check them an
 export async function publicUser(userId) {
   const { rows } = await db.query(
     `SELECT u.id, u.name, u.email, u.phone, u.role, u.status, u.created_at, u.last_login_at,
-            sh.shop_code, sh.name AS shop_name, sh.city, sh.state, sh.approval_status, sh.active_status
-       FROM users u LEFT JOIN shops sh ON sh.id = u.shop_id WHERE u.id = $1`,
+            sh.shop_code, sh.name AS shop_name, sh.city, sh.state, sh.approval_status, sh.active_status,
+            ar.artist_code, ar.username AS artist_username, ar.name AS artist_name, ar.status AS artist_status
+       FROM users u LEFT JOIN shops sh ON sh.id = u.shop_id LEFT JOIN artists ar ON ar.id = u.artist_id WHERE u.id = $1`,
     [userId]
   );
   const u = rows[0];
@@ -37,7 +38,8 @@ export async function publicUser(userId) {
     status: u.status,
     createdAt: u.created_at,
     lastLoginAt: u.last_login_at,
-    shop: u.role === "SHOP" ? { shopCode: u.shop_code, name: u.shop_name, city: u.city, state: u.state, status: shopStatus(u) } : null
+    shop: u.role === "SHOP" ? { shopCode: u.shop_code, name: u.shop_name, city: u.city, state: u.state, status: shopStatus(u) } : null,
+    artist: u.role === "ARTIST" ? { artistCode: u.artist_code, username: u.artist_username, name: u.artist_name, status: u.artist_status } : null
   };
 }
 
@@ -89,7 +91,7 @@ export async function login({ identifier, password, accountType }) {
   } else {
     const phone = id.includes("@") ? null : normalizePhone(id);
     row = id.includes("@")
-      ? (await db.query("SELECT * FROM users WHERE role IN ('CUSTOMER', 'ADMIN') AND lower(email) = $1", [normalizeEmail(id)])).rows[0]
+      ? (await db.query("SELECT * FROM users WHERE role IN ('CUSTOMER', 'ADMIN', 'ARTIST') AND lower(email) = $1", [normalizeEmail(id)])).rows[0]
       : phone
         ? (await db.query("SELECT * FROM users WHERE role IN ('CUSTOMER', 'ADMIN') AND phone = $1", [phone])).rows[0]
         : null;

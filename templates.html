@@ -25,6 +25,7 @@
   <link rel="stylesheet" href="assets/css/footer-faq.css">
   <link rel="stylesheet" href="assets/css/pages.css">
   <link rel="stylesheet" href="assets/css/templates.css">
+  <link rel="stylesheet" href="assets/css/mobile.css">
   <script>document.documentElement.classList.add("js");</script>
 </head>
 
@@ -33,12 +34,13 @@
   <div id="site-header-root"></div>
 
   <main id="main">
-    <section class="page-banner tpl-banner" aria-labelledby="page-title">
+    <section class="page-hero" aria-labelledby="page-title">
       <div class="container">
-        <nav class="page-banner__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
+        <nav class="page-hero__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span
             aria-hidden="true">/</span> <span aria-current="page">Templates</span></nav>
-        <h1 class="page-banner__title" id="page-title">Trending Templates</h1>
-        <p class="page-banner__lead">Turn your favourite moments into beautifully designed personalised frames.</p>
+        <p class="eyebrow">Personalised frames</p>
+        <h1 class="page-hero__title" id="page-title">Trending <span>Templates</span></h1>
+        <p class="page-hero__lead">Turn your favourite moments into beautifully designed personalised frames.</p>
       </div>
     </section>
 
@@ -97,7 +99,7 @@
         </div>
 
         <p class="tpl-count" id="tpl-count" aria-live="polite"></p>
-        <div class="tpl-grid" id="tpl-grid" aria-busy="true"></div>
+        <div class="product-grid" id="tpl-grid" aria-busy="true"></div>
         <div class="section-more"><button class="btn btn--outline" id="tpl-more" type="button" hidden>Load more
             templates</button></div>
 
@@ -116,7 +118,7 @@
           <ol class="tpl-how__steps">
             <li><span>1</span><strong>Choose a design</strong>Pick a template for the moment you want to keep.</li>
             <li><span>2</span><strong>Add photos and text</strong>See your frame update live as you go.</li>
-            <li><span>3</span><strong>Order</strong>Add it to your cart and send your order on WhatsApp.</li>
+            <li><span>3</span><strong>Order</strong>Add it to your cart and check out. We'll ask for your photos after you order.</li>
           </ol>
         </div>
       </div>
@@ -156,6 +158,7 @@
   <script src="assets/js/ui/nav.js" defer></script>
   <script src="assets/js/ui/chrome.js" defer></script>
   <script src="assets/js/ui/cart-drawer.js" defer></script>
+  <script src="assets/js/ui/auth-gate.js" defer></script>
   <script src="assets/js/ui/actions.js" defer></script>
   <script src="assets/js/services/template-engine.js" defer></script>
   <script src="assets/js/services/upload-service.js" defer></script>

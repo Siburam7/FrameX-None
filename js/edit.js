@@ -50,37 +50,37 @@
     {
       id: "classic",
       name: "Classic Frames",
-      image: "assets/img/products/vintage-legacy.webp",
+      image: "assets/img/categories/style-classic.webp",
       isActive: true,
     },
     {
       id: "modern",
       name: "Modern Frames",
-      image: "assets/img/products/urban-black.webp",
+      image: "assets/img/categories/style-modern.webp",
       isActive: true,
     },
     {
       id: "wooden",
       name: "Wooden Frames",
-      image: "assets/img/products/nordic-oak.webp",
+      image: "assets/img/categories/style-wooden.webp",
       isActive: true,
     },
     {
       id: "luxury",
       name: "Luxury Frames",
-      image: "assets/img/products/imperial-gold.webp",
+      image: "assets/img/categories/style-luxury.webp",
       isActive: true,
     },
     {
       id: "minimal",
       name: "Minimal Frames",
-      image: "assets/img/products/signature-frame.webp",
+      image: "assets/img/categories/style-minimal.webp",
       isActive: true,
     },
     {
       id: "decorative",
       name: "Decorative Frames",
-      image: "assets/img/products/royal-arch.webp",
+      image: "assets/img/categories/style-decorative.webp",
       isActive: true,
     },
 
@@ -258,6 +258,143 @@
     large: ["12 × 16 in", "16 × 20 in", "20 × 24 in"],
   };
 
+  /* ========================================================================
+     3b. HOW A FRAME IS BUILT (reusable details)
+     ------------------------------------------------------------------------
+     What a frame is made of and what comes with it, so you don't retype it
+     for every product. Use one in a product with:   build: BUILD.wood
+
+     A build fills in: print (the paper), protection (the front cover), back
+     (backing and hanging), included (what the customer receives) and care.
+     A product can still set any of those itself: its own value wins.
+
+     The product page shows all of it: in the specification table, in
+     "What's included" and as the layers of "Frame Components".
+
+     These are placeholders until each shop confirms its own materials.
+     ======================================================================== */
+  const CARE = [
+    "Dust the frame with a soft, dry cloth",
+    "Wipe the front with a slightly damp microfibre cloth; don't spray cleaner onto it",
+    "Hang it away from direct sunlight, heat and damp walls",
+  ];
+  const PAPER = {
+    materials: [
+      {
+        id: "pm1",
+        type: "photo-paper",
+        name: "Lustre Photo Paper",
+        finish: "Lustre (low glare)",
+        thickness: "260 gsm",
+        priceModifier: 0,
+      },
+    ],
+  };
+  const ACRYLIC = {
+    options: [
+      {
+        type: "acrylic",
+        priceModifier: 0,
+        description: "2 mm clear acrylic: lighter than glass and shatter-resistant",
+      },
+    ],
+    default: "acrylic",
+  };
+  const GLASS = {
+    options: [
+      {
+        type: "glass",
+        priceModifier: 0,
+        description: "2 mm clear float glass",
+      },
+    ],
+    default: "glass",
+  };
+  const WALL_BACK = {
+    backing: "MDF backing board",
+    hanging: "Sawtooth hanger fitted on the back",
+    mounting: "Turn clips hold the backing in place, so the print can be changed",
+    stand: false,
+  };
+  const BUILD = {
+    // A wooden wall frame: photo-paper print behind clear acrylic
+    wood: {
+      print: PAPER,
+      protection: ACRYLIC,
+      back: WALL_BACK,
+      included: [
+        "The frame, assembled",
+        "Your photo, printed and fitted",
+        "Hanging hook fitted on the back",
+        "Protective packaging",
+      ],
+      care: CARE,
+    },
+    // The same, with a glass front (heavier, formal frames)
+    woodGlass: {
+      print: PAPER,
+      protection: GLASS,
+      back: WALL_BACK,
+      included: [
+        "The frame, assembled",
+        "Your photo, printed and fitted",
+        "Hanging hook fitted on the back",
+        "Protective packaging with corner guards",
+      ],
+      care: CARE,
+    },
+    // A slim metal wall frame
+    metal: {
+      print: PAPER,
+      protection: ACRYLIC,
+      back: {
+        backing: "MDF backing board",
+        hanging: "Hanging hooks fitted on the back",
+        mounting: "Spring clips hold the backing in place, so the print can be changed",
+        stand: false,
+      },
+      included: [
+        "The frame, assembled",
+        "Your photo, printed and fitted",
+        "Hanging hooks fitted on the back",
+        "Protective packaging",
+      ],
+      care: CARE,
+    },
+    // A frame that stands on a table (it can hang too)
+    tabletop: {
+      print: PAPER,
+      protection: ACRYLIC,
+      back: {
+        backing: "MDF backing board",
+        hanging: "Wall hook on the back",
+        mounting: "Turn clips hold the backing in place, so the print can be changed",
+        stand: true,
+        standType: "Fold-out easel back",
+      },
+      included: [
+        "The frame, assembled",
+        "Your photo, printed and fitted",
+        "Fold-out stand and a wall hook on the back",
+        "Protective packaging",
+      ],
+      care: CARE,
+    },
+    // A set of several frames: one photo for each
+    set: {
+      print: PAPER,
+      protection: ACRYLIC,
+      back: WALL_BACK,
+      included: [
+        "Every frame in the set, assembled",
+        "Your photos, printed and fitted: one for each frame",
+        "A hanging hook fitted on the back of each frame",
+        "Protective packaging",
+      ],
+      care: CARE,
+    },
+  };
+
   // Opening hours helper: OPEN("10:00", "20:00") — use null for a closed day.
   const OPEN = (from, to) => [from, to];
 
@@ -293,7 +430,7 @@
       name: "FrameX Studio",
       ownerName: null,
       description: null,
-      coverImage: "assets/img/shops/cover-a.webp",
+      coverImage: "assets/img/shops/cover-stock-1.webp",
       logo: null,
       address: {
         line1: null,
@@ -315,7 +452,7 @@
       name: "Photo Frame Shop B",
       ownerName: null,
       description: null,
-      coverImage: "assets/img/shops/cover-b.webp",
+      coverImage: "assets/img/shops/cover-stock-2.webp",
       logo: null,
       address: {
         line1: null,
@@ -345,7 +482,7 @@
       name: "Photo Frame Shop C",
       ownerName: null,
       description: null,
-      coverImage: "assets/img/shops/cover-c.webp",
+      coverImage: "assets/img/shops/cover-stock-3.webp",
       logo: null,
       address: {
         line1: null,
@@ -418,6 +555,30 @@
      material         shown in the product details
      sizes            a preset from section 3 (SIZES.standard …) or your own list
      colors           frame colour ids from section 2. Leave out for no colour choice.
+     productType      what the product is. Leave it out for a PHOTO FRAME: the
+                      customer must then add their own photo before they can
+                      add it to the cart or buy it (the shop prints that photo).
+                        "photo-frame"   (the default) the customer's photo is required
+                        "other"         an accessory: no photo is asked for
+                      The full list (custom-frame, template, personalized, home-decor,
+                      wall-art, multi-panel) is in assets/js/services/product-model.js.
+     photos           how many photos the customer adds. Leave it out for 1.
+                      A set of 4 frames needs photos: 4. When the sizes of a set hold
+                      different numbers, put it on each size instead:
+                        sizes: [{ id: "0", label: "Set of 5", priceDelta: 0, photos: 5 }, …]
+     giftWrap         false = this product can't be gift wrapped (default: it can)
+     build            a preset from section 3b (BUILD.wood, BUILD.woodGlass,
+                      BUILD.metal, BUILD.tabletop, BUILD.set): the print, the
+                      front cover, the back, what's included and care.
+     look             which drawn "frame corner" and "back of the frame" pictures
+                      to show after the product's own photo: "black", "white",
+                      "oak", "walnut" or "gold". Leave it out to show none. They
+                      are illustrations; when the shop sends real photos of the
+                      corner and the back, list them in `views` instead.
+     included         what the customer receives, one line each:
+                        ["The frame", "Your photo, printed and fitted", "Hanging hook"]
+                      (a build already gives a list; set this to use your own)
+     care             care instructions, one line each (also part of a build)
      frame            THIS PRODUCT'S OWN frame design, used by "Try With Your
                       Own Image" on the product page so each product previews
                       with its own frame, not a generic one:
@@ -433,9 +594,12 @@
                       Leave `frame` out for products that aren't frames (accessories);
                       they can't be opened in FrameX Studio.
                       Optional, only when the shop has told you: inside `frame`
+                        finish  e.g. "Matte"
+                        width   width of the moulding seen from the front, in mm
+                        depth   how far the frame stands off the wall, in mm
+                      Optional, only when the shop has told you: inside `frame`
                         type    "classic" | "modern" | "minimal" | "premium" | "wood" |
                                 "metal" | "gallery" | "floating" | "canvas" | "collage"
-                        finish  e.g. "Matte"      width / depth  millimetres, e.g. 30
 
      OPTIONAL DETAIL (all of these can be left out; the product page only shows
      sections that have information. Shops normally enter this in the shop
@@ -458,8 +622,8 @@
                       never write "certified", "best quality" or "FrameX verified".
 
      Featured / recommended products are chosen in section 6 (HOMEPAGE).
-     Prices, discounts, stock and materials below are placeholders until each
-     shop confirms its own.
+     Prices, discounts, stock, materials and dimensions below are placeholders
+     until each shop confirms its own.
      ======================================================================== */
   const products = [
     // EDIT PRODUCT HERE — change any value inside a product's { } block.
@@ -471,7 +635,9 @@
       name: "Ace of Us",
       image: "assets/img/products/ace-of-us.webp",
       description:
-        "A warm walnut-finish frame with a bold mat border, built for the portrait you want front and centre.",
+        "A warm walnut-finish frame with a bold mat border, built for the portrait you want front and centre.\n\nThe moulding has a lightly carved profile with a satin finish, and a deep red mat sets the photo back from the frame so it reads from across the room. Your photo is printed on lustre photo paper and fitted behind clear acrylic, ready to hang.",
+      build: BUILD.wood,
+      look: "walnut",
       categoryIds: ["photo-frames", "portraits", "decorative", "wooden"],
       price: 799,
       discountPercent: 10,
@@ -488,6 +654,9 @@
         borderWidth: "thin",
         matColor: "red",
         matWidth: "medium",
+        finish: "Satin",
+        width: 26,
+        depth: 20,
       },
     },
     {
@@ -496,7 +665,9 @@
       name: "Classic Square",
       image: "assets/img/products/classic-square.webp",
       description:
-        "A soft white-wash square frame that keeps the focus on the photo — a quiet, everyday favourite.",
+        "A soft white-wash square frame that keeps the focus on the photo — a quiet, everyday favourite.\n\nThe wide profile shows the wood grain through a matte white-wash, and a broad white mat gives a small photo room to breathe. It suits a single square picture on a shelf wall, or a grid of several.",
+      build: BUILD.wood,
+      look: "white",
       categoryIds: ["photo-frames", "family", "classic", "minimal"],
       price: 499,
       discountPercent: 0,
@@ -513,6 +684,9 @@
         borderWidth: "thick",
         matColor: "white",
         matWidth: "wide",
+        finish: "Matte white-wash",
+        width: 44,
+        depth: 22,
       },
     },
     {
@@ -521,7 +695,9 @@
       name: "Grand Frame",
       image: "assets/img/products/grand-frame.webp",
       description:
-        "A substantial solid-wood frame with real presence — suited to a headboard wall or a wedding portrait.",
+        "A substantial solid-wood frame with real presence — suited to a headboard wall or a wedding portrait.\n\nThe deep, wide moulding is finished in a natural satin stain, with a wide white mat that lets a large print sit comfortably inside it. A glass front keeps the print flat and is easy to wipe clean.",
+      build: BUILD.woodGlass,
+      look: "walnut",
       categoryIds: ["photo-frames", "wedding", "classic", "wooden"],
       price: 1499,
       discountPercent: 15,
@@ -538,6 +714,9 @@
         borderWidth: "thick",
         matColor: "white",
         matWidth: "wide",
+        finish: "Natural satin",
+        width: 48,
+        depth: 28,
       },
     },
     {
@@ -546,7 +725,9 @@
       name: "Signature Frame",
       image: "assets/img/products/signature-frame.webp",
       description:
-        "A slim dark-wood frame with clean lines, equally at home on a desk or a gallery wall.",
+        "A slim dark-wood frame with clean lines, equally at home on a desk or a gallery wall.\n\nA narrow white mat lifts the photo off the dark moulding without taking attention from it. The straight, square-edged profile lines up neatly when several are hung side by side.",
+      build: BUILD.wood,
+      look: "black",
       categoryIds: ["photo-frames", "portraits", "minimal", "modern"],
       price: 699,
       discountPercent: 10,
@@ -563,14 +744,19 @@
         borderWidth: "medium",
         matColor: "white",
         matWidth: "thin",
+        finish: "Matte",
+        width: 30,
+        depth: 20,
       },
     },
     {
       id: "p-011",
       shopId: "shop-001",
       name: "Personalized Family Memory Wooden Photo Frame",
-      image: "assets/img/products/family-memory.webp",
-      description: "",
+      image: "assets/img/products/family-memory-photo.webp",
+      description:
+        "A warm wooden frame for the family photo that lives on the table, the shelf or the desk.\n\nIt stands on a fold-out easel back, so there is nothing to drill, and it can also hang from the hook on the back. Your photo is printed on lustre photo paper and fitted behind clear acrylic.",
+      build: BUILD.tabletop,
       categoryIds: [
         "photo-frames",
         "family",
@@ -592,8 +778,11 @@
       id: "p-012",
       shopId: "shop-001",
       name: "Custom Wedding Anniversary Premium Photo Frame",
-      image: "assets/img/products/wedding-anniversary.webp",
-      description: "",
+      image: "assets/img/products/wedding-anniversary-photo.webp",
+      description:
+        "A wall frame for the wedding or anniversary photo you want to see every day.\n\nA slim, dark moulding with a white mat keeps the look formal and lets the photo carry the colour. It is made in three large sizes, so it can hang on its own or as the centre of a gallery wall.",
+      build: BUILD.wood,
+      look: "black",
       categoryIds: [
         "photo-frames",
         "wedding",
@@ -619,7 +808,9 @@
       name: "The Royal Arch",
       image: "assets/img/products/royal-arch.webp",
       description:
-        "An arched silhouette with an ornate mat — a frame built for a moment worth dressing up.",
+        "An arched silhouette with an ornate mat — a frame built for a moment worth dressing up.\n\nThe photo sits in an arch-cut mat inside a carved moulding with a fine inner line and a small crest. It hangs upright: choose a photo with the subject near the centre, because the arch trims the top corners.",
+      build: BUILD.wood,
+      look: "gold",
       categoryIds: [
         "photo-frames",
         "wedding",
@@ -644,6 +835,9 @@
         ornament: true,
         matColor: "red",
         matWidth: "medium",
+        finish: "Antique",
+        width: 28,
+        depth: 22,
       },
     },
     {
@@ -652,7 +846,9 @@
       name: "Midnight Luxe",
       image: "assets/img/products/midnight-luxe.webp",
       description:
-        "A deep matte-black frame for black-and-white portraits and moody, low-light photos.",
+        "A deep matte-black frame for black-and-white portraits and moody, low-light photos.\n\nThere is no mat: the print runs to the inner edge of a thin, flat moulding, so the photo fills the frame. The matte finish keeps reflections off the frame itself.",
+      build: BUILD.wood,
+      look: "black",
       categoryIds: ["photo-frames", "portraits", "luxury", "modern"],
       price: 1199,
       discountPercent: 20,
@@ -669,6 +865,9 @@
         borderWidth: "thin",
         matColor: "none",
         matWidth: "none",
+        finish: "Matte",
+        width: 22,
+        depth: 20,
       },
     },
     {
@@ -677,7 +876,9 @@
       name: "Imperial Gold",
       image: "assets/img/products/imperial-gold.webp",
       description:
-        "A gold-finish statement frame with a wide profile, made to anchor a gallery wall.",
+        "A gold-finish statement frame with a wide profile, made to anchor a gallery wall.\n\nThe carved moulding is finished in antique gold and paired with a wide cream mat, which softens the gold against the photo. A glass front suits the weight and formality of the frame.",
+      build: BUILD.woodGlass,
+      look: "gold",
       categoryIds: ["photo-frames", "wall-art", "luxury", "decorative"],
       price: 1799,
       discountPercent: 15,
@@ -694,6 +895,9 @@
         borderWidth: "thick",
         matColor: "cream",
         matWidth: "wide",
+        finish: "Antique gold",
+        width: 50,
+        depth: 30,
       },
     },
     {
@@ -702,7 +906,9 @@
       name: "Vintage Legacy",
       image: "assets/img/products/vintage-legacy.webp",
       description:
-        "An antique-finish frame with a weathered edge, for photos that feel like they've always been there.",
+        "An antique-finish frame with a weathered edge, for photos that feel like they've always been there.\n\nA carved moulding with a fine inner line and a cream mat gives old family portraits and restored photographs a period setting. The finish is deliberately uneven, so each frame looks slightly different.",
+      build: BUILD.wood,
+      look: "walnut",
       categoryIds: ["photo-frames", "family", "classic", "decorative"],
       price: 1299,
       discountPercent: 0,
@@ -721,14 +927,20 @@
         ornament: true,
         matColor: "cream",
         matWidth: "medium",
+        finish: "Antique, hand-distressed",
+        width: 35,
+        depth: 25,
       },
     },
     {
       id: "p-013",
       shopId: "shop-002",
       name: "Multi-Photo Collage Wall Display Frame Set",
-      image: "assets/img/products/collage-set.webp",
-      description: "",
+      image: "assets/img/products/collage-set-photo.webp",
+      description:
+        "A collage display for a wall of memories: five or nine of your photos, framed and hung together as one set.\n\nEvery piece has the same slim moulding and white mat, so mixed photos read as a group. You add one photo for each space when you order, and the set arrives printed, fitted and ready to hang.",
+      build: BUILD.set,
+      look: "black",
       categoryIds: [
         "photo-frames",
         "wall-art",
@@ -744,7 +956,11 @@
       isVisible: true,
       isNew: false,
       material: "Wood",
-      sizes: ["Set of 5", "Set of 9"],
+      // One photo for every frame in the set.
+      sizes: [
+        { id: "0", label: "Set of 5", priceDelta: 0, photos: 5 },
+        { id: "1", label: "Set of 9", priceDelta: 0, photos: 9 },
+      ],
     },
 
     // ---------------- Photo Frame Shop C (shop-003) ----------------
@@ -754,7 +970,9 @@
       name: "Nordic Oak Frame",
       image: "assets/img/products/nordic-oak.webp",
       description:
-        "A pale oak frame with a thin, modern profile — minimal enough to hang in a row.",
+        "A pale oak frame with a thin, modern profile — minimal enough to hang in a row.\n\nThe natural finish shows the grain and stays light on the wall. A narrow white mat separates the photo from the wood, and the slim moulding keeps the whole frame close to the wall.",
+      build: BUILD.wood,
+      look: "oak",
       categoryIds: [
         "photo-frames",
         "new-arrivals",
@@ -778,6 +996,9 @@
         borderWidth: "thin",
         matColor: "white",
         matWidth: "thin",
+        finish: "Natural matte",
+        width: 20,
+        depth: 22,
       },
     },
     {
@@ -786,7 +1007,9 @@
       name: "Urban Black",
       image: "assets/img/products/urban-black.webp",
       description:
-        "A slim black metal frame with a contemporary edge, built for a clean, gallery-style hang.",
+        "A slim black metal frame with a contemporary edge, built for a clean, gallery-style hang.\n\nThe narrow metal profile holds a white mat and your print behind clear acrylic. The corners are joined square, so frames of different sizes line up crisply on the same wall.",
+      build: BUILD.metal,
+      look: "black",
       categoryIds: [
         "photo-frames",
         "new-arrivals",
@@ -810,14 +1033,19 @@
         borderWidth: "thin",
         matColor: "white",
         matWidth: "thin",
+        finish: "Matte powder coat",
+        width: 12,
+        depth: 20,
       },
     },
     {
       id: "p-014",
       shopId: "shop-003",
       name: "Luxury HD Printed Personalized Picture Frame",
-      image: "assets/img/products/luxury-hd.webp",
-      description: "",
+      image: "assets/img/products/luxury-hd-photo.webp",
+      description:
+        "A large wooden frame for the picture that deserves a wall of its own, with your photo printed at the size you choose.\n\nThe print is made on lustre photo paper and fitted behind clear acrylic. Three large sizes are available: choose a high-resolution photo so it holds up at that size.",
+      build: BUILD.wood,
       categoryIds: [
         "photo-frames",
         "new-arrivals",
@@ -838,8 +1066,11 @@
       id: "p-015",
       shopId: "shop-003",
       name: "Modern Decorative Wooden Wall Photo Frame",
-      image: "assets/img/products/modern-wooden.webp",
-      description: "",
+      image: "assets/img/products/modern-wooden-photo.webp",
+      description:
+        "A small wooden wall frame with a clean, modern profile: easy to hang alone, better in a group.\n\nThe narrow moulding and white mat suit small prints, and the three sizes are made to mix on one wall. Each frame holds one of your photos, printed and fitted behind clear acrylic.",
+      build: BUILD.wood,
+      look: "walnut",
       categoryIds: [
         "photo-frames",
         "wall-art",
@@ -861,7 +1092,32 @@
       shopId: "shop-003",
       name: "A4 White Texture Frame Set of 4",
       image: "assets/img/products/white-texture-set.webp",
-      description: "",
+      description:
+        "Four matching white frames in A4, for four of your photos hung as a set.\n\nThe frames have a lightly textured white finish over MDF, each with a white mat. You add four photos when you order (one for each frame), and the set arrives printed, fitted and ready to hang in a row or two by two.",
+      build: BUILD.set,
+      // Drawn pictures (tools/decor/frames.mjs), until the shop sends its own photos.
+      views: [
+        {
+          type: "WALL_PREVIEW",
+          url: "assets/img/products/white-texture-set.webp",
+          alt: "Four white A4 frames on a wall, each with a sample picture",
+        },
+        {
+          type: "LIFESTYLE",
+          url: "assets/img/products/white-texture-set-room.webp",
+          alt: "The set of four above a sofa, for scale",
+        },
+        {
+          type: "CORNER",
+          url: "assets/img/decor/_corner-white.webp",
+          alt: "Frame corner, close up (illustration)",
+        },
+        {
+          type: "BACK",
+          url: "assets/img/decor/_back-white.webp",
+          alt: "Back of a frame with its hanger (illustration)",
+        },
+      ],
       categoryIds: ["photo-frames", "new-arrivals", "minimal", "modern"],
       price: 649,
       discountPercent: 10,
@@ -871,6 +1127,7 @@
       isNew: true,
       material: "Textured MDF",
       sizes: ["A4"],
+      photos: 4, // one for each of the four frames
     },
 
     // ---------------- Accessories ----------------
@@ -899,6 +1156,7 @@
       isNew: true,
       material: "Magnetic mount with adhesive backing",
       sizes: ["Set of 4"],
+      productType: "other", // an accessory: no photo is needed to order it
     },
 
     // ADD NEW PRODUCT HERE — put a comma after the } above, then copy this block,
@@ -920,7 +1178,9 @@
     //   material: "Wood",
     //   sizes: SIZES.standard,
     //   colors: ["black", "walnut"],
-    //   frame: { shape: "rectangle", style: "grain", borderWidth: "medium", matColor: "white", matWidth: "thin" }
+    //   build: BUILD.wood,
+    //   look: "walnut",
+    //   frame: { shape: "rectangle", style: "grain", borderWidth: "medium", matColor: "white", matWidth: "thin", finish: "Matte", width: 30, depth: 20 }
     // }
     //
     // DELETE/DEACTIVATE PRODUCT HERE:
@@ -937,7 +1197,7 @@
      Hidden / deactivated items are skipped automatically.
 
      featuredProductIds     the scrolling "Featured frame styles" showcase
-     recommendedProductIds  "Highly recommended frames" (first 5 are shown)
+     recommendedProductIds  "Highly recommended frames" (shown in this order; 8 fill two lines of four on a laptop)
      categoryIds            the large "Shop by category" cards; every other
                             active category appears as a small link under them
      featuredShopIds        shops listed first under "Photo-frame shops near
@@ -956,7 +1216,7 @@
       "p-009",
       "p-010",
     ],
-    recommendedProductIds: ["p-011", "p-012", "p-013", "p-014", "p-015"],
+    recommendedProductIds: ["p-011", "p-012", "p-013", "p-014", "p-015", "p-007", "p-009", "p-008"],
     categoryIds: [
       "classic",
       "modern",
@@ -999,6 +1259,33 @@
   checkUnique(shops, "shop");
   checkUnique(products, "product");
 
+  // The drawn "frame corner" and "back of the frame" pictures (assets/img/decor/_corner-*.webp, _back-*.webp).
+  const LOOKS = ["black", "white", "oak", "walnut", "gold"];
+
+  /** A product with its `build` preset filled in (its own fields win) and its drawn corner / back views. */
+  function withBuild(p) {
+    const { build, look, ...own } = p;
+    const out = Object.assign({}, build && typeof build === "object" ? build : {}, own);
+    if (look && LOOKS.includes(look) && !out.views) {
+      const photos = out.images && out.images.length ? out.images : [out.image];
+      out.views = photos
+        .map((url) => ({ type: "PHOTO", url, alt: out.name }))
+        .concat([
+          {
+            type: "CORNER",
+            url: `assets/img/decor/_corner-${look}.webp`,
+            alt: "Frame corner, close up (illustration)",
+          },
+          {
+            type: "BACK",
+            url: `assets/img/decor/_back-${look}.webp`,
+            alt: "Back of the frame with its hanger (illustration)",
+          },
+        ]);
+    }
+    return out;
+  }
+
   const shopIds = ids(shops);
   const categoryIds = ids(categories);
   const colorIds = ids(frameColors);
@@ -1021,6 +1308,14 @@
       );
     if (typeof p.price !== "number")
       warn(`Product "${p.id}" needs a number for price (no quotes).`);
+    if ("build" in p && (!p.build || typeof p.build !== "object"))
+      warn(
+        `Product "${p.id}" has a build that isn't in section 3b (use BUILD.wood, BUILD.woodGlass, BUILD.metal, BUILD.tabletop or BUILD.set).`,
+      );
+    if (p.look && !LOOKS.includes(p.look))
+      warn(
+        `Product "${p.id}" has look "${p.look}". Use one of: ${LOOKS.join(", ")}.`,
+      );
     const VIEW_TYPES = [
       "FRONT",
       "SIDE",
@@ -1074,7 +1369,7 @@
     });
   });
 
-  FrameX.seed.products = products.map((p) => {
+  FrameX.seed.products = products.map(withBuild).map((p) => {
     const sizes = p.sizes || [];
     const priced = sizes.length && typeof sizes[0] === "object";
     const featured = rank(homepage.featuredProductIds, p.id);
