@@ -94,6 +94,26 @@
 /* The header shows the logo file as it is: dark letters and the orange X.
    (The footer, which is dark, uses logo-framex-light.png: white letters, the same X.) */
 
+/* Laptops and desktops: the header's logo is drawn larger than the room it takes in the bar.
+   The file has empty space around its letters (22% of its width on the left, 21% on the right).
+   Part of that empty space is let out past the logo's own place (negative margins), so the logo
+   takes exactly the 150px it always took, the menu has the same room as before, and the letters
+   still end well inside the logo's place. Phones and tablets are not touched. */
+@media (min-width: 1100px) {
+  .site-header .brand img {
+    width: 172px;
+    margin-right: -22px;
+  }
+}
+
+@media (min-width: 1180px) {
+  .site-header .brand img {
+    width: 200px;
+    margin-left: -22px;
+    margin-right: -28px;
+  }
+}
+
 .site-header__actions {
   display: flex;
   align-items: center;
