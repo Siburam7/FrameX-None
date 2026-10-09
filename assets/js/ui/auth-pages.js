@@ -41,12 +41,70 @@
     if (again) again.addEventListener("click", () => window.location.reload());
   }
 
-  const after = (user) => {
+  const destination = (user) => {
     const next = auth().safeNext(FrameX.qs.param("next"));
     // "next" is honoured only if that page fits the role (a customer isn't sent to the shop dashboard).
     const allowed = !next || (/^shop-dashboard/.test(next) ? user.role === "SHOP" : /^admin/.test(next) ? user.role === "ADMIN" : true);
-    window.location.href = next && allowed ? next : auth().homeFor(user.role);
+    return next && allowed ? next : auth().homeFor(user.role);
   };
+  const after = (user) => {
+    window.location.href = destination(user);
+  };
+
+  /* ---------------------------------------------------------------- Welcome animation
+     Right after a successful log-in or sign-up on these pages the next page opens at once, and the FrameX
+     animation plays THERE, over the page, for about 3 seconds while it loads (ui/welcome.js, in every page's
+     <head>). This page only leaves the note that asks for it, with the width of the header logo on this
+     screen (the film is sized so that its lettering matches the logo), and turns white so that nothing
+     flickers between the two pages.
+
+     While the visitor types, the film and the files of the page they will most likely land on are fetched,
+     so both are in the browser's cache by then. No note (storage is blocked, or the visitor asked their
+     device for less motion) = the next page simply opens, as before. */
+  const WELCOME_NOTE = "framex.welcome";
+  const WELCOME_FILM = "assets/video/FrameX-animation-2-landscape.mp4";
+  const lessMotion = () => Boolean(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  function preloadPage(url) {
+    const page = url.split("#")[0];
+    fetch(page, { credentials: "same-origin" })
+      .then((r) => (r.ok ? r.text() : ""))
+      .then((html) => {
+        const have = new Set($$("script[src], link[rel=stylesheet]").map((e) => e.getAttribute("src") || e.getAttribute("href")));
+        const files = [...html.matchAll(/<(?:script[^>]+src|link[^>]+rel="stylesheet"[^>]+href)="([^"]+)"/g)].map((m) => m[1]);
+        [...new Set(files)].filter((f) => !have.has(f) && !/^https?:/.test(f)).forEach((f) => {
+          const link = document.createElement("link");
+          link.rel = "prefetch";
+          link.href = f;
+          document.head.appendChild(link);
+        });
+      })
+      .catch(() => {});
+  }
+
+  let warmed = false;
+  function warmUp() {
+    if (warmed || lessMotion()) return;
+    warmed = true;
+    fetch(WELCOME_FILM).catch(() => {});
+    preloadPage(auth().safeNext(FrameX.qs.param("next")) || auth().homeFor("CUSTOMER"));
+  }
+
+  function welcome(user) {
+    const url = destination(user);
+    if (!lessMotion()) {
+      try {
+        const logo = $(".site-header .brand img");
+        window.sessionStorage.setItem(WELCOME_NOTE, JSON.stringify({ at: Date.now(), logo: logo ? Math.round(logo.getBoundingClientRect().width) : 0 }));
+        const cover = document.createElement("div");
+        cover.className = "fx-welcome";
+        document.body.appendChild(cover);
+      } catch (error) {
+        /* storage is blocked: the next page just opens */
+      }
+    }
+    window.location.href = url;
+  }
 
   /** Keeps "?next=…" when moving between the login and sign-up pages, so the visitor still returns where they were. */
   const carryNext = () => {
@@ -56,7 +114,8 @@
 
   /* ---------------------------------------------------------------- Login
      onSuccess(user) replaces the usual "go to the next page" (the login dialog uses it). */
-  function login(root, { onSuccess = after } = {}) {
+  function login(root, { onSuccess = welcome } = {}) {
+    if (onSuccess === welcome) warmUp();
     let type = FrameX.qs.param("type") === "shop" ? "shop" : "customer";
     const copy = {
       customer: { label: "Email or phone", placeholder: "you@example.com", autocomplete: "username" },
@@ -116,7 +175,8 @@
   }
 
   /* ---------------------------------------------------------------- Sign up (customers only) */
-  function signup(root, { onSuccess = after } = {}) {
+  function signup(root, { onSuccess = welcome } = {}) {
+    if (onSuccess === welcome) warmUp();
     shell(
       root,
       "Create your FrameX account",
