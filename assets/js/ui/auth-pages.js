@@ -50,6 +50,15 @@
   const after = (user) => {
     window.location.href = destination(user);
   };
+  /** After a log-in or sign-up on these pages: the page that opens next plays the FrameX logo animation (ui/welcome.js). */
+  const welcome = (user) => {
+    try {
+      window.sessionStorage.setItem("framex.welcome", String(Date.now()));
+    } catch (error) {
+      /* storage is blocked: the next page just opens */
+    }
+    after(user);
+  };
 
   /** Keeps "?next=…" when moving between the login and sign-up pages, so the visitor still returns where they were. */
   const carryNext = () => {
@@ -59,7 +68,7 @@
 
   /* ---------------------------------------------------------------- Login
      onSuccess(user) replaces the usual "go to the next page" (the login dialog uses it). */
-  function login(root, { onSuccess = after } = {}) {
+  function login(root, { onSuccess = welcome } = {}) {
     let type = FrameX.qs.param("type") === "shop" ? "shop" : "customer";
     const copy = {
       customer: { label: "Email or phone", placeholder: "you@example.com", autocomplete: "username" },
@@ -119,7 +128,7 @@
   }
 
   /* ---------------------------------------------------------------- Sign up (customers only) */
-  function signup(root, { onSuccess = after } = {}) {
+  function signup(root, { onSuccess = welcome } = {}) {
     shell(
       root,
       "Create your FrameX account",

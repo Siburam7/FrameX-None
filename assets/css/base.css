@@ -382,7 +382,8 @@ button:disabled {
   }
 }
 
-/* The FrameX logo animation while a page opens (ui/welcome.js): a white cover over the page, with the film
+/* The FrameX logo animation when the site is opened, a page is reloaded or someone has just logged in
+   (ui/welcome.js): a white cover over the page, with the film
    in the middle, small, for about a second. The script sets the film's width from the header logo's size.
    html.fx-welcoming covers the page before its first drawing; .fx-welcome is the cover itself. */
 html.fx-welcoming::before {

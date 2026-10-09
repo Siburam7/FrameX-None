@@ -1,11 +1,19 @@
 /* ==========================================================================
-   The FrameX logo animation while a page opens.
+   The FrameX logo animation while a page opens: only at three moments.
+
+     1. the site is opened: the first page of a visit (a new tab or window that
+        did not come from another FrameX page);
+     2. a page is reloaded (the browser's refresh button, F5, a hard refresh:
+        a page cannot tell these apart);
+     3. someone has just logged in or signed up: the login pages leave a note
+        (ui/auth-pages.js) and the page that opens next plays it.
+   Moving from one FrameX page to another shows nothing.
 
    This file is loaded in the <head> of every page, WITHOUT "defer", so it runs
-   before anything is drawn. Every time a page is opened or reloaded, the page
-   is covered in white and the logo part of the FrameX film plays once in the
-   middle, small, for about one second, while the page loads its pictures and
-   data underneath. Then the cover fades away and the page is simply there.
+   before anything is drawn. At one of those moments the page is covered in
+   white and the logo part of the FrameX film plays once in the middle, small,
+   for about one second, while the page loads its pictures and data underneath.
+   Then the cover fades away and the page is simply there.
 
    Which part: the film (3.3 s) first draws the logo mark (the black tile, the
    "F", the orange dot: finished at 1.6 s), and from 1.9 s shrinks it and writes
@@ -28,6 +36,8 @@
   var STOP_AT = 1.72; // seconds of film: the logo mark is complete, the lettering has not begun
   var SPEED = 1.7;
   var LOGO_KEY = "framex.logoWidth";
+  var NOTE_KEY = "framex.welcome"; // sessionStorage: left by the login pages, used once
+  var VISIT_KEY = "framex.visit"; // sessionStorage: a FrameX page has already been opened in this tab
 
   // The header logo's real width, noted once this page has drawn it, for the next page that opens.
   function rememberLogo() {
@@ -41,6 +51,30 @@
   }
   if (document.readyState === "complete") window.setTimeout(rememberLogo, 0);
   else window.addEventListener("load", function () { window.setTimeout(rememberLogo, 300); });
+
+  // Is this one of the three moments?
+  var loggedIn = false;
+  var firstPage = false;
+  try {
+    var store = window.sessionStorage;
+    var note = Number(store.getItem(NOTE_KEY));
+    store.removeItem(NOTE_KEY);
+    loggedIn = Date.now() - note < 15000; // older = left behind by a page that never opened
+    firstPage = !store.getItem(VISIT_KEY);
+    store.setItem(VISIT_KEY, "1");
+  } catch (e) {
+    /* storage is blocked: only a reload shows the animation */
+  }
+  // A FrameX link opened in a new tab is not "opening the site".
+  var cameFromFrameX = false;
+  try {
+    cameFromFrameX = Boolean(document.referrer) && new URL(document.referrer).origin === window.location.origin;
+  } catch (e) {
+    /* no usable referrer */
+  }
+  var nav = window.performance && performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null;
+  var reloaded = nav ? nav.type === "reload" : Boolean(window.performance && performance.navigation && performance.navigation.type === 1);
+  if (!(loggedIn || reloaded || (firstPage && !cameFromFrameX))) return;
 
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
