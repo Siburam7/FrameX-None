@@ -459,6 +459,11 @@
       addressId = (addresses.find((a) => a.isDefault) || addresses[0] || {}).id || null;
       await loadQuote();
       render();
+      // For the visitor statistics: checkout was opened with something in it (counted once per page).
+      if (!start.counted && FrameX.analytics && quote && quote.total > 0) {
+        start.counted = true;
+        FrameX.analytics.track("begin_checkout", { value: quote.total });
+      }
     } catch (error) {
       if (error.status === 401) return window.location.replace(FrameX.auth.loginUrl());
       FrameX.templates.showError(root, "Checkout couldn't be loaded.", start);

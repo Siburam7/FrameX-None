@@ -280,6 +280,56 @@
       </div>
       <div class="was-controls">${controlsHtml()}</div>`;
     refresh();
+    mountWallButton();
+  }
+
+  /* ---------------------------------------------------------------- "View on My Wall"
+     The set as it is now (panels, layout, spacing, frame thickness and colour, size, and
+     the part of the photo behind each panel) on the customer's own wall, through their
+     camera. The Live Demo only reads this; the customiser is as it was when it closes. */
+  function liveSpec() {
+    const each = String(sizeRaw().panel || "").match(/([\d.]+)\s*×\s*([\d.]+)/);
+    if (!each) throw new Error("This size has no measurements.");
+    const side = custom.layout !== "stacked";
+    const box = layoutOf(1000, 1000);
+    // Inches per layout unit: a panel standing upright is as wide as its short side, lying down as wide as its long side.
+    const k = (side ? Number(each[1]) : Number(each[2])) / box.panels[0].w;
+    const frame = find(C().border, custom.border).width * Math.min(box.panels[0].w, box.panels[0].h);
+    const p = photo && photo.image ? place(box.w, box.h) : null;
+    const px = p ? photo.image.naturalWidth / p.dw : 0; // preview-picture pixels per layout unit
+    return {
+      kind: "panels",
+      name: product.name,
+      hex: (M().palette()[sel.colorId] || { hex: "#1c1c1c" }).hex,
+      glossy: /gloss/i.test(sel.printMaterialId || ""),
+      image: p ? photo.image : null,
+      pieces: box.panels.map((r) => ({
+        x: (r.x + r.w / 2 - box.w / 2) * k,
+        y: -(r.y + r.h / 2 - box.h / 2) * k,
+        w: r.w * k,
+        h: r.h * k,
+        frameIn: frame * k,
+        slice: p ? { x: (r.x + frame - p.left) * px, y: (r.y + frame - p.top) * px, w: (r.w - frame * 2) * px, h: (r.h - frame * 2) * px } : null,
+      })),
+    };
+  }
+
+  function mountWallButton() {
+    if (!FrameX.liveDemo || !M().liveDemoSupport) return;
+    const stage = $(".was-stage", root);
+    const controls = $(".was-controls", root);
+    if (!stage || !controls) return;
+    const on = M().liveDemoSupport(product).ok;
+    const context = { productId: product.id, page: "wall-art-studio" };
+    // On a wide screen the button sits in a corner of the preview. On a phone that corner belongs to
+    // "Add your photo", so it is a full-width button under the preview (the preview itself stays pinned).
+    const corner = FrameX.liveDemo.mount(stage, { variant: "corner", getSpec: liveSpec, context });
+    corner.el.classList.add("ld-cta--wide-only");
+    corner.setVisible(on);
+    const row = FrameX.liveDemo.mount(controls, { variant: "row", getSpec: liveSpec, context });
+    row.el.classList.add("ld-cta--phone-only");
+    controls.prepend(row.el);
+    row.setVisible(on);
   }
 
   /** Everything that follows from the current choices. */

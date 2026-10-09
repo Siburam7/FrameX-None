@@ -35,6 +35,9 @@ router.get("/config", (req, res) => {
     // What a customer photo may be (the website checks the same before sending; the server checks again).
     uploads: { maxBytes: config.uploads.maxBytes, formats: ["jpeg", "png", "webp"], maxSide: config.uploads.maxSide },
     giftWrap: { enabled: config.checkout.giftWrap.enabled, fee: config.checkout.giftWrap.fee },
+    // Visitor statistics: whether the website may send them (only ever for visitors who said yes there),
+    // and the Google Analytics 4 Measurement ID when one is set. Neither is a secret.
+    analytics: { enabled: config.analytics.enabled, ga4MeasurementId: config.analytics.ga4MeasurementId || null },
     // Custom paintings: how the price is split, and how many reference photos a request may carry.
     paintings: { advancePercent: config.paintings.advancePercent, maxReferencePhotos: config.paintings.maxReferencePhotos }
   });

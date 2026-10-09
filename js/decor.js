@@ -100,6 +100,7 @@
     ],
   };
   const PANEL_GAP_IN = 2; // suggested space between panels on the wall, used for the overall width
+  const ART_GAP_PX = 34; // in a set's artwork picture: the strip left out between two panels (tools/decor/build.mjs draws it so)
 
   // Frame colour ids come from js/edit.js (FRAME COLOURS). Gold is offered on premium pieces.
   const FRAME_COLORS = ["black", "white", "natural-wood", "walnut"];
@@ -557,7 +558,12 @@
         customPhoto: Boolean(d.custom),
         credit: d.credit || null,
         original: !d.credit && !d.custom,
+        // "View on My Wall": the artwork alone (no frame, no wall), drawn by tools/decor. The Live Demo frames it
+        // in the colour and size the customer chose. mat = the product photos show a mat; wallGapIn = space between panels.
+        art: d.custom ? null : { url: `${IMG}art/${id}.webp`, gapPx: panels > 1 ? ART_GAP_PX : 0, mat: look.mat, wallGapIn: PANEL_GAP_IN },
       },
+      // `liveDemo: false` on a design switches "View on My Wall" off for it.
+      ...(d.liveDemo === false ? { liveDemo: false } : {}),
     };
   }
 
@@ -593,7 +599,7 @@
   /** What tools/decor/build.mjs draws: one entry per product photo set. */
   FrameX.seed.decorDesigns = designs.map((d) => {
     const look = lookOf(d);
-    return { id: "hd-" + d.id, art: d.art, format: d.format || "portrait", panels: d.panels || 1, stagger: Boolean(d.stagger), frame: SCENE_FRAME[look.frame], wall: look.wall, room: look.room, mat: look.mat };
+    return { id: "hd-" + d.id, art: d.art, format: d.format || "portrait", panels: d.panels || 1, stagger: Boolean(d.stagger), gap: ART_GAP_PX, custom: Boolean(d.custom), frame: SCENE_FRAME[look.frame], wall: look.wall, room: look.room, mat: look.mat };
   });
 
   /* ---- Custom-photo rules, shared by the customiser and the backend ---------

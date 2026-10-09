@@ -206,7 +206,7 @@
   function mountPhotos(root, p, sel, { preview }) {
     const box = $("[data-photos]", root);
     if (!box)
-      return { required: () => false, check: () => true, forOrder: async () => ({ ok: true, photos: null, thumbnail: "" }), sync() {}, firstPhotoId: () => "", destroy() {} };
+      return { required: () => false, check: () => true, forOrder: async () => ({ ok: true, photos: null, thumbnail: "" }), sync() {}, firstPhotoId: () => "", list: () => [], destroy() {} };
     const svc = FrameX.uploadService;
     const chosen = {}; // slot -> { id, url, width, height, x, y, zoom }
     let need = null;
@@ -434,6 +434,8 @@
       },
       sync,
       firstPhotoId: () => (need.count === 1 && chosen[need.slots[0]] ? chosen[need.slots[0]].id : ""),
+      /** The photos added so far and where each sits in the opening: what "View on My Wall" shows. */
+      list: () => need.slots.filter((slot) => chosen[slot]).map((slot) => Object.assign({ slot }, chosen[slot])),
       /** Every photo added? If not, say so in the customer's words and point at the empty tile. */
       check() {
         if (!need.required) return true;
@@ -544,6 +546,19 @@
         (a) => !preview && (a.href = S().studioUrl(p, sel, photos.firstPhotoId())),
       );
     photos.onChange = studioLinks; // a photo chosen here opens in FrameX Studio too
+
+    /* ---- "View on My Wall": this product, as chosen here, on the customer's own wall through their camera.
+       Only for products that can be shown (productModel.liveDemoSupport) and only where a camera can open;
+       the button reads the choice when it is pressed and changes nothing on this page. ---- */
+    const wall = !preview && FrameX.liveDemo ? M().liveDemoSupport(p) : { ok: false };
+    if (wall.ok && wall.kind !== "panels" && $(".pg-stage", root))
+      FrameX.liveDemo.mount($(".pg-stage", root), {
+        context: { productId: p.id, page: "product" },
+        getSpec: () =>
+          wall.kind === "decor"
+            ? { kind: "decor", product: p, selection: { sizeId: sel.sizeId, colorId: sel.colorId, printMaterialId: sel.printMaterialId } }
+            : { kind: "product", product: p, selection: { sizeId: sel.sizeId, colorId: sel.colorId, printMaterialId: sel.printMaterialId, protection: sel.protection }, photos: photos.list() },
+      });
 
     /* ---- price + options ---- */
     function refresh() {
@@ -982,6 +997,16 @@
         init,
       );
     }
+
+    // For the visitor statistics (sent only if the visitor allowed them): which product was looked at.
+    if (!previewId && FrameX.analytics)
+      FrameX.analytics.track("view_item", {
+        itemType: "product",
+        itemId: product.id,
+        itemName: product.name,
+        category: (product.categoryIds || [])[0] || "",
+        value: (product.pricing || {}).basePrice,
+      });
 
     // Older links asked for the in-page photo preview; that lives in FrameX Studio now.
     if (!previewId && q("mode") === "custom" && M().studioSupport(product).ok) {

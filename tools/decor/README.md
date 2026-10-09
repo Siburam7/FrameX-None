@@ -10,6 +10,7 @@ npm run sources      once: downloads the public-domain paintings into sources/ (
 npm run build        draws every design in js/decor.js
 
 node build.mjs --only=hd-never-give-up,hd-mp-cherry-tree-3     just these
+node build.mjs --art-only                                      only the artwork pictures in art/ (quick)
 node build.mjs --sheet=sheet.png --cols=6                      also one overview picture of all cards
 ```
 
@@ -20,6 +21,7 @@ For each design it makes:
 | `hd-<id>.webp` | the framed piece on a wall (card image and first product photo) |
 | `hd-<id>-room.webp` | the piece in a room, for scale |
 | `hd-<id>-set.webp` | multi-panel sets only: the panels straight on |
+| `art/hd-<id>.webp` | the artwork alone, no frame and no wall. "View on My Wall" draws the frame and the panels around it at the size the customer chose. Not made for the "your photo" sets |
 | `_back-<frame>.webp`, `_corner-<frame>.webp` | shared: back of a frame, corner close-up |
 
 ### Photo-frame pictures
@@ -49,7 +51,8 @@ The same seed always draws the same picture, so a rebuild only changes what you 
 ## Adding a design
 
 Add one line to section 3 of `js/decor.js`, run `node build.mjs --only=hd-<your-id>`, look at the result in
-`assets/img/decor/`, and refresh the website. `backend`'s `npm test` checks that every product has its pictures.
+`assets/img/decor/`, and refresh the website. `backend`'s `npm test` checks that every product has its pictures,
+the artwork picture in `art/` included.
 
 ## What may be used
 

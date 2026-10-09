@@ -291,17 +291,20 @@
   async function users(main, params, { head }) {
     const role = params.get("role") || "";
     const q = params.get("q") || "";
-    const r = await http().get("/admin/users", { role, q });
+    const page = Math.max(1, Number(params.get("page")) || 1);
+    const r = await http().get("/admin/users", { role, q, page });
+    const pages = Math.ceil(r.total / r.limit);
+    const pageLink = (n) => `#/users?${new URLSearchParams({ ...(role ? { role } : {}), ...(q ? { q } : {}), ...(n > 1 ? { page: n } : {}) })}`;
     const STATUS = { ACTIVE: "Active", PENDING_SETUP: "Waiting for password setup", DISABLED: "Disabled" };
-    main.innerHTML = `${head("Accounts", "Customers, shops, artists and admins. A login can be switched off (it is logged out at once) and on again. Passwords are never shown or set here.")}
+    main.innerHTML = `${head("Accounts", "Customers, shops, artists and admins. Open an account to see its contact details and order history. A login can be switched off (it is logged out at once) and on again. Passwords are never shown or set here.")}
       ${chips("users", "role", role, [["", `All (${Object.values(r.counts).reduce((a, b) => a + b, 0)})`], ["CUSTOMER", `Customers (${r.counts.CUSTOMER})`], ["SHOP", `Shops (${r.counts.SHOP})`], ["ARTIST", `Artists (${r.counts.ARTIST})`], ["ADMIN", `Admins (${r.counts.ADMIN})`]])}
       <form class="sd-toolbar" data-search><label class="art-search"><span class="visually-hidden">Search accounts</span>${icon("search")}<input class="input" type="search" name="q" placeholder="Name, email or phone" value="${esc(q)}"></label><button class="btn btn--outline btn--sm" type="submit">Search</button></form>
       ${r.items.length
         ? `<div class="sd-table-wrap"><table class="sd-table"><thead><tr><th scope="col">Account</th><th scope="col">Role</th><th scope="col">Status</th><th scope="col">Orders</th><th scope="col">Last login</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead><tbody>${r.items
-            .map((u) => `<tr data-user="${esc(u.id)}"><td><strong>${esc(u.name)}</strong><br><span class="sd-item__meta">${esc(u.email)}${u.phone ? ` · ${esc(u.phone)}` : ""}</span></td><td>${esc(u.role.toLowerCase())}${u.shopCode ? `<br><span class="sd-item__meta"><code>${esc(u.shopCode)}</code></span>` : ""}${u.artistCode ? `<br><span class="sd-item__meta"><code>${esc(u.artistCode)}</code></span>` : ""}</td>
+            .map((u) => `<tr data-user="${esc(u.id)}"><td><a class="sd-item__name" href="#/users/${esc(u.id)}">${esc(u.name)}</a><br><span class="sd-item__meta">${esc(u.email)}${u.phone ? ` · ${esc(u.phone)}` : ""}</span></td><td>${esc(u.role.toLowerCase())}${u.shopCode ? `<br><span class="sd-item__meta"><code>${esc(u.shopCode)}</code></span>` : ""}${u.artistCode ? `<br><span class="sd-item__meta"><code>${esc(u.artistCode)}</code></span>` : ""}</td>
               <td><span class="sd-status sd-status--${u.status === "ACTIVE" ? "published" : u.status === "DISABLED" ? "unpublished" : "pending_review"}">${esc(STATUS[u.status] || u.status)}</span></td><td>${u.orders}</td><td>${esc(when(u.lastLoginAt) || "Never")}</td>
               <td><div class="sd-item__actions">${u.role === "ADMIN" ? "" : u.status === "DISABLED" ? `<button class="iu-btn iu-btn--go" type="button" data-enable="true">Enable</button>` : `<button class="iu-btn iu-btn--danger" type="button" data-enable="false">Disable</button>`}</div></td></tr>`)
-            .join("")}</tbody></table></div>${r.total > r.items.length ? `<p class="sd-lead" style="margin-top:10px">Showing the newest ${r.items.length} of ${r.total}. Search to find others.</p>` : ""}`
+            .join("")}</tbody></table></div>${pages > 1 ? `<nav class="od-pages" aria-label="Pages" style="margin-top:14px">${page > 1 ? `<a class="btn btn--outline btn--sm" href="${pageLink(page - 1)}">Newer</a>` : ""}<span>Page ${r.page} of ${pages} · ${r.total} accounts</span>${page < pages ? `<a class="btn btn--outline btn--sm" href="${pageLink(page + 1)}">Older</a>` : ""}</nav>` : ""}`
         : emptyBox("users", "No account matches that")}`;
     $("[data-search]", main).addEventListener("submit", (e) => {
       e.preventDefault();

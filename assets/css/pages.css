@@ -1426,3 +1426,19 @@
   color: var(--taupe);
   font-weight: 600;
 }
+
+/* Privacy Notice: the analytics section (several paragraphs, and the visitor's current choice with a button). */
+#analytics p + p {
+  margin-top: 10px;
+}
+
+.legal__choice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  color: var(--ink);
+}

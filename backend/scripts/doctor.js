@@ -56,6 +56,14 @@ else
       ? "UPLOAD_DIR is not set. In production the folder must be on a disk that survives restarts and redeploys, or uploaded photos are lost."
       : "Stored exactly as uploaded (never resized or enhanced) and never public. Back this folder up together with the database."
   );
+{
+  const a = config.analytics;
+  line(
+    a.ga4Invalid ? false : null,
+    `Analytics: visitor statistics ${a.enabled ? "ON (only for visitors who allow them)" : "OFF (ANALYTICS_ENABLED=false)"}; Google Analytics 4 ${a.ga4MeasurementId ? a.ga4MeasurementId : "not used"}`,
+    a.ga4Invalid ? "GA4_MEASUREMENT_ID is not a GA4 Measurement ID. It looks like G-AB12CD34EF (GA4 -> Admin -> Data streams). GA4 stays off until it is corrected." : `Reports use UTC${a.utcOffsetMinutes >= 0 ? "+" : "-"}${String(Math.floor(Math.abs(a.utcOffsetMinutes) / 60)).padStart(2, "0")}:${String(Math.abs(a.utcOffsetMinutes) % 60).padStart(2, "0")} days; visitor records are kept ${a.retentionDays} days.`
+  );
+}
 line(null, `Custom paintings: ${config.paintings.advancePercent}% advance when the artist accepts, ${100 - config.paintings.advancePercent}% when the painting is finished`, "Change it in the admin dashboard (Settings) or with CUSTOM_PAINTING_ADVANCE_PERCENT. Requests already made keep the split they were made with.");
 line(null, `Shop products: ${config.catalog.productModeration ? "a shop's first Publish waits for FrameX approval (PRODUCT_MODERATION=true)" : "go on sale when the shop publishes them (PRODUCT_MODERATION=false)"}`);
 

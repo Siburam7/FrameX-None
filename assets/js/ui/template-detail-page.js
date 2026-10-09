@@ -54,6 +54,7 @@
       return;
     }
     setMeta(t);
+    if (FrameX.analytics) FrameX.analytics.track("view_template", { itemType: "template", itemId: t.id, itemName: t.title, category: t.category });
     const category = categories.find((c) => c.id === t.category);
     const sizes = options.sizes.filter((s) => (t.sizes || []).includes(s.id));
     $("#tpl-crumb").textContent = t.title;

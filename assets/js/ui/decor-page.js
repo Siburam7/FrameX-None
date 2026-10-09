@@ -174,8 +174,13 @@
     FrameX.reveal.observe(grid);
   }
 
+  /** For the visitor statistics: a wall-art collection was opened. */
+  const countCollection = () => FrameX.analytics && state.c && FrameX.analytics.track("view_item_list", { itemType: "category", itemId: "hd-" + state.c, itemName: collectionName(state.c) });
+
   function setFilter(change, { scroll = false } = {}) {
+    const before = state.c;
     Object.assign(state, change, { shown: PER_PAGE });
+    if (state.c !== before) countCollection();
     $("#hd-search").value = state.q;
     $("#hd-panel-filter").value = state.panels;
     $("#hd-sort").value = state.sort;
@@ -283,6 +288,7 @@
     });
     renderStatic();
     listen();
+    countCollection();
     $("#hd-search").value = state.q;
     $("#hd-panel-filter").value = state.panels;
     $("#hd-sort").value = state.sort;

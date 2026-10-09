@@ -112,6 +112,8 @@ const stillPayable = (row) => row.status === "PENDING_PAYMENT" && row.payment_me
 function summary(row) {
   return {
     orderNumber: row.order_number,
+    // true = paid through a gateway in TEST mode, or marked as a test by an admin: never counted as a sale.
+    isTest: Boolean(row.is_test),
     status: row.status,
     paymentMethod: row.payment_method,
     paymentStatus: row.payment_status,
@@ -170,7 +172,7 @@ export function shape(row, parts, { admin = false } = {}) {
     })),
     refunds: parts.refunds.map((f) => ({ amount: f.amount, status: f.status, reason: f.reason, createdAt: f.created_at, ...(admin ? { reference: f.gateway_refund_id } : {}) })),
     events: parts.events.map((e) => ({ kind: e.kind, status: e.status, detail: e.detail, by: e.actor_role, at: e.created_at })),
-    ...(admin ? { userId: row.user_id, gatewayOrderId: row.gateway_order_id, nextStatuses: nextStatuses(row), refundable: refundable(row), stockHeld: row.stock_held } : {})
+    ...(admin ? { userId: row.user_id, gatewayOrderId: row.gateway_order_id, nextStatuses: nextStatuses(row), refundable: refundable(row), stockHeld: row.stock_held, testNote: row.test_note || "" } : {})
   };
 }
 
@@ -298,6 +300,22 @@ export const adminGetOrder = async (orderNumber) => {
   const row = await adminOrderRow(orderNumber);
   return shape(row, await partsOf(row.id), { admin: true });
 };
+
+/**
+ * An admin says an order is (or is not) a test: an order someone placed to try the shop, for example
+ * with Cash on Delivery, which no gateway can label. Test orders stay in every list; the sales
+ * reports show them on their own and leave them out of orders, sales and revenue.
+ */
+export async function adminSetTest(orderNumber, { test, note = "" }, { actor, ip = null }) {
+  await db.tx(async (q) => {
+    const row = await adminOrderRow(orderNumber, q);
+    if (Boolean(row.is_test) === Boolean(test) && (row.test_note || "") === note) return;
+    await q.query("UPDATE orders SET is_test = $2, test_note = $3, updated_at = now() WHERE id = $1", [row.id, Boolean(test), test ? note || null : null]);
+    await addEvent(q, row.id, { kind: "NOTE", detail: test ? `Marked as a test order${note ? `: ${note}` : ""}. It is not counted in sales.` : "No longer marked as a test order. It is counted in sales.", actor: { id: actor.id, role: "ADMIN" } });
+    await audit(q, { actor, action: ACTIONS.ORDER_TEST_LABEL_CHANGED, targetType: "order", targetId: row.order_number, metadata: { test: Boolean(test), note }, ip });
+  });
+  return adminGetOrder(orderNumber);
+}
 
 export async function adminOrderCounts() {
   const { rows } = await db.query(

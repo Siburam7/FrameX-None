@@ -27,6 +27,7 @@ import { linkBase } from "../lib/context.js";
 import { HttpError } from "../lib/errors.js";
 import { newId } from "../lib/tokens.js";
 import { gateway, gatewayNamed } from "../payments/index.js";
+import { gatewayInTestMode } from "./analytics-service.js";
 import { artistUserIds, notifyUser, notifyUsers } from "./notification-service.js";
 import * as paintings from "./painting-service.js";
 
@@ -227,6 +228,8 @@ export async function startPayment(userId, number, method = null) {
       "INSERT INTO painting_payments (id, request_id, stage, attempt, provider, status, amount, currency, gateway_order_id, gateway_session) VALUES ($1, $2, $3, $4, $5, 'PENDING', $6, $7, $8, $9)",
       [id, fresh.id, stage, count + 1, gw.name, amount, fresh.currency, winner.gateway_order_id, winner.gateway_session]
     );
+    // A payment through a gateway in TEST mode is not real money: the reports keep this painting out of sales.
+    if (gatewayInTestMode()) await q.query("UPDATE painting_requests SET is_test = true WHERE id = $1 AND is_test IS DISTINCT FROM true", [fresh.id]);
     return { ...(await q.query("SELECT * FROM painting_payments WHERE id = $1", [id])).rows[0], method_requested: method };
   });
   return { request: await paintings.getOwnRequest(userId, number), payment: session(request, payment, stage) };

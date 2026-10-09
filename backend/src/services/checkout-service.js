@@ -25,6 +25,7 @@ import { HttpError, errors } from "../lib/errors.js";
 import { newId } from "../lib/tokens.js";
 import { gateway, paymentStatus } from "../payments/index.js";
 import { addressSnapshot, ownAddress, publicAddress } from "./address-service.js";
+import { gatewayInTestMode } from "./analytics-service.js";
 import { checkoutLines, directLines, removePurchased } from "./cart-service.js";
 import { reserveStock } from "./catalog-service.js";
 import * as orders from "./order-service.js";
@@ -217,13 +218,15 @@ async function insertOrder(q, user, { quote, address, paymentMethod, idempotency
     `INSERT INTO orders (id, order_number, user_id, idempotency_key, status, payment_method, payment_status, currency,
                          subtotal, discount, tax, tax_percent, shipping_fee, cod_fee, total, item_count,
                          address_id, shipping_address, customer_name, customer_email, customer_phone, placed_at, expires_at,
-                         gift_wrap, gift_wrap_fee)
+                         gift_wrap, gift_wrap_fee, is_test)
      VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
              CASE WHEN $21 THEN now() ELSE NULL END,
              CASE WHEN $21 THEN NULL ELSE now() + interval '${config.payments.pendingMinutes} minutes' END,
-             $22, $23)`,
+             $22, $23, $24)`,
     [id, number, user.id, idempotencyKey, cod ? "PLACED" : "PENDING_PAYMENT", paymentMethod, quote.currency, quote.subtotal, quote.discount, quote.tax, quote.taxPercent, quote.shippingFee, quote.codFee, quote.total, quote.itemCount,
-      address.id, JSON.stringify(addressSnapshot(address)), user.name, user.email, address.phone || user.phone || null, cod, quote.giftWrap.selected, quote.giftWrapFee]
+      address.id, JSON.stringify(addressSnapshot(address)), user.name, user.email, address.phone || user.phone || null, cod, quote.giftWrap.selected, quote.giftWrapFee,
+      // Paid through a gateway that is in TEST mode: not real money, so the reports keep it out of sales.
+      !cod && gatewayInTestMode()]
   );
   const sellers = await sellersOf(q, quote.lines);
   let position = 0;

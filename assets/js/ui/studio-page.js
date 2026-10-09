@@ -1098,6 +1098,23 @@
     $("[data-top]", root).addEventListener("click", () =>
       $(".fs-stage").scrollIntoView({ behavior: "smooth", block: "center" }),
     );
+    mountWallButton(root);
+  }
+
+  /* "View on My Wall": this design, exactly as it is now (frame, colour, size, border, mat, photos,
+     text), on the customer's own wall through their camera. The Live Demo is given a copy: it
+     can't change the design, and the customer comes back to this page as they left it.
+     A listed product can have it switched off (productModel.liveDemoSupport). */
+  function mountWallButton(root) {
+    if (!FrameX.liveDemo) return;
+    if (ctx.product && !FrameX.productModel.liveDemoSupport(ctx.product).ok) return;
+    const stage = $(".fs-stage", root);
+    stage.classList.add("ld-host");
+    const getSpec = () => ({ kind: "studio", cfg: clone(cfg), ctx, photoUrls: Object.assign({}, photoUrls) });
+    const context = { productId: ctx.product ? ctx.product.id : null, templateId: ctx.template ? ctx.template.id : null, page: "studio" };
+    // On a wide screen the button sits in a corner of the preview; on a phone it is a full-width button under it.
+    FrameX.liveDemo.mount(stage, { getSpec, context, variant: "corner" }).el.classList.add("ld-cta--wide-only");
+    FrameX.liveDemo.mount($(".fs-stagecol", root), { getSpec, context, variant: "row" }).el.classList.add("ld-cta--phone-only");
   }
 
   FrameX.studioPage = { init };

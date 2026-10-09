@@ -97,10 +97,43 @@
                 or a visit to the login page. They leave your device only when you are logged in to a FrameX account:
                 see &ldquo;Your photos&rdquo; in section 9. A photo that nothing on this site uses any more is removed
                 from your browser's storage automatically.</li>
+              <li><strong>Your camera (&ldquo;View on My Wall&rdquo;).</strong> When you press &ldquo;View on My
+                Wall&rdquo; and allow it, your camera's live picture is shown on your own screen so that you can see a
+                frame on your wall. It is not recorded and it is not sent to FrameX, a shop or anyone else, and the
+                camera is switched off when you close the view. &ldquo;Save photo&rdquo; makes a picture file on your
+                own device only; FrameX does not receive it. Where your phone offers them, its motion sensor and its
+                AR feature are used in the same way: on your device, and only while the view is open.</li>
               <li><strong>The contact form</strong> does not submit to a server. If an email address is configured for
                 FrameX, submitting the form opens your own email app with the message pre-filled, for you to send
                 yourself &mdash; FrameX does not receive it automatically.</li>
+              <li><strong>Your analytics choice.</strong> When you answer the analytics question (see below), the answer
+                is kept in your browser's local storage so that you are not asked again. If you allow analytics, your
+                browser also keeps a random visitor number and a visit number. If you say no, neither is created.</li>
             </ul>
+          </section>
+          <section class="legal-section" id="analytics">
+            <h2>Analytics: only if you allow it</h2>
+            <p>The first time you visit, FrameX asks whether it may count visits. Until you answer, and if you answer
+              &ldquo;No thanks&rdquo;, nothing is counted and no visitor number is made. If your browser sends a
+              &ldquo;Do Not Track&rdquo; or &ldquo;Global Privacy Control&rdquo; signal, we treat that as a no and do
+              not ask.</p>
+            <p><strong>If you allow it, we record:</strong> which pages are opened (the page's address without
+              anything after &ldquo;?&rdquo;), which products, categories, templates, artworks, artists and shops are
+              looked at, what is searched for (anything that looks like an email address or a phone number is removed
+              first), that a checkout was started, the name of the website a visit came from, whether a phone, tablet
+              or computer was used, and whether someone was logged in at the time (not who).</p>
+            <p><strong>We do not record:</strong> your name, email address, phone number, postal address or account,
+              your network (IP) address, your photos, or anything about your payment. These visitor records are deleted
+              after a set time: about 13 months, unless FrameX has set a different one.</p>
+            <p><strong>Google Analytics.</strong> Where FrameX has switched on Google Analytics for this site, the same
+              events are also sent to Google after you allow analytics, and only then is Google's script loaded.
+              Google sets its own cookies (their names start with &ldquo;_ga&rdquo;) and, like any website you connect
+              to, sees your network address. Advertising features are switched off. If you later say no, FrameX
+              removes those cookies and stops sending.</p>
+            <p><strong>Not analytics:</strong> your orders, payments and account (section 9) are records FrameX needs
+              to run the shop. They exist whether or not you allow analytics, and they are not sent to Google.</p>
+            <p class="legal__choice"><strong data-analytics-status>Analytics is OFF: you have not been asked yet.</strong>
+              <button class="btn btn--outline btn--sm" type="button" data-analytics-choice>Change my choice</button></p>
           </section>
           <section class="legal-section" id="s5">
             <h2>5. Data security</h2>
@@ -121,7 +154,8 @@
               location feature to find nearby shops. Where FrameX accounts are not switched on, the distance is worked
               out on your device and your coordinates are not sent to FrameX. Where they are switched on, your
               coordinates are sent to the FrameX server only to calculate distances and are not stored in the FrameX database (see section 9).
-              No advertising or analytics trackers are used in this version of the site.</p>
+              No advertising trackers are used. Analytics is used only if you allow it: see
+              <a href="#analytics">&ldquo;Analytics: only if you allow it&rdquo;</a> above.</p>
           </section>
           <section class="legal-section" id="s8">
             <h2>8. Your rights</h2>
@@ -138,6 +172,13 @@
               <li><strong>Your account.</strong> If you create an account, FrameX stores your name, email address and
                 phone number (if you give one). Your password is stored only as a one-way hash; FrameX staff cannot
                 read it. You can see and edit your details on your account page.</li>
+              <li><strong>Login records.</strong> To notice someone guessing passwords, FrameX keeps a record of each
+                login and each failed login: the time, the account it was aimed at, the reason it failed and the
+                network address it came from. What was typed is never stored. These records are deleted after the
+                same limited time as the visitor records above.</li>
+              <li><strong>Who at FrameX can see your details.</strong> Only FrameX administrators, to help with an
+                order or a problem: your name, contact details, saved addresses and order history. Each time an
+                administrator opens a customer's record, that is written to a log.</li>
               <li><strong>Your orders and addresses.</strong> When you check out, FrameX stores the delivery
                 addresses you save and, for each order, what you bought, the price you paid, the delivery address and
                 contact details you gave, and the order's history. Orders are kept as business records and are
@@ -228,6 +269,7 @@
   <script src="assets/js/ui/cart-drawer.js" defer></script>
   <script src="assets/js/ui/auth-gate.js" defer></script>
   <script src="assets/js/ui/actions.js" defer></script>
+  <script src="assets/js/services/analytics.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </body>
 

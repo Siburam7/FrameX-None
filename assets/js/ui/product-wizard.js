@@ -388,7 +388,26 @@
               ? `${icon("frame")}<div><strong>FrameX Studio is off for this product</strong><span>Customers add their photo on the product page and order it there. Turn on “Design in FrameX Studio” to also let them crop it and choose a border or a mat with a live preview.</span></div>`
               : `${icon("frame")}<div><strong>FrameX Studio isn't used for ready-made products</strong><span>The Studio builds a frame around the customer's photo. This product is sold as it is.</span></div>`}
         </div>
+        ${wallGroup()}
         ${extra.length ? `<ul class="wz-issues">${extra.map((i) => `<li>${icon("alert")} ${esc(i.message)}</li>`).join("")}</ul>` : ""}`;
+    }
+
+    /** "View on My Wall": may customers see this product on their own wall through their camera? */
+    function wallGroup() {
+      const wall = M().liveDemoSupport(draft);
+      const off = draft.liveDemo && draft.liveDemo.enabled === false;
+      return group(
+        "View on My Wall (Live Demo)",
+        `${field("Show “View on My Wall”", select(draft, "liveDemo.enabled", [{ id: "", name: "Automatic: on when FrameX can show this product" }, { id: "true", name: "On" }, { id: "false", name: "Off" }], { kind: "tri" }), { hint: "Customers point their phone camera at a wall and see this product on it, in the size and colour they chose." })}
+          <div class="wz-status ${wall.ok ? "is-ok" : off ? "" : "is-warn"}">${
+            wall.ok
+              ? `${icon("check")}<div><strong>Customers will see “View on My Wall”</strong><span>On the product page${draft.customization.photoUpload ? " and in FrameX Studio" : ""}, on phones and computers with a camera. It uses the sizes you entered, so check their width and height.</span></div>`
+              : off
+                ? `${icon("frame")}<div><strong>“View on My Wall” is off for this product</strong><span>The button is not shown.</span></div>`
+                : `${icon("alert")}<div><strong>“View on My Wall” can't be shown for this product yet</strong><ul>${wall.reasons.map((r) => `<li>${esc(r)}</li>`).join("")}</ul></div>`
+          }</div>`,
+        "FrameX draws the frame from the details you entered (frame type, colour, sizes) with the customer's own photo inside. Nothing extra is needed from you.",
+      );
     }
 
     function studioSummary() {
@@ -590,6 +609,7 @@
       if (t === "number") return el.value === "" ? null : Number(el.value);
       if (t === "list") return el.value.split(",").map((x) => x.trim()).filter(Boolean);
       if (t === "falsy") return el.value || false;
+      if (t === "tri") return el.value === "" ? null : el.value === "true"; // automatic / on / off
       // One item per line ("What's included", "Care").
       if (t === "lines") return el.value.split(/\r?\n/).map((x) => x.trim()).filter(Boolean).slice(0, 12);
       return el.value;

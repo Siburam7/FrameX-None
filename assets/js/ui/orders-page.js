@@ -318,6 +318,18 @@
     const show = (o, message) => {
       render(root, o, { placed, message });
       if (o.status === "DELIVERED") reviewsBox(root, o.orderNumber);
+      // Google Analytics (only if the visitor allowed analytics) is told about an order once: when this
+      // confirmation page shows an order the SERVER reports as placed. Never for an unpaid, cancelled or
+      // test order. It is a statistic, not a record of payment: sales are counted from the database.
+      if (placed && FrameX.analytics && !["PENDING_PAYMENT", "CANCELLED"].includes(o.status))
+        FrameX.analytics.track("purchase", {
+          transactionId: o.orderNumber,
+          value: o.total,
+          tax: o.tax,
+          shipping: o.shippingFee,
+          test: o.isTest,
+          items: (o.items || []).map((i) => ({ item_id: i.productId || i.templateId || "design", item_name: i.name, quantity: i.quantity, price: i.unitPrice })),
+        });
     };
     const fail = (error) => {
       if (error.status === 401) return window.location.replace(FrameX.auth.loginUrl());

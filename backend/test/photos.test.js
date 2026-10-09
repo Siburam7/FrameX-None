@@ -966,6 +966,38 @@ describe("9 + 10. a shop decides what it sells; the platform keeps its rules", (
     assert.equal((await shopN.get(`/api/shops/${code()}/products/${id}`)).status, 404);
   });
 
+  test('"View on My Wall": a shop can switch it off or on for its own product; a 3D model is FrameX\'s to add', async () => {
+    const id = "lp-" + crypto.randomBytes(6).toString("hex");
+    const url = `/api/shops/${code()}/products/${id}`;
+    // Nothing said: a photo frame follows its type, and this one has a frame and sizes that can be drawn.
+    // (The shop has not switched on "Design in FrameX Studio"; that is not needed to hang it on a wall.)
+    const auto = await shopN.put(url, record(S.media));
+    assert.equal(auto.status, 200, auto.text);
+    assert.deepEqual(auto.json.product.liveDemo, { enabled: null, model: "" });
+    assert.equal(auto.json.product.customization.photoUpload, false);
+    assert.deepEqual([model.liveDemoSupport(auto.json.product).ok, model.liveDemoSupport(auto.json.product).kind], [true, "product"], model.liveDemoSupport(auto.json.product).reasons.join(" / "));
+    // Switched off, with a model file slipped in: "off" is kept, the file is not.
+    const off = await shopN.put(url, record(S.media, { liveDemo: { enabled: false, model: "https://evil.example/frame.glb" } }));
+    assert.equal(off.status, 200, off.text);
+    assert.deepEqual(off.json.product.liveDemo, { enabled: false, model: "" });
+    assert.equal(model.liveDemoSupport(off.json.product).ok, false);
+    // Customers' browsers are told the same by the public catalogue, and it is what the database holds.
+    const listed = (await visitor.get("/api/catalog/shop-products")).json.items.find((x) => x.id === id);
+    assert.deepEqual(listed.liveDemo, { enabled: false, model: "" });
+    assert.deepEqual((await shopN.get(url)).json.product.liveDemo, { enabled: false, model: "" });
+    // Anything that is not yes or no is read as "not said".
+    const odd = await shopN.put(url, record(S.media, { liveDemo: "yes please" }));
+    assert.deepEqual(odd.json.product.liveDemo, { enabled: null, model: "" });
+    // "On" does not make a product showable that can't be drawn: here, one made from four photos.
+    const four = await shopN.put(url, record(S.media, { name: "Four Seasons Wall Collage", productType: "template", personalization: { photos: 4 }, liveDemo: { enabled: true } }));
+    assert.equal(four.status, 200, four.text);
+    assert.deepEqual(four.json.product.liveDemo, { enabled: true, model: "" });
+    const support = model.liveDemoSupport(four.json.product);
+    assert.equal(support.ok, false);
+    assert.match(support.reasons.join(" "), /several photos/);
+    assert.equal((await shopN.del(url)).status, 200);
+  });
+
   test("a shop can only touch its own products and its own pictures", async () => {
     // Another shop can't read, change or remove it, and can't use this shop's pictures.
     assert.equal((await shopB.get(`/api/shops/${S.shopB.code}/products/${S.frameId}`)).status, 404);

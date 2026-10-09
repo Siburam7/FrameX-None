@@ -62,6 +62,8 @@ const emailProvider = (env.EMAIL_PROVIDER || (emailKey ? "brevo" : env.GMAIL_APP
 
 export const EMAIL_PROVIDERS = ["brevo", "resend", "gmail", "smtp", "dev", "none"];
 export const PAYMENT_PROVIDERS = ["cashfree", "razorpay", "none"];
+// A Google Analytics 4 Measurement ID, e.g. G-AB12CD34EF.
+const GA4_ID = /^G-[A-Z0-9]{4,20}$/;
 export const RAZORPAY_API = "https://api.razorpay.com";
 // Cashfree Payments: the sandbox for PAYMENT_MODE=test, the live API for PAYMENT_MODE=live.
 export const CASHFREE_API = { test: "https://sandbox.cashfree.com/pg", live: "https://api.cashfree.com/pg" };
@@ -220,6 +222,23 @@ export const config = {
 
   // Cart limits. The quantity one line may hold also depends on the product's stock.
   cart: { maxLines: 50, noteMaxLength: 300 },
+
+  // Analytics for the admin dashboard.
+  //   - Sales, orders, payments, accounts: always read from the database. Nothing here switches those off.
+  //   - Visitor statistics (pages, products, searches): collected by the website only from visitors who
+  //     allowed analytics there. ANALYTICS_ENABLED=false stops collecting them altogether.
+  //   - Google Analytics 4 is optional. A Measurement ID is public (it is part of every page that uses
+  //     it), so the website gets it from /api/config; it is not a secret.
+  analytics: {
+    enabled: bool(env.ANALYTICS_ENABLED, true),
+    ga4MeasurementId: GA4_ID.test(String(env.GA4_MEASUREMENT_ID || "").trim()) ? env.GA4_MEASUREMENT_ID.trim() : "",
+    ga4Invalid: Boolean(String(env.GA4_MEASUREMENT_ID || "").trim()) && !GA4_ID.test(String(env.GA4_MEASUREMENT_ID).trim()),
+    retentionDays: Math.min(1825, Math.max(30, int(env.ANALYTICS_RETENTION_DAYS, 400))), // visitor and login records older than this are deleted
+    // The reports' calendar day. 330 = India time (UTC+5:30).
+    utcOffsetMinutes: Math.min(840, Math.max(-720, Math.round(int(env.ANALYTICS_UTC_OFFSET_MINUTES, 330)))),
+    // A cart that still holds items and was not touched for this long counts as abandoned.
+    abandonedCartHours: Math.min(720, Math.max(1, int(env.ANALYTICS_ABANDONED_CART_HOURS, 24)))
+  },
 
   tokens: { passwordResetMinutes: 60, accountSetupHours: 72 },
   rateLimit: { enabled: bool(env.RATE_LIMIT_ENABLED, true) }

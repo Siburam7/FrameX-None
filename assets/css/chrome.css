@@ -83,10 +83,16 @@
   }
 }
 
-/* The logo file is white; on the light header it is shown in the text colour */
-.site-header .brand img {
-  filter: brightness(0);
+/* Laptops and desktops: a little larger. Phones and tablets keep the sizes above.
+   (Not right at 1100px, where the full menu has only just appeared and the bar is at its fullest.) */
+@media (min-width: 1180px) {
+  .brand img {
+    width: 172px;
+  }
 }
+
+/* The header shows the logo file as it is: dark letters and the orange X.
+   (The footer, which is dark, uses logo-framex-light.png: white letters, the same X.) */
 
 .site-header__actions {
   display: flex;
@@ -510,6 +516,13 @@
 
 /* Just past the phone menu the bar is at its fullest: a long name is cut a little sooner. */
 @media (min-width: 1100px) and (max-width: 1179px) {
+  .account-btn__text {
+    max-width: 72px;
+  }
+}
+
+/* The same where the main button has only just joined the bar. */
+@media (min-width: 1300px) and (max-width: 1339px) {
   .account-btn__text {
     max-width: 72px;
   }

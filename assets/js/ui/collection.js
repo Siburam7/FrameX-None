@@ -194,8 +194,20 @@
     }
   }
 
+  /** For the visitor statistics: a category was opened. */
+  const countCategory = () =>
+    FrameX.analytics &&
+    state.category &&
+    FrameX.analytics.track("view_item_list", {
+      itemType: "category",
+      itemId: state.category,
+      itemName: categoryNames.get(state.category) || state.category,
+    });
+
   function setFilters(partial, { scroll = false } = {}) {
+    const before = state.category;
     Object.assign(state, partial, { page: 1 });
+    if (state.category !== before) countCategory();
     syncControls();
     syncShopBanner();
     load();
@@ -242,6 +254,7 @@
       state.shopId = options.shopId; // compact mode: fixed shop
     } else {
       state.category = FrameX.qs.param("category");
+      countCategory();
       state.q = FrameX.qs.param("q") || "";
       state.shopId = FrameX.qs.param("shop");
       ATTRS.forEach(

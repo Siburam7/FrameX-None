@@ -145,6 +145,49 @@ describe("the wall-art catalogue", () => {
     assert.equal(pictures.size, wallArt.length, "no two products share a picture");
   });
 
+  test("View on My Wall: every ready-made piece has its artwork picture on disk; photo sets are shown from their customiser", () => {
+    for (const raw of wallArt) {
+      const p = model.normalize(raw);
+      const live = model.liveDemoSupport(p);
+      assert.deepEqual([p.liveDemo.enabled, p.liveDemo.model], [null, ""], `${raw.id}: no product is switched by hand, and none has a 3D model yet`);
+      if (raw.decor.customPhoto) {
+        assert.deepEqual([live.ok, live.kind, p.decor.art], [true, "panels", null], raw.id);
+        continue;
+      }
+      assert.deepEqual([live.ok, live.kind, live.reasons.join(" ")], [true, "decor", ""], raw.id);
+      assert.match(p.decor.art.url, /^assets\/img\/decor\/art\/[\w-]+\.webp$/);
+      assert.ok(fs.existsSync(path.join(config.catalogDir, p.decor.art.url)), `${p.decor.art.url} is missing: run "node build.mjs --art-only" in tools/decor`);
+      assert.ok(p.decor.art.wallGapIn > 0 && p.decor.art.gapPx >= 0 && (raw.decor.panelCount === 1) === (p.decor.art.gapPx === 0), `${raw.id} panel gaps`);
+    }
+    // Without the artwork picture, or without measurements, there is nothing honest to hang: the button stays away.
+    const noArt = model.liveDemoSupport({ ...READY, decor: { ...READY.decor, art: null } });
+    assert.deepEqual([noArt.ok, noArt.reasons.join(" / ")], [false, "This product has no artwork picture for the Live Demo."]);
+    const noSize = model.liveDemoSupport({ ...READY, sizes: READY.sizes.map((s) => ({ ...s, width: 0, height: 0 })) });
+    assert.deepEqual([noSize.ok, noSize.reasons.join(" / ")], [false, "Add at least one size with width and height."]);
+    assert.equal(model.liveDemoSupport({ ...READY, liveDemo: { enabled: false } }).ok, false, "FrameX can switch one design off");
+    assert.equal(model.liveDemoSupport({ ...READY, availability: { ...READY.availability, status: "out_of_stock" } }).ok, false);
+  });
+
+  test("View on My Wall: among the frames, only those that can be drawn at their real size have it", () => {
+    const frames = seed.products.filter((p) => p.section !== "decor").map((p) => model.normalize(p));
+    const on = frames.filter((p) => model.liveDemoSupport(p).ok).map((p) => p.id).sort();
+    assert.equal(on.join(" "), "p-001 p-002 p-003 p-004 p-007 p-008 p-009 p-010");
+    const why = (id) => model.liveDemoSupport(frames.find((p) => p.id === id)).reasons.join(" ");
+    assert.match(why("p-005"), /arched frames/);
+    assert.match(why("p-006"), /out of stock/);
+    assert.match(why("p-013"), /several photos/);
+    assert.match(why("p-017"), /off for a Other unless it is switched on.*sold ready-made/);
+    // A frame does not have to be offered in FrameX Studio to be shown on a wall: the page's own choices are enough.
+    const plain = { ...frames.find((p) => p.id === "p-001") };
+    plain.customization = { ...plain.customization, photoUpload: false, frameColor: false, orientation: false };
+    assert.deepEqual([model.studioSupport(plain).ok, model.liveDemoSupport(plain).ok], [false, true]);
+    // Switching it on by hand can't make a product showable that has nothing to draw or measure.
+    const forced = model.liveDemoSupport({ ...frames.find((p) => p.id === "p-011"), liveDemo: { enabled: true } });
+    assert.equal(forced.ok, false);
+    assert.match(forced.reasons.join(" "), /Add at least one size with width and height/);
+    assert.equal(model.LIVE_DEMO_TYPES.join(" "), "photo-frame custom-frame template wall-art multi-panel");
+  });
+
   test("museum paintings carry their credit; everything else is a FrameX original or the customer's photo", () => {
     const credited = wallArt.filter((p) => p.decor.credit);
     assert.ok(credited.length >= 15);

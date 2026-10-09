@@ -53,6 +53,7 @@
       return notFound(root, "That shop doesn't exist or is no longer listed.");
 
     document.title = `${shop.name} — FrameX`;
+    if (FrameX.analytics) FrameX.analytics.track("view_shop", { itemType: "shop", itemId: shop.id, itemName: shop.name });
     $("#shop-crumb-name").textContent = shop.name;
     const open = FrameX.shopUtils.isOpenNow(shop);
     const methods = (shop.fulfilment || []).filter(

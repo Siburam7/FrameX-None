@@ -1,0 +1,530 @@
+/* ==========================================================================
+   FrameX — Live Demo ("View on My Wall")
+   1. The button on a product picture / design preview
+   2. The full-screen camera view (assets/js/livedemo/ld-view.js)
+
+   Everything here is new and has its own class names (ld-…): it changes no
+   existing part of a page. The feature's scripts load only when the button is
+   pressed (assets/js/services/live-demo.js); this small file is linked on the
+   pages that have the button.
+   ========================================================================== */
+
+/* 1. The button ------------------------------------------------------------- */
+.ld-host {
+  position: relative; /* lets the button sit over a picture that is not positioned itself */
+}
+
+.ld-cta {
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px 0 14px;
+  border: 1px solid rgba(13, 27, 62, 0.14);
+  border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 6px 20px rgba(5, 8, 22, 0.16);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  transition:
+    transform var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out);
+}
+
+.ld-cta[hidden] {
+  display: none;
+}
+
+.ld-cta .icon {
+  width: 18px;
+  height: 18px;
+  color: var(--amber-strong);
+}
+
+.ld-cta:hover {
+  background: var(--white);
+  box-shadow: 0 10px 26px rgba(5, 8, 22, 0.22);
+}
+
+.ld-cta:active {
+  transform: scale(0.97);
+}
+
+.ld-cta[aria-busy="true"] {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* over a picture: bottom centre (product gallery), or a top corner (design previews) */
+.ld-cta--overlay {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+}
+
+.ld-cta--overlay:active {
+  transform: translateX(-50%) scale(0.97);
+}
+
+.ld-cta--corner {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+/* in the flow of the page, full width (under a preview on a phone) */
+.ld-cta--row {
+  width: 100%;
+  margin-top: 10px;
+  min-height: 46px;
+  box-shadow: none;
+}
+
+/* 2. The camera view -------------------------------------------------------- */
+html.ld-lock,
+html.ld-lock body {
+  overflow: hidden;
+}
+
+.ld {
+  position: fixed;
+  inset: 0;
+  z-index: 400; /* above the header, drawers and toasts */
+  overflow: hidden;
+  background: #0b0d12;
+  color: #fff;
+  font-family: var(--font-body);
+  touch-action: none;
+  overscroll-behavior: contain;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* AR: the phone draws the camera behind this layer */
+.ld[data-mode="ar"] {
+  background: transparent;
+}
+
+.ld__video,
+.ld__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.ld__video {
+  object-fit: cover;
+  background: #000;
+}
+
+.ld__canvas {
+  pointer-events: none;
+}
+
+/* The whole screen takes the drags, pinches and turns */
+.ld__stage {
+  position: absolute;
+  inset: 0;
+  outline: none;
+  touch-action: none;
+  cursor: grab;
+}
+
+.ld__stage:active {
+  cursor: grabbing;
+}
+
+/* The outline around the picture is for people moving the piece with a keyboard (ld-view.js sets the class) */
+.ld--keys .ld__stage:focus {
+  box-shadow: inset 0 0 0 3px rgba(234, 120, 14, 0.85);
+}
+
+.ld[data-mode="intro"] .ld__stage {
+  cursor: default;
+}
+
+/* Top: Close + what is happening */
+.ld__top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) calc(env(safe-area-inset-right, 0px) + 12px) 0 calc(env(safe-area-inset-left, 0px) + 12px);
+  pointer-events: none;
+}
+
+.ld__top > * {
+  pointer-events: auto;
+}
+
+.ld-pill {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-pill);
+  background: rgba(13, 27, 62, 0.78);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.ld-pill .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.ld-pill--primary {
+  border-color: transparent;
+  background: var(--amber-strong);
+  box-shadow: 0 8px 24px rgba(222, 131, 46, 0.4);
+}
+
+.ld-pill:focus-visible,
+.ld-tool:focus-visible {
+  outline: 3px solid rgba(234, 120, 14, 0.9);
+  outline-offset: 2px;
+}
+
+.ld__status {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 46px;
+  margin: 0;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 18px;
+  background: rgba(13, 27, 62, 0.78);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.35;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.ld__dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fbbf24;
+  animation: ld-pulse 1.4s ease-in-out infinite;
+}
+
+.ld[data-tone="good"] .ld__dot {
+  background: #34d399;
+  animation: none;
+}
+
+.ld[data-tone="warn"] .ld__dot {
+  background: #f87171;
+  animation: none;
+}
+
+@keyframes ld-pulse {
+  50% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+}
+
+/* Bottom: the size line and the tools */
+.ld__bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 28px calc(env(safe-area-inset-right, 0px) + 12px) calc(env(safe-area-inset-bottom, 0px) + 14px) calc(env(safe-area-inset-left, 0px) + 12px);
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.6));
+  pointer-events: none;
+}
+
+.ld__size {
+  display: grid;
+  gap: 2px;
+  max-width: 100%;
+  margin: 0;
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: rgba(255, 255, 255, 0.86);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.ld__size strong {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  color: #fff;
+}
+
+.ld__tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  pointer-events: auto;
+}
+
+.ld-tool {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 5px;
+  min-width: 72px;
+  min-height: 58px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 16px;
+  background: rgba(13, 27, 62, 0.78);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.ld-tool .icon {
+  width: 20px;
+  height: 20px;
+}
+
+.ld-tool[aria-pressed="true"] {
+  border-color: #fff;
+  background: #fff;
+  color: var(--ink);
+}
+
+.ld-tool:active,
+.ld-pill:active {
+  transform: scale(0.96);
+}
+
+/* A short message above the tools */
+.ld__toast {
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 150px);
+  max-width: min(92%, 420px);
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: 16px;
+  background: rgba(13, 27, 62, 0.92);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.ld__toast[hidden] {
+  display: none;
+}
+
+/* Cards: before the camera opens, and when something needs saying */
+.ld__panel {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: calc(env(safe-area-inset-top, 0px) + 72px) 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+  overflow: auto;
+  background: rgba(8, 10, 16, 0.74);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.ld__panel[hidden] {
+  display: none;
+}
+
+.ld.has-panel .ld__status,
+.ld.has-panel .ld__bottom,
+.ld.has-panel .ld__toast {
+  visibility: hidden;
+}
+
+.ld__card {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: min(100%, 420px);
+  padding: 24px 20px 20px;
+  border-radius: 24px;
+  background: #fff;
+  color: var(--ink);
+  text-align: center;
+  box-shadow: 0 24px 80px rgba(2, 3, 10, 0.45);
+}
+
+.ld__badge {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface-soft);
+  color: var(--accent);
+}
+
+.ld__badge .icon {
+  width: 26px;
+  height: 26px;
+}
+
+.ld__badge--warn {
+  background: #fdecec;
+  color: var(--danger);
+}
+
+.ld__card h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ld__card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.ld__card .ld__what {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.ld__what strong {
+  font-family: var(--font-display);
+  font-weight: 700;
+}
+
+.ld__card .ld__private,
+.ld__card .ld__note {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface-soft);
+  color: var(--ink);
+  font-size: 0.8rem;
+  line-height: 1.45;
+  text-align: left;
+}
+
+.ld__private .icon,
+.ld__note .icon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.ld__actions {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.ld__actions .btn {
+  width: 100%;
+}
+
+.ld__actions .btn--light {
+  border-color: var(--line);
+  background: var(--white);
+  color: var(--ink);
+}
+
+/* A phone held sideways: less height, so the tools become one low row */
+@media (orientation: landscape) and (max-height: 520px) {
+  .ld__bottom {
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    justify-items: start;
+    padding-top: 12px;
+  }
+
+  .ld__size {
+    text-align: left;
+  }
+
+  .ld-tool {
+    grid-auto-flow: column;
+    min-height: 46px;
+    gap: 8px;
+  }
+
+  .ld__panel {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 64px);
+  }
+
+  .ld__card {
+    gap: 8px;
+    padding: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ld__dot {
+    animation: none;
+  }
+
+  .ld-cta,
+  .ld-tool,
+  .ld-pill {
+    transition: none;
+  }
+}
+
+/* FrameX Studio has the button twice: in a corner of the preview on a wide screen,
+   and as a full-width button under it on a phone. Only one of them is ever shown. */
+.ld-cta--phone-only {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .ld-cta--wide-only {
+    display: none;
+  }
+
+  .ld-cta--phone-only:not([hidden]) {
+    display: inline-flex;
+  }
+}

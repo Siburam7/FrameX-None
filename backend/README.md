@@ -187,7 +187,8 @@ A shop decides what it sells. The platform decides the rules.
   - the record is rebuilt by `productModel.sanitizeShopInput()`: the rules of the product type decide the customer-photo requirement (a photo frame always needs at least one photo; home decor and wall art never ask for one), and nothing a shop saves can say FrameX verified it;
   - publishing needs a complete product (`validateForPublish`), otherwise `422 PRODUCT_INCOMPLETE` with the list of what is missing; with `PRODUCT_MODERATION=true` a shop's first Publish waits as `pending_review` until a FrameX admin approves it;
   - prices are whole rupees within limits; pictures must be files that shop uploaded (`POST /api/shops/:shopCode/media`, served at `/media/<id>`) or the site's own; no `data:`, `javascript:` or outside addresses;
-  - a product of a shop that is not approved and active is never on sale, and FrameX can take any product off sale (`POST /api/admin/products/:id/listing`).
+  - a product of a shop that is not approved and active is never on sale, and FrameX can take any product off sale (`POST /api/admin/products/:id/listing`);
+  - "View on My Wall": a shop may send `liveDemo: { enabled: true | false | null }` (on, off, or follow the product type). Anything else in it is dropped: `liveDemo.model` (a 3D model file) is FrameX's to set. The switch cannot make a product showable that has no measured size or no frame that can be drawn; the website decides that with `productModel.liveDemoSupport()`. The camera feature itself runs entirely in the customer's browser: the backend receives no camera picture and has no endpoint for one.
 - Shop products get ids like `lp-…` and carry `shop_ref` = the shop's catalogue link or its Shop ID, so the cart, checkout, stock and orders treat them exactly like catalogue-file products. The website reads the ones on sale from `GET /api/catalog/shop-products`.
 - Pictures no product uses any more are removed after a week (`sweepUnusedMedia`). Video files are not stored: a product video is a YouTube or Vimeo link.
 
@@ -293,7 +294,7 @@ Set your own `SHIPPING_FEE`, `SHIPPING_FREE_ABOVE`, `TAX_PERCENT`, `COD_*` and `
 
 ### What has and hasn't been tested
 
-`npm test` runs 238 API tests against a real server and an in-memory PostgreSQL. 55 of them are in `test/art.test.js`: the backend's real Cashfree code against a stand-in for Cashfree's servers (`test/support/mock-cashfree.js`: same API, same headers, same webhook signature) for success, failure, a closed window, retry, an expired gateway order, wrong amount, unknown order, bad signature, duplicate webhook, refund, gift wrap in the amount, COD untouched and the gateway being down; artists (apply, approve, private contact details, search, listing); artworks (review before public, reject with reason, edit goes back to review, buy through the normal checkout, a sold original); the whole custom-painting flow (no payment before acceptance, decline, the 40% advance, no start before it is verified, wrong amount refused, the remaining 60% by signed webhook, dispatch, delivery, cancel and refund tracking, the waiting-time close); settings; reviews; notifications; search; accounts. **What it can't show is a payment going through Cashfree itself: that needs your sandbox credentials.** 48 of them are in `test/photos.test.js`: uploads (a 4K file kept byte for byte, type read from the bytes, non-images refused, size limit, forged and expired links), a photo frame without / with its photo, sets that need 4, 5 or 9 photos, FrameX Studio designs and a 3-photo template with 2 and with 3 photos, Home Decor without a photo, gift wrapping (yes, no, online amount, shop and product opt-outs), shop products (type rules, ownership, publishing, moderation, FrameX taking one off sale), and a shop's access to its own order lines and their original photos (and every other shop, customer and visitor being refused). It also checks that every catalogue frame carries its full product information and that every picture it names exists.
+`npm test` runs 268 API tests against a real server and an in-memory PostgreSQL (26 of them, in `test/analytics.test.js`, are about the admin reports: see "Analytics"). 56 of them are in `test/art.test.js`: the backend's real Cashfree code against a stand-in for Cashfree's servers (`test/support/mock-cashfree.js`: same API, same headers, same webhook signature) for success, failure, a closed window, retry, an expired gateway order, wrong amount, unknown order, bad signature, duplicate webhook, refund, gift wrap in the amount, COD untouched and the gateway being down; artists (apply, approve, private contact details, search, listing); artworks (review before public, reject with reason, edit goes back to review, buy through the normal checkout, a sold original); the whole custom-painting flow (no payment before acceptance, decline, the 40% advance, no start before it is verified, wrong amount refused, the remaining 60% by signed webhook, dispatch, delivery, cancel and refund tracking, the waiting-time close); settings; reviews; notifications; search; accounts. **What it can't show is a payment going through Cashfree itself: that needs your sandbox credentials.** 48 of them are in `test/photos.test.js`: uploads (a 4K file kept byte for byte, type read from the bytes, non-images refused, size limit, forged and expired links), a photo frame without / with its photo, sets that need 4, 5 or 9 photos, FrameX Studio designs and a 3-photo template with 2 and with 3 photos, Home Decor without a photo, gift wrapping (yes, no, online amount, shop and product opt-outs), shop products (type rules, ownership, publishing, moderation, FrameX taking one off sale), and a shop's access to its own order lines and their original photos (and every other shop, customer and visitor being refused). It also checks that every catalogue frame carries its full product information and that every picture it names exists.
 
 It runs the backend's real Razorpay code against a stand-in for Razorpay's servers (`test/support/mock-razorpay.js`: same API, same authentication, same signatures) through the checkout tests: UPI / card / net banking success and failure, COD, retry, refresh during payment, repeated callbacks and webhooks, forged signatures, wrong amounts, stock running out, price changes, cancellations, refunds, other users' orders. The real Razorpay API was called with an invalid key and answered "Authentication failed" on every endpoint used. **A payment through Razorpay itself has not been made**: that needs your Razorpay test keys (steps above).
 
@@ -355,6 +356,35 @@ Every change goes through one function (`move()` in `painting-service.js`) that 
 
 **Search.** `GET /api/search?q=…` looks through products, templates, shops, artists and artworks, and only what the public may see, and answers with the first few of each kind (`search.html`). The Art & Artists page has its own search by name, username, style, medium and city.
 
+## Analytics (admin dashboard)
+
+`admin.html` → **Analytics** shows one period at a time (today, 7, 30 or 90 days, or two dates you choose). A day is a day in India time unless `ANALYTICS_UTC_OFFSET_MINUTES` says otherwise.
+
+**Where each figure comes from**
+
+| Figures | Source | Depends on visitors' consent? |
+|---|---|---|
+| Orders created / paid / cancelled, gross sales, refunds, net revenue, Cash on Delivery, each gateway's successful / failed / pending payments, shops, artists, custom paintings | the database: `orders`, `payments`, `refunds`, `payment_events`, `painting_requests`, `painting_payments` | no |
+| Registered users, new registrations | `users` | no |
+| Logins and failed logins | `auth_events` (written by the login itself) | no |
+| Items added to carts; abandoned carts | `analytics_events` rows written by the cart on the server; the `carts` table | no |
+| Visitors, visits, page views, product / category / template / artwork views, searches, where visits came from, "on the site now" | `analytics_events` rows sent by the website | **yes**: only visitors who pressed "Allow analytics" |
+
+**What counts as paid.** An order is paid when `orders.paid_at` is set. That happens in two places only: the server verified the gateway's payment (the signed checkout answer, a signed webhook, or asking the gateway), or a Cash on Delivery order was marked delivered. A browser returning from the payment page changes nothing, and neither does anything Google Analytics is told. One order is one row, and every webhook is stored once by its own id (`payment_events`), so a payment reported five times is still one payment.
+
+- **created**: orders made in the period, whatever happened to them later. **paid**: orders whose payment was verified in the period. **gross**: the money of the orders and painting payments paid in the period. **refunds**: gateway refunds that went through in the period, plus painting refunds an admin recorded. **net** = gross − refunds. Cancelled orders are counted on their own.
+- **Test orders are never sales.** An order paid online while `PAYMENT_MODE=test` is labelled `is_test` when it is created; so is a painting request when a test payment starts. An admin can also mark any order as a test on its page ("Sales reports" → "Mark as a test order", written to the audit log), for example a Cash on Delivery order someone placed to try the shop. Test orders stay in every list, carry a "Test" tag, and are shown on their own line in the reports. Orders from before this label existed are labelled once at the next start: online orders are tests if the gateway is in test mode then; Cash on Delivery orders are left as real.
+
+**Visitor statistics and consent.** The website asks every new visitor once ("Help us improve FrameX?"). Nothing is sent and no visitor number exists until they press "Allow analytics"; "No thanks" is remembered; a browser that sends Do Not Track or Global Privacy Control is treated as a no without asking; the choice can be changed on the Privacy Notice page. What is stored per event: its name, the page's path (never the query string), the product / template / category looked at, search words (anything that looks like an email address or phone number is removed, in the browser and again on the server), the referring site's host, campaign tags, the device kind, whether someone was logged in (not who), a random visitor number and a visit number. Not stored: IP address, account, name, email, phone, address, photos, payment details. Programs (search engines, link previews, headless browsers) and logged-in admins are left out. Because they need consent, visitor figures are a floor, not a head count; the dashboard says so next to them. Someone who scripts requests could inflate them; they can't touch the sales figures.
+
+**Google Analytics 4 (optional).** Set `GA4_MEASUREMENT_ID=G-XXXXXXXXXX` (GA4 → Admin → Data streams → your web stream → Measurement ID) and restart. The website gets the ID from `GET /api/config` and loads Google's tag only after a visitor allows analytics, with advertising storage and signals denied. It sends `page_view`, `view_item`, `view_item_list`, `search`, `add_to_cart`, `begin_checkout` and `purchase` (once per order, from the confirmation page of an order the server reports as placed, never for a test order). The Measurement ID is public by nature; no Google secret is used anywhere. Without the backend, the same ID can be put in `assets/js/config.js` → `analytics.ga4MeasurementId`. GA4's own reports stay in GA4: the admin dashboard does not read them. The website sends no Content-Security-Policy today; if you add one, allow `https://www.googletagmanager.com` for scripts and `https://*.google-analytics.com` for connections, or the tag will be blocked. With `ANALYTICS_ENABLED=false` and no Measurement ID the website asks nothing and sends nothing at all.
+
+**Customers.** `admin.html` → Accounts → an account shows its contact details, saved addresses, cart, and order history (ten orders a page, each with its number, items, payment status and delivery status). No password, hash, session or payment credential is in that answer. Opening a record is written to the audit log. Orders belong to accounts: there are no guest orders in FrameX.
+
+**Housekeeping.** Visitor and login records older than `ANALYTICS_RETENTION_DAYS` (400) are deleted twice a day. Orders and payments are never deleted by this.
+
+**Tested** (`test/analytics.test.js`, 26 tests): every money figure against a fixture worked out by hand for today / 7 / 30 / 90 days and custom periods; refunds, Cash on Delivery, gateway successes and failures, test orders, the same payment reported repeatedly, an admin marking an order as a test; custom painting figures; sellers and popular items; that nothing is stored without consent, that batches are cleaned, bots and admins left out, the 20-event limit, retention; logins and failed logins without what was typed; the customer record without any credential; and that every one of these endpoints refuses visitors (401) and customers (403). **Not tested: Google itself.** No real Measurement ID was available, so no hit was sent to Google; the tests check that the tag is added only after consent and what the page hands to it.
+
 ## Create an admin
 
 There is no admin sign-up. Admins are created from the command line by someone with access to the server:
@@ -412,6 +442,9 @@ Copy `.env.example` to `.env`. Nothing secret is in the code or in Git (`.env` a
 | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` | with `razorpay` | API keys. The secret is never sent to a browser |
 | `RAZORPAY_WEBHOOK_SECRET` | recommended | the secret entered for the webhook at Razorpay |
 | `PAYMENT_PENDING_MINUTES` | no | how long an unpaid online order keeps its stock (`30`) |
+| `ANALYTICS_ENABLED` | no | `true` (default): the website may send visitor statistics for visitors who allow them. `false`: none are collected. Sales and order reports never depend on it |
+| `GA4_MEASUREMENT_ID` | for Google Analytics | the GA4 web stream's Measurement ID, `G-XXXXXXXXXX`. Empty = GA4 is not used. Public, not a secret |
+| `ANALYTICS_RETENTION_DAYS`, `ANALYTICS_UTC_OFFSET_MINUTES`, `ANALYTICS_ABANDONED_CART_HOURS` | no | how long visitor and login records are kept (`400`), the reports' day as minutes ahead of UTC (`330` = India), and after how many idle hours a cart with items counts as abandoned (`24`) |
 | `TAX_PERCENT`, `SHIPPING_FEE`, `SHIPPING_FREE_ABOVE` | your rules | tax added at checkout, delivery charge, free-delivery threshold (all `0`) |
 | `COD_ENABLED`, `COD_FEE`, `COD_MAX_ORDER_VALUE`, `COD_BLOCKED_PINCODES`, `COD_BLOCKED_SHOPS`, `COD_BLOCKED_PRODUCTS`, `COD_ALLOW_CUSTOM_DESIGNS` | your rules | Cash on Delivery: on/off, fee, limit and exclusions |
 | `GIFT_WRAP_ENABLED`, `GIFT_WRAP_FEE`, `GIFT_WRAP_BLOCKED_SHOPS`, `GIFT_WRAP_BLOCKED_PRODUCTS` | your rules | gift wrapping: on (`true`), the charge per order (`49`), and where it is not offered |
@@ -560,7 +593,12 @@ State-changing requests must send the header `X-FrameX-Client: web` (CSRF protec
 | `GET /api/admin/paintings`, `GET …/:number`, `POST …/:number/cancel` | `/refund-recorded` | `/delivered` | **ADMIN** | every custom painting; cancel; record a refund made by hand |
 | `GET` / `PATCH /api/admin/settings` | **ADMIN** | platform settings (`{ key: value }`; `null` = back to the server's default) |
 | `GET /api/admin/reviews`, `POST …/:id/status` | **ADMIN** | hide or show a review |
-| `GET /api/admin/users[?q=&role=]`, `POST …/:id/status` `{ enabled }` | **ADMIN** | accounts; switch a customer, shop or artist login off or on (never an admin's) |
+| `GET /api/admin/users[?q=&role=&page=]`, `POST …/:id/status` `{ enabled }` | **ADMIN** | accounts, 30 a page; switch a customer, shop or artist login off or on (never an admin's) |
+| `GET /api/admin/users/:id[?page=]` | **ADMIN** | one account: contact details, saved addresses, cart, order history (10 a page), painting requests. No credentials. Audited |
+| `GET /api/admin/analytics/overview` \| `/traffic` \| `/sales` \| `/catalog` \| `/sellers` \| `/paintings` \| `/accounts` `?range=today\|7d\|30d\|90d` or `?range=custom&from=YYYY-MM-DD&to=YYYY-MM-DD` | **ADMIN** | the reports. A custom period is at most one year; a bad one answers 422 |
+| `GET /api/admin/analytics/live` | **ADMIN** | visitors (who allowed analytics) heard from in the last 5 minutes |
+| `POST /api/admin/orders/:n/test` `{ test, note }` | **ADMIN** | mark an order as a test (kept out of sales), or take the mark away. Audited |
+| `POST /api/analytics/events` `{ consent: true, visitorId, sessionId, events[] }` | public | visitor statistics from the website. Stored only with `consent: true`; known events and field shapes only; at most 20 a batch; always answers 202 |
 
 ## Security notes
 
@@ -575,6 +613,7 @@ State-changing requests must send the header `X-FrameX-Client: web` (CSRF protec
 - Roles are read from the database on every request. Shop routes also check that the Shop ID in the URL is the logged-in shop's own.
 - Public sign-up can only create customers. Shops and admins cannot be created through any public endpoint.
 - Rate limits on login, sign-up, password reset, applications and place search (in memory: use a shared store if you run several instances).
+- Analytics: the reports are ADMIN-only and read-only. The public events endpoint stores nothing without the visitor's consent flag, keeps only known event names and field shapes, never an IP address or an account id, and is rate limited; text from it is escaped wherever the dashboard shows it. Failed logins keep the account aimed at and the reason, never what was typed. No analytics secret exists: the GA4 Measurement ID is public.
 - Only approved + active shops are returned by public endpoints. Distances are computed in the database (Haversine, after an indexed latitude / longitude box), never in the browser.
 
 ## Layout
@@ -594,13 +633,16 @@ backend/
                            address-service.js, checkout-service.js (quote, gift wrapping, place order), order-service.js, payment-service.js,
                            upload-service.js (customer photos), shop-product-service.js (a shop's own products and pictures),
                            shop-order-service.js (a shop's own order lines and their photos)
+                           analytics-service.js (what is recorded: visitor events with consent, cart additions, logins, test labels),
+                           admin-analytics-service.js (the dashboard's reports, read-only), user-admin-service.js (accounts, a customer's record)
   src/routes/              auth, users, shops, shop-dashboard (a shop's orders, products, pictures), uploads, cart, addresses,
-                           checkout, orders, admin, misc (health, config, geo, dev mailbox)
+                           checkout, orders, admin, analytics (visitor statistics from the website), misc (health, config, geo, dev mailbox)
   scripts/                 create-admin, seed-dev, migrate, doctor, test-email, test-sms, setup-email (Gmail)
   test/api.test.js         API tests: accounts, shops, password reset (node --test)
   test/cart.test.js        API tests: catalogue import and the cart
   test/checkout.test.js    API tests: checkout, orders, payments, webhooks, refunds
   test/decor.test.js       API tests: Home Decor catalogue and custom-photo sets
   test/photos.test.js      API tests: customer photos, gift wrapping, shop products, shop orders
+  test/analytics.test.js   API tests: visitor statistics and consent, the admin reports' figures, date filters, access control
   test/support/            mock-razorpay.js: a stand-in for Razorpay's servers; photos.js: test image files and uploads (tests only)
 ```

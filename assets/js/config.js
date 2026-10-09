@@ -39,6 +39,11 @@
     },
     // Used only if the backend can't be asked (GET /api/config is the source of truth).
     nearby: { radiusOptionsKm: [5, 10, 25, 50], defaultRadiusKm: 25 },
+    // Google Analytics 4 (optional). With the backend running, set GA4_MEASUREMENT_ID in backend/.env
+    // instead: that value wins. This one is only for a site that runs without the backend. A Measurement
+    // ID looks like "G-AB12CD34EF"; it is public, not a secret. Google is loaded only after a visitor
+    // presses "Allow analytics" (assets/js/services/analytics.js).
+    analytics: { ga4MeasurementId: "" },
     dataMode: "seed",
     apiBaseUrl: "/api/v1",
     currency: "INR",

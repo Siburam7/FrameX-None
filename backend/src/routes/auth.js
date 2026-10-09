@@ -40,7 +40,7 @@ router.post("/login", rateLimit("login-ip", { windowMs: 15 * MINUTE, max: 30 }),
   });
   // Slows down guessing one account's password from many addresses.
   hit("login-id", data.identifier.toLowerCase(), { windowMs: 15 * MINUTE, max: 10 });
-  const userId = await auth.login({ ...data, accountType: data.accountType || "customer" });
+  const userId = await auth.login({ ...data, accountType: data.accountType || "customer", ip: req.ip });
   await startSession(req, res, userId);
 });
 

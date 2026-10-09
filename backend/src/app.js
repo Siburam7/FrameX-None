@@ -10,6 +10,7 @@ import { cors, csrfGuard, securityHeaders } from "./lib/security.js";
 import { attachSession } from "./middleware/auth.js";
 import addressRoutes from "./routes/addresses.js";
 import adminRoutes from "./routes/admin.js";
+import analyticsRoutes from "./routes/analytics.js";
 import { artistDashboardRoutes, artistRoutes, artworkRoutes } from "./routes/artists.js";
 import authRoutes from "./routes/auth.js";
 import cartRoutes from "./routes/cart.js";
@@ -66,6 +67,7 @@ export function createApp() {
   app.use("/api/paintings", paintingRoutes); // a customer's custom painting requests and their payments
   app.use("/api/notifications", notificationRoutes);
   app.use("/api/reviews", reviewRoutes);
+  app.use("/api/analytics", analyticsRoutes); // visitor statistics from the website (only with the visitor's consent)
   app.use("/api/admin", adminRoutes);
   app.use("/api", miscRoutes);
   devRoutes(app); // development mailbox; registers nothing in production

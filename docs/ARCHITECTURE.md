@@ -456,6 +456,98 @@ Data safety: shop-entered quality information is always `shop_claimed`; `sanitiz
 
 FrameX Studio: `studio.html?product=<id>` builds its context from `productModel.studioOptions(product)`: only that product's frame colours, sizes (any width × height, in or cm), orientations, mat / border colours and widths, front covers (at the shop's prices), print materials and caption text. Options chosen on the product page come along as `&size=&color=&print=&cover=`.
 
+## View on My Wall (Live Demo)
+
+A customer looks at the frame they chose on their own wall through the camera. It is a separate module: the pages
+only hand it a description of what the customer has on screen and get nothing back. It never touches the cart, the
+design or the order.
+
+| Layer | File | Notes |
+| ----- | ---- | ----- |
+| Entry (on the three pages, 7 KB) | `assets/js/services/live-demo.js` (`FrameX.liveDemo`) | `available()`: secure page + a camera on the device. `mount(host, { getSpec })` adds the button, hidden until a camera is known. `open()` loads everything below on first use. `track()` announces the analytics events |
+| What to show | `livedemo/ld-subject.js` | Turns a page's description into a **subject**: real width, height and depth in metres, and one painted picture per piece. Kinds: `studio` (a Studio design), `product` (a product page's size, colour, photo and crop), `decor` (ready-made wall art and panel sets), `panels` (one photo across panels) |
+| The painter | `livedemo/ld-paint.js` | Redraws on a canvas exactly what the Studio preview and the template engine show in HTML: moulding, mats, printed border, the photo with its crop, a template's slots, shapes and words. It reads the same `geometry()` and the same catalogue, so there is one definition of a frame |
+| The 3D picture | `livedemo/ld-render.js` | One small WebGL renderer for both modes: the front, the four sides (frame depth), a soft shadow on the wall. Falls back to a flat 2D drawing if the device has no WebGL |
+| AR mode | `livedemo/ld-xr.js` | WebXR `immersive-ar` with `hit-test` (required), `anchors`, `dom-overlay` and `light-estimation` (used when the phone has them). States: scanning → floor seen → wall detected → placed → tracking lost. Real size, anchored to the wall |
+| Camera mode | `livedemo/ld-camera.js` | `getUserMedia` (back camera) under the same renderer. No wall detection. Size on screen is worked out from the real size, an assumed lens angle (60° on the long side) and the distance the customer picks (1 to 4 m; it starts at 2 m, or farther when a wide set would not fit). With the phone's motion sensor ("Stick to wall") the frame stays in place when the phone is turned |
+| The screen | `livedemo/ld-view.js` (`FrameX.liveDemoView`), `css/livedemo.css` | Full-screen dialog: first card (what will happen, privacy line), hints, tools, every error panel. Gestures: drag, pinch, two-finger twist (snaps to straight); mouse drag, wheel, Shift + wheel; arrow keys, + and −, [ and ], R |
+| Maths | `livedemo/ld-math.js` | Matrices, rays, the wall's pose, phone-sensor angles to a camera rotation |
+
+**Which products.** `productModel.liveDemoSupport(product)` → `{ ok, kind, reasons }`. Three steps: the product type
+(frames, templates, wall art and panel sets are on by default; gifts, other decor and artists' originals are off);
+the product's own switch `liveDemo.enabled` (`true` / `false` / `null` = follow the type); and what can really be
+drawn at its real size: a size with measurements and either a frame the Studio engine can draw around one photo, or
+the wall art's artwork picture (`decor.art`, drawn by `tools/decor` into `assets/img/decor/art/`). A product that
+fails the last step has no button, whatever the switch says. A shop sets the switch in its product editor; the backend
+keeps only `enabled` from a shop (`sanitizeShopInput`).
+
+**What is honest about size.** AR mode uses the phone's own measurement of the room, so the frame is its real size.
+Camera mode cannot measure anything: it says "Approximate size for a wall about N m away". The words "exact" or
+"real size" are never shown in camera mode. A product page shows the product as its page sells it (every listed
+colour, the frame turned to suit the photo, the product's own mat colour); the Studio shows the design as the Studio
+preview shows it.
+
+**3D models later.** `liveDemo.model` on a product is reserved for a `.glb` file and already travels in the subject
+(`subject.model`). Today nothing reads it: `ld-render.js` draws the painted box. A model loader goes in
+`ld-render.js` (`setSubject`), and neither the pages, the engines nor the product data have to change. Apple's AR
+Quick Look (USDZ) would be a third engine next to `ld-xr.js` and `ld-camera.js`.
+
+**Privacy.** The camera is requested only after the customer presses "Open camera" on the first card. The stream is shown
+on the screen and nowhere else: no recording, no upload, no analytics picture. Close, Escape, leaving the page or
+putting the browser in the background stops the camera. "Save photo" (camera mode) builds one JPEG on the device and
+hands it to the device's share sheet or downloads folder.
+
+**Analytics.** `FrameX.liveDemo.track(name, detail)` dispatches `framex:analytics` on `document` and pushes to
+`window.dataLayer` when a page has one. Events: `live_demo_opened`, `camera_permission_granted`,
+`camera_permission_denied`, `surface_detected`, `frame_placed`, `frame_repositioned`, `live_demo_closed`,
+`live_demo_add_to_cart`. No analytics service is connected: the events are announced and nothing listens yet.
+
+**Requirements and limits.**
+
+- A secure page: `https://` or `localhost`. On plain `http://` (for example a phone opening the computer's address
+  on the home network) the browser gives no camera and the button stays hidden.
+- AR mode needs WebXR with hit-test: Chrome on an Android phone that has Google Play Services for AR. iPhones and
+  iPads have no WebXR in Safari or Chrome, so they use camera mode.
+- A laptop with a webcam shows the button too (camera mode with the mouse).
+- Not shown: products made from several photos, arched frames, frames FrameX has no drawing for, out-of-stock products.
+- **Tested** in desktop Chrome with a simulated camera, simulated touch and motion sensors, and a simulated WebXR
+  phone that reports walls, floors, anchors, light and tracking loss: the button, both modes, placing, drag, pinch,
+  twist, reset, distance, save, close and re-open, the design and photo staying unchanged, add to cart afterwards,
+  permission refused, no camera, camera lost, files failing to load, landscape, and the pages on a laptop without a
+  camera being pixel-identical to before. **Not tested: a real phone.** The first run on an Android phone (AR) and an
+  iPhone (camera mode) still has to be done; expect the lens-angle assumption to need tuning per device.
+
+## Analytics and the admin dashboard
+
+Two kinds of numbers, kept apart on purpose.
+
+**Business figures** (orders, sales, refunds, payments, sellers, paintings, accounts, logins, carts) are read from
+the database by `backend/src/services/admin-analytics-service.js`. The website sends nothing for them. An order is
+paid when the server has verified its payment or a Cash on Delivery order was delivered; test orders (`orders.is_test`)
+are reported separately. See `backend/README.md` → "Analytics" for the definitions.
+
+**Visitor statistics** come from the website, and only for visitors who allowed analytics.
+
+| Layer | File | Notes |
+| ----- | ---- | ----- |
+| The question, consent, sending | `assets/js/services/analytics.js` (`FrameX.analytics`), on every page except the redirect page | States: not asked → `granted` / `denied` (`localStorage framex.consent.v1`). Nothing is sent or stored before a yes; events of the open page wait in memory and go out only after it. Do Not Track / Global Privacy Control = no, without asking. Staff pages and the password-reset page are never measured |
+| What pages report | one line in each page module: `FrameX.analytics.track(name, {...})` | `page_view` (automatic), `view_item` (product page), `view_item_list` (a category in Shop or Home Decor), `view_template`, `view_artwork`, `view_artist`, `view_shop`, `search` (once typing stops), `begin_checkout`, `live_demo_opened`. `add_to_cart` and `purchase` go to Google only: FrameX counts those from the cart and the orders |
+| FrameX's own store | `POST /api/analytics/events` → `backend/src/routes/analytics.js` → `services/analytics-service.js` → table `analytics_events` | Requires `consent: true`; cleans every field; drops unknown events, bots and admins; never keeps an IP address or an account. Batches of up to 20, sent with `fetch(..., { keepalive: true })` |
+| Google Analytics 4 | the same module, `loadGoogle()` | Only with a Measurement ID (`/api/config` → `analytics.ga4MeasurementId`, from `GA4_MEASUREMENT_ID`) and only after a yes. Consent Mode: analytics granted, all advertising denied. The page address is sent without the part after `#` and with only the parameters that name a product or a template |
+| Server-side records | `recordServerEvent` (cart additions, from `cart-service.js`), `recordAuthEvent` (logins and failed logins, from `auth-service.js`) | Never throw: a customer can always log in or add to the cart even if the record can't be written |
+| Reports | `GET /api/admin/analytics/{overview,traffic,sales,catalog,sellers,paintings,accounts,live}` | ADMIN only. `?range=today\|7d\|30d\|90d` or a custom period of up to a year |
+| The screen | `assets/js/ui/admin-analytics.js`, `assets/css/admin-analytics.css` | Draws what the API answers and nothing else: cards, one bar per hour or day (inline SVG, with the same numbers as a table), ranked lists. Loading, empty ("Nothing in this period") and error (Retry) states. `#/users/<id>` is one account's record |
+
+**Adding an event.** Call `FrameX.analytics.track("my_event", {...})` where it happens; add its name to `FIRST_PARTY`
+in `analytics.js` and to `WEB_EVENTS` in `analytics-service.js` if FrameX should keep it (otherwise it only goes to
+Google, under its own name); add a query to `admin-analytics-service.js` and a card or list to `admin-analytics.js`
+if the dashboard should show it.
+
+**Limits.** Visitor figures only include visitors who said yes, so they are a floor, and a funnel step from
+analytics is not a share of a step from the database (the screen says which is which). "On the site now" is kept in
+the server's memory, so it is right for one server process. Google Analytics has not been run with a real
+Measurement ID. GA4's own reports are not read back into the dashboard.
+
 ## Art & Artists and custom paintings
 
 | Piece | Where | What it does |

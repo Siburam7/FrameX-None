@@ -83,7 +83,7 @@
 
     return `<header class="site-header${solid}" data-site-header>
       <div class="site-header__bar">
-        <a class="brand" href="${pages.home}" aria-label="FrameX home"><img src="assets/img/ui/logo-framex.png" alt="FrameX" width="150" height="32"></a>
+        <a class="brand" href="${pages.home}" aria-label="FrameX home"><img src="assets/img/ui/logo-framex.png" alt="FrameX" width="160" height="40"></a>
         <nav class="primary-nav" id="primary-nav" aria-label="Primary">
           <ul class="primary-nav__list">${links}</ul>
           <div class="primary-nav__mobile-extras">${locationChip}
@@ -141,7 +141,7 @@
     return `<footer class="site-footer">
       <div class="container site-footer__top">
         <div class="site-footer__brand">
-          <a class="brand" href="${pages.home}" aria-label="FrameX home"><img src="assets/img/ui/logo-framex.png" alt="FrameX" width="150" height="32" loading="lazy"></a>
+          <a class="brand" href="${pages.home}" aria-label="FrameX home"><img src="assets/img/ui/logo-framex-light.png" alt="FrameX" width="160" height="40" loading="lazy"></a>
           <p>Premium photo frames from local framing shops. Choose your frame, preview your own photo in it, then collect it or have it delivered.</p>
           ${contactLinks()}
         </div>

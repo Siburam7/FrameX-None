@@ -26,6 +26,7 @@ import { db } from "../db/index.js";
 import { HttpError, errors } from "../lib/errors.js";
 import { newId } from "../lib/tokens.js";
 import { isUuid } from "../lib/validate.js";
+import { recordServerEvent } from "./analytics-service.js";
 import { productsById, templatesById } from "./catalog-service.js";
 import { ownUploads, publicUpload } from "./upload-service.js";
 
@@ -542,6 +543,8 @@ export async function addProduct(userId, { productId, quantity, selection, note,
     await touch(q, cartId);
     return rows[0].id;
   });
+  // For the admin reports: the cart is emptied by an order, so "added to cart" is counted when it happens. No account id is kept.
+  await recordServerEvent("add_to_cart", { itemType: /^aw-/.test(product.id) ? "artwork" : "product", itemId: product.id, itemName: ev.p.name, value: ev.line.unitPrice * quantity });
   return { itemId, cart: await getCart(userId) };
 }
 
@@ -569,6 +572,12 @@ export async function addDesign(userId, { designId, config: design, thumbnail, q
     if (rows[0].quantity > ev.maxQty) throw fail(409, issue("QUANTITY_LIMIT", limitMessage(ev.maxQty, rows[0].quantity - quantity)));
     await touch(q, cartId);
     return rows[0].id;
+  });
+  await recordServerEvent("add_to_cart", {
+    itemType: ev.template ? "template" : ev.product ? "product" : "design",
+    itemId: ev.template ? ev.template.id : ev.product ? ev.product.id : null,
+    itemName: ev.name,
+    value: ev.price.total * quantity
   });
   return { itemId, cart: await getCart(userId) };
 }

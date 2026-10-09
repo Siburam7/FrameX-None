@@ -8,6 +8,7 @@ import { smsStatus } from "./lib/sms.js";
 import { paymentStatus } from "./payments/index.js";
 import { storageStatus } from "./lib/storage.js";
 import { syncCatalog } from "./services/catalog-service.js";
+import { labelOlderOrders, sweepAnalytics } from "./services/analytics-service.js";
 import { sweepUnusedArtistMedia } from "./services/artist-service.js";
 import { expireUnpaidAdvances } from "./services/painting-payment-service.js";
 import { expireUnpaidOrders } from "./services/payment-service.js";
@@ -23,6 +24,8 @@ async function main() {
   await syncCatalog({ log: (m) => console.log(`[db] ${m}`) });
   // What a FrameX admin changed in the dashboard (fees, the custom-painting advance) replaces the environment's defaults.
   await loadSettings();
+  // Orders from before test payments were labelled get their label once (test payments are never counted as sales).
+  await labelOlderOrders({ log: (m) => console.log(`[db] ${m}`) });
 
   // Housekeeping: expired sessions and used / expired one-time links.
   const sweep = () =>
@@ -40,6 +43,10 @@ async function main() {
       .catch((error) => console.error("[uploads] cleanup failed:", error.message));
   setInterval(tidyUploads, 6 * 60 * 60 * 1000).unref();
   tidyUploads();
+  // Visitor statistics and login records older than ANALYTICS_RETENTION_DAYS are deleted.
+  const tidyAnalytics = () => sweepAnalytics().catch((error) => console.error("[analytics] cleanup failed:", error.message));
+  setInterval(tidyAnalytics, 12 * 60 * 60 * 1000).unref();
+  tidyAnalytics();
   const files = await storageStatus();
 
   // Online orders that were never paid: cancelled after PAYMENT_PENDING_MINUTES, and their stock is given back.
@@ -66,6 +73,7 @@ async function main() {
     console.log(`Customer photos: ${files.ready ? `READY (kept in ${files.dir}, up to ${Math.round(config.uploads.maxBytes / 1048576)} MB each)` : `NOT WORKING - ${files.problem}`}`);
     if (config.isProd && !process.env.UPLOAD_DIR) console.log("                 WARNING: UPLOAD_DIR is not set. On a host without a persistent disk, uploaded photos are lost when the service restarts.");
     console.log(`Gift wrapping:  ${config.checkout.giftWrap.enabled ? `ON (₹${config.checkout.giftWrap.fee} per order)` : "OFF"}`);
+    console.log(`Analytics:      visitor statistics ${config.analytics.enabled ? "ON (only for visitors who allow them)" : "OFF"}; Google Analytics 4 ${config.analytics.ga4MeasurementId || (config.analytics.ga4Invalid ? "NOT USED - GA4_MEASUREMENT_ID is not a Measurement ID (G-XXXXXXXXXX)" : "not used")}`);
     console.log(`Custom paintings: ${config.paintings.advancePercent}% advance, ${100 - config.paintings.advancePercent}% when the painting is finished`);
     if (config.devMailbox) console.log(`Dev mailbox:    http://localhost:${config.port}/dev/mailbox`);
     console.log("Check setup:    npm run doctor");

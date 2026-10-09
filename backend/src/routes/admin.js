@@ -6,6 +6,7 @@ import { Router } from "express";
 import { errors } from "../lib/errors.js";
 import { isUuid, v, validate } from "../lib/validate.js";
 import { requireRole } from "../middleware/auth.js";
+import * as analytics from "../services/admin-analytics-service.js";
 import * as artists from "../services/artist-service.js";
 import * as artworks from "../services/artwork-service.js";
 import * as orders from "../services/order-service.js";
@@ -106,6 +107,30 @@ router.post("/orders/:orderNumber/refund", async (req, res) => {
   await payments.refundPayment(order.id, { amount: amount ?? null, reason, actor: req.auth.user, ip: req.ip });
   res.json({ order: await orders.adminGetOrder(req.params.orderNumber) });
 });
+
+// Mark an order as a test (it is then kept out of sales), or take the mark away. Written to the audit log.
+router.post("/orders/:orderNumber/test", async (req, res) => {
+  const { test, note } = validate(req.body, { test: v.boolean(), note: v.string({ max: 200, label: "Note" }) });
+  res.json({ order: await orders.adminSetTest(req.params.orderNumber, { test, note }, { actor: req.auth.user, ip: req.ip }) });
+});
+
+/* ---- Analytics ----
+   Reports for one period: ?range=today|7d|30d|90d, or ?range=custom&from=YYYY-MM-DD&to=YYYY-MM-DD.
+   Money and orders come from the database's verified records, never from what a browser reported
+   (services/admin-analytics-service.js says where each figure comes from). */
+const period = (req) => validate(req.query, { range: v.enumOf(analytics.RANGES, { required: false }), from: v.string({ max: 10 }), to: v.string({ max: 10 }), page: v.number({ min: 1, max: 100000, required: false }) });
+const report = (name) => async (req, res) => {
+  const q = period(req);
+  res.json(await analytics[name]({ range: q.range || "30d", from: q.from, to: q.to, page: q.page || 1 }));
+};
+router.get("/analytics/overview", report("overview"));
+router.get("/analytics/traffic", report("traffic"));
+router.get("/analytics/sales", report("sales"));
+router.get("/analytics/catalog", report("catalog"));
+router.get("/analytics/sellers", report("sellers"));
+router.get("/analytics/paintings", report("paintings"));
+router.get("/analytics/accounts", report("accounts"));
+router.get("/analytics/live", (req, res) => res.json(analytics.live()));
 
 /* ---- Products shops created ----
    Shops manage their own catalogue. FrameX keeps the last word: approve a product
@@ -293,6 +318,11 @@ router.post("/reviews/:id/status", async (req, res) => {
 router.get("/users", async (req, res) => {
   const f = validate(req.query, { q: v.string({ max: 80 }), role: v.enumOf(users.ROLES, { required: false }), page: v.number({ min: 1, max: 100000, required: false }) });
   res.json(await users.listUsers({ q: f.q, role: f.role, page: f.page || 1 }));
+});
+// One account with its contact details, saved addresses and order history (ten orders a page).
+router.get("/users/:id", async (req, res) => {
+  const { page } = validate(req.query, { page: v.number({ min: 1, max: 100000, required: false }) });
+  res.json(await users.getUser(idParam(req), { page: page || 1, actor: req.auth.user, ip: req.ip }));
 });
 router.post("/users/:id/status", async (req, res) => {
   const { enabled } = validate(req.body, { enabled: v.boolean() });

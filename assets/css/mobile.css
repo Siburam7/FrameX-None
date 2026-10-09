@@ -464,3 +464,21 @@
     display: block;
   }
 }
+
+/* The analytics question: under the header, so it never covers a page's own bar of buttons at the bottom. */
+@media (max-width: 639px) {
+  .consent {
+    top: calc(var(--header-h) + 8px);
+    right: 12px;
+    bottom: auto;
+    left: 12px;
+    width: auto;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .consent__actions .btn {
+    flex: 1;
+    min-height: 44px;
+  }
+}

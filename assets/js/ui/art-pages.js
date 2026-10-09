@@ -202,6 +202,7 @@
     }
     const a = data.artist;
     document.title = `${a.name} — Art & Artists — FrameX`;
+    if (FrameX.analytics) FrameX.analytics.track("view_artist", { itemType: "artist", itemId: a.artistCode || a.username, itemName: a.name });
     const crumb = $("#artist-crumb");
     if (crumb) crumb.textContent = a.name;
     const custom = a.customEnabled && data.services.length;
@@ -452,6 +453,7 @@
     }
     const w = data.artwork;
     document.title = `${w.title} by ${w.artist.name} — FrameX`;
+    if (FrameX.analytics) FrameX.analytics.track("view_artwork", { itemType: "artwork", itemId: w.id, itemName: w.title, category: w.artTypeName, value: w.price });
     const crumb = $("#artwork-crumb");
     if (crumb) crumb.textContent = w.title;
     const fact = (label, value) => (value ? `<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>` : "");

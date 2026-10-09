@@ -12,6 +12,10 @@
      <id>.webp        the framed piece on a wall (card image, front view)
      <id>-room.webp   in a room
      <id>-set.webp    multi-panel sets only: the panels straight on
+     art/<id>.webp    the artwork alone, flat and unframed: what "View on My Wall" hangs on the
+                      customer's wall, in the frame colour and size they chose (js/decor.js -> decor.art)
+
+     node build.mjs --art-only        only (re)writes the art/ pictures; the product photos are left as they are
 
    Needs Google Chrome. Set CHROME_PATH if it is not in the usual place.
    Run it again after adding or changing a design in js/decor.js.
@@ -98,6 +102,9 @@ async function main() {
   if (args.only) designs = designs.filter((d) => String(args.only).split(",").includes(d.id));
   if (args.slice) designs = designs.slice(...String(args.slice).split(",").map(Number));
   fs.mkdirSync(outDir, { recursive: true });
+  const artDir = path.join(outDir, "art");
+  fs.mkdirSync(artDir, { recursive: true });
+  const artOnly = Boolean(args["art-only"]);
   const tmp = path.join(here, ".tmp");
   fs.mkdirSync(tmp, { recursive: true });
   const shell = path.join(tmp, "render.html");
@@ -130,6 +137,13 @@ async function main() {
     // 1. the artwork
     await show(template(spec, size.w, size.h, rng(d.art.seed || d.id), { panels: d.panels || 1, gap: size.gap || 0 }));
     await page.evaluate(fitText);
+    // The artwork alone, for the Live Demo. A custom-photo design has none: the customer's own photo is the artwork.
+    if (!d.custom) await shot(size.w, size.h, path.join(artDir, `${d.id}.webp`), 84);
+    if (artOnly) {
+      done += 1;
+      if (done % 40 === 0) console.log(`${done} / ${designs.length} designs`);
+      continue;
+    }
     const png = await page.screenshot({ clip: { x: 0, y: 0, width: size.w, height: size.h }, encoding: "base64" });
     const url = await page.evaluate(async (b64) => {
       const blob = await (await fetch("data:image/png;base64," + b64)).blob();
@@ -156,7 +170,7 @@ async function main() {
   }
 
   // Shared views: the back of a frame and a corner close-up, once per frame colour.
-  if (!args.only && !args.file && !args.sheetOnly)
+  if (!args.only && !args.file && !args.sheetOnly && !artOnly)
     for (const color of Object.keys(scene.FRAMES)) {
       await show(scene.back({ frame: color }));
       await shot(800, 1000, path.join(outDir, `_back-${color}.webp`), 78);

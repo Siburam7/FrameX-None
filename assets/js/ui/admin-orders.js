@@ -55,7 +55,7 @@
           ${r.items
             .map(
               (o) => `<tr>
-              <td><a class="sd-item__name" href="#/orders/${esc(o.orderNumber)}">${esc(o.orderNumber)}</a><br><span class="sd-item__meta">${esc(o.firstItem ? o.firstItem.name : "")}${o.itemCount > 1 ? ` + ${o.itemCount - 1} more` : ""}</span></td>
+              <td><a class="sd-item__name" href="#/orders/${esc(o.orderNumber)}">${esc(o.orderNumber)}</a>${o.isTest ? ` <span class="sd-status sd-status--draft an-test">Test</span>` : ""}<br><span class="sd-item__meta">${esc(o.firstItem ? o.firstItem.name : "")}${o.itemCount > 1 ? ` + ${o.itemCount - 1} more` : ""}</span></td>
               <td>${esc(o.customer.name)}<br><span class="sd-item__meta">${esc(o.customer.email)}</span></td>
               <td>${v.badge(o.status, v.ORDER_STATUS)}</td>
               <td>${v.paymentBadge(o)}<br><span class="sd-item__meta">${esc(v.methodLabel(o))}</span></td>
@@ -89,6 +89,7 @@
         <div><span>Refunded</span><strong>${formatPrice(o.amountRefunded)}</strong></div>
         <div><span>Stock</span><strong>${o.stockHeld ? "Held for this order" : "Given back"}</strong></div>
       </div>
+      ${o.isTest ? `<p class="co-note" data-test-note>${icon("alert")}<span><strong>Test order.</strong> It is not counted in orders, sales or revenue in Analytics.${o.testNote ? ` Note: ${esc(o.testNote)}` : o.paymentMethod === "ONLINE" ? " It was paid with the payment gateway in TEST mode, or marked as a test." : ""}</span></p>` : ""}
       ${o.status === "CANCELLED" && o.cancelReason ? `<p class="od-cancel">${icon("alert")}<span>Cancelled: ${esc(o.cancelReason)}</span></p>` : ""}
       ${o.giftWrap ? `<p class="co-note co-note--gift"><span aria-hidden="true">🎁</span><span><strong>Gift wrap this order.</strong> The customer paid ${o.giftWrapFee ? formatPrice(o.giftWrapFee) : "nothing extra"} for gift wrapping.</span></p>` : ""}
       ${o.photoCount ? `<p class="co-note">${icon("image")}<span><strong>${o.photoCount} customer ${o.photoCount === 1 ? "photo" : "photos"}.</strong> Download the original ${o.photoCount === 1 ? "file" : "files"} below and print ${o.photoCount === 1 ? "it" : "them"} as ${o.photoCount === 1 ? "it is" : "they are"}: FrameX does not enhance or resize customer images.</span></p>` : ""}
@@ -134,6 +135,16 @@
               </form></section>`
               : ""
           }
+          <section class="co-card" data-test-card><h2 class="co-card__title">Sales reports</h2>
+            ${
+              o.isTest
+                ? `<p class="co-lead">This order is kept out of sales reports as a test order.</p><div><button class="btn btn--outline btn--sm" type="button" data-test-off>Count it as a real order</button></div>`
+                : `<form class="ao-form" data-test-form><p class="co-lead">This order is counted in sales reports.</p>
+                <div class="form-field"><label for="ao-test-note">Only a test? Say why <span class="hint">(optional)</span></label><input id="ao-test-note" name="note" maxlength="200"></div>
+                <div><button class="btn btn--outline btn--sm" type="submit">Mark as a test order</button></div></form>`
+            }
+            <p class="co-fine">${icon("alert")}<span>Marking changes nothing for the customer or the shop: the order, its payment and its delivery stay as they are.</span></p>
+          </section>
           <section class="co-card"><h2 class="co-card__title">Price details</h2>${v.totalsHtml(o)}</section>
           <section class="co-card"><h2 class="co-card__title">${icon("user")} Customer</h2>
             <dl class="ao-facts">${fact("Name", esc(o.customer.name))}${fact("Email", esc(o.customer.email))}${fact("Phone", esc(o.customer.phone || "—"))}</dl>
@@ -163,6 +174,20 @@
         }
         e.submitter.disabled = true;
         apply(http().post(`/admin/orders/${encodeURIComponent(o.orderNumber)}/status`, { status, note: statusForm.elements.note.value.trim() }));
+      });
+    // A test order is kept out of the sales reports (and can be put back).
+    const testForm = $("[data-test-form]", main);
+    if (testForm)
+      testForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        e.submitter.disabled = true;
+        apply(http().post(`/admin/orders/${encodeURIComponent(o.orderNumber)}/test`, { test: true, note: testForm.elements.note.value.trim() }));
+      });
+    const testOff = $("[data-test-off]", main);
+    if (testOff)
+      testOff.addEventListener("click", () => {
+        testOff.disabled = true;
+        apply(http().post(`/admin/orders/${encodeURIComponent(o.orderNumber)}/test`, { test: false }));
       });
     const refundForm = $("[data-refund-form]", main);
     if (refundForm)

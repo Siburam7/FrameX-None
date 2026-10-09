@@ -29,6 +29,8 @@
      sizes:        [{ id, label, width, height, unit: "in"|"cm", price }]
      orientations: ["portrait" | "landscape" | "square"]
      customization:{ photoUpload, crop, frameColor, border, mat, text, textLabel, orientation }
+     liveDemo:     { enabled, model }   "View on My Wall" (see liveDemoSupport): enabled true / false,
+                   or null to follow the product type; model is reserved for a 3D model of the frame
      views:        [{ id, type, url, thumb, alt, sortOrder, isMain }]      see VIEW_TYPES
      product360:   { frames: [url], thumbs?: [url] } | null
      media:        [{ id, kind: "video", url, thumbnail, duration }]
@@ -425,6 +427,7 @@
         textLabel: "",
         orientation: false,
       },
+      liveDemo: { enabled: null, model: "" },
       views: [],
       product360: null,
       media: [],
@@ -468,6 +471,7 @@
       "seo",
       "personalization",
     ].forEach((k) => (out[k] = Object.assign({}, base[k], p[k] || {})));
+    out.liveDemo = cleanLiveDemo(p.liveDemo);
     out.giftWrap = p.giftWrap !== false;
     [
       "included",
@@ -530,6 +534,7 @@
     out.productType = raw.productType || "";
     out.personalization = { photos: num(raw.photos), panels: null };
     out.giftWrap = raw.giftWrap !== false;
+    out.liveDemo = cleanLiveDemo(raw.liveDemo);
     out.included = Array.isArray(raw.included) ? raw.included : [];
     out.care = Array.isArray(raw.care) ? raw.care : [];
     // Only what the data actually says. `type` stays empty unless edit.js names it;
@@ -852,6 +857,87 @@
     }
     p.giftWrap = p.giftWrap !== false;
     return p;
+  }
+
+  /* ---------------------------------------------------------------- Live Demo ("View on My Wall")
+     Which products a customer can see on their own wall through the camera.
+     It is a capability of the PRODUCT, decided in three steps:
+       1. its type: frames, templates, wall art and multi-panel sets hang on a wall;
+          personalised gifts, other decor, accessories and artists' originals are off
+          unless someone switches them on;
+       2. its own switch, liveDemo.enabled: a shop sets it in its dashboard, FrameX in the
+          catalogue files (`liveDemo: false`). true = on, false = off, null = follow the type;
+       3. what can really be drawn at its real size: a size with measurements, and either
+          a frame FrameX Studio can draw around ONE photo, or (wall art) its artwork picture.
+     liveDemo.model is reserved for a 3D model of the frame (.glb): the Live Demo will hang
+     that instead of the drawn frame once FrameX adds one. Nothing else has to change. */
+  const LIVE_DEMO_TYPES = [
+    "photo-frame",
+    "custom-frame",
+    "template",
+    "wall-art",
+    "multi-panel",
+  ];
+
+  function cleanLiveDemo(value) {
+    const enabled =
+      typeof value === "boolean"
+        ? value
+        : value && typeof value.enabled === "boolean"
+          ? value.enabled
+          : null;
+    const model =
+      value && typeof value === "object" && typeof value.model === "string"
+        ? value.model.trim().slice(0, 300)
+        : "";
+    return { enabled, model };
+  }
+
+  /**
+   * Can this product be shown with "View on My Wall"?
+   * -> { ok, kind, reasons[] }   kind: "product" (a frame, drawn by the Studio engine),
+   *    "decor" (ready-made wall art), "panels" (one photo across panels, in its customiser)
+   */
+  function liveDemoSupport(p) {
+    const reasons = [];
+    if (!p) return { ok: false, kind: "", reasons: ["No product."] };
+    const type = productTypeOf(p);
+    const own = cleanLiveDemo(p.liveDemo).enabled;
+    if (own === false)
+      reasons.push("Live Demo is switched off for this product.");
+    else if (own === null && !LIVE_DEMO_TYPES.includes(type.id))
+      reasons.push(
+        `Live Demo is off for a ${type.name} unless it is switched on.`,
+      );
+    if ((p.availability || {}).status === "out_of_stock")
+      reasons.push("The product is out of stock.");
+    const measured = (p.sizes || []).some((s) => sizeInches(s));
+    if (p.decor) {
+      if (!measured)
+        reasons.push("Add at least one size with width and height.");
+      if (p.decor.customPhoto)
+        return { ok: !reasons.length, kind: "panels", reasons };
+      if (!(p.decor.art && p.decor.art.url))
+        reasons.push("This product has no artwork picture for the Live Demo.");
+      return { ok: !reasons.length, kind: "decor", reasons };
+    }
+    const photos = photoRequirement(p).count;
+    if (photos > 1)
+      reasons.push(
+        "Live Demo can't show a product made from several photos yet.",
+      );
+    else if (photos < 1)
+      reasons.push(
+        "Live Demo shows frames made with the customer's photo. This product is sold ready-made.",
+      );
+    // The frame is drawn by the Studio engine, so it needs what the Studio
+    // needs to draw: a frame type it knows and measured sizes. It does not
+    // need the Studio to be offered to customers ("photo upload"), and out
+    // of stock is already said above.
+    studioSupport(p)
+      .reasons.filter((r) => !/out of stock|photo upload/i.test(r))
+      .forEach((r) => reasons.push(r));
+    return { ok: !reasons.length, kind: "product", reasons };
   }
 
   /* ---------------------------------------------------------------- FrameX Studio support */
@@ -1267,6 +1353,8 @@
     delete out.rating;
     delete out.reviews;
     delete out.decor; // Home Decor's own catalogue entries are FrameX's
+    // A shop decides on / off; a 3D model is added by FrameX.
+    out.liveDemo = { enabled: cleanLiveDemo(out.liveDemo).enabled, model: "" };
     const lines = (list) =>
       (Array.isArray(list) ? list : [])
         .map((x) => String(x || "").trim())
@@ -1550,6 +1638,8 @@
     applyTypeRules,
     studioSupport,
     studioOptions,
+    liveDemoSupport,
+    LIVE_DEMO_TYPES,
     protectionOptions,
     defaultSelection,
     quote,

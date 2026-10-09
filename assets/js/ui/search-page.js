@@ -26,6 +26,17 @@
       return `<a class="cp-row" href="${esc(i.url)}">${i.image ? `<img class="ad-thumb" src="${esc(FrameX.http.asset(i.image))}" alt="" loading="lazy">` : `<span class="artist-photo" aria-hidden="true">${esc(String(i.name).slice(0, 1).toUpperCase())}</span>`}<span><strong>${esc(i.name)}</strong><br><span class="cp-row__meta">${esc(meta || "")}</span></span>${icon("arrow-right")}</a>`;
     };
     let last = 0;
+    // For the visitor statistics: the words someone searched for, once they stop typing (not every letter on the way).
+    let counted = "";
+    let countTimer = 0;
+    const count = (q, wait) => {
+      clearTimeout(countTimer);
+      countTimer = setTimeout(() => {
+        if (q === counted || !FrameX.analytics) return;
+        counted = q;
+        FrameX.analytics.track("search", { query: q });
+      }, wait);
+    };
     async function run() {
       const q = input.value.trim();
       const mine = (last += 1);
@@ -35,6 +46,7 @@
       try {
         const r = await FrameX.http.get("/search", { q, limit: 6 });
         if (mine !== last) return; // an older answer arriving late
+        count(q, 1500);
         const groups = GROUPS.filter(([kind]) => r.results[kind] && r.results[kind].total);
         out.innerHTML = groups.length
           ? groups.map(([kind, label, more]) => `<section class="art-section" aria-label="${label}"><div class="section-head"><h2 class="section-title section-title--sm">${label} <span class="art-count">(${r.results[kind].total})</span></h2>${r.results[kind].total > r.results[kind].items.length ? `<a class="btn btn--outline btn--sm" href="${esc(more(q))}">See all</a>` : ""}</div>${r.results[kind].items.map((i) => row(kind, i)).join("")}</section>`).join("")
@@ -45,7 +57,7 @@
     }
     input.value = FrameX.qs.param("q") || "";
     input.addEventListener("input", debounce(run, 300));
-    $("#search-form").addEventListener("submit", (e) => (e.preventDefault(), run()));
+    $("#search-form").addEventListener("submit", (e) => (e.preventDefault(), run(), input.value.trim().length >= 2 && count(input.value.trim(), 0)));
     input.focus();
     run();
   }

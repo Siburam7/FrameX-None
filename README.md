@@ -114,6 +114,33 @@ order, with a preview of how it fits the chosen size, drag to position, zoom). K
 accordion / menu, contact-form validation, location permission + real haversine distance (only when a
 shop has coordinates).
 
+**View on My Wall (Live Demo)**: a customer sees the frame they chose (their size, frame colour, mat, their own
+photo and crop, a template's layout and words, or a wall-art design and its panels) on their own wall through
+the camera, moves, resizes and turns it, and goes back to the page with nothing changed. The button is on a
+product page's picture, in FrameX Studio and in the wall-art customiser, and only on a device with a camera and
+only for products that can be drawn at their real size. Two modes, chosen by what the phone can do:
+
+- **AR mode** (Android phones with Google's AR in Chrome, through the browser's WebXR API): the phone finds the
+  wall itself, the frame stays fixed to it while the customer walks around, and its size is the real size.
+- **Camera mode** (every other device with a camera, iPhones included): the frame is drawn on top of the live
+  camera picture and the customer places it. Its size is an **estimate** for a wall "about N metres away", and the
+  screen says so. Nothing in this mode pretends to detect a wall.
+
+The camera is asked for only when the customer presses the button, is switched off on Close, and no picture is
+recorded or sent anywhere ("Save photo" makes a file on the customer's own device). Details and limits:
+`docs/ARCHITECTURE.md` → "View on My Wall (Live Demo)".
+
+**Analytics and the admin dashboard** (needs the backend): `admin.html` → Analytics shows, for today / 7 / 30 /
+90 days or two dates you choose: orders created, paid and cancelled, gross sales, refunds and net revenue, Cash on
+Delivery, each payment gateway's successful, failed and pending payments, shops' and artists' sales, popular
+products, templates and artworks, custom painting requests and payments, registrations, logins and failed logins,
+items added to carts and abandoned carts. All of that is read from the database's verified records; a browser
+returning from a payment page counts for nothing, and test payments are shown separately and never as sales.
+**Visitor statistics** (visitors, page and product views, searches, where visits came from, "on the site now") are
+collected only from visitors who press "Allow analytics" in a small question shown once; Google Analytics 4 can be
+switched on with one setting and is loaded only after that same yes. Accounts → an account shows the customer's
+contact details and order history. Details: `backend/README.md` → "Analytics".
+
 ## Not connected (labelled as such on the site)
 
 - **Reviews submission, custom sizes** - show "coming soon" / "not connected". (Accounts, the cart, checkout,
@@ -128,6 +155,16 @@ shop has coordinates).
   (`priceDelta`) are a frontend placeholder until a shop sets its own per-size pricing.
 - **Delivery fees, tax, gift wrapping, Cash on Delivery fee** - calculated by the backend at checkout, never in the
   frontend. **Commission** is not built.
+- **Google Analytics 4** is built but has never sent a real hit: no Measurement ID was available while it was
+  built. The tests check that Google's tag is added only after a visitor allows analytics, and what the page hands
+  to it; they block Google's servers. Set `GA4_MEASUREMENT_ID` and check GA4's "Realtime" report once.
+- **Visitor figures are a floor.** They only include visitors who allowed analytics, and the dashboard says so.
+  Orders, sales and accounts are exact. There are no guest orders: every order belongs to an account.
+- **View on My Wall** needs `https://` (or `localhost`): browsers give no camera to a plain `http://` page, so the
+  button does not appear there. It was built and tested in desktop Chrome with a simulated camera, simulated phone
+  sensors and a simulated AR phone; **it has not been tried on a real phone yet** (see the test list in
+  `docs/ARCHITECTURE.md`). Not built: 3D models of frames (the product field for one exists), Apple's AR Quick Look,
+  frames made from several photos, arched frames.
 
 ## Where to change things
 
@@ -147,6 +184,12 @@ shop has coordinates).
 | FAQ, gallery, reviews, community tiles                      | `faq.seed.js`, `gallery.seed.js`, `reviews.seed.js`, `community.seed.js`        |
 | Colours, fonts, heading sizes, spacing, radius              | `assets/css/tokens.css` (one place for the whole site; see "Design system" in `docs/ARCHITECTURE.md`) |
 | How the site looks on a phone (card size, text size, spacing) | `assets/css/mobile.css` (phones only, up to 639px wide; laptop and desktop never use it) |
+| Which products show "View on My Wall" | automatic by product type; `liveDemo: false` on a product in `js/edit.js` or a design in `js/decor.js` switches one off; a shop chooses Automatic / On / Off in its dashboard (product editor → Customization). Rules: `liveDemoSupport()` in `assets/js/services/product-model.js` |
+| The words of the Live Demo (hints, errors, buttons) | `assets/js/livedemo/ld-view.js` → `TEXT` |
+| Camera mode's assumptions (lens angle, the distances offered) | `assets/js/livedemo/ld-camera.js` → `FOV_LONG_DEG`, `DISTANCES` |
+| Google Analytics 4 on / off | `GA4_MEASUREMENT_ID` in `backend/.env` (or `analytics.ga4MeasurementId` in `assets/js/config.js` for a site without the backend). Visitor statistics altogether: `ANALYTICS_ENABLED` |
+| The analytics question's words; what the website sends | `assets/js/services/analytics.js` (`showBanner`, `FIRST_PARTY`, `googleEvent`); what the server keeps: `backend/src/services/analytics-service.js` |
+| What the admin reports count, and how | `backend/src/services/admin-analytics-service.js` (the top of the file says where each figure comes from); the screen: `assets/js/ui/admin-analytics.js` |
 | Switch to a real backend                                    | `assets/js/config.js` -> `dataMode: "api"` (see `docs/ARCHITECTURE.md`)         |
 
 ## Placeholders needing real business information
@@ -198,6 +241,9 @@ assets/data  *.seed.js  (stand-in for the database)
 assets/img assets/video   optimised media
 docs/ARCHITECTURE.md
 js/decor.js  Home Decor catalogue | tools/decor  draws its product pictures (not needed to run the site)
+assets/js/livedemo   "View on My Wall": loaded only when a customer opens it (entry: assets/js/services/live-demo.js)
+assets/js/services/analytics.js   the analytics question, FrameX's own visitor statistics, Google Analytics 4 (all only after a yes)
+assets/js/ui/admin-analytics.js + assets/css/admin-analytics.css   the admin's Analytics screen and the account record
 ```
 
 ## GitHub Pages

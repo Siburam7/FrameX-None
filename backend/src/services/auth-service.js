@@ -13,6 +13,7 @@ import { sendOtpSms, smsStatus } from "../lib/sms.js";
 import { hashPassword, needsRehash, verifyAgainstDummy, verifyPassword } from "../lib/passwords.js";
 import { hashToken, newId, newToken } from "../lib/tokens.js";
 import { normalizeEmail, normalizePhone } from "../lib/validate.js";
+import { recordAuthEvent } from "./analytics-service.js";
 import { shopStatus } from "./shop-service.js";
 
 const SHOP_CODE = /^FRX-SHOP-\d{3,}$/i;
@@ -80,7 +81,7 @@ export async function signupCustomer({ name, email, phone, password }) {
  * tab: Shop ID / shop email). The role that comes back is whatever the
  * database says, so choosing the "shop" tab can never make someone a shop.
  */
-export async function login({ identifier, password, accountType }) {
+export async function login({ identifier, password, accountType, ip = null }) {
   const id = String(identifier || "").trim();
   let row = null;
   if (accountType === "shop") {
@@ -98,14 +99,20 @@ export async function login({ identifier, password, accountType }) {
   }
 
   const ok = row && row.password_hash ? await verifyPassword(password, row.password_hash) : await verifyAgainstDummy(password);
-  if (!ok) throw errors.unauthorized(GENERIC_LOGIN_ERROR, "INVALID_CREDENTIALS");
+  // For the admin's security figures: which account an attempt was aimed at (when there is one) and why it failed. Never what was typed.
+  const failed = async (error) => {
+    await recordAuthEvent({ kind: "LOGIN_FAILED", userId: row ? row.id : null, role: row ? row.role : null, accountType, reason: error.code, ip });
+    return error;
+  };
+  if (!ok) throw await failed(errors.unauthorized(GENERIC_LOGIN_ERROR, "INVALID_CREDENTIALS"));
   // Only someone who knows the password learns the account's state.
-  if (row.status === "DISABLED") throw errors.forbidden("This account has been disabled. Please contact FrameX.", "ACCOUNT_DISABLED");
-  if (row.status !== "ACTIVE") throw errors.forbidden("This account isn't ready yet. Use the setup link FrameX sent you.", "ACCOUNT_NOT_READY");
-  if (row.role === "SHOP" && row.approval_status !== "APPROVED") throw errors.forbidden("This shop isn't approved on FrameX at the moment. Please contact FrameX.", "SHOP_NOT_APPROVED");
+  if (row.status === "DISABLED") throw await failed(errors.forbidden("This account has been disabled. Please contact FrameX.", "ACCOUNT_DISABLED"));
+  if (row.status !== "ACTIVE") throw await failed(errors.forbidden("This account isn't ready yet. Use the setup link FrameX sent you.", "ACCOUNT_NOT_READY"));
+  if (row.role === "SHOP" && row.approval_status !== "APPROVED") throw await failed(errors.forbidden("This shop isn't approved on FrameX at the moment. Please contact FrameX.", "SHOP_NOT_APPROVED"));
 
   if (needsRehash(row.password_hash)) await db.query("UPDATE users SET password_hash = $1 WHERE id = $2", [await hashPassword(password), row.id]);
   await db.query("UPDATE users SET last_login_at = now() WHERE id = $1", [row.id]);
+  await recordAuthEvent({ kind: "LOGIN", userId: row.id, role: row.role, accountType, ip });
   return row.id;
 }
 

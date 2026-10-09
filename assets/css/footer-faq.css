@@ -584,9 +584,20 @@
   line-height: 1.6;
 }
 
+/* The logo file has empty space around its letters (22% of its width on the left):
+   the picture is pulled left by that much, so the letters line up with the text under them. */
 .site-footer__brand .brand img {
   width: 116px;
   height: auto;
+  margin-left: -25px;
+}
+
+/* Laptops and desktops: the same size as the logo in the header. */
+@media (min-width: 1180px) {
+  .site-footer__brand .brand img {
+    width: 172px;
+    margin-left: -38px;
+  }
 }
 
 .site-footer__contact li a {

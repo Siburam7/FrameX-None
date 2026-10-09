@@ -3,6 +3,9 @@
 
    Routes (hash):
      #/overview                 counts: applications, pending / active / inactive shops
+     #/analytics[/<report>]     sales, visitors, products, sellers, paintings, logins
+                                for a period (ui/admin-analytics.js)
+     #/users/<id>               one account: contact details and order history
      #/applications[?status=]   shop applications
      #/applications/<id>        one application: review, approve (with location), reject
      #/shops[?status=]          shops: view, activate / deactivate
@@ -26,6 +29,7 @@
 
   const NAV = [
     ["overview", "Overview", "frame"],
+    ["analytics", "Analytics", "chart"],
     ["applications", "Applications", "mail"],
     ["shops", "Shops", "store"],
     ["orders", "Orders", "receipt"],
@@ -53,6 +57,7 @@
     SHOP_ACCOUNT_ENABLED: "Shop login enabled", SHOP_PROFILE_UPDATED: "Shop edited its profile", PASSWORD_RESET: "Password reset", ACCOUNT_SETUP_COMPLETED: "Shop set its password",
     ORDER_STATUS_CHANGED: "Order status changed", ORDER_CANCELLED: "Order cancelled", ORDER_REFUNDED: "Order refunded",
     ORDER_PHOTO_ACCESSED: "Customer photo downloaded", ORDER_ITEM_FULFILMENT_CHANGED: "Shop updated an order item",
+    ORDER_TEST_LABEL_CHANGED: "Order marked (or unmarked) as a test", CUSTOMER_RECORD_VIEWED: "Account record opened",
     SHOP_PRODUCT_SAVED: "Shop saved a product", SHOP_PRODUCT_DELETED: "Shop deleted a product", PRODUCT_MODERATED: "Product listing changed by FrameX",
     SETTINGS_CHANGED: "Platform settings changed", USER_STATUS_CHANGED: "Account switched on or off",
     ARTIST_APPLICATION_SUBMITTED: "Artist application submitted", ARTIST_APPLICATION_REJECTED: "Artist application rejected", ARTIST_APPROVED: "Artist approved", ARTIST_CREATED: "Artist created",
@@ -99,7 +104,7 @@
   async function overview(main) {
     const [o, apps] = await Promise.all([http().get("/admin/overview"), http().get("/admin/applications", { status: "PENDING" })]);
     const tile = (n, label, href, tone = "") => `<a class="ad-tile ${tone}" href="${href}"><strong>${n}</strong><span>${esc(label)}</span></a>`;
-    main.innerHTML = `${head("Overview", "Shop onboarding at a glance.")}
+    main.innerHTML = `${head("Overview", "Shop onboarding at a glance.", `<a class="btn btn--outline btn--sm" href="#/analytics">${icon("chart")} Analytics</a>`)}
       <div class="ad-tiles">
         ${tile(o.applications.pending + o.applications.underReview, "Shop applications to review", "#/applications?status=PENDING", o.applications.pending ? "ad-tile--alert" : "")}
         ${tile(o.shops.approved, "Approved shops", "#/shops?status=APPROVED")}
@@ -530,6 +535,7 @@
     document.title = `${NAV.find(([id]) => id === section)[1]} — FrameX admin`;
     try {
       if (section === "overview") await overview(main);
+      if (section === "analytics") await FrameX.adminAnalytics.show(main, parts, params, { head });
       if (section === "applications") await (parts[1] ? application(main, parts[1]) : applications(main, params));
       if (section === "shops") await (parts[1] === "new" ? newShop(main) : parts[1] ? shop(main, parts[1]) : shops(main, params));
       if (section === "orders") await (parts[1] ? FrameX.adminOrders.detail(main, parts[1], { head }) : FrameX.adminOrders.list(main, params, { head }));
@@ -540,7 +546,7 @@
       if (section === "artworks") await art.artworks(main, params, { head });
       if (section === "paintings") await (parts[1] ? art.painting(main, parts[1], { head }) : art.paintings(main, params, { head }));
       if (section === "reviews") await art.reviews(main, params, { head });
-      if (section === "users") await art.users(main, params, { head });
+      if (section === "users") await (parts[1] ? FrameX.adminAnalytics.customer(main, parts[1], params, { head }) : art.users(main, params, { head }));
       if (section === "settings") await art.settings(main, params, { head });
     } catch (error) {
       // The session ended or the role changed: the API said no, so leave.
