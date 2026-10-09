@@ -382,10 +382,9 @@ button:disabled {
   }
 }
 
-/* The FrameX animation after logging in (ui/welcome.js): a white cover over the page that is opening, with
-   the film in the middle, small. The script sets the film's width so that its lettering is as large as the
-   header logo's. html.fx-welcoming covers the page before its first drawing; .fx-welcome is the cover itself
-   (the login page also shows it, empty, for the moment between the two pages). */
+/* The FrameX logo animation while a page opens (ui/welcome.js): a white cover over the page, with the film
+   in the middle, small, for about a second. The script sets the film's width from the header logo's size.
+   html.fx-welcoming covers the page before its first drawing; .fx-welcome is the cover itself. */
 html.fx-welcoming::before {
   content: "";
   position: fixed;
@@ -402,7 +401,7 @@ html.fx-welcoming::before {
   place-items: center;
   background: #fff;
   opacity: 1;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.2s ease;
 }
 
 .fx-welcome.is-leaving {

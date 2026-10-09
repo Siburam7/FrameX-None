@@ -1,86 +1,110 @@
 /* ==========================================================================
-   The FrameX animation after logging in.
+   The FrameX logo animation while a page opens.
 
-   The login and sign-up pages leave a note in sessionStorage when someone has
-   just logged in (ui/auth-pages.js) and open the next page straight away. This
-   file is loaded in the <head> of every page, WITHOUT "defer", so it runs
-   before anything is drawn: when the note is there (and fresh), the page is
-   covered in white and the animation plays once in the middle, small, for
-   about 3 seconds, while the page loads its pictures and data underneath.
-   Then the cover fades away and the page is simply there.
+   This file is loaded in the <head> of every page, WITHOUT "defer", so it runs
+   before anything is drawn. Every time a page is opened or reloaded, the page
+   is covered in white and the logo part of the FrameX film plays once in the
+   middle, small, for about one second, while the page loads its pictures and
+   data underneath. Then the cover fades away and the page is simply there.
+
+   Which part: the film (3.3 s) first draws the logo mark (the black tile, the
+   "F", the orange dot: finished at 1.6 s), and from 1.9 s shrinks it and writes
+   "FRAMEX". Only the first part is shown: it is played 1.7 times faster and
+   stopped at 1.72 s, before the lettering begins. That takes one second.
 
    Size: the film is 1920 x 1080 and its "FRAMEX" lettering is 686 px wide; the
    header logo's lettering is 912 px of its 1600 px file. The film is shown at
-   the width that makes the two letterings the same size on this screen. The
-   login page measured its own header logo and wrote the width in the note.
+   the width at which the two letterings would be the same size on this screen
+   (so the logo mark is about 76 px on a laptop and 53 px on a phone). The
+   header logo's width is remembered from the last page that was opened on this
+   screen; before that, the sizes written in chrome.css / mobile.css are used.
 
-   It never holds anyone up: no note, a film that can't be loaded or played,
-   or a device set to "reduce motion" -> nothing happens, the page just opens.
-   The note is used once: reloading the page does not play the film again.
+   It never holds anyone up: a film that can't be loaded or played, or a device
+   set to "reduce motion" -> no cover, the page just opens.
    ========================================================================== */
 (function () {
-  var KEY = "framex.welcome";
   var FILM = "assets/video/FrameX-animation-2-landscape.mp4";
   var FILM_PER_LOGO = 912 / 1600 / (686 / 1920);
+  var STOP_AT = 1.72; // seconds of film: the logo mark is complete, the lettering has not begun
+  var SPEED = 1.7;
+  var LOGO_KEY = "framex.logoWidth";
 
-  var note = null;
-  try {
-    note = JSON.parse(window.sessionStorage.getItem(KEY) || "null");
-    window.sessionStorage.removeItem(KEY);
-  } catch (e) {
-    return;
+  // The header logo's real width, noted once this page has drawn it, for the next page that opens.
+  function rememberLogo() {
+    try {
+      var img = document.querySelector(".site-header .brand img");
+      var width = img ? Math.round(img.getBoundingClientRect().width) : 0;
+      if (width > 60 && width < 400) window.localStorage.setItem(LOGO_KEY, JSON.stringify({ screen: window.innerWidth, logo: width }));
+    } catch (e) {
+      /* storage is blocked: the sizes below are used */
+    }
   }
-  // Older than 15 seconds = left behind by a page that never opened; not a login that just happened.
-  if (!note || !(Date.now() - Number(note.at) < 15000)) return;
+  if (document.readyState === "complete") window.setTimeout(rememberLogo, 0);
+  else window.addEventListener("load", function () { window.setTimeout(rememberLogo, 300); });
+
   if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
   var root = document.documentElement;
   root.classList.add("fx-welcoming"); // base.css: a white cover, before the page draws anything
 
-  // The header logo's width: as measured on the login page, otherwise the sizes in chrome.css / mobile.css.
   var w = window.innerWidth;
-  var logo = Number(note.logo);
+  var logo = 0;
+  try {
+    var noted = JSON.parse(window.localStorage.getItem(LOGO_KEY) || "null");
+    if (noted && noted.screen === w) logo = Number(noted.logo);
+  } catch (e) {
+    /* use the sizes below */
+  }
   if (!(logo > 60 && logo < 400)) logo = w >= 1180 ? 200 : w >= 1100 ? 172 : w >= 640 ? 132 : w >= 420 ? 158 : 140;
 
   var box = document.createElement("div");
   box.className = "fx-welcome";
-  box.setAttribute("role", "status");
+  box.setAttribute("aria-hidden", "true");
   var film = document.createElement("video");
   film.muted = true;
   film.playsInline = true;
+  film.defaultPlaybackRate = SPEED;
+  film.playbackRate = SPEED;
   film.setAttribute("muted", "");
   film.setAttribute("playsinline", "");
   film.setAttribute("preload", "auto");
   film.setAttribute("disablepictureinpicture", "");
-  film.setAttribute("aria-hidden", "true");
   film.width = 1920;
   film.height = 1080;
   film.style.width = Math.round(logo * FILM_PER_LOGO) + "px";
-  var words = document.createElement("span");
-  words.className = "visually-hidden";
-  words.textContent = "You are logged in. Opening FrameX…";
   box.appendChild(film);
-  box.appendChild(words);
 
   var done = false;
   function finish() {
     if (done) return;
     done = true;
+    try {
+      film.pause();
+    } catch (e) {
+      /* nothing to stop */
+    }
     root.classList.remove("fx-welcoming");
     box.classList.add("is-leaving");
     window.setTimeout(function () {
       if (box.parentNode) box.parentNode.removeChild(box);
-    }, 300);
+    }, 260);
   }
 
-  // Whichever comes first: the film ends, 3 seconds of it have played, or it never starts.
-  var giveUp = window.setTimeout(finish, 2000);
+  // Whichever comes first: the logo mark is complete, a little over a second has passed, or the film never starts.
+  var giveUp = window.setTimeout(finish, 900);
+  function watch() {
+    if (done) return;
+    if (film.currentTime >= STOP_AT) return finish();
+    window.requestAnimationFrame(watch);
+  }
   film.addEventListener(
     "playing",
     function () {
       window.clearTimeout(giveUp);
+      film.playbackRate = SPEED;
       box.classList.add("is-playing");
-      window.setTimeout(finish, 3000);
+      window.setTimeout(finish, (STOP_AT / SPEED) * 1000 + 250); // also when the tab is in the background
+      window.requestAnimationFrame(watch);
     },
     { once: true },
   );
