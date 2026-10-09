@@ -15,6 +15,7 @@ import { artistDashboardRoutes, artistRoutes, artworkRoutes } from "./routes/art
 import authRoutes from "./routes/auth.js";
 import cartRoutes from "./routes/cart.js";
 import checkoutRoutes from "./routes/checkout.js";
+import contactRoutes from "./routes/contact.js";
 import miscRoutes, { devRoutes } from "./routes/misc.js";
 import orderRoutes from "./routes/orders.js";
 import paintingRoutes, { notificationRoutes, reviewRoutes } from "./routes/paintings.js";
@@ -23,6 +24,7 @@ import shopRoutes from "./routes/shops.js";
 import uploadRoutes, { fileRoutes } from "./routes/uploads.js";
 import userRoutes from "./routes/users.js";
 import { handleWebhook } from "./services/payment-service.js";
+import { sendReviewPhoto } from "./services/review-service.js";
 import { sendMedia } from "./services/shop-product-service.js";
 
 export function createApp() {
@@ -68,12 +70,14 @@ export function createApp() {
   app.use("/api/notifications", notificationRoutes);
   app.use("/api/reviews", reviewRoutes);
   app.use("/api/analytics", analyticsRoutes); // visitor statistics from the website (only with the visitor's consent)
+  app.use("/api/contact", contactRoutes); // a message from the Contact page
   app.use("/api/admin", adminRoutes);
   app.use("/api", miscRoutes);
   devRoutes(app); // development mailbox; registers nothing in production
   app.use("/api", notFoundHandler);
 
   /* ---- Product pictures uploaded by shops (public, like the pictures on any product page) ---- */
+  app.get("/media/review/:id", sendReviewPhoto); // the photo of a published review
   app.get("/media/:id", sendMedia);
   app.get("/media/:id/:variant", sendMedia);
 

@@ -60,7 +60,8 @@ async function api(url, options, name) {
   return data || {};
 }
 
-async function sendBrevo({ to, subject, text, html }) {
+async function sendBrevo({ to, subject, text, html, replyTo = null }) {
+  const reply = replyTo ? { email: replyTo.email, ...(replyTo.name ? { name: replyTo.name } : {}) } : config.email.replyTo ? { email: config.email.replyTo } : null;
   const data = await api(
     "https://api.brevo.com/v3/smtp/email",
     {
@@ -72,7 +73,7 @@ async function sendBrevo({ to, subject, text, html }) {
         subject,
         textContent: text,
         htmlContent: html || `<pre style="font-family:inherit">${esc(text)}</pre>`,
-        ...(config.email.replyTo ? { replyTo: { email: config.email.replyTo } } : {})
+        ...(reply ? { replyTo: reply } : {})
       })
     },
     "Brevo"
@@ -80,10 +81,10 @@ async function sendBrevo({ to, subject, text, html }) {
   return data.messageId || "accepted";
 }
 
-async function sendResend({ to, subject, text, html }) {
+async function sendResend({ to, subject, text, html, replyTo = null }) {
   const data = await api(
     "https://api.resend.com/emails",
-    { method: "POST", headers: { Authorization: `Bearer ${config.email.key}`, "Content-Type": "application/json" }, body: JSON.stringify({ from: config.email.from, to: [to], subject, text, html }) },
+    { method: "POST", headers: { Authorization: `Bearer ${config.email.key}`, "Content-Type": "application/json" }, body: JSON.stringify({ from: config.email.from, to: [to], subject, text, html, ...(replyTo ? { reply_to: replyTo.email } : {}) }) },
     "Resend"
   );
   return data.id || "accepted";
@@ -116,19 +117,19 @@ export function explainMailError(error) {
   return text.split("\n")[0].slice(0, 220);
 }
 
-export async function sendMail({ to, subject, text, html, links = [] }) {
+export async function sendMail({ to, subject, text, html, links = [], replyTo = null }) {
   const status = emailStatus();
   if (status.mode === "none") return { delivered: false, reason: "not_configured", detail: status.problems.join(" ") };
   if (status.mode === "dev") {
-    pushDevMessage({ kind: "email", to, subject, text, links });
+    pushDevMessage({ kind: "email", to, subject, text, links, ...(replyTo ? { replyTo: replyTo.email } : {}) });
     if (!config.isTest) console.log(`[dev-mail] NOT SENT (development mailbox): "${subject}" for ${to}`);
     return { delivered: false, reason: "dev" };
   }
   try {
     let id;
-    if (status.provider === "brevo") id = await sendBrevo({ to, subject, text, html });
-    else if (status.provider === "resend") id = await sendResend({ to, subject, text, html });
-    else id = (await (await smtpTransport()).sendMail({ from: config.email.from, to, subject, text, html })).messageId;
+    if (status.provider === "brevo") id = await sendBrevo({ to, subject, text, html, replyTo });
+    else if (status.provider === "resend") id = await sendResend({ to, subject, text, html, replyTo });
+    else id = (await (await smtpTransport()).sendMail({ from: config.email.from, to, subject, text, html, ...(replyTo ? { replyTo: replyTo.email } : {}) })).messageId;
     // Recipient and provider id only: never the body (it carries one-time codes and links).
     if (!config.isTest) console.log(`[mail] ${status.provider} accepted "${subject}" for ${to} (id ${id})`);
     return { delivered: true, id };

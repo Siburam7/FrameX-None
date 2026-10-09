@@ -1,274 +1,133 @@
 /* ==========================================================================
    Customer gallery & reviews page.
-   Shows customer reviews (with their framed photo when they sent one) and a
-   form to share a new one.
 
-   There is NO backend yet, so nothing is uploaded: a submission is stored in
-   this browser only (localStorage) and shown back with a "this device only"
-   label. Published reviews come from the reviews data (GET /reviews) — add
-   real ones in assets/data/reviews.seed.js, with an optional `photo`.
-   To go live: replace saveLocal() with a request to your API and moderate
-   submissions before they appear for other visitors.
+   Shows the published reviews of the whole site, the ones with a photo first:
+   GET /api/reviews/gallery. A review can only be written by a customer whose
+   order (or custom painting) was delivered, from that order's own page, where
+   they can also add one photo. So this page has no free form: it tells a
+   customer where to write theirs, and lists their delivered orders when they
+   are logged in.
+
+   Without the backend, the reviews of assets/data/reviews.seed.js are shown.
    ========================================================================== */
 (function (FrameX) {
-  const { $, $$, escapeHtml: esc, icon } = FrameX.dom;
+  const { $, escapeHtml: esc, icon } = FrameX.dom;
 
-  const KEY = "framex.submissions.v1";
-  const MAX_LOCAL = 12; // keeps localStorage well under its size limit
-  const MAX_UPLOAD_MB = 10;
-  const TYPES = ["image/jpeg", "image/png", "image/webp"];
-  const PHOTO_EDGE = 1000; // px, longest side of the stored copy
-
-  let published = [];
-  let photoData = "";
-
-  const loadLocal = () => {
-    try {
-      return JSON.parse(localStorage.getItem(KEY)) || [];
-    } catch (error) {
-      return [];
-    }
-  };
-  const saveLocal = (list) => localStorage.setItem(KEY, JSON.stringify(list));
+  let items = [];
+  let total = 0;
+  let page = 1;
 
   const stars = (n) =>
     `<div class="review-card__stars" role="img" aria-label="${n} out of 5 stars">${Array.from({ length: 5 }, (_, i) => icon("star", i < n ? "icon--fill" : "")).join("")}</div>`;
 
-  const card = (
-    r,
-  ) => `<article class="cg-card${r.photo ? "" : " cg-card--text"}">
-      ${r.photo ? `<div class="cg-card__media"><img src="${esc(r.photo)}" alt="Framed photo shared by ${esc(r.name)}" width="800" height="1000" loading="lazy" decoding="async"></div>` : ""}
+  const card = (r) => `<article class="cg-card${r.photo ? "" : " cg-card--text"}">
+      ${r.photo ? `<div class="cg-card__media"><img src="${esc(r.photo)}" alt="Photo shared by ${esc(r.name)}" width="800" height="1000" loading="lazy" decoding="async"></div>` : ""}
       <div class="cg-card__body">
         ${stars(r.rating)}
-        <p class="cg-card__text">${esc(r.text)}</p>
+        ${r.text ? `<p class="cg-card__text">${esc(r.text)}</p>` : ""}
         <p class="cg-card__who"><strong>${esc(r.name)}</strong>${r.productName ? `<span>${esc(r.productName)}</span>` : ""}</p>
         <p class="cg-card__meta">
-          ${r.isLocal ? `<span class="badge badge--muted">On this device only</span>` : r.isVerified ? `<span class="review-card__verified">${icon("badge-check")} Verified buyer</span>` : ""}
+          ${r.isVerified ? `<span class="review-card__verified">${icon("badge-check")} Verified buyer</span>` : ""}
           <span>${esc(r.dateLabel || "")}</span>
-          ${r.isLocal ? `<button class="cart-line__remove" type="button" data-remove="${esc(r.id)}">Remove</button>` : ""}
         </p>
       </div>
     </article>`;
 
+  /** A review as the backend gives it -> what a card shows. */
+  const fromApi = (r) => ({
+    name: r.author,
+    rating: r.rating,
+    text: r.body,
+    productName: r.targetName || "",
+    photo: r.photo ? FrameX.http.asset(r.photo) : "",
+    isVerified: true,
+    dateLabel: new Date(r.createdAt).toLocaleDateString(FrameX.config.locale, { day: "numeric", month: "short", year: "numeric" }),
+  });
+
   function render() {
     const grid = $("#cg-grid");
-    const all = loadLocal()
-      .map((r) => Object.assign({ isLocal: true }, r))
-      .concat(published);
-    grid.classList.toggle("cg-grid--empty", !all.length);
-    grid.innerHTML = all.length
-      ? all.map(card).join("")
+    grid.classList.toggle("cg-grid--empty", !items.length);
+    grid.innerHTML = items.length
+      ? items.map(card).join("")
       : `<div class="state-message"><strong>No customer photos yet</strong>
           <span>Photos and reviews from people who have framed their memories with FrameX will appear here.</span>
-          <a class="btn btn--dark btn--sm" href="#share">Be the first to share</a></div>`;
-  }
-
-  /** Downscale the chosen photo in the browser so the stored copy stays small. */
-  function readPhoto(file) {
-    return new Promise((resolve, reject) => {
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = () => {
-        const scale = Math.min(
-          1,
-          PHOTO_EDGE / Math.max(img.naturalWidth, img.naturalHeight),
-        );
-        const canvas = document.createElement("canvas");
-        canvas.width = Math.round(img.naturalWidth * scale);
-        canvas.height = Math.round(img.naturalHeight * scale);
-        canvas
-          .getContext("2d")
-          .drawImage(img, 0, 0, canvas.width, canvas.height);
-        URL.revokeObjectURL(url);
-        resolve(canvas.toDataURL("image/jpeg", 0.82));
-      };
-      img.onerror = () => {
-        URL.revokeObjectURL(url);
-        reject(new Error("unreadable"));
-      };
-      img.src = url;
-    });
-  }
-
-  const RULES = {
-    name: (v) => (v.trim().length >= 2 ? "" : "Please enter your name."),
-    rating: (v) => (v ? "" : "Please choose a star rating."),
-    text: (v) =>
-      v.trim().length >= 10 ? "" : "Please write at least 10 characters.",
-    consent: (v) =>
-      v
-        ? ""
-        : "Please confirm you have the right to share this photo and review.",
-  };
-
-  function setError(form, name, message) {
-    const wrap = $(`[data-field="${name}"]`, form);
-    wrap.dataset.invalid = message ? "true" : "false";
-    $(".form-field__error span", wrap).textContent = message;
-  }
-
-  function status(form, kind, text) {
-    const box = $("#cg-status", form);
-    box.className = `form-status form-status--${kind} is-visible`;
-    box.innerHTML = `${icon(kind === "error" ? "close" : "check")}<span>${esc(text)}</span>`;
-  }
-
-  function wireForm(form) {
-    const file = $("#cg-photo", form);
-    const preview = $("#cg-photo-preview", form);
-    const zone = $("#cg-photo-zone", form);
-
-    const clearPhoto = () => {
-      photoData = "";
-      file.value = "";
-      preview.hidden = true;
-      zone.hidden = false;
-    };
-
-    async function handleFile(picked) {
-      setError(form, "photo", "");
-      if (!picked) return;
-      if (!TYPES.includes(picked.type))
-        return setError(
-          form,
-          "photo",
-          "Please choose a JPG, PNG or WebP image.",
-        );
-      if (picked.size > MAX_UPLOAD_MB * 1024 * 1024)
-        return setError(
-          form,
-          "photo",
-          `That file is larger than ${MAX_UPLOAD_MB} MB.`,
-        );
-      try {
-        photoData = await readPhoto(picked);
-        $("img", preview).src = photoData;
-        preview.hidden = false;
-        zone.hidden = true;
-      } catch (error) {
-        setError(
-          form,
-          "photo",
-          "That image couldn't be read. Please try another one.",
-        );
+          <a class="btn btn--dark btn--sm" href="#share">How to share yours</a></div>`;
+    let more = $("#cg-more");
+    if (items.length < total) {
+      if (!more) {
+        grid.insertAdjacentHTML("afterend", `<div class="section-more" style="margin-top:20px;text-align:center"><button class="btn btn--outline" type="button" id="cg-more">Show more</button></div>`);
+        more = $("#cg-more");
+        more.addEventListener("click", async () => {
+          more.disabled = true;
+          try {
+            const r = await FrameX.http.get("/reviews/gallery", { page: page + 1 });
+            page += 1;
+            items = items.concat(r.items.map(fromApi));
+            total = r.total;
+          } catch (error) {
+            FrameX.toast.show("More reviews couldn't be loaded. Please try again.");
+          }
+          more.disabled = false;
+          render();
+        });
       }
+    } else if (more) more.parentElement.remove();
+  }
+
+  /** Where a customer writes their own review: on the page of an order that was delivered to them. */
+  async function shareBox(box) {
+    if (!FrameX.http.enabled()) {
+      box.innerHTML = `<p class="cg-share__lead">Reviews can be written here once ordering is switched on for this site.</p>`;
+      return;
     }
-
-    file.addEventListener("change", () => handleFile(file.files[0]));
-    ["dragover", "dragleave", "drop"].forEach((evt) =>
-      zone.addEventListener(evt, (event) => {
-        event.preventDefault();
-        zone.classList.toggle("is-dragover", evt === "dragover");
-        if (evt === "drop") handleFile(event.dataTransfer.files[0]);
-      }),
-    );
-    $("#cg-photo-remove", form).addEventListener("click", clearPhoto);
-
-    // Clear a field's error as soon as its value becomes valid.
-    ["input", "change"].forEach((evt) =>
-      form.addEventListener(evt, (event) => {
-        const wrap = event.target.closest("[data-field]");
-        const name = wrap && wrap.dataset.field;
-        if (!RULES[name] || wrap.dataset.invalid !== "true") return;
-        const field = event.target;
-        const value =
-          field.type === "checkbox"
-            ? field.checked
-              ? "yes"
-              : ""
-            : field.value;
-        if (!RULES[name](value)) setError(form, name, "");
-      }),
-    );
-
-    form.addEventListener("submit", (event) => {
-      event.preventDefault();
-      const data = new FormData(form);
-      const values = {
-        name: data.get("name") || "",
-        rating: data.get("rating") || "",
-        text: data.get("text") || "",
-        consent: data.get("consent") || "",
-      };
-      let firstBad = null;
-      Object.keys(RULES).forEach((name) => {
-        const message = RULES[name](values[name]);
-        setError(form, name, message);
-        if (message && !firstBad) firstBad = name;
-      });
-      if (firstBad) {
-        status(form, "error", "Please fix the highlighted fields.");
-        const field = $(
-          `[data-field="${firstBad}"] input, [data-field="${firstBad}"] textarea`,
-          form,
-        );
-        return field && field.focus();
-      }
-
-      const entry = {
-        id: "local-" + Date.now(),
-        name: values.name.trim(),
-        rating: Number(values.rating),
-        text: values.text.trim(),
-        productName: data.get("product") || "",
-        photo: photoData,
-        dateLabel: new Date().toLocaleDateString(FrameX.config.locale, {
-          day: "numeric",
-          month: "short",
-          year: "numeric",
-        }),
-      };
-      try {
-        saveLocal([entry].concat(loadLocal()).slice(0, MAX_LOCAL));
-      } catch (error) {
-        return status(
-          form,
-          "error",
-          "This browser couldn't save your review (its storage is full or blocked). Nothing was saved.",
-        );
-      }
-      form.reset();
-      clearPhoto();
-      render();
-      status(
-        form,
-        "info",
-        "Saved on this device, so you can see how it looks above. Publishing reviews on the site is coming soon, so it hasn't been sent to FrameX.",
-      );
-      $("#cg-grid").scrollIntoView({
-        behavior: FrameX.dom.prefersReducedMotion() ? "auto" : "smooth",
-        block: "start",
-      });
-    });
+    const state = await FrameX.auth.ready;
+    if (!state.authenticated) {
+      box.innerHTML = `<p class="cg-share__lead">Log in, open the order that was delivered to you, and rate what you received. You can add a photo there.</p>
+        <div><a class="btn btn--dark" href="orders.html">Log in and open my orders</a></div>`;
+      return;
+    }
+    let delivered = [];
+    try {
+      delivered = (await FrameX.http.get("/orders", { limit: 50 })).items.filter((o) => o.status === "DELIVERED");
+    } catch (error) {
+      /* the list below simply stays empty */
+    }
+    box.innerHTML = delivered.length
+      ? `<p class="cg-share__lead">These orders were delivered to you. Open one to rate what you received and add your photo:</p>
+        <ul class="cg-orders">${delivered
+          .slice(0, 8)
+          .map((o) => `<li><a class="btn btn--outline btn--sm" href="order.html?id=${encodeURIComponent(o.orderNumber)}#reviews">${icon("star")} Review order ${esc(o.orderNumber)}${o.firstItem ? ` · ${esc(o.firstItem.name)}` : ""}</a></li>`)
+          .join("")}</ul>`
+      : `<p class="cg-share__lead">You can write a review as soon as an order has been delivered to you. It will show up on its order page.</p>
+        <div><a class="btn btn--outline" href="orders.html">My orders</a></div>`;
   }
 
   async function init() {
     const grid = $("#cg-grid");
-    const form = $("#cg-form");
-    if (!grid || !form) return;
-
-    try {
-      const [reviews, products] = await Promise.all([
-        FrameX.api.getReviews(),
-        FrameX.api.getProducts({ limit: 1000 }),
-      ]);
-      published = reviews;
-      $("#cg-product", form).insertAdjacentHTML(
-        "beforeend",
-        products.items.map((p) => `<option>${esc(p.name)}</option>`).join(""),
-      );
-    } catch (error) {
-      console.error("Customer gallery failed to load", error);
+    if (!grid) return;
+    grid.innerHTML = `<div class="skeleton" style="min-height:240px"></div>`;
+    let loaded = false;
+    if (FrameX.http.enabled()) {
+      try {
+        const r = await FrameX.http.get("/reviews/gallery");
+        items = r.items.map(fromApi);
+        total = r.total;
+        loaded = true;
+      } catch (error) {
+        console.error("Customer gallery failed to load", error);
+      }
     }
-
+    if (!loaded) {
+      try {
+        items = await FrameX.api.getReviews();
+        total = items.length;
+      } catch (error) {
+        items = [];
+      }
+    }
     render();
-    grid.addEventListener("click", (event) => {
-      const remove = event.target.closest("[data-remove]");
-      if (!remove) return;
-      saveLocal(loadLocal().filter((r) => r.id !== remove.dataset.remove));
-      render();
-    });
-    wireForm(form);
+    const box = $("#cg-share-box");
+    if (box) shareBox(box);
   }
 
   FrameX.customerGalleryPage = { init };

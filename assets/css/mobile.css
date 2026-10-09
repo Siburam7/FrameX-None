@@ -482,3 +482,21 @@
     min-height: 44px;
   }
 }
+
+/* Phones: the header logo a little larger. It is drawn wider than the room it takes (its file has empty
+   space left and right), so the buttons next to it keep exactly the room they had. */
+@media (max-width: 639px) {
+  .site-header .brand img {
+    width: 140px;
+    margin-left: -12px;
+    margin-right: -12px;
+  }
+}
+
+@media (min-width: 420px) and (max-width: 639px) {
+  .site-header .brand img {
+    width: 158px;
+    margin-left: -13px;
+    margin-right: -13px;
+  }
+}

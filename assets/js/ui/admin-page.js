@@ -16,6 +16,7 @@
                                 download the customer's original photos
      #/products[?status=]       products shops created: approve one that waits
                                 for review, or take one off sale
+     #/messages[?status=]       messages from the Contact page (ui/admin-messages.js)
      #/activity                 audit log of admin actions
 
    The page is only a view. Every request goes to /api/admin/*, where the
@@ -38,6 +39,7 @@
     ["artworks", "Artworks", "frame"],
     ["paintings", "Custom paintings", "edit"],
     ["reviews", "Reviews", "star"],
+    ["messages", "Messages", "mail"],
     ["users", "Accounts", "user"],
     ["settings", "Settings", "settings"],
     ["activity", "Activity", "clock"],
@@ -65,7 +67,7 @@
     ARTWORK_SUBMITTED: "Artwork submitted for review", ARTWORK_APPROVED: "Artwork approved", ARTWORK_REJECTED: "Artwork rejected", ARTWORK_STATUS_CHANGED: "Artwork shown, paused or withdrawn",
     PAINTING_SERVICE_SAVED: "Artist changed their price list", PAINTING_REQUESTED: "Custom painting requested", PAINTING_ACCEPTED: "Artist accepted a painting request",
     PAINTING_DECLINED: "Artist declined a painting request", PAINTING_STATUS_CHANGED: "Custom painting moved on", PAINTING_CANCELLED: "Custom painting cancelled",
-    PAINTING_PAYMENT_VERIFIED: "Painting payment verified", PAINTING_REFERENCE_ACCESSED: "Reference photo downloaded", PAINTING_REFUND_RECORDED: "Painting refund recorded", REVIEW_MODERATED: "Review hidden or shown",
+    PAINTING_PAYMENT_VERIFIED: "Painting payment verified", PAINTING_REFERENCE_ACCESSED: "Reference photo downloaded", PAINTING_REFUND_RECORDED: "Painting refund recorded", REVIEW_MODERATED: "Review hidden or shown", CONTACT_MESSAGE_DELETED: "Contact message deleted",
   };
 
   let root, admin;
@@ -111,6 +113,7 @@
         ${tile(o.shops.pending, "Pending shops", "#/shops?status=PENDING")}
         ${tile(o.shops.active, "Active shops (listed)", "#/shops?status=ACTIVE")}
         ${tile(o.shops.inactive, "Inactive shops (hidden)", "#/shops?status=INACTIVE")}
+        ${o.messages ? tile(o.messages.unread, "New messages from the Contact page", "#/messages?status=NEW", o.messages.unread ? "ad-tile--alert" : "") : ""}
       </div>
       <h2 class="ad-subtitle">Orders</h2>
       <div class="ad-tiles">
@@ -532,6 +535,7 @@
     const main = layout(section);
     main.onclick = null;
     main.innerHTML = `<div class="skeleton" style="height:120px"></div>`;
+    if (FrameX.adminMessages) FrameX.adminMessages.badge();
     document.title = `${NAV.find(([id]) => id === section)[1]} — FrameX admin`;
     try {
       if (section === "overview") await overview(main);
@@ -546,6 +550,7 @@
       if (section === "artworks") await art.artworks(main, params, { head });
       if (section === "paintings") await (parts[1] ? art.painting(main, parts[1], { head }) : art.paintings(main, params, { head }));
       if (section === "reviews") await art.reviews(main, params, { head });
+      if (section === "messages") await FrameX.adminMessages.list(main, params, { head });
       if (section === "users") await (parts[1] ? FrameX.adminAnalytics.customer(main, parts[1], params, { head }) : art.users(main, params, { head }));
       if (section === "settings") await art.settings(main, params, { head });
     } catch (error) {

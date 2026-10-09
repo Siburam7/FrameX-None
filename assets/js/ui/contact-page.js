@@ -1,9 +1,11 @@
 /* ==========================================================================
    Contact page.
-   There is NO backend yet, so the form never claims a message was sent.
-   - valid + an email address configured  -> opens the visitor's email app (mailto)
-   - valid + nothing configured           -> says plainly that it is not connected
-   To go live: implement sendMessage() to POST to your form service / API.
+   The form sends the message to the FrameX backend (POST /api/contact): it is
+   kept for the admin panel ("Messages") and an alert email goes to FrameX's
+   own address. The visitor's email app is never opened.
+   - sent                      -> says so, and empties the form
+   - refused / no connection   -> says it was NOT sent, and keeps what was typed
+   - no backend on this site   -> says plainly that the form is not connected
    ========================================================================== */
 (function (FrameX) {
   const { $, $$, icon, escapeHtml: esc } = FrameX.dom;
@@ -36,14 +38,11 @@
     box.innerHTML = `${icon(kind === "error" ? "close" : "check")}<span>${esc(text)}</span>`;
   }
 
-  /** Replace with a real request once a backend / form service exists. */
-  async function sendMessage(data, contact) {
-    if (contact && contact.email) {
-      const body = `${data.message}\n\n— ${data.name}${data.phone ? " · " + data.phone : ""} · ${data.email}`;
-      window.location.href = `mailto:${contact.email}?subject=${encodeURIComponent(data.subject)}&body=${encodeURIComponent(body)}`;
-      return "mailto";
-    }
-    return "not-connected";
+  /** -> "sent" | "not-connected". Throws when the server refused the message or couldn't be reached. */
+  async function sendMessage(data) {
+    if (!FrameX.http || !FrameX.http.enabled()) return "not-connected";
+    await FrameX.http.post("/contact", data);
+    return "sent";
   }
 
   async function init() {
@@ -69,11 +68,10 @@
       ? `<ul class="info-list">${rows.join("")}</ul>`
       : `<p class="contact-info__empty">FrameX hasn't published a phone number or email address yet. They will be listed here as soon as they are available.</p>`;
 
-    $$("input, textarea", form).forEach((field) => {
-      field.addEventListener(
-        "blur",
-        () =>
-          RULES[field.name] && setError(field, RULES[field.name](field.value)),
+    const fields = $$("input, textarea", form).filter((f) => RULES[f.name]);
+    fields.forEach((field) => {
+      field.addEventListener("blur", () =>
+        setError(field, RULES[field.name](field.value)),
       );
       field.addEventListener(
         "input",
@@ -83,9 +81,21 @@
       );
     });
 
+    // A logged-in customer doesn't have to type who they are again.
+    if (FrameX.auth && FrameX.auth.ready)
+      FrameX.auth.ready
+        .then((state) => {
+          if (!state.authenticated || !state.user) return;
+          if (!form.name.value) form.name.value = state.user.name || "";
+          if (!form.email.value) form.email.value = state.user.email || "";
+        })
+        .catch(() => {});
+
+    const button = $("button[type=submit]", form);
+    let busy = false;
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const fields = $$("input, textarea", form).filter((f) => RULES[f.name]);
+      if (busy) return;
       let firstBad = null;
       fields.forEach((f) => {
         const message = RULES[f.name](f.value);
@@ -96,15 +106,42 @@
         status(form, "error", "Please fix the highlighted fields.");
         return firstBad.focus();
       }
-      const data = Object.fromEntries(fields.map((f) => [f.name, f.value]));
-      const result = await sendMessage(data, contact);
-      status(
-        form,
-        "info",
-        result === "mailto"
-          ? "Your email app should open with this message ready to send. Nothing has been sent yet."
-          : "Your message couldn't be sent from this page. Please reach us on WhatsApp or by email using the details on this page.",
-      );
+      const data = Object.fromEntries(fields.map((f) => [f.name, f.value.trim()]));
+      data.fxhp = form.fxhp ? form.fxhp.value : "";
+      busy = true;
+      button.disabled = true;
+      const label = button.textContent;
+      button.textContent = "Sending…";
+      try {
+        const result = await sendMessage(data);
+        if (result === "sent") {
+          form.reset();
+          status(form, "success", `Thank you, ${data.name}. Your message has been sent to FrameX. We will reply to ${data.email}.`);
+        } else {
+          status(form, "info", "Your message couldn't be sent from this page. Please reach us on WhatsApp or by email using the details on this page.");
+        }
+      } catch (error) {
+        // The server names the fields it refused; show each under its own box.
+        let shown = false;
+        if (error.fields)
+          fields.forEach((f) => {
+            if (!error.fields[f.name]) return;
+            setError(f, error.fields[f.name]);
+            shown = true;
+          });
+        status(
+          form,
+          "error",
+          shown
+            ? "Please fix the highlighted fields."
+            : error.status === 429
+              ? "You have sent several messages already. Please wait a while before sending another, or reach us using the details on this page."
+              : "Your message was NOT sent: FrameX couldn't be reached. Please try again in a moment, or reach us using the details on this page.",
+        );
+      }
+      busy = false;
+      button.disabled = false;
+      button.textContent = label;
     });
   }
 

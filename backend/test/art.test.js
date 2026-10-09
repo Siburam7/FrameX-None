@@ -974,6 +974,52 @@ describe("reviews, notifications, search and accounts", () => {
     await admin.post(`/api/admin/reviews/${id}/status`, { status: "PUBLISHED" });
   });
 
+  test("a review can carry one photo: only its writer can add it, only a real picture is kept, and it is public only while the review is", async () => {
+    const send = (client, id, body, type = "image/jpeg") => fetch(`${base}/api/reviews/${id}/photo`, { method: "POST", headers: { "Content-Type": type, "X-FrameX-Client": "test", ...(client.cookie ? { Cookie: client.cookie } : {}) }, body }).then(async (r) => ({ status: r.status, json: await r.json().catch(() => null) }));
+    const mine = (await asha.get(`/api/reviews/mine?sourceType=PAINTING&sourceId=${S.cp}`)).json.items[0].review;
+    assert.deepEqual([typeof mine.id, mine.photo, mine.hidden], ["string", null, false]);
+    const picture = jpeg({ width: 1200, height: 1600, bytes: 20_000, fill: 0x33 });
+    // Not logged in, someone else, a review that doesn't exist, a file that is not a picture.
+    assert.equal((await send(visitor, mine.id, picture)).status, 401);
+    assert.equal((await send(binod, mine.id, picture)).status, 404, "another customer can't touch this review");
+    assert.equal((await send(asha, crypto.randomUUID(), picture)).status, 404);
+    assert.equal((await send(asha, mine.id, Buffer.from("<svg onload=alert(1)>"))).status, 415);
+    assert.equal((await send(asha, mine.id, Buffer.from("GIF89a not allowed"), "image/gif")).status, 415);
+    const saved = await send(asha, mine.id, picture);
+    assert.equal(saved.status, 201, JSON.stringify(saved.json));
+    assert.match(saved.json.review.photo, new RegExp(`^/media/review/${mine.id}\\?v=\\d+$`));
+    // Anyone can see it, with the type read from the file itself.
+    const shown = await fetch(base + saved.json.review.photo);
+    assert.deepEqual([shown.status, shown.headers.get("content-type"), shown.headers.get("x-content-type-options"), (await shown.arrayBuffer()).byteLength], [200, "image/jpeg", "nosniff", picture.length]);
+    // It is in the public lists: the gallery (with what was reviewed), the artist's page, the latest reviews.
+    const gallery = (await visitor.get("/api/reviews/gallery")).json;
+    const entry = gallery.items.find((r) => r.id === mine.id);
+    assert.deepEqual([gallery.total >= 1, entry.photo, entry.author, entry.targetName, entry.verified], [true, saved.json.review.photo, "Asha V.", "Meera Nair", true]);
+    assert.equal((await visitor.get("/api/artists/meera.paints")).json.reviews[0].photo, saved.json.review.photo);
+    assert.ok((await visitor.get("/api/reviews/latest")).json.items.some((r) => r.photo === saved.json.review.photo));
+    // Replacing it removes the old file from the disk.
+    const before = (await db.query("SELECT photo_key FROM reviews WHERE id = $1", [mine.id])).rows[0].photo_key;
+    const again = await send(asha, mine.id, jpeg({ width: 800, height: 800, bytes: 9000, fill: 0x44 }));
+    const after = (await db.query("SELECT photo_key FROM reviews WHERE id = $1", [mine.id])).rows[0].photo_key;
+    const storage = await import("../src/lib/storage.js");
+    assert.deepEqual([again.status, before !== after, await storage.exists(before), await storage.exists(after)], [201, true, false, true]);
+    // Changing the stars or the words keeps the photo.
+    await asha.post("/api/reviews", { targetType: "ARTIST", targetId: S.meera.artistCode, sourceType: "PAINTING", sourceId: S.cp, rating: 4, body: "Exactly like the photo." });
+    assert.equal((await db.query("SELECT photo_key FROM reviews WHERE id = $1", [mine.id])).rows[0].photo_key, after);
+    // Hidden by FrameX: the picture is no longer served and the review leaves the gallery.
+    await admin.post(`/api/admin/reviews/${mine.id}/status`, { status: "HIDDEN" });
+    assert.equal((await fetch(`${base}/media/review/${mine.id}`)).status, 404);
+    assert.ok(!(await visitor.get("/api/reviews/gallery")).json.items.some((r) => r.id === mine.id));
+    assert.equal((await asha.get(`/api/reviews/mine?sourceType=PAINTING&sourceId=${S.cp}`)).json.items[0].review.hidden, true);
+    await admin.post(`/api/admin/reviews/${mine.id}/status`, { status: "PUBLISHED" });
+    assert.equal((await fetch(`${base}/media/review/${mine.id}`)).status, 200);
+    // The writer can take the photo away; someone else can't.
+    assert.equal((await binod.del(`/api/reviews/${mine.id}/photo`)).status, 404);
+    const removed = await asha.del(`/api/reviews/${mine.id}/photo`);
+    assert.deepEqual([removed.status, removed.json.review.photo, await storage.exists(after), (await fetch(`${base}/media/review/${mine.id}`)).status], [200, null, false, 404]);
+    assert.equal((await fetch(base + "/media/review/not-an-id")).status, 404);
+  });
+
   test("notifications belong to their user and can be marked read", async () => {
     const mine = await asha.get("/api/notifications");
     assert.equal(mine.status, 200);

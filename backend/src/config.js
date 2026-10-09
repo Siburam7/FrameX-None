@@ -114,6 +114,9 @@ export const config = {
     adminNotify: env.ADMIN_NOTIFY_EMAIL || ""
   },
 
+  // Messages from the Contact page: at most this many alert emails an hour (the rest wait in the admin panel).
+  contact: { alertsPerHour: int(env.CONTACT_ALERTS_PER_HOUR, 30) },
+
   // Text messages (password-reset codes). Off unless a provider is configured.
   sms: {
     provider: (env.SMS_PROVIDER || "none").toLowerCase(),

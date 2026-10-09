@@ -1442,3 +1442,24 @@
   background: var(--surface-soft);
   color: var(--ink);
 }
+
+/* Customer gallery: where to write a review (the customer's delivered orders). */
+.cg-share__box {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+
+.cg-orders {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Contact page: the message was sent. */
+.form-status--success {
+  background: rgba(31, 157, 85, 0.12);
+  color: #14693f;
+}

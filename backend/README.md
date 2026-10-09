@@ -465,7 +465,8 @@ Copy `.env.example` to `.env`. Nothing secret is in the code or in Git (`.env` a
 | `SMS_SENDER_ID`, `SMS_TEMPLATE_ID` | no | your DLT-registered sender and template (Fast2SMS DLT route; 2Factor template name) |
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM` | with `twilio` | Twilio credentials |
 | `OTP_EXPIRY_MINUTES`, `OTP_MAX_ATTEMPTS`, `OTP_RESEND_SECONDS`, `OTP_MAX_PER_HOUR` | no | one-time code rules (`10`, `5`, `30`, `5`) |
-| `ADMIN_NOTIFY_EMAIL` | no | gets a note when a shop applies |
+| `ADMIN_NOTIFY_EMAIL` | no | gets a note when a shop or an artist applies, and receives the messages sent from the Contact page (empty = those messages go to the email of every admin account). Several addresses: separate them with a comma |
+| `CONTACT_ALERTS_PER_HOUR` | no | Contact page: at most this many alert emails an hour (default 30); further messages are kept in admin → Messages without an email |
 | `GEOCODER_PROVIDER` | no | `nominatim` (OpenStreetMap place search) or `none` |
 | `GEOCODER_CONTACT_EMAIL` | with nominatim | required by Nominatim's usage policy |
 | `MAP_PROVIDER_KEY` | no | reserved for a future map provider |
@@ -563,6 +564,8 @@ State-changing requests must send the header `X-FrameX-Client: web` (CSRF protec
 | `POST /api/admin/orders/:n/photos/:uploadId/link` | **ADMIN** | a short-lived link to a customer's original photo of any order (audited) |
 | `GET /api/admin/products[?status=]`, `POST /api/admin/products/:id/listing` | **ADMIN** | products shops created; `{ status: "published" \| "unpublished" }` approves one or takes it off sale |
 | `GET /api/geo/search?q=` | anyone | place search for a typed location |
+| `POST /api/contact` `{ name, email, phone?, subject, message }` | anyone (6 an hour per address) | a message from the Contact page: kept for admin → Messages, and an alert email goes to `ADMIN_NOTIFY_EMAIL` (or, when that is empty, to every active admin account) with the sender as Reply-To. Nothing is emailed to the sender. At most `CONTACT_ALERTS_PER_HOUR` (30) alerts an hour; later messages are still kept |
+| `GET /api/admin/messages?status=&page=`, `POST /api/admin/messages/:id/status` `{ status: NEW \| READ }`, `DELETE /api/admin/messages/:id` | admin | read, mark and delete those messages |
 | `GET /api/admin/overview` | **ADMIN** | counts |
 | `GET /api/admin/applications[?status=]`, `GET …/:id` | **ADMIN** | applications |
 | `POST /api/admin/applications/:id/review` \| `/reject` \| `/approve` | **ADMIN** | approve creates the shop, its Shop ID and its login |
@@ -585,6 +588,9 @@ State-changing requests must send the header `X-FrameX-Client: web` (CSRF protec
 | `POST /api/payments/webhook/cashfree` | Cashfree (signed) | payment and refund news for orders and for painting payments |
 | `GET /api/notifications`, `GET …/unread`, `POST …/read`, `POST …/:id/read` | logged in | the account's notifications |
 | `GET /api/reviews?targetType=&targetId=`, `GET /api/reviews/latest` | public | published reviews |
+| `GET /api/reviews/gallery?page=` | public | published reviews of the whole site with what was reviewed, the ones with a photo first (the Customer Gallery page) |
+| `POST /api/reviews/:id/photo` (the picture's bytes), `DELETE /api/reviews/:id/photo` | the review's writer | add, replace or remove the one photo of a review (JPG, PNG or WebP) |
+| `GET /media/review/:id` | public | that photo, only while the review is published |
 | `GET /api/reviews/mine?sourceType=&sourceId=`, `POST /api/reviews` | logged in | what a delivered order or painting lets you review; write or change your review |
 | `GET /api/search?q=[&kinds=]` | public | products, templates, shops, artists and artworks |
 | `GET /api/admin/artist-applications`, `POST …/:id/approve` | `/reject` | **ADMIN** | approve creates the artist and their login |

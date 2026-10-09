@@ -1132,3 +1132,36 @@ textarea.input {
     transition: none;
   }
 }
+
+/* A review's photo: on the order page's review form, in the home page's review cards, in the gallery's share box. */
+.rev-photo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin-top: 8px;
+}
+
+.rev-photo__img {
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.rev-photo__pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.rev-photo__pick .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.rev-photo__note {
+  margin-top: 6px;
+  font-size: var(--text-xs);
+}

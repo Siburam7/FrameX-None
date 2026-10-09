@@ -9,6 +9,7 @@ import { requireRole } from "../middleware/auth.js";
 import * as analytics from "../services/admin-analytics-service.js";
 import * as artists from "../services/artist-service.js";
 import * as artworks from "../services/artwork-service.js";
+import * as contact from "../services/contact-service.js";
 import * as orders from "../services/order-service.js";
 import * as paintings from "../services/painting-service.js";
 import * as payments from "../services/payment-service.js";
@@ -57,15 +58,16 @@ function checkLocation(shop) {
 }
 
 router.get("/overview", async (req, res) => {
-  const [base, orderCounts, artworkCounts, paintingCounts, artistApps, artistCount] = await Promise.all([
+  const [base, orderCounts, artworkCounts, paintingCounts, artistApps, artistCount, unreadMessages] = await Promise.all([
     shops.adminOverview(),
     orders.adminOrderCounts(),
     artworks.adminCounts(),
     paintings.adminCounts(),
     artists.adminListApplications({ status: "PENDING" }),
-    artists.adminListArtists({})
+    artists.adminListArtists({}),
+    contact.unreadCount()
   ]);
-  res.json({ ...base, orders: orderCounts, artists: { total: artistCount.length, active: artistCount.filter((a) => a.status === "ACTIVE").length, applicationsPending: artistApps.length }, artworks: artworkCounts, paintings: paintingCounts });
+  res.json({ ...base, orders: orderCounts, artists: { total: artistCount.length, active: artistCount.filter((a) => a.status === "ACTIVE").length, applicationsPending: artistApps.length }, artworks: artworkCounts, paintings: paintingCounts, messages: { unread: unreadMessages } });
 });
 
 /* ---- Orders ----
@@ -313,6 +315,17 @@ router.post("/reviews/:id/status", async (req, res) => {
   const { status } = validate(req.body, { status: v.enumOf(["PUBLISHED", "HIDDEN"], { label: "Status" }) });
   res.json({ review: await reviews.adminSetStatus(idParam(req), status, { actor: req.auth.user, ip: req.ip }) });
 });
+
+/* ---- Messages from the Contact page ---- */
+router.get("/messages", async (req, res) => {
+  const f = validate(req.query, { status: v.enumOf(["NEW", "READ"], { required: false }), page: v.number({ min: 1, max: 100000, required: false }), limit: v.number({ min: 1, max: 50, required: false }) });
+  res.json(await contact.adminList({ status: f.status || "", page: f.page || 1, limit: f.limit || 20 }));
+});
+router.post("/messages/:id/status", async (req, res) => {
+  const { status } = validate(req.body, { status: v.enumOf(["NEW", "READ"], { label: "Status" }) });
+  res.json({ message: await contact.adminSetStatus(idParam(req), status) });
+});
+router.delete("/messages/:id", async (req, res) => res.json(await contact.adminDelete(idParam(req), { actor: req.auth.user, ip: req.ip })));
 
 /* ---- Accounts ---- */
 router.get("/users", async (req, res) => {

@@ -1584,3 +1584,11 @@
     grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   }
 }
+
+/* A customer's photo on a review card (only reviews that have one). */
+.review-card__photo {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}

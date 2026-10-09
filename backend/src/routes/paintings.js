@@ -102,6 +102,11 @@ reviewRoutes.get("/", async (req, res) => {
   res.json(await reviews.listFor(f.targetType, f.targetId, { page: f.page || 1, limit: f.limit || 10 }));
 });
 reviewRoutes.get("/latest", async (req, res) => res.json({ items: await reviews.latest({ limit: 8 }) }));
+// The "Customer Gallery" page: published reviews with their photos, twelve a page.
+reviewRoutes.get("/gallery", async (req, res) => {
+  const f = validate(req.query, { page: v.number({ min: 1, max: 100000, required: false }) });
+  res.json(await reviews.gallery({ page: f.page || 1 }));
+});
 
 // What can I review from this delivered order or painting?
 reviewRoutes.get("/mine", requireAuth, async (req, res) => {
@@ -120,3 +125,9 @@ reviewRoutes.post("/", requireAuth, rateLimit("review", { windowMs: 60 * 60_000,
   });
   res.status(201).json({ review: await reviews.saveReview(req.auth.user, data) });
 });
+
+// The writer adds, replaces or removes the photo of their own review (the body is the picture's bytes).
+reviewRoutes.post("/:id/photo", requireAuth, rateLimit("review-photo", { windowMs: 60 * 60_000, max: 40 }), async (req, res) => {
+  res.status(201).json({ review: await reviews.savePhoto(req.auth.user, req.params.id, req) });
+});
+reviewRoutes.delete("/:id/photo", requireAuth, async (req, res) => res.json({ review: await reviews.removePhoto(req.auth.user, req.params.id) }));

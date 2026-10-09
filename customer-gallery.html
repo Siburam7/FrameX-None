@@ -78,91 +78,12 @@
                 </svg><span>Give it a star rating and a few words.</span></li>
               <li><svg class="icon" aria-hidden="true">
                   <use href="#i-alert"></use>
-                </svg><span><strong>Coming soon:</strong> publishing reviews on the site. For now your photo and review
-                  are saved in this browser so you can see how they will look; nothing is uploaded.</span></li>
+                </svg><span><strong>Real customers only:</strong> a review can be written once your order has been delivered,
+                  from that order's page. That is why every review here says &ldquo;Verified buyer&rdquo;.</span></li>
             </ul>
           </div>
 
-          <form class="form-grid cg-form" id="cg-form" novalidate>
-            <div class="form-grid form-grid--2">
-              <div class="form-field" data-field="name" data-invalid="false"><label for="cg-name">Your
-                  name</label><input id="cg-name" name="name" type="text" autocomplete="name" required>
-                <p class="form-field__error"><svg class="icon" aria-hidden="true">
-                    <use href="#i-alert"></use>
-                  </svg><span></span></p>
-              </div>
-              <div class="form-field" data-field="product" data-invalid="false"><label for="cg-product">Frame you
-                  ordered <span class="hint">(optional)</span></label><select id="cg-product" name="product">
-                  <option value="">Choose a frame</option>
-                </select></div>
-            </div>
-
-            <fieldset class="form-field cg-rating" data-field="rating" data-invalid="false">
-              <legend>Your rating</legend>
-              <div class="cg-rating__stars">
-                <input class="visually-hidden" type="radio" name="rating" id="cg-star-5" value="5"><label
-                  for="cg-star-5"><span class="visually-hidden">5 stars</span><svg class="icon" aria-hidden="true">
-                    <use href="#i-star"></use>
-                  </svg></label>
-                <input class="visually-hidden" type="radio" name="rating" id="cg-star-4" value="4"><label
-                  for="cg-star-4"><span class="visually-hidden">4 stars</span><svg class="icon" aria-hidden="true">
-                    <use href="#i-star"></use>
-                  </svg></label>
-                <input class="visually-hidden" type="radio" name="rating" id="cg-star-3" value="3"><label
-                  for="cg-star-3"><span class="visually-hidden">3 stars</span><svg class="icon" aria-hidden="true">
-                    <use href="#i-star"></use>
-                  </svg></label>
-                <input class="visually-hidden" type="radio" name="rating" id="cg-star-2" value="2"><label
-                  for="cg-star-2"><span class="visually-hidden">2 stars</span><svg class="icon" aria-hidden="true">
-                    <use href="#i-star"></use>
-                  </svg></label>
-                <input class="visually-hidden" type="radio" name="rating" id="cg-star-1" value="1"><label
-                  for="cg-star-1"><span class="visually-hidden">1 star</span><svg class="icon" aria-hidden="true">
-                    <use href="#i-star"></use>
-                  </svg></label>
-              </div>
-              <p class="form-field__error"><svg class="icon" aria-hidden="true">
-                  <use href="#i-alert"></use>
-                </svg><span></span></p>
-            </fieldset>
-
-            <div class="form-field" data-field="text" data-invalid="false"><label for="cg-text">Your
-                review</label><textarea id="cg-text" name="text" rows="4" required></textarea>
-              <p class="form-field__error"><svg class="icon" aria-hidden="true">
-                  <use href="#i-alert"></use>
-                </svg><span></span></p>
-            </div>
-
-            <div class="form-field" data-field="photo" data-invalid="false">
-              <span class="cg-form__label">Photo of your frame <span class="hint">(optional)</span></span>
-              <label class="pdp-upload__zone cg-form__zone" for="cg-photo" id="cg-photo-zone"><svg class="icon"
-                  aria-hidden="true">
-                  <use href="#i-upload"></use>
-                </svg><span>Choose a photo (JPG, PNG or WebP, up to 10 MB)</span></label>
-              <input class="visually-hidden" id="cg-photo" type="file" accept="image/jpeg,image/png,image/webp">
-              <div class="cg-form__preview" id="cg-photo-preview" hidden>
-                <img alt="Your selected photo" width="96" height="96">
-                <div><label class="cart-line__remove" for="cg-photo" style="cursor:pointer">Replace photo</label>
-                  <button class="cart-line__remove" type="button" id="cg-photo-remove">Remove photo</button>
-                </div>
-              </div>
-              <p class="form-field__error"><svg class="icon" aria-hidden="true">
-                  <use href="#i-alert"></use>
-                </svg><span></span></p>
-            </div>
-
-            <div class="form-field cg-consent" data-field="consent" data-invalid="false">
-              <label class="cg-consent__label" for="cg-consent"><input id="cg-consent" name="consent" type="checkbox"
-                  value="yes"><span>This is my own photo and review, and I'm happy for them to be shown on
-                  FrameX.</span></label>
-              <p class="form-field__error"><svg class="icon" aria-hidden="true">
-                  <use href="#i-alert"></use>
-                </svg><span></span></p>
-            </div>
-
-            <div id="cg-status" class="form-status" role="status" aria-live="polite"></div>
-            <div><button class="btn btn--dark" type="submit">Save my review</button></div>
-          </form>
+          <div class="cg-share__box" id="cg-share-box" aria-live="polite"></div>
         </div>
       </div>
     </section>

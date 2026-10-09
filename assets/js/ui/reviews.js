@@ -16,6 +16,7 @@
           ${r.isVerified ? `<span class="review-card__verified">${icon("badge-check")} Verified buyer</span>` : ""}
         </div>
       </div>
+      ${r.photo ? `<img class="review-card__photo" src="${esc(r.photo)}" alt="Photo shared by ${esc(r.name)}" loading="lazy" decoding="async">` : ""}
       ${stars(r.rating)}
       <p class="review-card__text">${esc(r.text)}</p>
       ${r.productName ? `<p class="review-card__product">Ordered: <b>${esc(r.productName)}</b></p>` : ""}
@@ -31,7 +32,7 @@
       if (FrameX.http && FrameX.http.enabled()) {
         try {
           const live = (await FrameX.http.get("/reviews/latest")).items.map((r) => ({
-            name: r.author, rating: r.rating, text: r.body, isVerified: true, productName: "",
+            name: r.author, rating: r.rating, text: r.body, isVerified: true, productName: "", photo: r.photo ? FrameX.http.asset(r.photo) : "",
             dateLabel: new Date(r.createdAt).toLocaleDateString(undefined, { month: "long", year: "numeric" }),
           }));
           if (live.length) reviews = live;

@@ -275,6 +275,28 @@
   }
 
   /** A delivered order: what the customer can review from it (the backend says what, and accepts nothing else). */
+  /** A phone photo is several megabytes: a copy 1600px on its long side is what is uploaded with a review. */
+  function smallerPhoto(file) {
+    return new Promise((resolve) => {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      const give = (blob) => {
+        URL.revokeObjectURL(url);
+        resolve(blob || file);
+      };
+      img.onload = () => {
+        const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.naturalWidth * scale);
+        canvas.height = Math.round(img.naturalHeight * scale);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(give, "image/jpeg", 0.85);
+      };
+      img.onerror = () => give(null);
+      img.src = url;
+    });
+  }
+
   async function reviewsBox(root, orderNumber) {
     const box = $("[data-order-reviews]", root);
     if (!box) return;
@@ -288,11 +310,19 @@
     const KIND = { PRODUCT: "Product", ARTWORK: "Artwork", ARTIST: "Artist", SHOP: "Shop" };
     const stars = (i, rating) => [5, 4, 3, 2, 1].map((n) => `<input type="radio" name="rating" id="orv-${i}-${n}" value="${n}"${rating === n ? " checked" : ""}><label for="orv-${i}-${n}" aria-label="${n} ${n === 1 ? "star" : "stars"}">${icon("star")}</label>`).join("");
     box.hidden = false;
+    const first = !box.id;
+    box.id = "reviews";
     box.innerHTML = `<h2 class="co-card__title">${icon("star")} Rate what you received</h2>
       ${items.map((t, i) => `<form class="rev-form" data-review="${i}" novalidate style="padding:12px 0;border-top:1px solid var(--line)">
           <strong>${esc(t.name)} <span class="co-muted">(${esc(KIND[t.targetType] || "")})</span></strong>
           <div class="rev-stars" role="radiogroup" aria-label="Your rating for ${esc(t.name)}">${stars(i, t.review ? t.review.rating : 0)}</div>
           <textarea class="input" name="body" rows="2" maxlength="1500" placeholder="Tell other customers about it (optional).">${esc(t.review ? t.review.body : "")}</textarea>
+          <div class="rev-photo">
+            ${t.review && t.review.photo ? `<img class="rev-photo__img" src="${esc(http().asset(t.review.photo))}" alt="The photo on your review" width="72" height="72"><button class="co-link" type="button" data-photo-remove>Remove photo</button>` : ""}
+            <label class="co-link rev-photo__pick">${icon("image")} <span data-photo-label>${t.review && t.review.photo ? "Change the photo" : "Add a photo of it at home (optional)"}</span><input class="visually-hidden" type="file" name="photo" accept="image/jpeg,image/png,image/webp"></label>
+            <span class="co-muted" data-photo-name></span>
+          </div>
+          <p class="co-muted rev-photo__note">Your review and photo are shown publicly on FrameX with your first name and the first letter of your surname.${t.review && t.review.hidden ? " <strong>FrameX has hidden this review.</strong>" : ""}</p>
           <div class="form-status" role="status" aria-live="polite"></div>
           <div><button class="btn btn--dark btn--sm" type="submit">${t.review ? "Update review" : "Post review"}</button></div>
         </form>`).join("")}`;
@@ -303,11 +333,48 @@
       const status = $(".form-status", form);
       const rating = Number(new FormData(form).get("rating"));
       if (!rating) return FrameX.forms.status(status, "error", "Choose 1 to 5 stars.");
+      const file = form.photo.files[0];
+      if (file && !["image/jpeg", "image/png", "image/webp"].includes(file.type)) return FrameX.forms.status(status, "error", "Please choose a JPG, PNG or WebP picture.");
+      const button = $("button[type=submit]", form);
+      button.disabled = true;
       try {
-        await http().post("/reviews", { targetType: t.targetType, targetId: t.targetId, sourceType: "ORDER", sourceId: orderNumber, rating, body: form.body.value });
-        FrameX.forms.status(status, "success", "Thank you. Your review was saved.");
+        const saved = (await http().post("/reviews", { targetType: t.targetType, targetId: t.targetId, sourceType: "ORDER", sourceId: orderNumber, rating, body: form.body.value })).review;
+        if (file) {
+          FrameX.forms.status(status, "info", "Review saved. Uploading your photo…");
+          try {
+            await http().upload(`/reviews/${saved.id}/photo`, await smallerPhoto(file), { name: file.name });
+          } catch (error) {
+            button.disabled = false;
+            return FrameX.forms.status(status, "error", `Your review was saved, but the photo wasn't: ${esc(error.message)}`);
+          }
+        }
+        await reviewsBox(root, orderNumber);
+        const again = $(`[data-review="${form.dataset.review}"] .form-status`, box);
+        if (again) FrameX.forms.status(again, "success", file ? "Thank you. Your review and photo were saved." : "Thank you. Your review was saved.");
       } catch (error) {
+        button.disabled = false;
         FrameX.forms.status(status, "error", esc(error.message));
+      }
+    };
+    // The customer gallery's "Review order" link ends in #reviews: this box only exists now, so go to it here.
+    if (first && location.hash === "#reviews") box.scrollIntoView({ block: "start" });
+    box.onchange = (e) => {
+      if (e.target.name !== "photo") return;
+      const picked = e.target.files[0];
+      $("[data-photo-name]", e.target.closest("[data-review]")).textContent = picked ? `${picked.name} — press the button below to save it` : "";
+    };
+    box.onclick = async (e) => {
+      const remove = e.target.closest("[data-photo-remove]");
+      if (!remove) return;
+      const form = remove.closest("[data-review]");
+      const t = items[Number(form.dataset.review)];
+      remove.disabled = true;
+      try {
+        await http().delete(`/reviews/${t.review.id}/photo`);
+        await reviewsBox(root, orderNumber);
+      } catch (error) {
+        remove.disabled = false;
+        FrameX.forms.status($(".form-status", form), "error", esc(error.message));
       }
     };
   }
