@@ -111,7 +111,11 @@ export const config = {
     // Gmail: the account's address and a Google "App Password" (never the normal password). Spaces are ignored.
     gmail: { user: (env.GMAIL_USER || "").trim(), appPassword: (env.GMAIL_APP_PASSWORD || "").replace(/\s+/g, "") },
     smtp: { host: env.SMTP_HOST || "", port: int(env.SMTP_PORT, 587), user: env.SMTP_USER || "", password: env.SMTP_PASSWORD || "" },
-    adminNotify: env.ADMIN_NOTIFY_EMAIL || ""
+    adminNotify: env.ADMIN_NOTIFY_EMAIL || "",
+    // The logo picture at the top of every email. A mailbox can only load it from a public https address:
+    // by default the live website's own copy (FRONTEND_URL). On a development machine there is none, and
+    // the emails show the logo as text instead.
+    logoUrl: env.EMAIL_LOGO_URL || (/^https:\/\//.test(env.FRONTEND_URL || "") ? `${env.FRONTEND_URL.replace(/\/+$/, "")}/assets/img/ui/logo-framex-email.png` : "")
   },
 
   // Messages from the Contact page: at most this many alert emails an hour (the rest wait in the admin panel).

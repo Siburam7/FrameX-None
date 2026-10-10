@@ -172,6 +172,15 @@ const plainFooter = "\n\n— FrameX\nIf you didn't ask for this, you can ignore 
  * Order emails add `tables`: [{ title?, rows: [[left, right, bold?]] }] with
  * already-escaped HTML in the cells, and `account: false` (no password advice).
  */
+// The FrameX logo on the dark bar: white letters and the orange X. The picture is the website's
+// assets/img/ui/logo-framex-email.png; its alt text is styled the same way, so a mailbox that blocks
+// pictures (or a development machine, where there is no public address) still shows the name like the logo.
+const LOGO_TEXT_STYLE = "font-family:Arial,Helvetica,sans-serif;font-size:24px;font-weight:900;letter-spacing:1px;line-height:24px;color:#ffffff";
+export function emailLogo() {
+  const text = `<span style="${LOGO_TEXT_STYLE}">FRAME<span style="color:#ff5a1f">X</span></span>`;
+  return config.email.logoUrl ? `<img src="${esc(config.email.logoUrl)}" width="140" height="24" alt="FRAMEX" style="display:block;border:0;outline:none;text-decoration:none;width:140px;height:24px;${LOGO_TEXT_STYLE}">` : text;
+}
+
 export function htmlEmail({ preview = "", heading, paragraphs = [], code = "", codeNote = "", button = null, notice = "", tables = [], account = true }) {
   const table = (t) => `<tr><td style="padding:10px 28px 4px">${t.title ? `<div style="font-size:13px;font-weight:bold;color:#5b5f6b;padding-bottom:6px">${esc(t.title)}</div>` : ""}
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.5;color:#2b2b2b">${t.rows
@@ -182,7 +191,7 @@ export function htmlEmail({ preview = "", heading, paragraphs = [], code = "", c
 <span style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(preview)}</span>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf6ee"><tr><td align="center" style="padding:24px 12px">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border-radius:16px;overflow:hidden">
-    <tr><td style="background:#050816;padding:20px 28px"><span style="font-size:24px;font-weight:bold;letter-spacing:.5px;color:#ffffff">frame<span style="color:#ea780e">X</span></span></td></tr>
+    <tr><td style="background:#050816;padding:20px 28px">${emailLogo()}</td></tr>
     <tr><td style="padding:28px 28px 8px;font-size:21px;font-weight:bold;line-height:1.3">${esc(heading)}</td></tr>
     ${paragraphs.map((p) => `<tr><td style="padding:6px 28px;font-size:15px;line-height:1.6;color:#2b2b2b">${p}</td></tr>`).join("")}
     ${code ? `<tr><td style="padding:14px 28px 4px"><div style="display:inline-block;padding:14px 22px;border-radius:12px;background:#faf6ee;border:1px solid #ecdcbd;font-family:'Courier New',monospace;font-size:30px;font-weight:bold;letter-spacing:8px;color:#050816">${esc(code)}</div></td></tr>
