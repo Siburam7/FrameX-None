@@ -176,9 +176,9 @@
   async function prepare(file, onProgress = () => {}) {
     if (!file) throw new UploadError("No photo was selected.", "EMPTY");
     await limits();
-    // Phones sometimes give no type at all: the name's ending is then the only hint. The server decides for real.
-    const named = /\.(jpe?g|png|webp)$/i.test(file.name || "");
-    if (file.type ? !TYPES.includes(file.type) : !named) throw new UploadError(`${TEXT().unsupported} Use a JPG, PNG or WebP photo.`, "UNSUPPORTED");
+    // Phones word a picture's type in several ways, or give none: only a file the browser says is something else is
+    // turned away here (core/dom.js). The server reads the file itself and decides for real.
+    if (!FrameX.dom.looksLikePhoto(file)) throw new UploadError(`${TEXT().unsupported} That is a ${String(file.type).replace(/[^a-z0-9/+.-]/gi, "")} file. Use a JPG, PNG or WebP photo.`, "UNSUPPORTED");
     if (!file.size) throw new UploadError("That file is empty. Please choose another photo.", "EMPTY");
     if (file.size > maxBytes) throw new UploadError(`That photo is larger than ${maxMb()} MB. Please choose a smaller file.`, "TOO_LARGE");
     onProgress(5);

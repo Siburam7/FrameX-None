@@ -36,9 +36,24 @@
       root,
     ).filter((el) => el.offsetParent !== null || el === document.activeElement);
 
+  /**
+   * Could this chosen file be a JPG, PNG or WebP picture?
+   * A browser tells a file's type from its name, and phones and apps word it in several ways for the same
+   * picture ("image/jpeg", "image/jpg", "image/pjpeg") or give no type at all. So a file is only turned away
+   * here when the browser positively says it is something else (a HEIC photo, a GIF, a PDF, a video).
+   * Everything else is sent, and the server reads the file's own bytes and decides for real.
+   */
+  const PHOTO_TYPE = /^image\/(jpe?g|pjpeg|png|x-png|webp)$/i;
+  const UNKNOWN_TYPE = /^(|application\/octet-stream|binary\/octet-stream)$/i;
+  const looksLikePhoto = (file) => {
+    const type = String((file && file.type) || "").trim();
+    return PHOTO_TYPE.test(type) || UNKNOWN_TYPE.test(type);
+  };
+
   FrameX.dom = {
     $,
     $$,
+    looksLikePhoto,
     escapeHtml,
     icon,
     debounce,

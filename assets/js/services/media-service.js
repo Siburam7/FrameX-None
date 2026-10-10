@@ -48,7 +48,7 @@
     const rule = RULES[kind];
     if (!rule) return "Video files can't be uploaded here. Paste a YouTube or Vimeo link instead.";
     if (!file) return "No file was selected.";
-    if (!rule.types.includes(file.type)) return `“${file.name}” isn't a supported file. Please use ${label(rule.types)}.`;
+    if (!FrameX.dom.looksLikePhoto(file)) return `“${file.name}” is a ${file.type || "file"} file, which isn't supported. Please use ${label(rule.types)}.`;
     if (file.size > rule.maxMB * 1024 * 1024) return `“${file.name}” is larger than ${rule.maxMB} MB. Please use a smaller file.`;
     return "";
   }

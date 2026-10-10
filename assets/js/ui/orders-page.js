@@ -334,7 +334,7 @@
       const rating = Number(new FormData(form).get("rating"));
       if (!rating) return FrameX.forms.status(status, "error", "Choose 1 to 5 stars.");
       const file = form.photo.files[0];
-      if (file && !["image/jpeg", "image/png", "image/webp"].includes(file.type)) return FrameX.forms.status(status, "error", "Please choose a JPG, PNG or WebP picture.");
+      if (file && !FrameX.dom.looksLikePhoto(file)) return FrameX.forms.status(status, "error", `“${esc(file.name)}” is a ${esc(file.type || "file")} file. Please choose a JPG, PNG or WebP picture.`);
       const button = $("button[type=submit]", form);
       button.disabled = true;
       try {

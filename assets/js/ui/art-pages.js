@@ -354,7 +354,7 @@
 
     async function addPhoto(file) {
       photoError("");
-      if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return photoError("Please upload a supported image format (JPG, PNG or WebP).");
+      if (!FrameX.dom.looksLikePhoto(file)) return photoError(`“${file.name}” is a ${file.type || "file"} file. Please upload a JPG, PNG or WebP photo.`);
       if (file.size > maxBytes) return photoError(`That photo is larger than ${Math.round(maxBytes / 1048576)} MB. Please choose a smaller file.`);
       const entry = { url: URL.createObjectURL(file), progress: 0.03 };
       state.photos.push(entry);
