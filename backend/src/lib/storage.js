@@ -265,7 +265,17 @@ export const storagePlace = () => (inBucket() ? `object storage, bucket "${confi
  * Can files be written (and read back) here? Used at start-up, by "npm run doctor" and "npm run storage:test".
  * -> { ready, kind: "disk" | "object", dir, problem? }
  */
+let lastCheck = null;
+/** What the last check found: true, false, or null when none has run yet. */
+export const storageReady = () => lastCheck;
+
 export async function storageStatus() {
+  const status = await checkStorage();
+  lastCheck = status.ready;
+  return status;
+}
+
+async function checkStorage() {
   const kind = inBucket() ? "object" : "disk";
   const dir = storagePlace();
   try {

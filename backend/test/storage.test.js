@@ -87,6 +87,7 @@ describe("uploaded files in a bucket", () => {
   test("the start-up check makes a real round trip and leaves nothing behind", async () => {
     const status = await storage.storageStatus();
     assert.deepEqual([status.ready, status.kind, status.dir], [true, "object", `object storage, bucket "${s3.bucket}"`]);
+    assert.equal((await (await fetch(base + "/api/config")).json()).features.fileStorageReady, true);
     assert.equal(s3.objects.size, 0);
     assert.deepEqual(s3.requests.map((r) => r.split(" ")[0]), ["PUT", "GET", "DELETE"]);
     assert.equal(s3.unsigned, 0, "every request was signed");
@@ -173,10 +174,12 @@ describe("uploaded files in a bucket", () => {
     assert.equal((await db.query("SELECT count(*)::int AS n FROM uploads WHERE status = 'UPLOADED'")).rows[0].n, 0, "no record without a file");
     const status = await storage.storageStatus();
     assert.deepEqual([status.ready, status.kind, /503/.test(status.problem)], [false, "object", true]);
+    assert.equal((await (await fetch(base + "/api/config")).json()).features.fileStorageReady, false, "the website can be told the storage is not working");
     s3.down = false;
     assert.equal(await storage.exists(key), true);
     await storage.remove(key);
     assert.deepEqual(filesOnDisk("tmp"), []);
+    assert.equal((await storage.storageStatus()).ready, true);
   });
 
   test("only the live server tidies away files its database does not know", async () => {

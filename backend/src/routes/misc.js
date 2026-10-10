@@ -5,6 +5,7 @@ import { db } from "../db/index.js";
 import { geocoderEnabled, searchPlaces } from "../lib/geocoder.js";
 import { devOutbox, emailDelivery } from "../lib/mailer.js";
 import { smsDelivery } from "../lib/sms.js";
+import { storageReady } from "../lib/storage.js";
 import { paymentStatus } from "../payments/index.js";
 import { rateLimit } from "../lib/rate-limit.js";
 import { v, validate } from "../lib/validate.js";
@@ -32,7 +33,9 @@ router.get("/config", (req, res) => {
       payments: (({ ready, provider, mode }) => ({ online: ready, provider: ready ? provider : null, mode: ready ? mode : null, cod: config.checkout.cod.enabled }))(paymentStatus()),
       productModeration: config.catalog.productModeration,
       // "object" = uploaded files are kept in a bucket (they outlive the server); "disk" = on the server's own disk.
-      fileStorage: config.storage.provider === "s3" ? "object" : "disk"
+      fileStorage: config.storage.provider === "s3" ? "object" : "disk",
+      // Did the storage pass the check made when the server started (a test file written, read back, removed)? null = not checked yet.
+      fileStorageReady: storageReady()
     },
     // What a customer photo may be (the website checks the same before sending; the server checks again).
     uploads: { maxBytes: config.uploads.maxBytes, formats: ["jpeg", "png", "webp"], maxSide: config.uploads.maxSide },
