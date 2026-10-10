@@ -71,6 +71,7 @@ async function main() {
     console.log(`Online payment: ${pay.ready ? `READY (${pay.provider}, ${pay.mode.toUpperCase()} mode${pay.webhookReady ? "" : ", webhook secret NOT set"})` : `NOT CONFIGURED - ${pay.problems.join(" ")} See backend/README.md -> Payments.`}`);
     console.log(`Cash on Delivery: ${config.checkout.cod.enabled ? "ON" : "OFF"}`);
     console.log(`Customer photos: ${files.ready ? `READY (kept in ${files.dir}, up to ${Math.round(config.uploads.maxBytes / 1048576)} MB each)` : `NOT WORKING - ${files.problem}`}`);
+    if (files.ready && files.kind === "disk" && config.isProd && !process.env.UPLOAD_DIR) console.log("                 WARNING: this is the server's own disk. If the host wipes it on a restart or a redeploy, every uploaded photo is lost. Use a persistent disk (UPLOAD_DIR) or a bucket (STORAGE_PROVIDER=s3).");
     if (config.isProd && !process.env.UPLOAD_DIR) console.log("                 WARNING: UPLOAD_DIR is not set. On a host without a persistent disk, uploaded photos are lost when the service restarts.");
     console.log(`Gift wrapping:  ${config.checkout.giftWrap.enabled ? `ON (₹${config.checkout.giftWrap.fee} per order)` : "OFF"}`);
     console.log(`Analytics:      visitor statistics ${config.analytics.enabled ? "ON (only for visitors who allow them)" : "OFF"}; Google Analytics 4 ${config.analytics.ga4MeasurementId || (config.analytics.ga4Invalid ? "NOT USED - GA4_MEASUREMENT_ID is not a Measurement ID (G-XXXXXXXXXX)" : "not used")}`);

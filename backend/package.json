@@ -16,11 +16,13 @@
     "email:setup": "node scripts/setup-email.js",
     "email:test": "node scripts/test-email.js",
     "sms:test": "node scripts/test-sms.js",
+    "storage:test": "node scripts/test-storage.js",
     "doctor": "node scripts/doctor.js",
-    "test": "node --test test/api.test.js test/cart.test.js test/checkout.test.js test/decor.test.js test/photos.test.js test/art.test.js test/analytics.test.js test/contact.test.js"
+    "test": "node --test test/api.test.js test/cart.test.js test/checkout.test.js test/decor.test.js test/photos.test.js test/art.test.js test/analytics.test.js test/contact.test.js test/storage.test.js"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",
+    "aws4fetch": "^1.0.20",
     "express": "^5.2.1",
     "nodemailer": "^10.0.14",
     "pg": "^8.23.1"

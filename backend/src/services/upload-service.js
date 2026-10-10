@@ -201,6 +201,7 @@ export async function sweepUnusedUploads() {
   }
   await storage.sweepTemp();
   // Files whose record is gone (an account that was deleted): nothing points at them any more.
+  if (!storage.ownsEveryFile()) return rows.length; // a development machine sharing the live bucket: its files are not ours to remove
   const files = (await storage.listFiles("private")).filter((f) => f.ageMs > 24 * 60 * 60 * 1000);
   for (let i = 0; i < files.length; i += 200) {
     const batch = files.slice(i, i + 200);

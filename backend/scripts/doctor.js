@@ -47,7 +47,9 @@ line(null, `Gift wrapping: ${wrap.enabled ? `ON (₹${wrap.fee} per order)` : "O
 
 const files = await storageStatus();
 const mb = Math.round(config.uploads.maxBytes / 1048576);
-if (!files.ready) line(false, "Customer photos: NOT WORKING - personalised products can't be ordered", `The folder ${files.dir} can't be written to: ${files.problem}\n        Fix: set UPLOAD_DIR in backend/.env to a folder this server may write to.`);
+if (!files.ready && files.kind === "object") line(false, "Uploaded files: NOT WORKING - photos can't be uploaded or shown", `${files.dir}: ${files.problem}\n        Check S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY (the key needs read and write access to this bucket).`);
+else if (!files.ready) line(false, "Customer photos: NOT WORKING - personalised products can't be ordered", `The folder ${files.dir} can't be written to: ${files.problem}\n        Fix: set UPLOAD_DIR in backend/.env to a folder this server may write to.`);
+else if (files.kind === "object") line(true, `Uploaded files: kept in ${files.dir} (up to ${mb} MB each, links last ${config.uploads.linkSeconds} s)`, "A test file was written, read back and removed just now. The bucket stays private: the server sends every file itself.");
 else
   line(
     config.isProd && !process.env.UPLOAD_DIR ? null : true,

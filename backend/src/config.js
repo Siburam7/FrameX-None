@@ -48,6 +48,19 @@ function devSecret() {
 
 // Where uploaded files are kept. Tests and in-memory runs get a throw-away folder of their own.
 const uploadDir = env.UPLOAD_DIR ? path.resolve(env.UPLOAD_DIR) : isTest || inMemory ? path.join(os.tmpdir(), `framex-uploads-${process.pid}`) : path.join(dataDir, "uploads");
+// Where uploaded files are KEPT: this server's disk (above), or a bucket in an S3-compatible object store.
+// Naming a bucket is enough to choose it. The keys are secrets: they are read here and nowhere printed.
+const STORAGE_PROVIDERS = ["disk", "s3"];
+const storageProvider = (env.STORAGE_PROVIDER || (env.S3_BUCKET ? "s3" : "disk")).trim().toLowerCase();
+const s3 = {
+  endpoint: (env.S3_ENDPOINT || "").trim().replace(/\/+$/, ""),
+  region: (env.S3_REGION || "auto").trim(),
+  bucket: (env.S3_BUCKET || "").trim(),
+  accessKeyId: (env.S3_ACCESS_KEY_ID || "").trim(),
+  secretAccessKey: (env.S3_SECRET_ACCESS_KEY || "").trim(),
+  pageSize: Math.min(1000, Math.max(1, int(env.S3_LIST_PAGE_SIZE, 1000)))
+};
+s3.missing = [["S3_ENDPOINT", s3.endpoint], ["S3_BUCKET", s3.bucket], ["S3_ACCESS_KEY_ID", s3.accessKeyId], ["S3_SECRET_ACCESS_KEY", s3.secretAccessKey]].filter(([, value]) => !value).map(([name]) => name);
 const megabytes = (v, fallback, max) => Math.min(max, Math.max(1, int(v, fallback))) * 1024 * 1024;
 
 const placeholderSecret = !env.AUTH_SECRET || /replace-with/i.test(env.AUTH_SECRET);
@@ -210,6 +223,8 @@ export const config = {
   },
   // FrameX's share of a sale, in percent. Recorded for reports; payouts to sellers are not automated.
   platform: { commissionPercent: Math.min(90, Math.max(0, Number(env.PLATFORM_COMMISSION_PERCENT) || 0)) },
+  // Where uploaded files are kept: "disk" (uploads.dir below) or "s3" (a private bucket). See lib/storage.js.
+  storage: { provider: storageProvider, s3 },
   // Customer photos (the originals that are printed). Private: only served through
   // short-lived signed links made for the customer, FrameX staff or the shop that makes the order.
   uploads: {
@@ -260,6 +275,9 @@ export function assertConfig() {
   if (isProd && !config.authSecret) problems.push("AUTH_SECRET must be set to a long random string.");
   if (isProd && config.authSecret && config.authSecret.length < 32) problems.push("AUTH_SECRET must be at least 32 characters.");
   if (isProd && !config.databaseUrl && !config.allowEmbeddedDbInProd) problems.push("DATABASE_URL must be set (or ALLOW_EMBEDDED_DB=true with a persistent disk).");
+  if (!STORAGE_PROVIDERS.includes(config.storage.provider)) problems.push(`STORAGE_PROVIDER must be one of: ${STORAGE_PROVIDERS.join(", ")}.`);
+  if (config.storage.provider === "s3" && config.storage.s3.missing.length) problems.push(`File storage in a bucket (STORAGE_PROVIDER=s3) also needs: ${config.storage.s3.missing.join(", ")}.`);
+  if (config.storage.provider === "s3" && config.storage.s3.endpoint && !/^https:\/\//.test(config.storage.s3.endpoint) && isProd) problems.push("S3_ENDPOINT must be an https address.");
   if (isProd && !config.frontendUrlSet) problems.push("FRONTEND_URL must be set to the website's public address (it is used in password-reset links).");
   if (isProd && config.email.provider === "dev") problems.push('EMAIL_PROVIDER "dev" is not allowed in production.');
   if (isProd && config.sms.provider === "dev") problems.push('SMS_PROVIDER "dev" is not allowed in production.');

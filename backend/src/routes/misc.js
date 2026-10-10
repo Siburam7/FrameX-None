@@ -30,7 +30,9 @@ router.get("/config", (req, res) => {
       smsDelivery: smsDelivery(),
       // Whether customers can pay online here, and whether the gateway is in test mode. No key is in this answer.
       payments: (({ ready, provider, mode }) => ({ online: ready, provider: ready ? provider : null, mode: ready ? mode : null, cod: config.checkout.cod.enabled }))(paymentStatus()),
-      productModeration: config.catalog.productModeration
+      productModeration: config.catalog.productModeration,
+      // "object" = uploaded files are kept in a bucket (they outlive the server); "disk" = on the server's own disk.
+      fileStorage: config.storage.provider === "s3" ? "object" : "disk"
     },
     // What a customer photo may be (the website checks the same before sending; the server checks again).
     uploads: { maxBytes: config.uploads.maxBytes, formats: ["jpeg", "png", "webp"], maxSide: config.uploads.maxSide },

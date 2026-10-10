@@ -23,6 +23,19 @@ services:
       # Left empty, files go to the service's own (temporary) disk and are lost on a restart.
       - key: UPLOAD_DIR
         sync: false
+      # Without a persistent disk (Render's free plan): keep uploaded files in a private bucket of an
+      # S3-compatible object store instead (Cloudflare R2, Backblaze B2 ...). Fill these five in the
+      # dashboard; the two keys are secrets. Left empty, files stay on the service's own temporary disk.
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_REGION
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
       - key: NODE_ENV
         value: production
       - key: SERVE_FRONTEND
