@@ -18,7 +18,7 @@
     "sms:test": "node scripts/test-sms.js",
     "storage:test": "node scripts/test-storage.js",
     "doctor": "node scripts/doctor.js",
-    "test": "node --test test/api.test.js test/cart.test.js test/checkout.test.js test/decor.test.js test/photos.test.js test/art.test.js test/analytics.test.js test/contact.test.js test/storage.test.js"
+    "test": "node --test test/api.test.js test/cart.test.js test/checkout.test.js test/decor.test.js test/photos.test.js test/art.test.js test/analytics.test.js test/contact.test.js test/storage.test.js test/updates.test.js"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",

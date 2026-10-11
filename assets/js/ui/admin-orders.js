@@ -3,6 +3,13 @@
 
      #/orders[?status=&q=]      every order, newest first
      #/orders/<FX-number>       one order: move it forward, cancel it, refund it
+     #/orders/updates           tell every customer whose order is under way its status, on WhatsApp
+
+   WhatsApp: nothing is sent by FrameX or by this page. A WhatsApp button opens the admin's OWN WhatsApp
+   (the app on a phone, WhatsApp Desktop or WhatsApp Web) in a chat with the customer's number, with the
+   message already written; the admin presses Send there. That is free and needs no account or key, and it
+   also means one press per customer: a page cannot send a WhatsApp message by itself. So this page says
+   "opened", never "sent". (The customer's emails about each status change are sent by the backend as before.)
 
    The page is only a view of /api/admin/orders. The backend decides which
    status changes are allowed (order.nextStatuses), marks Cash on Delivery as
@@ -31,6 +38,138 @@
   };
   const FILTERS = [["", "All"], ["PLACED", "New"], ["CONFIRMED", "Confirmed"], ["PROCESSING", "Being made"], ["SHIPPED", "Shipped"], ["OUT_FOR_DELIVERY", "Out for delivery"], ["DELIVERED", "Delivered"], ["PENDING_PAYMENT", "Waiting for payment"], ["CANCELLED", "Cancelled"], ["RETURNED", "Returned"]];
 
+  /* ---------------------------------------------------------------- WhatsApp */
+  const WA_ACTIVE = ["PLACED", "CONFIRMED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY"];
+  // What the message says about each status. Facts of the order only: no promises FrameX hasn't made.
+  const WA_STATUS = {
+    PENDING_PAYMENT: "is waiting for payment. You can pay from the order page.",
+    PLACED: "has been received. We will confirm it shortly.",
+    CONFIRMED: "is confirmed and will be prepared soon.",
+    PROCESSING: "is being made.",
+    SHIPPED: "has been shipped and is on its way.",
+    OUT_FOR_DELIVERY: "is out for delivery.",
+    DELIVERED: "has been delivered. We hope you love it.",
+    CANCELLED: "has been cancelled.",
+    RETURNED: "has been marked as returned.",
+  };
+  const WA_KEY = "framex.admin.waOpened.v1";
+
+  /** "+91 98765 43210" -> "919876543210" (what wa.me wants); "" when it can't be a mobile number. */
+  function waNumber(phone) {
+    const digits = String(phone || "").replace(/\D/g, "").replace(/^0+/, "");
+    if (digits.length === 10) return "91" + digits;
+    return digits.length >= 11 && digits.length <= 15 ? digits : "";
+  }
+  const orderLink = (o) => `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, "")}order.html?id=${encodeURIComponent(o.orderNumber)}`;
+  function waText(o) {
+    const first = String(o.customer.name || "").trim().split(/\s+/)[0];
+    // A list row carries its first item; a whole order carries all of them.
+    const item = o.firstItem || (o.items && o.items[0]);
+    const count = o.itemCount || (o.items ? o.items.length : 1);
+    const what = item ? ` (${item.name}${count > 1 ? ` + ${count - 1} more` : ""})` : "";
+    const lines = [`Hello${first ? " " + first : ""}, this is FrameX.`, "", `Your order ${o.orderNumber}${what} ${WA_STATUS[o.status] || "has been updated."}`];
+    if (o.paymentMethod === "COD" && o.paymentStatus !== "PAID" && WA_ACTIVE.includes(o.status)) lines.push(`Cash on Delivery: ${formatPrice(o.total)} to pay when it arrives.`);
+    lines.push("", `See your order: ${orderLink(o)}`, "", "Thank you for ordering with FrameX.");
+    return lines.join("\n");
+  }
+  const waUrl = (o) => (waNumber(o.customer.phone) ? `https://wa.me/${waNumber(o.customer.phone)}?text=${encodeURIComponent(waText(o))}` : "");
+
+  // Which chats this browser has opened (order + the status it had), so the list can show where the admin got to.
+  function waOpened() {
+    try {
+      return JSON.parse(window.localStorage.getItem(WA_KEY) || "{}") || {};
+    } catch (e) {
+      return {};
+    }
+  }
+  function waRemember(o) {
+    try {
+      const all = waOpened();
+      const week = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      Object.keys(all).forEach((k) => all[k] < week && delete all[k]);
+      all[`${o.orderNumber}:${o.status}`] = Date.now();
+      window.localStorage.setItem(WA_KEY, JSON.stringify(all));
+    } catch (e) {
+      /* storage blocked: the list just doesn't remember */
+    }
+  }
+  const waOpenedAt = (o) => waOpened()[`${o.orderNumber}:${o.status}`] || 0;
+  /** Opens the chat in one WhatsApp tab that is used again for the next customer. -> false when the browser refused. */
+  function waOpen(o) {
+    const url = waUrl(o);
+    if (!url) return false;
+    const tab = window.open(url, "framex-whatsapp");
+    if (!tab) return false;
+    try {
+      tab.opener = null;
+    } catch (e) {
+      /* another site already */
+    }
+    waRemember(o);
+    return true;
+  }
+  const waButton = (o, label = "WhatsApp") =>
+    waUrl(o) ? `<button class="iu-btn" type="button" data-wa="${esc(o.orderNumber)}" title="Open WhatsApp with this order's status ready to send">${icon("phone")} ${esc(label)}</button>` : `<span class="sd-item__meta" title="This order has no mobile number WhatsApp can use">No number</span>`;
+
+  /** Every order that is under way: one chat after another. */
+  async function updates(main, { head }) {
+    const r = await http().get("/admin/order-updates");
+    const v = view();
+    const orders = r.items;
+    const withNumber = orders.filter((o) => waUrl(o));
+    const draw = (notice = "") => {
+      const left = withNumber.filter((o) => !waOpenedAt(o));
+      const next = left[0];
+      main.innerHTML = `${head("Order updates on WhatsApp", "Tell every customer whose order is under way what its status is.", `<a class="btn btn--outline btn--sm" href="#/orders">All orders</a>`)}
+        <p class="co-note">${icon("alert")}<span><strong>One press per customer.</strong> Each press opens your own WhatsApp in a chat with the next customer, with the message already written: you press Send there, come back and press again. WhatsApp does not let a website send messages by itself, so nothing here is sent automatically. Customers are still emailed automatically whenever an order's status changes.</span></p>
+        ${notice ? `<div class="form-status form-status--error is-visible" role="alert">${icon("alert")}<span>${esc(notice)}</span></div>` : ""}
+        ${
+          orders.length
+            ? `<div class="co-actions" style="margin:16px 0">
+              ${next ? `<button class="btn btn--primary" type="button" data-wa-next>${icon("phone")} Open next chat (${withNumber.length - left.length + 1} of ${withNumber.length})</button>` : `<span class="form-status form-status--success is-visible">${icon("check")}<span>All ${withNumber.length} chats have been opened.</span></span>`}
+              ${withNumber.length > left.length ? `<button class="btn btn--outline btn--sm" type="button" data-wa-reset>Start again from the first</button>` : ""}
+            </div>
+            ${next ? `<p class="sd-item__meta" style="margin-bottom:12px">Next: <strong>${esc(next.orderNumber)}</strong> · ${esc(next.customer.name)} · ${esc(next.customer.phone)}</p><pre data-wa-preview style="white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;margin:0 0 20px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius-md);background:#fff">${esc(waText(next))}</pre>` : ""}
+            <div class="sd-table-wrap"><table class="sd-table"><thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Order status</th><th scope="col">WhatsApp</th></tr></thead><tbody>
+              ${orders
+                .map((o) => {
+                  const at = waOpenedAt(o);
+                  return `<tr><td><a class="sd-item__name" href="#/orders/${esc(o.orderNumber)}">${esc(o.orderNumber)}</a>${o.isTest ? ` <span class="sd-status sd-status--draft an-test">Test</span>` : ""}<br><span class="sd-item__meta">${esc(o.firstItem ? o.firstItem.name : "")}${o.itemCount > 1 ? ` + ${o.itemCount - 1} more` : ""}</span></td>
+                    <td>${esc(o.customer.name)}<br><span class="sd-item__meta">${esc(o.customer.phone || "no phone number")}</span></td>
+                    <td>${v.badge(o.status, v.ORDER_STATUS)}</td>
+                    <td>${waButton(o, at ? "Open again" : "Open chat")}${at ? `<br><span class="sd-item__meta">Opened ${esc(v.when(new Date(at).toISOString()))}</span>` : ""}</td></tr>`;
+                })
+                .join("")}
+            </tbody></table></div>
+            ${r.total > orders.length ? `<p class="co-fine">${icon("alert")}<span>Showing the newest ${orders.length} of ${r.total} orders under way.</span></p>` : ""}`
+            : `<div class="sd-empty">${icon("check")}<strong>No orders under way</strong><span>Orders that are placed and not yet delivered appear here.</span></div>`
+        }`;
+    };
+    draw();
+    main.onclick = (e) => {
+      const blocked = "Your browser stopped the WhatsApp window from opening. Allow pop-ups for this site, then press again.";
+      if (e.target.closest("[data-wa-next]")) {
+        const next = withNumber.find((o) => !waOpenedAt(o));
+        return draw(next && !waOpen(next) ? blocked : "");
+      }
+      if (e.target.closest("[data-wa-reset]")) {
+        try {
+          const all = waOpened();
+          withNumber.forEach((o) => delete all[`${o.orderNumber}:${o.status}`]);
+          window.localStorage.setItem(WA_KEY, JSON.stringify(all));
+        } catch (error) {
+          /* nothing to forget */
+        }
+        return draw();
+      }
+      const one = e.target.closest("[data-wa]");
+      if (one) {
+        const o = orders.find((x) => x.orderNumber === one.dataset.wa);
+        draw(o && !waOpen(o) ? blocked : "");
+      }
+    };
+  }
+
   /* ---------------------------------------------------------------- List */
   async function list(main, params, { head }) {
     const status = params.get("status") || "";
@@ -47,11 +186,12 @@
     main.innerHTML = `${head("Orders", "Customer orders. Order status and payment status are separate: an order is only marked paid after the payment gateway confirms it, or when a Cash on Delivery order is delivered.")}
       <div class="sd-toolbar">
         <div class="chip-scroll" role="group" aria-label="Filter by order status">${FILTERS.map(([id, label]) => `<a class="chip" href="${link({ status: id, page: "" })}" aria-pressed="${status === id}">${esc(label)}</a>`).join("")}</div>
+        <a class="btn btn--outline btn--sm" href="#/orders/updates">${icon("phone")} Send order updates on WhatsApp</a>
         <form class="ad-search" data-search role="search"><input type="search" name="q" value="${esc(q)}" placeholder="Order number, name, email or phone" aria-label="Search orders"><button class="btn btn--dark btn--sm" type="submit">Search</button></form>
       </div>
       ${
         r.items.length
-          ? `<div class="sd-table-wrap"><table class="sd-table"><thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Order status</th><th scope="col">Payment</th><th scope="col">Total</th><th scope="col">Date</th></tr></thead><tbody>
+          ? `<div class="sd-table-wrap"><table class="sd-table"><thead><tr><th scope="col">Order</th><th scope="col">Customer</th><th scope="col">Order status</th><th scope="col">Payment</th><th scope="col">Total</th><th scope="col">Date</th><th scope="col">Tell the customer</th></tr></thead><tbody>
           ${r.items
             .map(
               (o) => `<tr>
@@ -61,6 +201,7 @@
               <td>${v.paymentBadge(o)}<br><span class="sd-item__meta">${esc(v.methodLabel(o))}</span></td>
               <td><strong>${formatPrice(o.total)}</strong></td>
               <td>${esc(v.when(o.createdAt))}</td>
+              <td>${waButton(o)}</td>
             </tr>`,
             )
             .join("")}
@@ -68,6 +209,11 @@
         ${pages > 1 ? `<nav class="od-pages" aria-label="Pages">${page > 1 ? `<a class="btn btn--outline btn--sm" href="${link({ page: page - 1 })}">Newer</a>` : ""}<span>Page ${page} of ${pages} · ${r.total} orders</span>${page < pages ? `<a class="btn btn--outline btn--sm" href="${link({ page: page + 1 })}">Older</a>` : ""}</nav>` : ""}`
           : `<div class="sd-empty">${icon("receipt")}<strong>No orders here</strong><span>${status || q ? "No order matches this filter." : "Orders appear here as soon as customers place them."}</span></div>`
       }`;
+    main.onclick = (e) => {
+      const one = e.target.closest("[data-wa]");
+      const o = one && r.items.find((x) => x.orderNumber === one.dataset.wa);
+      if (o && !waOpen(o)) FrameX.toast.show("Your browser stopped the WhatsApp window from opening. Allow pop-ups for this site, then press again.", { duration: 7000 });
+    };
     $("[data-search]", main).addEventListener("submit", (e) => {
       e.preventDefault();
       window.location.hash = link({ q: new FormData(e.target).get("q").trim(), page: "" });
@@ -150,6 +296,15 @@
             <dl class="ao-facts">${fact("Name", esc(o.customer.name))}${fact("Email", esc(o.customer.email))}${fact("Phone", esc(o.customer.phone || "—"))}</dl>
             ${v.addressHtml(o)}
           </section>
+          <section class="co-card" data-wa-card><h2 class="co-card__title">${icon("phone")} Tell the customer on WhatsApp</h2>
+            ${
+              waUrl(o)
+                ? `<pre style="white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;margin:0 0 12px">${esc(waText(o))}</pre>
+              <div><button class="btn btn--dark btn--sm" type="button" data-wa-one>${icon("phone")} Open WhatsApp with this message</button></div>
+              <p class="co-fine">${icon("alert")}<span>This opens your own WhatsApp in a chat with ${esc(o.customer.phone)}; you press Send there. Nothing is sent from this page.</span></p>`
+                : `<p class="co-lead">This order has no mobile number WhatsApp can use.</p>`
+            }
+          </section>
           ${gatewayPaid ? `<section class="co-card"><h2 class="co-card__title">Gateway</h2><dl class="ao-facts">${fact("Gateway", esc(o.paymentGateway || "—"))}${fact("Gateway order", `<code>${esc(o.gatewayOrderId || "—")}</code>`)}</dl></section>` : ""}
         </div>
       </div>`;
@@ -160,6 +315,8 @@
         render(main, o, { head, message: error.message });
       });
 
+    const waOne = $("[data-wa-one]", main);
+    if (waOne) waOne.addEventListener("click", () => waOpen(o) || render(main, o, { head, message: "Your browser stopped the WhatsApp window from opening. Allow pop-ups for this site, then press again." }));
     const statusForm = $("[data-status-form]", main);
     if (statusForm)
       statusForm.addEventListener("submit", (e) => {
@@ -202,6 +359,7 @@
   }
 
   async function detail(main, orderNumber, { head }) {
+    if (orderNumber === "updates") return updates(main, { head });
     const { order } = await http().get("/admin/orders/" + encodeURIComponent(orderNumber));
     render(main, order, { head });
     // "Download original": the backend signs a short-lived link to that photo of this order (and logs it).

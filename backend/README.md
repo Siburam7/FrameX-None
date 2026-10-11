@@ -568,6 +568,7 @@ State-changing requests must send the header `X-FrameX-Client: web` (CSRF protec
 | `GET /api/admin/products[?status=]`, `POST /api/admin/products/:id/listing` | **ADMIN** | products shops created; `{ status: "published" \| "unpublished" }` approves one or takes it off sale |
 | `GET /api/geo/search?q=` | anyone | place search for a typed location |
 | `POST /api/contact` `{ name, email, phone?, subject, message }` | anyone (6 an hour per address) | a message from the Contact page: kept for admin → Messages, and an alert email goes to `ADMIN_NOTIFY_EMAIL` (or, when that is empty, to every active admin account) with the sender as Reply-To. Nothing is emailed to the sender. At most `CONTACT_ALERTS_PER_HOUR` (30) alerts an hour; later messages are still kept |
+| `GET /api/admin/order-updates` | admin | every order still under way (placed … out for delivery, at most 300) with the customer's name and phone, for the admin's "Send order updates on WhatsApp" list. Nothing is sent by the server: the admin page opens the admin's own WhatsApp with the message ready |
 | `GET /api/admin/messages?status=&page=`, `POST /api/admin/messages/:id/status` `{ status: NEW \| READ }`, `DELETE /api/admin/messages/:id` | admin | read, mark and delete those messages |
 | `GET /api/admin/overview` | **ADMIN** | counts |
 | `GET /api/admin/applications[?status=]`, `GET …/:id` | **ADMIN** | applications |

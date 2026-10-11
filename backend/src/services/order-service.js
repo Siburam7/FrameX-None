@@ -256,8 +256,8 @@ export const orderForCustomer = async (orderId) => {
 };
 
 /** A page of order rows with the first item of each (for lists). */
-async function page(where, params, { page: p = 1, limit = 10 } = {}) {
-  const size = Math.min(Math.max(1, limit), 50);
+async function page(where, params, { page: p = 1, limit = 10, most = 50 } = {}) {
+  const size = Math.min(Math.max(1, limit), most);
   const at = Math.max(1, p);
   const total = (await db.query(`SELECT count(*)::int AS n FROM orders o WHERE ${where}`, params)).rows[0].n;
   const { rows } = await db.query(`SELECT o.* FROM orders o WHERE ${where} ORDER BY o.created_at DESC, o.order_number DESC LIMIT ${size} OFFSET ${(at - 1) * size}`, params);
@@ -268,7 +268,7 @@ async function page(where, params, { page: p = 1, limit = 10 } = {}) {
     for (const i of items) if (!first.has(i.order_id)) first.set(i.order_id, i);
   }
   return {
-    items: rows.map((r) => ({ ...summary(r), firstItem: first.has(r.id) ? { name: first.get(r.id).name, image: first.get(r.id).image } : null, customer: { name: r.customer_name, email: r.customer_email } })),
+    items: rows.map((r) => ({ ...summary(r), firstItem: first.has(r.id) ? { name: first.get(r.id).name, image: first.get(r.id).image } : null, customer: { name: r.customer_name, email: r.customer_email, phone: r.customer_phone } })),
     total,
     page: at,
     limit: size
@@ -288,6 +288,15 @@ export function adminListOrders({ status = "", paymentStatus = "", q = "", page:
   }
   return page(where.join(" AND "), params, { page: p, limit: limit || 20 });
 }
+
+/** Orders that are under way: placed, and not yet delivered, cancelled or returned. */
+export const ACTIVE_STATUSES = ["PLACED", "CONFIRMED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY"];
+
+/**
+ * Every order that is still under way, newest first, for the admin's "send order updates" list
+ * (one WhatsApp message per customer, opened by the admin). At most 300.
+ */
+export const adminActiveOrders = () => page(`o.status IN (${ACTIVE_STATUSES.map((s) => `'${s}'`).join(", ")})`, [], { page: 1, limit: 300, most: 300 });
 
 export async function adminOrderRow(orderNumber, q = db) {
   if (!ORDER_NUMBER.test(String(orderNumber || ""))) throw notFound();

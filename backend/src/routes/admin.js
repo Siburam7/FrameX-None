@@ -83,6 +83,9 @@ router.get("/orders", async (req, res) => {
   res.json(await orders.adminListOrders({ status: f.status, paymentStatus: f.paymentStatus, q: f.q, page: f.page || 1 }));
 });
 
+// Orders still under way, with the customer's phone: the admin sends each one its status on WhatsApp (the admin's own app).
+router.get("/order-updates", async (req, res) => res.json(await orders.adminActiveOrders()));
+
 router.get("/orders/:orderNumber", async (req, res) => res.json({ order: await orders.adminGetOrder(req.params.orderNumber) }));
 
 // Fulfilment by FrameX: a short-lived link to the customer's ORIGINAL photo of an order line (logged).
