@@ -7,7 +7,7 @@ import { devOutbox, emailDelivery } from "../lib/mailer.js";
 import { smsDelivery } from "../lib/sms.js";
 import { storageReady } from "../lib/storage.js";
 import { paymentStatus } from "../payments/index.js";
-import { rateLimit } from "../lib/rate-limit.js";
+import { isLoadTest, rateLimit } from "../lib/rate-limit.js";
 import { v, validate } from "../lib/validate.js";
 import { SEARCH_KINDS, searchAll } from "../services/search-service.js";
 
@@ -16,6 +16,27 @@ const router = Router();
 router.get("/health", async (req, res) => {
   await db.query("SELECT 1");
   res.json({ ok: true, database: db.kind });
+});
+
+/**
+ * How the server sees the caller's own address, shortened ("203.0.x.x"): for checking that the request limits count
+ * each visitor separately behind the host's proxies (TRUST_PROXY). Says nothing about anyone but the caller.
+ */
+const short = (ip) => {
+  const s = String(ip || "").trim().replace(/^::ffff:/, "");
+  if (!s) return null;
+  return s.includes(":") ? s.split(":").slice(0, 2).join(":") + ":x" : s.split(".").slice(0, 2).join(".") + ".x.x";
+};
+router.get("/health/client", (req, res) => {
+  res.set("Cache-Control", "no-store").json({
+    seenAs: short(req.ip),
+    connectedFrom: short(req.socket.remoteAddress),
+    forwardedFor: String(req.headers["x-forwarded-for"] || "").split(",").map((s) => short(s)).filter(Boolean),
+    cfConnectingIp: short(req.headers["cf-connecting-ip"]),
+    trueClientIp: short(req.headers["true-client-ip"]),
+    trustProxy: config.trustProxy,
+    loadTestKey: Boolean(config.loadTestKey)
+  });
 });
 
 // Settings the website needs (nothing secret).
@@ -65,7 +86,7 @@ router.get("/geo/search", rateLimit("geo", { windowMs: 60_000, max: 20 }), async
 });
 
 /** One search across products, templates, shops, artists and artworks. kinds: a comma-separated list to narrow it. */
-router.get("/search", rateLimit("search", { windowMs: 60_000, max: 90 }), async (req, res) => {
+router.get("/search", rateLimit("search", { windowMs: 60_000, max: 90, skip: isLoadTest }), async (req, res) => {
   const { q, kinds, limit } = validate(req.query, { q: v.string({ max: 80, label: "Search" }), kinds: v.string({ max: 80 }), limit: v.number({ min: 1, max: 12, required: false }) });
   const wanted = kinds ? kinds.split(",").map((k) => k.trim()).filter((k) => SEARCH_KINDS.includes(k)) : SEARCH_KINDS;
   res.json(await searchAll({ q, kinds: wanted.length ? wanted : SEARCH_KINDS, limit: limit || 5 }));

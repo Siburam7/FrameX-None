@@ -13,3 +13,5 @@ tools/decor/.tmp/
 
 # Safety copies of the local database made before an upgrade (they hold real accounts and orders)
 backend/.data.backup-*/
+# The key of a load test (npm run load:test -- --make-key)
+backend/.loadtest-key

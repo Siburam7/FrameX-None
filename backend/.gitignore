@@ -5,3 +5,5 @@
 .data/
 node_modules/
 *.log
+# The key of a load test (npm run load:test -- --make-key)
+.loadtest-key

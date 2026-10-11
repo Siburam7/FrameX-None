@@ -3,6 +3,7 @@
    Enough for one server instance. With several instances behind a load
    balancer, move the counters to a shared store (Redis) — only this file changes.
    ========================================================================== */
+import crypto from "node:crypto";
 import { config } from "../config.js";
 import { errors } from "./errors.js";
 
@@ -27,10 +28,21 @@ export function hit(name, key, { windowMs, max }) {
   if (b.count > max) throw errors.tooMany(Math.max(1, Math.ceil((b.resetAt - now) / 1000)));
 }
 
-/** Express middleware: limit by client IP (plus an optional extra key). */
-export const rateLimit = (name, { windowMs, max, key = null }) => (req, res, next) => {
+/** Express middleware: limit by client IP (plus an optional extra key). `skip(req)` true = this request is not counted. */
+export const rateLimit = (name, { windowMs, max, key = null, skip = null }) => (req, res, next) => {
+  if (skip && skip(req)) return next();
   hit(name, req.ip + (key ? ":" + key(req) : ""), { windowMs, max });
   next();
 };
+
+/**
+ * A load test's request (scripts/load-test.js): it carries the server's own LOAD_TEST_KEY, when one is set.
+ * Used as `skip` on the general limit and on public reading (search) only: never on logins, uploads or anything that writes.
+ */
+export function isLoadTest(req) {
+  const key = config.loadTestKey;
+  const sent = String(req.headers["x-load-test"] || "");
+  return Boolean(key) && sent.length === key.length && crypto.timingSafeEqual(Buffer.from(sent), Buffer.from(key));
+}
 
 export const resetRateLimits = () => buckets.clear();

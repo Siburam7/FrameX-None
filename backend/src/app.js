@@ -5,7 +5,7 @@ import path from "node:path";
 import { config, PROJECT_ROOT } from "./config.js";
 import { errorHandler, notFoundHandler } from "./lib/errors.js";
 import { requestContext } from "./lib/context.js";
-import { rateLimit } from "./lib/rate-limit.js";
+import { isLoadTest, rateLimit } from "./lib/rate-limit.js";
 import { cors, csrfGuard, securityHeaders } from "./lib/security.js";
 import { attachSession } from "./middleware/auth.js";
 import addressRoutes from "./routes/addresses.js";
@@ -43,7 +43,7 @@ export function createApp() {
 
   /* ---- API ---- */
   app.use("/api", cors);
-  app.use("/api", rateLimit("api", { windowMs: 60_000, max: 300 }));
+  app.use("/api", rateLimit("api", { windowMs: 60_000, max: 300, skip: isLoadTest }));
   // A shop's product record (text, sizes, components) is larger than other requests.
   app.use("/api/shops/:shopCode/products", express.json({ limit: "400kb" }));
   // Uploaded files are not JSON: their bytes are read as a stream by the upload routes.

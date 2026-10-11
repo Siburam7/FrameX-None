@@ -82,15 +82,43 @@
     return { parts: path.split("/").filter(Boolean), params: new URLSearchParams(query || "") };
   }
 
+  /* Refresh: the screens show what the backend said when they were opened; nothing updates by itself.
+     "Refresh" asks again for the screen that is open (same filter, same page, same order) and stays where
+     the admin had scrolled to. The time under the button is when this screen's data was last loaded. */
+  let refreshing = false;
+  let typed = false; // something was typed on this screen and not saved yet
+  async function refresh() {
+    if (refreshing) return;
+    if (typed && !window.confirm("You have typed something on this screen that isn't saved. Refresh anyway?")) return;
+    const y = window.scrollY;
+    refreshing = true;
+    try {
+      await route();
+    } finally {
+      refreshing = false;
+      const button = $("[data-refresh]", root);
+      if (button) {
+        button.disabled = false;
+        button.innerHTML = `${icon("refresh")} Refresh`;
+      }
+      window.scrollTo(0, y);
+    }
+  }
+
   function layout(section) {
     root.innerHTML = `<div class="sd">
       <aside class="sd-side">
         <div class="sd-shop"><span class="sd-logo">${icon("shield")}</span><div><strong>FrameX Admin</strong><span class="sd-side__who">${esc(admin.name)}</span></div></div>
+        <div style="display:grid;gap:4px;justify-items:start">
+          <button class="btn btn--outline btn--sm" type="button" data-refresh title="Load the newest data for this screen"${refreshing ? " disabled" : ""}>${icon("refresh")} ${refreshing ? "Refreshing…" : "Refresh"}</button>
+          <span class="sd-side__who" data-refreshed role="status"></span>
+        </div>
         <nav class="sd-nav" aria-label="Admin"><ul>${NAV.map(([id, label, ic]) => `<li><a href="#/${id}"${id === section ? ' aria-current="page"' : ""}>${icon(ic)}<span>${label}</span></a></li>`).join("")}</ul></nav>
         <button class="btn btn--outline btn--sm" type="button" data-logout>${icon("logout")} Log out</button>
       </aside>
       <section class="sd-main" data-main></section>
     </div>`;
+    $("[data-refresh]", root).addEventListener("click", refresh);
     $("[data-logout]", root).addEventListener("click", async () => {
       await FrameX.auth.logout();
       window.location.href = "login.html";
@@ -534,7 +562,13 @@
     const section = NAV.some(([id]) => id === parts[0]) ? parts[0] : "overview";
     const main = layout(section);
     main.onclick = null;
+    typed = false;
+    main.oninput = () => (typed = true);
     main.innerHTML = `<div class="skeleton" style="height:120px"></div>`;
+    const loaded = (ok) => {
+      const stamp = $("[data-refreshed]", root);
+      if (stamp) stamp.textContent = ok ? `Updated ${new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Couldn't be updated";
+    };
     if (FrameX.adminMessages) FrameX.adminMessages.badge();
     document.title = `${NAV.find(([id]) => id === section)[1]} — FrameX admin`;
     try {
@@ -553,7 +587,9 @@
       if (section === "messages") await FrameX.adminMessages.list(main, params, { head });
       if (section === "users") await (parts[1] ? FrameX.adminAnalytics.customer(main, parts[1], params, { head }) : art.users(main, params, { head }));
       if (section === "settings") await art.settings(main, params, { head });
+      loaded(true);
     } catch (error) {
+      loaded(false);
       // The session ended or the role changed: the API said no, so leave.
       if (error.status === 401) return window.location.replace(FrameX.auth.loginUrl());
       if (error.status === 403) return window.location.replace("index.html");
