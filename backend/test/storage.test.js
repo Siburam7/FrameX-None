@@ -199,7 +199,7 @@ describe("uploaded files in a bucket", () => {
     config.storage.s3.accessKeyId = "SOMEONE-ELSES-KEY";
     const fresh = await import("../src/lib/storage.js?wrong-key");
     const status = await fresh.storageStatus();
-    assert.deepEqual([status.ready, /403/.test(status.problem), status.problem.includes(s3.secret)], [false, true, false]);
+    assert.deepEqual([status.ready, /403/.test(status.problem), status.problem.includes(s3.secret)], [false, true, false], `the problem reported was: ${status.problem}`);
     config.storage.s3.accessKeyId = s3.keyId;
   });
 });

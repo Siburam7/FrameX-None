@@ -32,11 +32,18 @@
   let ready = null;
   function init() {
     if (ready) return ready;
-    ready = !state.available
+    // No backend, or a browser that holds no session token: nobody is logged in, and there is nothing to wait for.
+    // (A visitor's first page no longer waits for a backend that may take a while to wake up.)
+    ready = !state.available || (http.mayHaveSession && !http.mayHaveSession())
       ? Promise.resolve(set(null))
       : http
           .get("/auth/me")
-          .then((r) => set(r.authenticated ? r.user : null))
+          .then((r) => {
+            // The backend no longer knows this session (logged out elsewhere, password changed, unused for too long):
+            // the token this browser kept is of no use any more.
+            if (!r.authenticated && http.setToken) http.setToken("");
+            set(r.authenticated ? r.user : null);
+          })
           .catch(() => {
             state.reachable = false;
             set(null);
@@ -70,6 +77,13 @@
     set(r.authenticated ? r.user : null);
     return state.user;
   }
+
+  // Another tab of this browser logged in or out: this tab follows (its header, its cart, its pages that listen).
+  if (http.onSessionChange)
+    http.onSessionChange((loggedIn) => {
+      if (!loggedIn) return set(null);
+      refresh().catch(() => {});
+    });
 
   /** Where each role lands after logging in. */
   const HOME = { CUSTOMER: "shop.html", SHOP: "shop-dashboard.html", ADMIN: "admin.html", ARTIST: "artist-dashboard.html" };

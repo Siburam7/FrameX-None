@@ -432,7 +432,7 @@ Copy `.env.example` to `.env`. Nothing secret is in the code or in Git (`.env` a
 | `DATABASE_URL` | production | PostgreSQL connection string. Empty = embedded database (development) |
 | `DATABASE_SSL` | hosted DBs | `require` for Neon / Render / Supabase |
 | `AUTH_SECRET` | production | 32+ random characters; keys the hashes of session and reset tokens |
-| `SESSION_TTL_DAYS` | no | default `14` |
+| `SESSION_TTL_DAYS` | no | default `90`. A login lasts until Log out; it only runs out after this many days WITHOUT a visit (each visit renews it, at most once a day). On the live site the browser keeps the session token in `localStorage`, so closing the browser does not log anyone out |
 | `COOKIE_SAMESITE` | no | `lax` (default) / `none` |
 | `AUTH_ALLOW_BEARER` | cross-site only | `true` to also hand the session token to the website (see "How the website connects") |
 | `FRONTEND_URL` | production | the website's public address, no trailing slash (e.g. `https://siburam7.github.io/FrameX-None`); reset and setup links are built from it. Empty locally = links go back to the allowed site the request came from |

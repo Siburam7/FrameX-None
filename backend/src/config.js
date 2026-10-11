@@ -95,7 +95,8 @@ export const config = {
   allowEmbeddedDbInProd: bool(env.ALLOW_EMBEDDED_DB, false),
 
   authSecret: placeholderSecret ? (isProd ? "" : devSecret()) : env.AUTH_SECRET,
-  sessionTtlDays: int(env.SESSION_TTL_DAYS, 14),
+  // How long a login lasts WITHOUT being used. Every visit renews it, so only someone who stays away this long logs in again.
+  sessionTtlDays: Math.min(400, Math.max(1, int(env.SESSION_TTL_DAYS, 90))),
   cookie: {
     name: "fx_session",
     sameSite: /^(none|strict)$/i.test(env.COOKIE_SAMESITE || "") ? env.COOKIE_SAMESITE.toLowerCase() : "lax",

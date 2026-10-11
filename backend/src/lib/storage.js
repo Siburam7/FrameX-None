@@ -64,15 +64,20 @@ const objectUrl = (name) => `${bucketUrl()}/${name.split("/").map(encodeURICompo
 
 /** One request to the bucket. The answer's headers must arrive within `waitMs`; a body may take longer. */
 async function bucket(method, url, { body, waitMs = 30000 } = {}) {
-  const stop = new AbortController();
-  const timer = setTimeout(() => stop.abort(), waitMs);
-  try {
-    return await signer().fetch(url, { method, body, signal: stop.signal, headers: body ? { "Content-Type": "application/octet-stream" } : undefined });
-  } catch (error) {
-    // Never the address or a key: only that it failed.
-    throw new Error(`The file storage could not be reached (${error.name === "AbortError" ? "no answer in time" : error.message}).`);
-  } finally {
-    clearTimeout(timer);
+  for (let attempt = 1; ; attempt++) {
+    const stop = new AbortController();
+    const timer = setTimeout(() => stop.abort(), waitMs);
+    try {
+      return await signer().fetch(url, { method, body, signal: stop.signal, headers: body ? { "Content-Type": "application/octet-stream" } : undefined });
+    } catch (error) {
+      const late = error.name === "AbortError";
+      // A connection that dropped is worth one more try: every request made here can safely be repeated.
+      if (!late && attempt < 2) continue;
+      // Never the address or a key: only that it failed.
+      throw new Error(`The file storage could not be reached (${late ? "no answer in time" : error.message}).`);
+    } finally {
+      clearTimeout(timer);
+    }
   }
 }
 const failed = (what, response) => new Error(`The file storage refused to ${what} (it answered ${response.status}).`);

@@ -42,24 +42,45 @@
   const enabled = () => Boolean(cfg.url);
   const bearer = () => cfg.session === "bearer";
 
+  /* Bearer mode: the session token is kept in this browser (localStorage) until the customer logs out, so
+     closing the tab or the browser does not log them out, and every tab of the site shares the login.
+     The token is only a key to the session the backend keeps: logging out, a changed password or a disabled
+     account end it on the server, whatever a browser still holds. (Earlier versions kept it per tab, in
+     sessionStorage: one found there is moved across.) */
   function getToken() {
     if (!bearer()) return "";
     try {
-      return sessionStorage.getItem(TOKEN_KEY) || "";
+      const kept = localStorage.getItem(TOKEN_KEY);
+      if (kept) return kept;
+      const old = sessionStorage.getItem(TOKEN_KEY) || "";
+      if (old) {
+        localStorage.setItem(TOKEN_KEY, old);
+        sessionStorage.removeItem(TOKEN_KEY);
+      }
+      return old;
     } catch (e) {
       return "";
     }
   }
 
-  /** Bearer mode only: keep (or forget) the session token for this browser tab. */
+  /** Bearer mode only: keep (or forget) the session token for this browser. */
   function setToken(token) {
     if (!bearer()) return;
     try {
-      if (token) sessionStorage.setItem(TOKEN_KEY, token);
-      else sessionStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(TOKEN_KEY);
+      if (token) localStorage.setItem(TOKEN_KEY, token);
+      else localStorage.removeItem(TOKEN_KEY);
     } catch (e) {
       /* storage blocked: the session lasts for this page only */
     }
+  }
+
+  /** Bearer mode: tells `fn` when ANOTHER tab of this browser logged in or out. */
+  function onSessionChange(fn) {
+    if (!bearer()) return;
+    window.addEventListener("storage", (e) => {
+      if (e.key === TOKEN_KEY && e.newValue !== e.oldValue) fn(Boolean(e.newValue));
+    });
   }
 
   async function request(method, path, body, params) {
@@ -177,6 +198,10 @@
     enabled,
     ApiError,
     setToken,
+    // false = this browser cannot be logged in: the session travels as a token and it holds none.
+    // (With a cookie session the page can't tell; only the backend knows.)
+    mayHaveSession: () => !bearer() || Boolean(getToken()),
+    onSessionChange,
     serverConfig,
     get: (path, params) => request("GET", path, undefined, params),
     post: (path, body) => request("POST", path, body || {}),

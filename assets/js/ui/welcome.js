@@ -125,7 +125,8 @@
   }
 
   // Whichever comes first: the logo mark is complete, a little over a second has passed, or the film never starts.
-  var giveUp = window.setTimeout(finish, 900);
+  // On a first visit the film has to be downloaded first: the page is not kept covered for that.
+  var giveUp = window.setTimeout(finish, 600);
   function watch() {
     if (done) return;
     if (film.currentTime >= STOP_AT) return finish();

@@ -12,10 +12,11 @@
 import { config } from "../config.js";
 import { db } from "../db/index.js";
 import { errors } from "../lib/errors.js";
-import { clearSessionCookie, readCookie } from "../lib/security.js";
+import { clearSessionCookie, readCookie, setSessionCookie } from "../lib/security.js";
 import { hashToken } from "../lib/tokens.js";
 
 const TOUCH_AFTER_MS = 5 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 function tokenFrom(req) {
   const cookie = readCookie(req, config.cookie.name);
@@ -31,7 +32,7 @@ export async function attachSession(req, res, next) {
   const found = tokenFrom(req);
   if (!found || found.token.length < 20 || found.token.length > 200) return next();
   const { rows } = await db.query(
-    `SELECT s.id AS session_id, s.last_seen_at,
+    `SELECT s.id AS session_id, s.last_seen_at, s.expires_at,
             u.id, u.name, u.email, u.phone, u.role, u.status, u.shop_id, u.created_at,
             u.artist_id, sh.shop_code, sh.name AS shop_name, sh.approval_status, sh.active_status, ar.artist_code
        FROM sessions s
@@ -66,6 +67,15 @@ export async function attachSession(req, res, next) {
   };
   if (Date.now() - new Date(row.last_seen_at).getTime() > TOUCH_AFTER_MS) {
     db.query("UPDATE sessions SET last_seen_at = now() WHERE id = $1", [row.session_id]).catch(() => {});
+  }
+  // Staying logged in: a session that is used gets its full lifetime again (at most once a day), so someone who
+  // keeps coming back is never logged out. One that is not used for SESSION_TTL_DAYS still runs out, and
+  // logging out, a changed password or a disabled account end it at once, as before.
+  const ttlMs = config.sessionTtlDays * DAY_MS;
+  if (new Date(row.expires_at).getTime() - Date.now() < ttlMs - DAY_MS) {
+    const until = new Date(Date.now() + ttlMs);
+    db.query("UPDATE sessions SET expires_at = $2 WHERE id = $1 AND revoked_at IS NULL", [row.session_id, until]).catch(() => {});
+    if (found.via === "cookie") setSessionCookie(res, found.token, until);
   }
   next();
 }
