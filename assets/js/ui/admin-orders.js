@@ -187,7 +187,7 @@
       <div class="sd-toolbar">
         <div class="chip-scroll" role="group" aria-label="Filter by order status">${FILTERS.map(([id, label]) => `<a class="chip" href="${link({ status: id, page: "" })}" aria-pressed="${status === id}">${esc(label)}</a>`).join("")}</div>
         <a class="btn btn--outline btn--sm" href="#/orders/updates">${icon("phone")} Send order updates on WhatsApp</a>
-        <form class="ad-search" data-search role="search"><input type="search" name="q" value="${esc(q)}" placeholder="Order number, name, email or phone" aria-label="Search orders"><button class="btn btn--dark btn--sm" type="submit">Search</button></form>
+        <form class="adm-search" data-search role="search"><input type="search" name="q" value="${esc(q)}" placeholder="Order number, name, email or phone" aria-label="Search orders"><button class="btn btn--dark btn--sm" type="submit">Search</button></form>
       </div>
       ${
         r.items.length
@@ -254,7 +254,7 @@
                 )
                 .join("")}
             </tbody></table></div>
-            ${o.refunds.length ? `<h3 class="ad-subtitle">Refunds</h3><ul class="ao-facts">${o.refunds.map((f) => `<div><dt>${formatPrice(f.amount)} · ${esc(f.status.toLowerCase())}${f.reason ? ` · ${esc(f.reason)}` : ""}</dt><dd>${esc(v.when(f.createdAt))}</dd></div>`).join("")}</ul>` : ""}
+            ${o.refunds.length ? `<h3 class="adm-subtitle">Refunds</h3><ul class="ao-facts">${o.refunds.map((f) => `<div><dt>${formatPrice(f.amount)} · ${esc(f.status.toLowerCase())}${f.reason ? ` · ${esc(f.reason)}` : ""}</dt><dd>${esc(v.when(f.createdAt))}</dd></div>`).join("")}</ul>` : ""}
           </section>
           <section class="co-card"><h2 class="co-card__title">${icon("clock")} History</h2>${v.timelineHtml(o)}</section>
         </div>

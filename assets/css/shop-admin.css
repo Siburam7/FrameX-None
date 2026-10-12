@@ -1697,14 +1697,14 @@ p.iu-errors {
   gap: 8px;
 }
 
-.so-item__photos .ad-subtitle {
+.so-item__photos .adm-subtitle {
   display: flex;
   align-items: center;
   gap: 6px;
   margin: 0;
 }
 
-.so-item__photos .ad-subtitle .icon {
+.so-item__photos .adm-subtitle .icon {
   width: 16px;
   height: 16px;
 }
@@ -1751,14 +1751,14 @@ p.iu-errors {
 }
 
 /* Admin: a shop's product in the moderation table */
-.ad-product {
+.adm-product {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 180px;
 }
 
-.ad-product img {
+.adm-product img {
   flex: none;
   width: 48px;
   height: 48px;

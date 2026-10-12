@@ -23,7 +23,7 @@
     if (!FrameX.http.enabled()) return (out.innerHTML = `<div class="state-message"><strong>Search isn't available right now</strong><span>You can still browse the shop.</span><a class="btn btn--primary btn--sm" href="shop.html">Shop frames</a></div>`);
     const row = (kind, i) => {
       const meta = kind === "products" ? i.shopName : kind === "artworks" ? `by ${i.artistName} · ${rupees(i.price)}` : kind === "artists" ? `@${i.username} · ${i.city}` : kind === "shops" ? i.city : "Design template";
-      return `<a class="cp-row" href="${esc(i.url)}">${i.image ? `<img class="ad-thumb" src="${esc(FrameX.http.asset(i.image))}" alt="" loading="lazy">` : `<span class="artist-photo" aria-hidden="true">${esc(String(i.name).slice(0, 1).toUpperCase())}</span>`}<span><strong>${esc(i.name)}</strong><br><span class="cp-row__meta">${esc(meta || "")}</span></span>${icon("arrow-right")}</a>`;
+      return `<a class="cp-row" href="${esc(i.url)}">${i.image ? `<img class="adm-thumb" src="${esc(FrameX.http.asset(i.image))}" alt="" loading="lazy">` : `<span class="artist-photo" aria-hidden="true">${esc(String(i.name).slice(0, 1).toUpperCase())}</span>`}<span><strong>${esc(i.name)}</strong><br><span class="cp-row__meta">${esc(meta || "")}</span></span>${icon("arrow-right")}</a>`;
     };
     let last = 0;
     // For the visitor statistics: the words someone searched for, once they stop typing (not every letter on the way).

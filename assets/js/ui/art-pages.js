@@ -219,7 +219,7 @@
 
       <div class="artist-about">
         <section class="art-panel" aria-labelledby="ab-title"><h2 id="ab-title">About ${esc(a.name.split(/\s+/)[0])}</h2>${a.bio ? a.bio.split(/\n{2,}/).map((p) => `<p>${esc(p)}</p>`).join("") : `<p class="pp-muted">This artist hasn't written about themselves yet.</p>`}</section>
-        <section class="art-panel" aria-labelledby="ad-title"><h2 id="ad-title">Details</h2>
+        <section class="art-panel" aria-labelledby="adm-title"><h2 id="adm-title">Details</h2>
           <dl class="art-facts">
             ${a.specialties.length ? `<div><dt>Specialties</dt><dd>${esc(a.specialties.join(", "))}</dd></div>` : ""}
             ${a.mediums.length ? `<div><dt>Mediums</dt><dd>${esc(a.mediums.join(", "))}</dd></div>` : ""}

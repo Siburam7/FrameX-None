@@ -1037,7 +1037,7 @@ textarea.input {
 }
 
 /* Artist dashboard and admin: what is its own ---------------------------------- */
-.ad-thumb {
+.adm-thumb {
   width: 56px;
   height: 56px;
   border-radius: var(--radius-sm);
@@ -1045,7 +1045,7 @@ textarea.input {
   object-fit: cover;
 }
 
-.ad-reason {
+.adm-reason {
   margin-top: 6px;
   padding: 8px 10px;
   border-radius: var(--radius-sm);
@@ -1054,43 +1054,43 @@ textarea.input {
   font-size: var(--text-sm);
 }
 
-.ad-form {
+.adm-form {
   display: grid;
   gap: 14px;
   max-width: 760px;
 }
 
-.ad-form__row {
+.adm-form__row {
   display: grid;
   gap: 14px;
 }
 
 @media (min-width: 640px) {
-  .ad-form__row {
+  .adm-form__row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-.ad-check {
+.adm-check {
   display: flex;
   align-items: center;
   gap: 10px;
   font-size: var(--text-sm);
 }
 
-.ad-check input {
+.adm-check input {
   width: 18px;
   height: 18px;
   accent-color: var(--accent);
 }
 
-.ad-pics {
+.adm-pics {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-.ad-pics .ref-tile {
+.adm-pics .ref-tile {
   width: 110px;
 }
 

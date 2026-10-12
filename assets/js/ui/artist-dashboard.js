@@ -69,22 +69,22 @@
   /* ---------------------------------------------------------------- Overview */
   async function overview(main) {
     const o = await http().get("/artist/overview");
-    const tile = (n, label, href, alert = false) => `<a class="ad-tile ${alert ? "ad-tile--alert" : ""}" href="${href}"><strong>${n}</strong><span>${esc(label)}</span></a>`;
+    const tile = (n, label, href, alert = false) => `<a class="adm-tile ${alert ? "adm-tile--alert" : ""}" href="${href}"><strong>${n}</strong><span>${esc(label)}</span></a>`;
     main.innerHTML = `${head("Overview", o.artist.listed ? "Your profile is listed on FrameX." : "Your profile is not listed at the moment. Contact FrameX if this is unexpected.")}
-      <div class="ad-tiles">
+      <div class="adm-tiles">
         ${tile(o.requests.new, "New requests to answer", "#/requests?filter=new", o.requests.new > 0)}
         ${tile(o.requests.accepted, "Accepted, advance pending", "#/requests?filter=accepted")}
         ${tile(o.requests.active, "Active painting jobs", "#/requests?filter=active", o.requests.active > 0)}
         ${tile(o.requests.completed, "Completed jobs", "#/requests?filter=completed")}
       </div>
-      <h2 class="ad-subtitle">Artworks</h2>
-      <div class="ad-tiles">
+      <h2 class="adm-subtitle">Artworks</h2>
+      <div class="adm-tiles">
         ${tile(o.artworks.APPROVED, "Approved (on show)", "#/artworks?status=APPROVED")}
         ${tile(o.artworks.PENDING_REVIEW, "Waiting for review", "#/artworks?status=PENDING_REVIEW")}
         ${tile(o.artworks.REJECTED, "Rejected", "#/artworks?status=REJECTED", o.artworks.REJECTED > 0)}
       </div>
-      <h2 class="ad-subtitle">Payments from customers</h2>
-      <div class="ad-tiles">
+      <h2 class="adm-subtitle">Payments from customers</h2>
+      <div class="adm-tiles">
         ${tile(rupees(o.earnings.paintings.received), "Paid for custom paintings", "#/requests")}
         ${tile(rupees(o.earnings.paintings.outstanding), "Still to be paid on open jobs", "#/requests?filter=active")}
         ${tile(rupees(o.earnings.artworks.paid), "Paid for artworks", "#/orders")}
@@ -100,7 +100,7 @@
       <div class="sd-toolbar"><div class="chip-scroll" role="group" aria-label="Filter">${FILTERS.map(([id, label]) => `<a class="chip" href="#/requests${id ? `?filter=${id}` : ""}" aria-pressed="${filter === id}">${esc(label)}${id && r.counts[id] ? ` (${r.counts[id]})` : ""}</a>`).join("")}</div></div>
       ${r.items.length
         ? `<ul class="sd-list">${r.items
-            .map((p) => `<li class="sd-item ad-item"><a class="sd-item__main" href="#/requests/${esc(p.requestNumber)}"><strong>${esc(p.service.size)} ${esc(p.service.artType)}</strong><span class="sd-item__meta">${esc(p.requestNumber)} · ${esc(p.customerName)} · ${rupees(p.price)} · ${esc(when(p.createdAt))}</span><span class="sd-item__meta">${esc(p.nextStep)}</span></a>${pv().badge(p.status)}</li>`)
+            .map((p) => `<li class="sd-item adm-item"><a class="sd-item__main" href="#/requests/${esc(p.requestNumber)}"><strong>${esc(p.service.size)} ${esc(p.service.artType)}</strong><span class="sd-item__meta">${esc(p.requestNumber)} · ${esc(p.customerName)} · ${rupees(p.price)} · ${esc(when(p.createdAt))}</span><span class="sd-item__meta">${esc(p.nextStep)}</span></a>${pv().badge(p.status)}</li>`)
             .join("")}</ul>`
         : emptyBox("mail", filter ? "Nothing here" : "No requests yet", filter ? "No request matches this filter." : "Requests from customers appear here. Make sure your price list has at least one service.", `<a class="btn btn--outline btn--sm" href="#/services">Open your price list</a>`)}`;
   }
@@ -213,10 +213,10 @@
       <div class="sd-toolbar"><div class="chip-scroll" role="group" aria-label="Filter">${tabs.map(([id, label]) => `<a class="chip" href="#/artworks${id ? `?status=${id}` : ""}" aria-pressed="${status === id}">${esc(label)}${id && r.counts[id] ? ` (${r.counts[id]})` : ""}</a>`).join("")}</div></div>
       ${r.items.length
         ? `<ul class="sd-list">${r.items
-            .map((w) => `<li class="sd-item ad-item" data-artwork="${esc(w.id)}">
-              ${w.images[0] ? `<img class="ad-thumb" src="${esc(img(w.images[0]))}" alt="" loading="lazy">` : ""}
+            .map((w) => `<li class="sd-item adm-item" data-artwork="${esc(w.id)}">
+              ${w.images[0] ? `<img class="adm-thumb" src="${esc(img(w.images[0]))}" alt="" loading="lazy">` : ""}
               <div class="sd-item__main"><strong>${esc(w.title)}</strong><span class="sd-item__meta">${esc(w.artTypeName)} · ${esc(w.medium)} · ${esc(w.size)} · ${rupees(w.price)}</span>
-                ${w.status === "REJECTED" && w.rejectionReason ? `<p class="ad-reason"><strong>Why it was rejected:</strong> ${esc(w.rejectionReason)}</p>` : ""}</div>
+                ${w.status === "REJECTED" && w.rejectionReason ? `<p class="adm-reason"><strong>Why it was rejected:</strong> ${esc(w.rejectionReason)}</p>` : ""}</div>
               ${artBadge(w.status)}
               <div class="sd-item__actions">
                 ${w.status !== "CANCELLED" ? `<a class="iu-btn" href="#/artworks/${esc(w.id)}">${icon("edit")} Edit</a>` : ""}
@@ -254,23 +254,23 @@
 
     main.innerHTML = `<a class="sd-back" href="#/artworks">${icon("chev-left")} All artworks</a>
       ${head(id === "new" ? "Add artwork" : "Edit artwork", w.status === "APPROVED" ? "This artwork is approved. If you change it, it goes back to FrameX for review and is hidden until it is approved again." : "FrameX reviews it before customers can see it.", w.status ? artBadge(w.status) : "")}
-      ${w.status === "REJECTED" && w.rejectionReason ? `<p class="ad-reason" style="margin-bottom:14px"><strong>Why it was rejected:</strong> ${esc(w.rejectionReason)}</p>` : ""}
-      <form class="ad-form" novalidate>
+      ${w.status === "REJECTED" && w.rejectionReason ? `<p class="adm-reason" style="margin-bottom:14px"><strong>Why it was rejected:</strong> ${esc(w.rejectionReason)}</p>` : ""}
+      <form class="adm-form" novalidate>
         <div class="form-field" data-invalid="false"><label>Pictures <span class="hint">(the first one is the main picture; up to 8)</span></label>
-          <div class="ad-pics" data-pics></div><p class="form-field__error" id="aw-images-err">${icon("alert")}<span></span></p></div>
+          <div class="adm-pics" data-pics></div><p class="form-field__error" id="aw-images-err">${icon("alert")}<span></span></p></div>
         ${text("title", "Title", w.title, { required: true, maxlength: 140 })}
-        <div class="ad-form__row">
+        <div class="adm-form__row">
           <div class="form-field" data-invalid="false"><label for="aw-artType">Art type</label><select class="select" id="aw-artType" name="artType" required aria-describedby="aw-artType-err"><option value="">Choose…</option>${types.map((t) => `<option value="${esc(t.id)}"${t.id === w.artType ? " selected" : ""}>${esc(t.name)}</option>`).join("")}</select><p class="form-field__error" id="aw-artType-err">${icon("alert")}<span></span></p></div>
           ${text("medium", "Medium", w.medium, { required: true, maxlength: 80, placeholder: "e.g. Oil on canvas" })}
         </div>
-        <div class="ad-form__row">${text("size", "Size", w.size, { required: true, maxlength: 60, placeholder: "e.g. 18 x 24 in" })}${text("price", "Price (₹)", w.price, { required: true, inputmode: "numeric", placeholder: "Whole rupees" })}</div>
-        <div class="ad-form__row">
+        <div class="adm-form__row">${text("size", "Size", w.size, { required: true, maxlength: 60, placeholder: "e.g. 18 x 24 in" })}${text("price", "Price (₹)", w.price, { required: true, inputmode: "numeric", placeholder: "Whole rupees" })}</div>
+        <div class="adm-form__row">
           <div class="form-field" data-invalid="false"><label for="aw-kind">Original or print</label><select class="select" id="aw-kind" name="kind"><option value="ORIGINAL"${w.kind !== "PRINT" ? " selected" : ""}>Original (one piece)</option><option value="PRINT"${w.kind === "PRINT" ? " selected" : ""}>Print (several copies)</option></select></div>
           ${text("stock", "Copies available (prints only)", w.kind === "PRINT" ? w.stock : "", { inputmode: "numeric" })}
         </div>
-        <div class="ad-form__row">${text("year", "Year it was made", w.year || "", { inputmode: "numeric", maxlength: 4 })}${text("canvasDetails", "Canvas details", w.canvasDetails, { maxlength: 200, placeholder: "e.g. Stretched cotton canvas" })}</div>
-        <label class="ad-check"><input type="checkbox" name="handmade"${w.handmade ? " checked" : ""}> Handmade by me</label>
-        <label class="ad-check"><input type="checkbox" name="frameIncluded"${w.frameIncluded ? " checked" : ""}> A frame is included</label>
+        <div class="adm-form__row">${text("year", "Year it was made", w.year || "", { inputmode: "numeric", maxlength: 4 })}${text("canvasDetails", "Canvas details", w.canvasDetails, { maxlength: 200, placeholder: "e.g. Stretched cotton canvas" })}</div>
+        <label class="adm-check"><input type="checkbox" name="handmade"${w.handmade ? " checked" : ""}> Handmade by me</label>
+        <label class="adm-check"><input type="checkbox" name="frameIncluded"${w.frameIncluded ? " checked" : ""}> A frame is included</label>
         ${text("frameDetails", "Frame details", w.frameDetails, { maxlength: 200, placeholder: "e.g. Teak wood frame, ready to hang" })}
         ${text("description", "Description", w.description, { rows: 5, maxlength: 3000 })}
         ${text("shipping", "Shipping / delivery", w.shipping, { rows: 2, maxlength: 400, placeholder: "How you pack and send it, and how long it takes" })}
@@ -324,17 +324,17 @@
     const { items } = await http().get("/artist/services");
     const f = forms().field;
     const row = (s) => `<tr data-service="${esc(s.id)}"><td><strong>${esc(s.size)} ${esc(s.artType)}</strong><br><span class="sd-item__meta">${esc([s.title, s.medium, s.estDays ? `about ${s.estDays} days` : ""].filter(Boolean).join(" · "))}</span></td><td>${rupees(s.price)}</td><td><span class="sd-status sd-status--${s.active ? "published" : "draft"}">${s.active ? "Offered" : "Hidden"}</span></td><td><div class="sd-item__actions"><button class="iu-btn" type="button" data-edit>${icon("edit")} Edit</button><button class="iu-btn" type="button" data-toggle>${s.active ? "Hide" : "Offer"}</button><button class="iu-btn iu-btn--danger" type="button" data-remove>Remove</button></div></td></tr>`;
-    const formHtml = (s = {}) => `<form class="ad-form" data-service-form="${esc(s.id || "")}" novalidate>
-        <div class="ad-form__row">${f("title", "Service name", { required: true, value: s.title || "", maxlength: 80, placeholder: "e.g. Pencil portrait", prefix: "sv" })}${f("artType", "Art type", { required: true, value: s.artType || "", maxlength: 60, placeholder: "e.g. Pencil Drawing", prefix: "sv" })}</div>
-        <div class="ad-form__row">${f("size", "Size", { required: true, value: s.size || "", maxlength: 40, placeholder: "e.g. 12 × 16", prefix: "sv" })}${f("price", "Fixed price (₹)", { required: true, value: s.price || "", inputmode: "numeric", prefix: "sv" })}</div>
-        <div class="ad-form__row">${f("medium", "Medium", { value: s.medium || "", maxlength: 80, placeholder: "e.g. Graphite", prefix: "sv" })}${f("estDays", "Estimated days to complete", { value: s.estDays || "", inputmode: "numeric", prefix: "sv" })}</div>
+    const formHtml = (s = {}) => `<form class="adm-form" data-service-form="${esc(s.id || "")}" novalidate>
+        <div class="adm-form__row">${f("title", "Service name", { required: true, value: s.title || "", maxlength: 80, placeholder: "e.g. Pencil portrait", prefix: "sv" })}${f("artType", "Art type", { required: true, value: s.artType || "", maxlength: 60, placeholder: "e.g. Pencil Drawing", prefix: "sv" })}</div>
+        <div class="adm-form__row">${f("size", "Size", { required: true, value: s.size || "", maxlength: 40, placeholder: "e.g. 12 × 16", prefix: "sv" })}${f("price", "Fixed price (₹)", { required: true, value: s.price || "", inputmode: "numeric", prefix: "sv" })}</div>
+        <div class="adm-form__row">${f("medium", "Medium", { value: s.medium || "", maxlength: 80, placeholder: "e.g. Graphite", prefix: "sv" })}${f("estDays", "Estimated days to complete", { value: s.estDays || "", inputmode: "numeric", prefix: "sv" })}</div>
         ${f("description", "Description", { value: s.description || "", rows: 2, maxlength: 600, prefix: "sv" })}
         <div class="form-status" role="status" aria-live="polite"></div>
         <div style="display:flex;gap:10px"><button class="btn btn--dark btn--sm" type="submit">${s.id ? "Save service" : "Add service"}</button>${s.id ? `<a class="btn btn--outline btn--sm" href="#/services">Cancel</a>` : ""}</div>
       </form>`;
     main.innerHTML = `${head("Custom painting price list", "Each service is a size and type of work at a fixed price. Customers choose one and see the price before they send a request.")}
       ${items.length ? `<div class="sd-table-wrap"><table class="sd-table"><thead><tr><th scope="col">Service</th><th scope="col">Price</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead><tbody>${items.map(row).join("")}</tbody></table></div>` : emptyBox("receipt", "No services yet", "Add at least one service so customers can send you a custom painting request.")}
-      <h2 class="ad-subtitle" data-form-title>Add a service</h2><div data-form>${formHtml()}</div>`;
+      <h2 class="adm-subtitle" data-form-title>Add a service</h2><div data-form>${formHtml()}</div>`;
     const wire = () =>
       forms().handle($("[data-service-form]", main), {
         busyLabel: "Saving…",
@@ -383,7 +383,7 @@
     const r = await http().get("/artist/orders");
     main.innerHTML = `${head("Artwork orders", "Orders that contain one of your artworks. Pack it carefully and update where you are with it.")}
       ${r.items.length
-        ? `<ul class="sd-list">${r.items.map((o) => `<li class="sd-item ad-item"><a class="sd-item__main" href="#/orders/${esc(o.orderNumber)}"><strong>${esc(o.firstItem ? o.firstItem.name : o.orderNumber)}</strong><span class="sd-item__meta">${esc(o.orderNumber)} · ${esc(o.customerName)} · ${rupees(o.itemsTotal)} · ${esc(when(o.placedAt))}</span><span class="sd-item__meta">${esc(o.payment)}</span></a>${o.needsAction ? `<span class="sd-status sd-status--pending_review">New</span>` : `<span class="sd-status sd-status--published">${esc(o.status.replace(/_/g, " ").toLowerCase())}</span>`}</li>`).join("")}</ul>`
+        ? `<ul class="sd-list">${r.items.map((o) => `<li class="sd-item adm-item"><a class="sd-item__main" href="#/orders/${esc(o.orderNumber)}"><strong>${esc(o.firstItem ? o.firstItem.name : o.orderNumber)}</strong><span class="sd-item__meta">${esc(o.orderNumber)} · ${esc(o.customerName)} · ${rupees(o.itemsTotal)} · ${esc(when(o.placedAt))}</span><span class="sd-item__meta">${esc(o.payment)}</span></a>${o.needsAction ? `<span class="sd-status sd-status--pending_review">New</span>` : `<span class="sd-status sd-status--published">${esc(o.status.replace(/_/g, " ").toLowerCase())}</span>`}</li>`).join("")}</ul>`
         : emptyBox("package", "No orders yet", "When a customer buys one of your approved artworks, the order appears here.")}`;
   }
 
@@ -423,17 +423,17 @@
     const f = forms().field;
     let photoRef = p.photoRef;
     main.innerHTML = `${head("Your profile", "This is what customers see on your public page. Your phone number and email are never shown.")}
-      <form class="ad-form" novalidate>
-        <div class="form-field"><label>Profile photo</label><div class="ad-pics" data-photo></div></div>
-        <div class="ad-form__row">${f("name", "Artist name", { required: true, value: p.name, maxlength: 80, prefix: "ap" })}${f("username", "Username", { required: true, value: p.username, maxlength: 30, prefix: "ap", hint: "Shown as @username. Letters, numbers, dots and underscores." })}</div>
+      <form class="adm-form" novalidate>
+        <div class="form-field"><label>Profile photo</label><div class="adm-pics" data-photo></div></div>
+        <div class="adm-form__row">${f("name", "Artist name", { required: true, value: p.name, maxlength: 80, prefix: "ap" })}${f("username", "Username", { required: true, value: p.username, maxlength: 30, prefix: "ap", hint: "Shown as @username. Letters, numbers, dots and underscores." })}</div>
         ${f("bio", "Story / about you", { value: p.bio, rows: 5, maxlength: 2000, prefix: "ap" })}
         ${f("experience", "Experience", { value: p.experience, maxlength: 300, placeholder: "e.g. 8 years, fine arts graduate", prefix: "ap" })}
-        <div class="ad-form__row">${f("specialties", "Specialties", { value: p.specialties.join(", "), maxlength: 400, prefix: "ap", hint: "Separate with commas." })}${f("mediums", "Mediums", { value: p.mediums.join(", "), maxlength: 400, prefix: "ap", hint: "Separate with commas." })}</div>
+        <div class="adm-form__row">${f("specialties", "Specialties", { value: p.specialties.join(", "), maxlength: 400, prefix: "ap", hint: "Separate with commas." })}${f("mediums", "Mediums", { value: p.mediums.join(", "), maxlength: 400, prefix: "ap", hint: "Separate with commas." })}</div>
         ${f("styles", "Art styles", { value: p.styles.join(", "), maxlength: 400, prefix: "ap", hint: "Separate with commas. Customers can search by these." })}
-        <div class="ad-form__row">${f("city", "City", { required: true, value: p.location.city, maxlength: 80, prefix: "ap" })}${f("state", "State", { required: true, value: p.location.state, maxlength: 80, prefix: "ap" })}</div>
+        <div class="adm-form__row">${f("city", "City", { required: true, value: p.location.city, maxlength: 80, prefix: "ap" })}${f("state", "State", { required: true, value: p.location.state, maxlength: 80, prefix: "ap" })}</div>
         ${f("area", "Area / locality", { value: p.area, maxlength: 120, prefix: "ap", hint: "Only the area, never your street address." })}
-        <label class="ad-check"><input type="checkbox" name="showArea"${p.showArea ? " checked" : ""}> Show my area on my public profile (your city is always shown)</label>
-        <label class="ad-check"><input type="checkbox" name="customEnabled"${p.customEnabled ? " checked" : ""}> I am taking custom painting requests</label>
+        <label class="adm-check"><input type="checkbox" name="showArea"${p.showArea ? " checked" : ""}> Show my area on my public profile (your city is always shown)</label>
+        <label class="adm-check"><input type="checkbox" name="customEnabled"${p.customEnabled ? " checked" : ""}> I am taking custom painting requests</label>
         <div class="form-status" role="status" aria-live="polite"></div>
         <div><button class="btn btn--primary" type="submit">Save profile</button></div>
       </form>`;

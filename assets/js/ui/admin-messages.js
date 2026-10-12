@@ -24,7 +24,7 @@
   const when = (iso) => new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
   const replyLink = (m) => `mailto:${encodeURIComponent(m.email)}?subject=${encodeURIComponent("Re: " + m.subject)}`;
 
-  const row = (m) => `<li class="sd-item ad-item" data-message="${esc(m.id)}">
+  const row = (m) => `<li class="sd-item adm-item" data-message="${esc(m.id)}">
       <div class="sd-item__main">
         <strong>${esc(m.subject)} ${m.status === "NEW" ? `<span class="sd-status sd-status--pending_review">New</span>` : ""}</strong>
         <span class="sd-item__meta">${esc(m.name)} · <a href="${esc(replyLink(m))}">${esc(m.email)}</a>${m.phone ? ` · <a href="tel:${esc(m.phone.replace(/[^\d+]/g, ""))}">${esc(m.phone)}</a>` : ""}${m.hasAccount ? " · has a FrameX account" : ""} · ${esc(when(m.createdAt))}</span>
@@ -48,7 +48,7 @@
       ${r.items.length
         ? `<ul class="sd-list">${r.items.map(row).join("")}</ul>`
         : `<div class="sd-empty">${icon("mail")}<strong>${status === "NEW" ? "No new messages" : "No messages yet"}</strong><span>Messages sent from the Contact page appear here.</span></div>`}
-      ${pages > 1 ? `<div class="ad-actions" style="margin-top:16px">${page > 1 ? `<a class="btn btn--outline btn--sm" href="${link(page - 1)}">Newer</a>` : ""}<span class="sd-item__meta">Page ${page} of ${pages}</span>${page < pages ? `<a class="btn btn--outline btn--sm" href="${link(page + 1)}">Older</a>` : ""}</div>` : ""}`;
+      ${pages > 1 ? `<div class="adm-actions" style="margin-top:16px">${page > 1 ? `<a class="btn btn--outline btn--sm" href="${link(page - 1)}">Newer</a>` : ""}<span class="sd-item__meta">Page ${page} of ${pages}</span>${page < pages ? `<a class="btn btn--outline btn--sm" href="${link(page + 1)}">Older</a>` : ""}</div>` : ""}`;
     main.onclick = async (e) => {
       const item = e.target.closest("[data-message]");
       if (!item) return;

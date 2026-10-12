@@ -26,19 +26,19 @@
     setTimeout(() => btn.isConnected && (btn.classList.remove("is-confirming"), (btn.textContent = btn.dataset.label)), 4000);
     return false;
   };
-  const credentials = (c) => `<div class="ad-credentials" role="status"><strong>${c.emailed ? "Setup link emailed" : "Setup link created"}</strong>
+  const credentials = (c) => `<div class="adm-credentials" role="status"><strong>${c.emailed ? "Setup link emailed" : "Setup link created"}</strong>
       <p>${c.emailed ? `We emailed the link to ${esc(c.accountEmail)}.` : `Email isn't set up, so pass this link to the artist yourself (${esc(c.accountEmail)}).`} It works once and expires on ${esc(when(c.expiresAt))}.</p>
-      <div class="ad-link"><input class="input" type="text" readonly value="${esc(c.setupUrl)}" aria-label="One-time setup link"><button class="btn btn--dark btn--sm" type="button" data-copy="${esc(c.setupUrl)}">${icon("copy")} Copy link</button></div></div>`;
+      <div class="adm-link"><input class="input" type="text" readonly value="${esc(c.setupUrl)}" aria-label="One-time setup link"><button class="btn btn--dark btn--sm" type="button" data-copy="${esc(c.setupUrl)}">${icon("copy")} Copy link</button></div></div>`;
 
   /* ---------------------------------------------------------------- Artists */
   const ART_STATUS = { ACTIVE: "Listed", INACTIVE: "Not listed" };
 
   function artistFields(a = {}, { account = true } = {}) {
     const f = forms().field;
-    return `<div class="ad-form__row">${f("name", "Artist name", { required: true, value: a.name || "", maxlength: 80, prefix: "ar" })}${f("username", "Username", { value: a.username || "", maxlength: 30, prefix: "ar", hint: "Leave empty to make one from the name." })}</div>
-      <div class="ad-form__row">${f("city", "City", { required: true, value: a.city || "", maxlength: 80, prefix: "ar" })}${f("state", "State", { required: true, value: a.state || "", maxlength: 80, prefix: "ar" })}</div>
-      <div class="ad-form__row">${f("area", "Area / locality", { value: a.area || "", maxlength: 120, prefix: "ar", hint: "Never a street address." })}${f("experience", "Experience", { value: a.experience || "", maxlength: 300, prefix: "ar" })}</div>
-      <div class="ad-form__row">${f("styles", "Art styles", { value: a.styles || "", maxlength: 300, prefix: "ar", hint: "Separate with commas." })}${f("mediums", "Mediums", { value: a.mediums || "", maxlength: 300, prefix: "ar", hint: "Separate with commas." })}</div>
+    return `<div class="adm-form__row">${f("name", "Artist name", { required: true, value: a.name || "", maxlength: 80, prefix: "ar" })}${f("username", "Username", { value: a.username || "", maxlength: 30, prefix: "ar", hint: "Leave empty to make one from the name." })}</div>
+      <div class="adm-form__row">${f("city", "City", { required: true, value: a.city || "", maxlength: 80, prefix: "ar" })}${f("state", "State", { required: true, value: a.state || "", maxlength: 80, prefix: "ar" })}</div>
+      <div class="adm-form__row">${f("area", "Area / locality", { value: a.area || "", maxlength: 120, prefix: "ar", hint: "Never a street address." })}${f("experience", "Experience", { value: a.experience || "", maxlength: 300, prefix: "ar" })}</div>
+      <div class="adm-form__row">${f("styles", "Art styles", { value: a.styles || "", maxlength: 300, prefix: "ar", hint: "Separate with commas." })}${f("mediums", "Mediums", { value: a.mediums || "", maxlength: 300, prefix: "ar", hint: "Separate with commas." })}</div>
       ${f("bio", "About", { value: a.bio || "", rows: 3, maxlength: 2000, prefix: "ar" })}
       ${account ? f("accountEmail", "Login email", { required: true, type: "email", value: a.email || "", prefix: "ar", hint: "The artist gets a one-time link to set their own password. You never see or set it." }) : ""}`;
   }
@@ -49,7 +49,7 @@
     const done = params.get("done");
     if (tab === "new") {
       main.innerHTML = `<a class="sd-back" href="#/artists">${icon("chev-left")} Artists</a>${head("Add an artist", "For an artist you onboarded yourself. They get a one-time link to set their password.")}
-        <form class="ad-form" novalidate>${artistFields()}<div class="form-status" role="status" aria-live="polite"></div><div><button class="btn btn--primary" type="submit">Create artist</button></div></form><div data-result></div>`;
+        <form class="adm-form" novalidate>${artistFields()}<div class="form-status" role="status" aria-live="polite"></div><div><button class="btn btn--primary" type="submit">Create artist</button></div></form><div data-result></div>`;
       forms().handle($("form", main), {
         busyLabel: "Creating…",
         send: (v) => http().post("/admin/artists", { artist: readArtist(v), accountEmail: v.accountEmail }),
@@ -62,10 +62,10 @@
     }
     const [apps, list] = await Promise.all([http().get("/admin/artist-applications", { status: "PENDING" }), http().get("/admin/artists")]);
     main.innerHTML = `${head("Artists", "Artists apply from the Art & Artists page. Approving creates their profile and a login they finish with a one-time link. There is no public artist sign-up.", `<a class="btn btn--primary btn--sm" href="#/artists?tab=new">${icon("plus")} Add an artist</a>`)}
-      <h2 class="ad-subtitle">Applications to review (${apps.items.length})</h2>
+      <h2 class="adm-subtitle">Applications to review (${apps.items.length})</h2>
       ${apps.items.length
         ? `<ul class="sd-list">${apps.items
-            .map((a) => `<li class="sd-item ad-item" data-app="${esc(a.id)}"><div class="sd-item__main"><strong>${esc(a.name)}</strong><span class="sd-item__meta">${esc([a.city, a.state].join(", "))} · ${esc(a.email)} · ${esc(a.phone)} · ${esc(when(a.createdAt))}</span>
+            .map((a) => `<li class="sd-item adm-item" data-app="${esc(a.id)}"><div class="sd-item__main"><strong>${esc(a.name)}</strong><span class="sd-item__meta">${esc([a.city, a.state].join(", "))} · ${esc(a.email)} · ${esc(a.phone)} · ${esc(when(a.createdAt))}</span>
               <span class="sd-item__meta">${esc([a.artStyles && `Styles: ${a.artStyles}`, a.mediums && `Mediums: ${a.mediums}`, a.experience && `Experience: ${a.experience}`].filter(Boolean).join(" · "))}</span>
               ${a.portfolioUrl ? `<span class="sd-item__meta"><a href="${esc(a.portfolioUrl)}" target="_blank" rel="noopener noreferrer nofollow">Their work</a></span>` : ""}${a.message ? `<span class="sd-item__meta">“${esc(a.message)}”</span>` : ""}
               <div data-approve hidden></div></div>
@@ -73,7 +73,7 @@
             .join("")}</ul>`
         : emptyBox("check", "No applications waiting")}
       <div data-result>${done ? "" : ""}</div>
-      <h2 class="ad-subtitle">Artists (${list.items.length})</h2>
+      <h2 class="adm-subtitle">Artists (${list.items.length})</h2>
       ${list.items.length
         ? `<div class="sd-table-wrap"><table class="sd-table"><thead><tr><th scope="col">Artist</th><th scope="col">Location</th><th scope="col">Status</th><th scope="col">Login</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead><tbody>${list.items
             .map((a) => `<tr data-artist="${esc(a.uuid)}"><td><strong>${esc(a.name)}</strong><br><span class="sd-item__meta">@${esc(a.username)} · <code>${esc(a.artistCode)}</code> · ${a.artworkCount} artworks</span></td>
@@ -94,7 +94,7 @@
           const a = apps.items.find((x) => x.id === app.dataset.app);
           const box = $("[data-approve]", app);
           box.hidden = false;
-          box.innerHTML = `<form class="ad-form" style="margin-top:12px" novalidate>${artistFields({ name: a.name, city: a.city, state: a.state, styles: a.artStyles, mediums: a.mediums, experience: a.experience, email: a.email })}<div class="form-status" role="status" aria-live="polite"></div><div><button class="btn btn--primary btn--sm" type="submit">Approve and create login</button></div></form>`;
+          box.innerHTML = `<form class="adm-form" style="margin-top:12px" novalidate>${artistFields({ name: a.name, city: a.city, state: a.state, styles: a.artStyles, mediums: a.mediums, experience: a.experience, email: a.email })}<div class="form-status" role="status" aria-live="polite"></div><div><button class="btn btn--primary btn--sm" type="submit">Approve and create login</button></div></form>`;
           forms().handle($("form", box), {
             busyLabel: "Approving…",
             send: (v) => http().post(`/admin/artist-applications/${a.id}/approve`, { artist: readArtist(v), accountEmail: v.accountEmail }),
@@ -139,12 +139,12 @@
       ${chips("artworks", "status", status, [["", "All"], ["PENDING_REVIEW", `Waiting for review (${r.counts.PENDING_REVIEW})`], ["APPROVED", "Approved"], ["REJECTED", "Rejected"], ["INACTIVE", "Hidden"], ["CANCELLED", "Withdrawn"]])}
       ${r.items.length
         ? `<ul class="sd-list">${r.items
-            .map((w) => `<li class="sd-item ad-item" data-artwork="${esc(w.id)}">
-              ${w.images[0] ? `<a href="${esc(img(w.images[0]))}" target="_blank" rel="noopener"><img class="ad-thumb" src="${esc(img(w.images[0]))}" alt="" loading="lazy"></a>` : ""}
+            .map((w) => `<li class="sd-item adm-item" data-artwork="${esc(w.id)}">
+              ${w.images[0] ? `<a href="${esc(img(w.images[0]))}" target="_blank" rel="noopener"><img class="adm-thumb" src="${esc(img(w.images[0]))}" alt="" loading="lazy"></a>` : ""}
               <div class="sd-item__main"><strong>${esc(w.title)}</strong><span class="sd-item__meta">by ${esc(w.artistName)} (<code>${esc(w.artistCode)}</code>) · ${esc(w.artTypeName)} · ${esc(w.medium)} · ${esc(w.size)} · ${esc(w.kind === "PRINT" ? `Print, ${w.stock} copies` : "Original")} · ${rupees(w.price)}</span>
                 ${w.description ? `<span class="sd-item__meta">${esc(w.description.slice(0, 220))}${w.description.length > 220 ? "…" : ""}</span>` : ""}
                 <span class="sd-item__meta">${w.images.length} ${w.images.length === 1 ? "picture" : "pictures"} · submitted ${esc(when(w.submittedAt))}</span>
-                ${w.status === "REJECTED" && w.rejectionReason ? `<p class="ad-reason"><strong>Rejected:</strong> ${esc(w.rejectionReason)}</p>` : ""}
+                ${w.status === "REJECTED" && w.rejectionReason ? `<p class="adm-reason"><strong>Rejected:</strong> ${esc(w.rejectionReason)}</p>` : ""}
                 ${w.status === "PENDING_REVIEW" ? `<label class="form-field" style="margin-top:8px"><span>Reason, if you reject it <span class="hint">(the artist sees this)</span></span><input class="input" type="text" maxlength="500" data-reason></label>` : ""}</div>
               <span class="sd-status sd-status--${AW_TONE[w.status]}">${esc(AW_STATUS[w.status])}</span>
               <div class="sd-item__actions">
@@ -188,9 +188,9 @@
     const c = r.counts;
     main.innerHTML = `${head("Custom paintings", "Every custom painting request, from the first message to delivery. Payments are verified by the server; refunds are recorded here after you make them.")}
       ${chips("paintings", "status", status, [["", "All"], ["PENDING_ARTIST_RESPONSE", `Waiting for artist (${c.PENDING_ARTIST_RESPONSE})`], ["ADVANCE_PAYMENT_PENDING", `Advance pending (${c.ADVANCE_PAYMENT_PENDING})`], ["PAINTING_IN_PROGRESS", `In progress (${c.PAINTING_IN_PROGRESS})`], ["REMAINING_PAYMENT_PENDING", `Balance pending (${c.REMAINING_PAYMENT_PENDING})`], ["READY_FOR_DISPATCH", "Ready"], ["SHIPPED", "Dispatched"], ["DELIVERED", "Delivered"], ["CANCELLED", "Cancelled"], ["DECLINED", "Declined"]])}
-      ${c.refundPending ? `<p class="ad-reason" style="margin-bottom:12px"><strong>${c.refundPending}</strong> cancelled ${c.refundPending === 1 ? "request has" : "requests have"} money waiting to be refunded. Open the cancelled requests to record the refund.</p>` : ""}
+      ${c.refundPending ? `<p class="adm-reason" style="margin-bottom:12px"><strong>${c.refundPending}</strong> cancelled ${c.refundPending === 1 ? "request has" : "requests have"} money waiting to be refunded. Open the cancelled requests to record the refund.</p>` : ""}
       ${r.items.length
-        ? `<ul class="sd-list">${r.items.map((p) => `<li class="sd-item ad-item"><a class="sd-item__main" href="#/paintings/${esc(p.requestNumber)}"><strong>${esc(p.requestNumber)} · ${esc(p.service.size)} ${esc(p.service.artType)}</strong><span class="sd-item__meta">${esc(p.customerName)} → ${esc(p.artist.name)} · ${rupees(p.price)} · paid ${rupees(p.amountPaid)} · ${esc(when(p.updatedAt))}</span>${p.refundStatus === "REFUND_PENDING" ? `<span class="sd-item__meta">Refund waiting</span>` : ""}</a>${pv().badge(p.status)}</li>`).join("")}</ul>`
+        ? `<ul class="sd-list">${r.items.map((p) => `<li class="sd-item adm-item"><a class="sd-item__main" href="#/paintings/${esc(p.requestNumber)}"><strong>${esc(p.requestNumber)} · ${esc(p.service.size)} ${esc(p.service.artType)}</strong><span class="sd-item__meta">${esc(p.customerName)} → ${esc(p.artist.name)} · ${rupees(p.price)} · paid ${rupees(p.amountPaid)} · ${esc(when(p.updatedAt))}</span>${p.refundStatus === "REFUND_PENDING" ? `<span class="sd-item__meta">Refund waiting</span>` : ""}</a>${pv().badge(p.status)}</li>`).join("")}</ul>`
         : emptyBox("mail", status ? "No request matches this filter" : "No custom painting requests yet")}`;
   }
 
@@ -214,13 +214,13 @@
           <section class="art-panel"><h2>Payments</h2>
             <div class="cp-split"><div class="is-total"><span>Price</span><strong>${rupees(r.price)}</strong></div><div><span>Advance (${r.advancePercent}%)</span><strong>${rupees(r.advanceAmount)}</strong></div><div><span>On completion (${100 - r.advancePercent}%)</span><strong>${rupees(r.balanceAmount)}</strong></div><div><span>Paid</span><strong>${rupees(r.amountPaid)}</strong></div></div>
             ${r.payments.length ? `<ul class="cp-history" style="margin-top:12px">${r.payments.map((p) => `<li><span>${esc(p.stage === "ADVANCE" ? "Advance" : "Balance")} attempt ${p.attempt}: <strong>${esc(p.status)}</strong> · ${rupees(p.amount)}${p.method ? ` · ${esc(p.method)}` : ""}${p.reason ? ` · ${esc(p.reason)}` : ""}</span><small>${esc(when(p.paidAt || p.at))}</small></li>`).join("")}</ul>` : `<p class="pp-muted" style="margin-top:10px">No payment attempt yet.</p>`}
-            ${r.refundStatus !== "NONE" ? `<p class="ad-reason" style="margin-top:12px"><strong>Refund: ${r.refundStatus === "REFUNDED" ? "recorded" : "waiting"}</strong>${r.refundNote ? ` — ${esc(r.refundNote)}` : ""}</p>` : ""}
+            ${r.refundStatus !== "NONE" ? `<p class="adm-reason" style="margin-top:12px"><strong>Refund: ${r.refundStatus === "REFUNDED" ? "recorded" : "waiting"}</strong>${r.refundNote ? ` — ${esc(r.refundNote)}` : ""}</p>` : ""}
           </section>
         </div>
         <aside style="display:grid;gap:var(--grid-gap)">
           <section class="art-panel"><h2>Actions</h2>
-            ${canCancel ? `<form data-cancel class="ad-form" novalidate><label class="form-field"><span>Cancel this request (say why; the customer and the artist see it)</span><input class="input" type="text" name="reason" maxlength="300" required></label><div><button class="btn btn--outline btn--sm" type="submit">Cancel request</button></div><p class="form-field__hint">Nothing is refunded automatically. If the customer has paid, refund them in the payment gateway's dashboard, then record it here.</p></form>` : ""}
-            ${r.refundStatus === "REFUND_PENDING" ? `<form data-refund class="ad-form" novalidate><label class="form-field"><span>Record the refund you made (amount and how)</span><input class="input" type="text" name="note" maxlength="300" required></label><div><button class="btn btn--dark btn--sm" type="submit">Record refund</button></div></form>` : ""}
+            ${canCancel ? `<form data-cancel class="adm-form" novalidate><label class="form-field"><span>Cancel this request (say why; the customer and the artist see it)</span><input class="input" type="text" name="reason" maxlength="300" required></label><div><button class="btn btn--outline btn--sm" type="submit">Cancel request</button></div><p class="form-field__hint">Nothing is refunded automatically. If the customer has paid, refund them in the payment gateway's dashboard, then record it here.</p></form>` : ""}
+            ${r.refundStatus === "REFUND_PENDING" ? `<form data-refund class="adm-form" novalidate><label class="form-field"><span>Record the refund you made (amount and how)</span><input class="input" type="text" name="note" maxlength="300" required></label><div><button class="btn btn--dark btn--sm" type="submit">Record refund</button></div></form>` : ""}
             ${r.status === "SHIPPED" ? `<button class="btn btn--dark btn--sm" type="button" data-delivered>Mark as delivered</button>` : ""}
             ${!canCancel && r.refundStatus !== "REFUND_PENDING" && r.status !== "SHIPPED" ? `<p class="pp-muted">Nothing to do here.</p>` : ""}
             <div class="form-status" data-status role="status" aria-live="polite"></div>
@@ -254,7 +254,7 @@
         : `<input class="input" type="number" inputmode="decimal" step="${s.unit === "percent" && s.key !== "customPaintingAdvancePercent" ? "0.01" : "1"}" min="0" data-setting="${esc(s.key)}" data-unit="${esc(s.unit)}" value="${esc(s.value)}" aria-label="${esc(s.label)}">`;
     main.innerHTML = `${head("Platform settings", "Fees and rules FrameX decides. A change applies from the next quote or request; orders and requests already made keep what was agreed. Keys and passwords are not settings: they stay on the server.")}
       <form class="set-list" novalidate>
-        ${groups.map((g) => `<h2 class="ad-subtitle">${esc(g)}</h2>${items.filter((s) => s.group === g).map((s) => `<div class="set-row"><div><strong>${esc(s.label)}</strong> <span class="sd-item__meta">(${esc(s.unit === "rupees" ? "₹" : s.unit === "percent" ? "%" : "on / off")})</span><small>${esc(s.hint || "")}${s.changed ? ` Changed by an admin; the server's default is ${esc(String(s.default))}.` : " Using the server's default."}</small></div><div>${control(s)}${s.changed ? `<button class="iu-btn" type="button" data-reset="${esc(s.key)}" style="margin-top:6px">Back to default</button>` : ""}</div></div>`).join("")}`).join("")}
+        ${groups.map((g) => `<h2 class="adm-subtitle">${esc(g)}</h2>${items.filter((s) => s.group === g).map((s) => `<div class="set-row"><div><strong>${esc(s.label)}</strong> <span class="sd-item__meta">(${esc(s.unit === "rupees" ? "₹" : s.unit === "percent" ? "%" : "on / off")})</span><small>${esc(s.hint || "")}${s.changed ? ` Changed by an admin; the server's default is ${esc(String(s.default))}.` : " Using the server's default."}</small></div><div>${control(s)}${s.changed ? `<button class="iu-btn" type="button" data-reset="${esc(s.key)}" style="margin-top:6px">Back to default</button>` : ""}</div></div>`).join("")}`).join("")}
         <div class="form-status" role="status" aria-live="polite"></div>
         <div><button class="btn btn--primary" type="submit">Save settings</button></div>
       </form>`;
@@ -331,7 +331,7 @@
     const KIND = { PRODUCT: "Product", SHOP: "Shop", ARTIST: "Artist", ARTWORK: "Artwork" };
     main.innerHTML = `${head("Reviews", "Reviews come only from customers whose order or painting was delivered. FrameX never writes or edits one; a review that breaks the rules can be hidden.")}
       ${items.length
-        ? `<ul class="sd-list">${items.map((r) => `<li class="sd-item ad-item" data-review="${esc(r.id)}"><div class="sd-item__main"><strong>${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)} · ${esc(KIND[r.targetType])} <code>${esc(r.targetId)}</code></strong><span class="sd-item__meta">${esc(r.author)} · ${esc(r.source)} · ${esc(when(r.createdAt))}</span>${r.body ? `<span class="sd-item__meta">“${esc(r.body)}”</span>` : ""}</div><span class="sd-status sd-status--${r.status === "PUBLISHED" ? "published" : "unpublished"}">${r.status === "PUBLISHED" ? "Shown" : "Hidden"}</span><div class="sd-item__actions"><button class="iu-btn ${r.status === "PUBLISHED" ? "iu-btn--danger" : "iu-btn--go"}" type="button" data-to="${r.status === "PUBLISHED" ? "HIDDEN" : "PUBLISHED"}">${r.status === "PUBLISHED" ? "Hide" : "Show"}</button></div></li>`).join("")}</ul>`
+        ? `<ul class="sd-list">${items.map((r) => `<li class="sd-item adm-item" data-review="${esc(r.id)}"><div class="sd-item__main"><strong>${"★".repeat(r.rating)}${"☆".repeat(5 - r.rating)} · ${esc(KIND[r.targetType])} <code>${esc(r.targetId)}</code></strong><span class="sd-item__meta">${esc(r.author)} · ${esc(r.source)} · ${esc(when(r.createdAt))}</span>${r.body ? `<span class="sd-item__meta">“${esc(r.body)}”</span>` : ""}</div><span class="sd-status sd-status--${r.status === "PUBLISHED" ? "published" : "unpublished"}">${r.status === "PUBLISHED" ? "Shown" : "Hidden"}</span><div class="sd-item__actions"><button class="iu-btn ${r.status === "PUBLISHED" ? "iu-btn--danger" : "iu-btn--go"}" type="button" data-to="${r.status === "PUBLISHED" ? "HIDDEN" : "PUBLISHED"}">${r.status === "PUBLISHED" ? "Hide" : "Show"}</button></div></li>`).join("")}</ul>`
         : emptyBox("star", "No reviews yet", "They appear here once customers review a delivered order or painting.")}`;
     main.onclick = async (e) => {
       const btn = e.target.closest("[data-to]");
@@ -347,9 +347,9 @@
 
   /** Extra tiles for the admin overview. */
   function overviewTiles(o) {
-    const tile = (n, label, href, alert = false) => `<a class="ad-tile ${alert ? "ad-tile--alert" : ""}" href="${href}"><strong>${n}</strong><span>${esc(label)}</span></a>`;
+    const tile = (n, label, href, alert = false) => `<a class="adm-tile ${alert ? "adm-tile--alert" : ""}" href="${href}"><strong>${n}</strong><span>${esc(label)}</span></a>`;
     if (!o.artists) return "";
-    return `<h2 class="ad-subtitle">Art &amp; Artists</h2><div class="ad-tiles">
+    return `<h2 class="adm-subtitle">Art &amp; Artists</h2><div class="adm-tiles">
         ${tile(o.artists.applicationsPending, "Artist applications to review", "#/artists", o.artists.applicationsPending > 0)}
         ${tile(o.artworks.PENDING_REVIEW, "Artworks waiting for review", "#/artworks?status=PENDING_REVIEW", o.artworks.PENDING_REVIEW > 0)}
         ${tile(o.artists.active, "Listed artists", "#/artists")}

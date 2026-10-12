@@ -124,12 +124,12 @@
         <div class="form-grid form-grid--3">
           ${f("city", "City / town", { required: true, autocomplete: "address-level2", maxlength: 80, value: a.city || "", prefix: "ad" })}
           <div class="form-field" data-invalid="false">
-            <label for="ad-state">State</label>
-            <select class="select" id="ad-state" name="state" required autocomplete="address-level1" aria-describedby="ad-state-err">
+            <label for="adm-state">State</label>
+            <select class="select" id="adm-state" name="state" required autocomplete="address-level1" aria-describedby="adm-state-err">
               <option value="">Choose a state</option>
               ${states.map((s) => `<option value="${esc(s)}"${s === a.state ? " selected" : ""}>${esc(s)}</option>`).join("")}
             </select>
-            <p class="form-field__error" id="ad-state-err">${icon("alert")}<span></span></p>
+            <p class="form-field__error" id="adm-state-err">${icon("alert")}<span></span></p>
           </div>
           ${f("postalCode", "PIN code", { required: true, inputmode: "numeric", autocomplete: "postal-code", maxlength: 6, value: a.postalCode || "", prefix: "ad" })}
         </div>

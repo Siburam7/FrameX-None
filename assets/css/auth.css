@@ -194,7 +194,7 @@
 }
 
 .account__grid,
-.ad-cards {
+.adm-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 18px;
@@ -368,13 +368,13 @@ code {
   font-weight: 800;
 }
 
-.ad-tiles {
+.adm-tiles {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 170px), 1fr));
   gap: 12px;
 }
 
-.ad-tile {
+.adm-tile {
   display: grid;
   gap: 4px;
   padding: 18px;
@@ -383,54 +383,54 @@ code {
   transition: border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 
-.ad-tile:hover {
+.adm-tile:hover {
   border-color: var(--gold-muted);
   transform: translateY(-2px);
 }
 
-.ad-tile strong {
+.adm-tile strong {
   font-family: var(--font-display);
   font-size: 2rem;
   line-height: 1;
 }
 
-.ad-tile span {
+.adm-tile span {
   color: var(--taupe);
   font-size: var(--text-sm);
 }
 
-.ad-tile--alert {
+.adm-tile--alert {
   border-color: var(--amber-strong);
   background: #fff7ec;
 }
 
-.ad-subtitle {
+.adm-subtitle {
   margin: 28px 0 12px;
   font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 700;
 }
 
-.ad-item {
+.adm-item {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
-.ad-item .sd-item__actions {
+.adm-item .sd-item__actions {
   grid-column: 1 / -1;
 }
 
-.ad-actions {
+.adm-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   margin: 14px 0;
 }
 
-.account-card .ad-actions {
+.account-card .adm-actions {
   margin: 0;
 }
 
-.ad-panel {
+.adm-panel {
   display: grid;
   gap: 12px;
   margin-bottom: 14px;
@@ -439,16 +439,16 @@ code {
   border-radius: var(--radius-lg);
 }
 
-.ad-panel[hidden] {
+.adm-panel[hidden] {
   display: none;
 }
 
-.ad-form {
+.adm-form {
   display: grid;
   gap: 18px;
 }
 
-.ad-group {
+.adm-group {
   display: grid;
   gap: 16px;
   min-width: 0;
@@ -458,47 +458,47 @@ code {
   border-radius: var(--radius-lg);
 }
 
-.ad-group legend {
+.adm-group legend {
   padding: 0 6px;
   color: var(--brown-deep);
   font-weight: 800;
 }
 
-.ad-label {
+.adm-label {
   font-size: var(--text-sm);
   font-weight: 700;
 }
 
-.ad-checks {
+.adm-checks {
   display: flex;
   flex-wrap: wrap;
   gap: 10px 20px;
 }
 
-.ad-geo {
+.adm-geo {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.ad-geo [hidden] {
+.adm-geo [hidden] {
   display: none;
 }
 
-.ad-geo__note {
+.adm-geo__note {
   flex-basis: 100%;
   color: var(--taupe);
   font-size: var(--text-xs);
   line-height: 1.55;
 }
 
-.ad-geo__results {
+.adm-geo__results {
   display: grid;
   flex-basis: 100%;
   gap: 6px;
 }
 
-.ad-geo__results button {
+.adm-geo__results button {
   display: grid;
   gap: 2px;
   width: 100%;
@@ -508,22 +508,22 @@ code {
   text-align: left;
 }
 
-.ad-geo__results button:hover {
+.adm-geo__results button:hover {
   border-color: var(--brown-deep);
   background: var(--ivory);
 }
 
-.ad-geo__results span,
-.ad-geo__empty {
+.adm-geo__results span,
+.adm-geo__empty {
   color: var(--taupe);
   font-size: var(--text-xs);
 }
 
-.ad-coords {
+.adm-coords {
   font-weight: 700;
 }
 
-.ad-credentials {
+.adm-credentials {
   display: grid;
   gap: 12px;
   margin-bottom: 18px;
@@ -534,7 +534,7 @@ code {
   outline: none;
 }
 
-.ad-credentials h2 {
+.adm-credentials h2 {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -542,14 +542,14 @@ code {
   font-size: 1.1rem;
 }
 
-.ad-credentials dd {
+.adm-credentials dd {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
 
-.ad-credentials__link {
+.adm-credentials__link {
   flex: 1 1 220px;
   min-width: 0;
   min-height: 40px;
@@ -565,8 +565,8 @@ code {
 
 /* Checkboxes inside form fields keep their natural size (the text-input styles don't apply). */
 .form-field .wz-check input,
-.ad-checks input[type="checkbox"],
-.ad-group .wz-check input {
+.adm-checks input[type="checkbox"],
+.adm-group .wz-check input {
   width: 18px;
   height: 18px;
   min-height: 0;

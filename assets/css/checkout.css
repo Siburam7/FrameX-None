@@ -829,13 +829,13 @@ div.co-choice--pay {
   gap: 10px;
 }
 
-.ad-search {
+.adm-search {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.ad-search input {
+.adm-search input {
   flex: 1;
   min-width: min(100%, 240px);
   min-height: 44px;
@@ -845,7 +845,7 @@ div.co-choice--pay {
   background: var(--white);
 }
 
-.ad-search input:focus {
+.adm-search input:focus {
   outline: none;
   border-color: var(--brown);
   box-shadow: var(--focus-ring);

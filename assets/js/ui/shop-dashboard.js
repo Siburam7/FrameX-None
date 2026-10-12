@@ -453,7 +453,7 @@
       </div>
       ${
         i.photosRequired || (i.photos || []).length
-          ? `<div class="so-item__photos"><h3 class="ad-subtitle">${icon("image")} Customer ${i.photos.length === 1 ? "photo" : "photos"} to print</h3>
+          ? `<div class="so-item__photos"><h3 class="adm-subtitle">${icon("image")} Customer ${i.photos.length === 1 ? "photo" : "photos"} to print</h3>
           ${v.photosHtml(i, { actions: o.canDownloadPhotos ? (p) => `<button class="btn btn--dark btn--sm" type="button" data-photo="${esc(p.id)}" data-photo-action="download">${icon("upload")} Download original</button>` : null })}
           ${(i.photos || []).some((p) => p.placement) ? `<p class="co-fine">${icon("frame")}<span>How the customer placed ${i.photos.length > 1 ? "each picture" : "the picture"} in the frame: ${(i.photos || []).map((p, n) => (p.placement ? `${i.photos.length > 1 ? `Photo ${n + 1}: ` : ""}centred on the point ${Math.round(p.placement.x * 100)}% from the left and ${Math.round(p.placement.y * 100)}% from the top of the photo, zoom ${p.placement.zoom}×` : "")).filter(Boolean).join("; ")}.</span></p>` : ""}
           ${o.canDownloadPhotos ? "" : `<p class="co-fine co-fine--warn">${icon("lock")}<span>This order is not active, so its photos can't be downloaded.</span></p>`}</div>`
@@ -552,12 +552,12 @@
     main.innerHTML = `<header class="sd-head"><div><h1 class="sd-title">Shop profile</h1><p class="sd-lead">What customers see about your shop.</p></div></header>
       <dl class="sd-profile">${fixed.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v ? esc(v) : `<span class="pp-muted">Not added yet</span>`}</dd></div>`).join("")}</dl>
       <p class="wz-note">${icon("lock")} Shop ID, name, address and map location are managed by FrameX. To change them, <a href="contact.html">contact FrameX</a>.</p>
-      <h2 class="ad-subtitle">Details you can edit</h2>
+      <h2 class="adm-subtitle">Details you can edit</h2>
       <form id="shop-profile-form" class="form-grid" novalidate>
         ${forms.field("phone", "Shop phone", { type: "tel", autocomplete: "tel", value: shop.phone || "", hint: "Shown to customers on your shop page.", prefix: "sp" })}
         ${forms.field("description", "About your shop", { rows: 4, maxlength: 1000, value: shop.description || "", prefix: "sp" })}
-        <div class="form-field"><span class="ad-label">Pickup and delivery</span><div class="ad-checks">${options.map(([id, m]) => `<label class="wz-check"><input type="checkbox" name="fulfilment" value="${id}"${(shop.fulfilment || []).includes(id) ? " checked" : ""}> ${esc(m.label)}</label>`).join("")}</div></div>
-        <div class="form-field"><span class="ad-label">Gift wrapping</span><div class="ad-checks"><label class="wz-check"><input type="checkbox" name="giftWrap"${shop.giftWrap !== false ? " checked" : ""}> My shop can gift wrap its products</label></div>
+        <div class="form-field"><span class="adm-label">Pickup and delivery</span><div class="adm-checks">${options.map(([id, m]) => `<label class="wz-check"><input type="checkbox" name="fulfilment" value="${id}"${(shop.fulfilment || []).includes(id) ? " checked" : ""}> ${esc(m.label)}</label>`).join("")}</div></div>
+        <div class="form-field"><span class="adm-label">Gift wrapping</span><div class="adm-checks"><label class="wz-check"><input type="checkbox" name="giftWrap"${shop.giftWrap !== false ? " checked" : ""}> My shop can gift wrap its products</label></div>
           <p class="form-field__hint">At checkout FrameX asks customers whether they want their order gift wrapped. If you can't offer it, untick this: the option is then not offered for orders that contain your products. You can also switch it off for a single product in the product editor.</p></div>
         <div class="form-status" role="status" aria-live="polite"></div>
         <div><button class="btn btn--dark btn--sm" type="submit">Save changes</button></div>
@@ -582,8 +582,8 @@
         <div><dt>Login email</dt><dd>${esc(a.email || "")}</dd></div>
         <div><dt>Last login</dt><dd>${a.lastLoginAt ? esc(when(a.lastLoginAt)) : "—"}</dd></div>
       </dl>
-      <div class="ad-actions"><a class="btn btn--dark btn--sm" href="account.html">${icon("lock")} Change password</a><button class="btn btn--outline btn--sm" type="button" data-logout-2>${icon("logout")} Log out</button></div>
-      <h2 class="ad-subtitle">How selling on FrameX works</h2>
+      <div class="adm-actions"><a class="btn btn--dark btn--sm" href="account.html">${icon("lock")} Change password</a><button class="btn btn--outline btn--sm" type="button" data-logout-2>${icon("logout")} Log out</button></div>
+      <h2 class="adm-subtitle">How selling on FrameX works</h2>
       <div class="sd-cards">
         <article class="sd-card"><h2>You decide</h2><p>What you sell and its type, the name, description, pictures, price, sizes, materials, stock, delivery notes, whether a product can be gift wrapped and, where the type allows it, how many photos a customer adds.</p></article>
         <article class="sd-card"><h2>FrameX decides</h2><p>Payments, customer accounts, how orders are stored, the rules of each product type (a photo frame always needs the customer's photo) and how customer photos are kept and shared. ${FrameX.config.productModeration ? "FrameX also reviews a product before it first goes on sale." : "A published product goes on sale straight away; FrameX can take one off sale if it breaks the rules."}</p></article>

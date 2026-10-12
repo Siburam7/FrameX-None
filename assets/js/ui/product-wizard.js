@@ -138,7 +138,7 @@
       if (found.source === "catalogue") {
         root.innerHTML = `<div class="sd-empty">${icon("lock")}<strong>${esc(found.name)} is managed by FrameX</strong>
           <span>This product comes from the FrameX catalogue, so its details and price are changed by FrameX. You can make your own copy of it and sell that with your own details, pictures and price.</span>
-          <div class="ad-actions"><button class="btn btn--primary btn--sm" type="button" data-copy>${icon("copy")} Make my own copy</button><a class="btn btn--outline btn--sm" href="product.html?slug=${encodeURIComponent(found.slug || found.id)}" target="_blank" rel="noopener">View it</a><a class="btn btn--outline btn--sm" href="#/products">Back to products</a></div></div>`;
+          <div class="adm-actions"><button class="btn btn--primary btn--sm" type="button" data-copy>${icon("copy")} Make my own copy</button><a class="btn btn--outline btn--sm" href="product.html?slug=${encodeURIComponent(found.slug || found.id)}" target="_blank" rel="noopener">View it</a><a class="btn btn--outline btn--sm" href="#/products">Back to products</a></div></div>`;
         $("[data-copy]", root).addEventListener("click", async (e) => {
           e.currentTarget.disabled = true;
           try {

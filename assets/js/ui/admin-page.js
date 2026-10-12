@@ -133,30 +133,30 @@
   /* ---------------------------------------------------------------- Overview */
   async function overview(main) {
     const [o, apps] = await Promise.all([http().get("/admin/overview"), http().get("/admin/applications", { status: "PENDING" })]);
-    const tile = (n, label, href, tone = "") => `<a class="ad-tile ${tone}" href="${href}"><strong>${n}</strong><span>${esc(label)}</span></a>`;
+    const tile = (n, label, href, tone = "") => `<a class="adm-tile ${tone}" href="${href}"><strong>${n}</strong><span>${esc(label)}</span></a>`;
     main.innerHTML = `${head("Overview", "Shop onboarding at a glance.", `<a class="btn btn--outline btn--sm" href="#/analytics">${icon("chart")} Analytics</a>`)}
-      <div class="ad-tiles">
-        ${tile(o.applications.pending + o.applications.underReview, "Shop applications to review", "#/applications?status=PENDING", o.applications.pending ? "ad-tile--alert" : "")}
+      <div class="adm-tiles">
+        ${tile(o.applications.pending + o.applications.underReview, "Shop applications to review", "#/applications?status=PENDING", o.applications.pending ? "adm-tile--alert" : "")}
         ${tile(o.shops.approved, "Approved shops", "#/shops?status=APPROVED")}
         ${tile(o.shops.pending, "Pending shops", "#/shops?status=PENDING")}
         ${tile(o.shops.active, "Active shops (listed)", "#/shops?status=ACTIVE")}
         ${tile(o.shops.inactive, "Inactive shops (hidden)", "#/shops?status=INACTIVE")}
-        ${o.messages ? tile(o.messages.unread, "New messages from the Contact page", "#/messages?status=NEW", o.messages.unread ? "ad-tile--alert" : "") : ""}
+        ${o.messages ? tile(o.messages.unread, "New messages from the Contact page", "#/messages?status=NEW", o.messages.unread ? "adm-tile--alert" : "") : ""}
       </div>
-      <h2 class="ad-subtitle">Orders</h2>
-      <div class="ad-tiles">
-        ${tile(o.orders.placed, "New orders to confirm", "#/orders?status=PLACED", o.orders.placed ? "ad-tile--alert" : "")}
+      <h2 class="adm-subtitle">Orders</h2>
+      <div class="adm-tiles">
+        ${tile(o.orders.placed, "New orders to confirm", "#/orders?status=PLACED", o.orders.placed ? "adm-tile--alert" : "")}
         ${tile(o.orders.inProgress, "Orders in progress", "#/orders")}
         ${tile(o.orders.awaitingPayment, "Waiting for payment", "#/orders?status=PENDING_PAYMENT")}
         ${tile(o.orders.delivered, "Delivered", "#/orders?status=DELIVERED")}
       </div>
       ${FrameX.adminArt ? FrameX.adminArt.overviewTiles(o) : ""}
-      <h2 class="ad-subtitle">Waiting for review</h2>
+      <h2 class="adm-subtitle">Waiting for review</h2>
       ${apps.items.length ? `<ul class="sd-list">${apps.items.slice(0, 5).map(applicationRow).join("")}</ul>` : `<div class="sd-empty">${icon("check")}<strong>No applications waiting</strong><span>New shop applications from the “Partner With FrameX” page appear here.</span></div>`}`;
   }
 
   /* ---------------------------------------------------------------- Applications */
-  const applicationRow = (a) => `<li class="sd-item ad-item">
+  const applicationRow = (a) => `<li class="sd-item adm-item">
       <div class="sd-item__main"><a class="sd-item__name" href="#/applications/${esc(a.id)}">${esc(a.shopName)}</a>
         <span class="sd-item__meta">${esc(a.ownerName)} · ${esc(a.city)}, ${esc(a.state)} · applied ${esc(when(a.createdAt))}</span>
         ${a.shopCode ? `<span class="sd-item__source">Became ${esc(a.shopCode)}</span>` : ""}</div>
@@ -166,7 +166,7 @@
   async function applications(main, params) {
     const status = params.get("status") || "";
     const { items } = await http().get("/admin/applications", { status });
-    main.innerHTML = `${head("Shop applications", "Requests sent from the “Partner With FrameX” page. Applying does not create a login.")}
+    main.innerHTML = `${head("Shop applications", "Requests sent from the “Partner With FrameX” page. Applying does not create a login. An artist's application (“Join as an Artist”) is not here: it is under <a href=\"#/artists\">Artists</a>.")}
       <div class="sd-toolbar">${chips("applications", status, [["", "All"], ["PENDING", "Pending"], ["UNDER_REVIEW", "Under review"], ["APPROVED", "Approved"], ["REJECTED", "Rejected"]])}</div>
       ${items.length ? `<ul class="sd-list">${items.map(applicationRow).join("")}</ul>` : `<div class="sd-empty">${icon("mail")}<strong>No applications here</strong></div>`}`;
   }
@@ -177,7 +177,7 @@
     const o = { prefix: "sh" };
     const catalogue = (FrameX.seed.shops || []).map((c) => [c.id, `${c.name} (${c.id})`]);
     return `
-      <fieldset class="ad-group"><legend>Shop</legend>
+      <fieldset class="adm-group"><legend>Shop</legend>
         <div class="form-grid form-grid--2">
           ${f("name", "Shop name", { ...o, required: true, value: s.name, maxlength: 120 })}
           ${f("ownerName", "Owner name", { ...o, value: s.ownerName, maxlength: 80 })}
@@ -186,7 +186,7 @@
         </div>
         ${f("description", "About the shop", { ...o, rows: 2, value: s.description, maxlength: 1000 })}
       </fieldset>
-      <fieldset class="ad-group"><legend>Address and location</legend>
+      <fieldset class="adm-group"><legend>Address and location</legend>
         ${f("addressLine1", "Address", { ...o, value: s.addressLine1, maxlength: 200 })}
         <div class="form-grid form-grid--3">
           ${f("area", "Area", { ...o, value: s.area, maxlength: 120 })}
@@ -199,21 +199,21 @@
           ${f("latitude", "Latitude", { ...o, required: true, value: s.latitude ?? "", inputmode: "decimal", placeholder: "e.g. 20.658612", hint: "From the shop's exact pin on a map." })}
           ${f("longitude", "Longitude", { ...o, required: true, value: s.longitude ?? "", inputmode: "decimal", placeholder: "e.g. 85.598134" })}
         </div>
-        <div class="ad-geo">
+        <div class="adm-geo">
           <button class="btn btn--outline btn--sm" type="button" data-geo-lookup>${icon("search")} Look up coordinates from the address</button>
           <a class="btn btn--outline btn--sm" href="#" target="_blank" rel="noopener noreferrer" data-geo-map hidden>${icon("pin")} Check this pin on the map</a>
-          <p class="ad-geo__note">Distances shown to customers are measured from these coordinates. Use the shop's real position: look it up, then check the pin on the map and correct it if needed. Never guess.</p>
-          <ul class="ad-geo__results" data-geo-results hidden></ul>
+          <p class="adm-geo__note">Distances shown to customers are measured from these coordinates. Use the shop's real position: look it up, then check the pin on the map and correct it if needed. Never guess.</p>
+          <ul class="adm-geo__results" data-geo-results hidden></ul>
         </div>
       </fieldset>
-      <fieldset class="ad-group"><legend>Listing</legend>
-        <div class="form-field"><span class="ad-label">Pickup and delivery</span><div class="ad-checks">${FULFILMENT.map(([id, label]) => `<label class="wz-check"><input type="checkbox" name="fulfilment" value="${id}"${(s.fulfilment || ["pickup"]).includes(id) ? " checked" : ""}> ${label}</label>`).join("")}</div></div>
+      <fieldset class="adm-group"><legend>Listing</legend>
+        <div class="form-field"><span class="adm-label">Pickup and delivery</span><div class="adm-checks">${FULFILMENT.map(([id, label]) => `<label class="wz-check"><input type="checkbox" name="fulfilment" value="${id}"${(s.fulfilment || ["pickup"]).includes(id) ? " checked" : ""}> ${label}</label>`).join("")}</div></div>
         <div class="form-field" data-invalid="false"><label for="sh-catalogRef">Catalogue link <span class="hint">(optional)</span></label>
           <select class="select" id="sh-catalogRef" name="catalogRef"><option value="">Not linked</option>${catalogue.map(([id, label]) => `<option value="${esc(id)}"${s.catalogRef === id ? " selected" : ""}>${esc(label)}</option>`).join("")}</select>
           <p class="form-field__hint">Connects this shop to its products in the website's catalogue file until products move to the database (Step 2).</p>
           <p class="form-field__error">${icon("alert")}<span></span></p></div>
       </fieldset>
-      ${account ? `<fieldset class="ad-group"><legend>Shop login</legend>
+      ${account ? `<fieldset class="adm-group"><legend>Shop login</legend>
         ${f("accountEmail", "Login email", { ...o, required: !edit, type: "email", value: accountEmail, hint: "The shop receives its Shop ID and a one-time link to set its own password. You never choose or see the password." })}
         <label class="wz-check"><input type="checkbox" name="activate"${activate ? " checked" : ""}> List the shop publicly straight away (Active)</label>
       </fieldset>` : ""}`;
@@ -262,11 +262,11 @@
       forms().busy(button, false);
       results.hidden = false;
       results.innerHTML = !r.available
-        ? `<li class="ad-geo__empty">Place search isn't available. Open a map, find the shop, and copy its latitude and longitude here.</li>`
+        ? `<li class="adm-geo__empty">Place search isn't available. Open a map, find the shop, and copy its latitude and longitude here.</li>`
         : r.results.length
           ? r.results.map((p, i) => `<li><button type="button" data-geo-pick="${i}"><strong>${esc(p.label)}</strong><span>${p.latitude.toFixed(6)}, ${p.longitude.toFixed(6)} · ${esc(p.kind || "place")}</span></button></li>`).join("") +
-            `<li class="ad-geo__empty">These are approximate (often a street or town centre). Pick the closest, then check the pin on the map and adjust the numbers to the shop's real position.</li>`
-          : `<li class="ad-geo__empty">Nothing found for that address. Open a map, find the shop, and copy its latitude and longitude here.</li>`;
+            `<li class="adm-geo__empty">These are approximate (often a street or town centre). Pick the closest, then check the pin on the map and adjust the numbers to the shop's real position.</li>`
+          : `<li class="adm-geo__empty">Nothing found for that address. Open a map, find the shop, and copy its latitude and longitude here.</li>`;
       results.onclick = (ev) => {
         const b = ev.target.closest("[data-geo-pick]");
         if (!b) return;
@@ -281,12 +281,12 @@
 
   /** One-time credentials panel: Shop ID + setup link. The password is never shown because nobody but the shop knows it. */
   function credentialsHtml(c) {
-    return `<div class="ad-credentials" role="status" tabindex="-1">
+    return `<div class="adm-credentials" role="status" tabindex="-1">
       <h2>${icon("lock")} Shop login details</h2>
       <dl class="account-list">
         <div><dt>Shop ID</dt><dd><code>${esc(c.shopCode)}</code></dd></div>
         <div><dt>Login email</dt><dd>${esc(c.accountEmail)}</dd></div>
-        <div><dt>One-time password link</dt><dd><input class="input ad-credentials__link" readonly value="${esc(c.setupUrl)}" aria-label="One-time password link"><button class="iu-btn" type="button" data-copy="${esc(c.setupUrl)}">${icon("copy")} Copy link</button></dd></div>
+        <div><dt>One-time password link</dt><dd><input class="input adm-credentials__link" readonly value="${esc(c.setupUrl)}" aria-label="One-time password link"><button class="iu-btn" type="button" data-copy="${esc(c.setupUrl)}">${icon("copy")} Copy link</button></dd></div>
         <div><dt>Link expires</dt><dd>${esc(when(c.expiresAt))}</dd></div>
       </dl>
       <p class="wz-note">${icon("alert")} ${c.emailed ? "The link was emailed to the shop." : `${{ not_configured: "No email was sent: the email service is not configured.", dev: "No email was sent: this server is in development mode.", provider_error: "The email could NOT be sent: the email provider refused it." }[c.emailStatus] || "No email was sent."} Send this link to the shop owner yourself, for example on WhatsApp.`} It works once and is shown only now; you can always create a new one.</p>
@@ -301,18 +301,18 @@
       ${head(a.shopName, "", badge(a.status, APP_STATUS))}
       <dl class="sd-profile">${rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
       ${a.shopCode ? `<p class="wz-note">${icon("check")} Approved as <strong>${esc(a.shopCode)}</strong>. Manage it under <a href="#/shops">Shops</a>.</p>` : ""}
-      ${open ? `<div class="ad-actions">
+      ${open ? `<div class="adm-actions">
           ${a.status === "PENDING" ? `<button class="btn btn--outline btn--sm" type="button" data-act="review">Mark as under review</button>` : ""}
           <button class="btn btn--outline btn--sm sd-danger" type="button" data-act="reject-open">Reject</button>
         </div>
-        <form id="reject-form" class="ad-panel" hidden novalidate>
+        <form id="reject-form" class="adm-panel" hidden novalidate>
           ${forms().field("reason", "Reason (kept in FrameX's records)", { rows: 2, maxlength: 500, prefix: "rj" })}
           <div class="form-status" role="status"></div>
-          <div class="ad-actions"><button class="btn btn--dark btn--sm" type="submit">Reject application</button><button class="btn btn--outline btn--sm" type="button" data-act="reject-cancel">Cancel</button></div>
+          <div class="adm-actions"><button class="btn btn--dark btn--sm" type="submit">Reject application</button><button class="btn btn--outline btn--sm" type="button" data-act="reject-cancel">Cancel</button></div>
         </form>
-        <h2 class="ad-subtitle">Approve and create the shop</h2>
+        <h2 class="adm-subtitle">Approve and create the shop</h2>
         <p class="sd-lead">Check the details, add the shop's real location, and approve. This creates the shop, its Shop ID and its login in one step.</p>
-        <form id="approve-form" class="ad-form" novalidate>
+        <form id="approve-form" class="adm-form" novalidate>
           ${shopFields({ name: a.shopName, ownerName: a.ownerName, phone: a.phone, email: a.email, addressLine1: a.address, city: a.city, state: a.state, postalCode: a.postalCode, description: a.businessDetails }, { account: true, accountEmail: a.email })}
           <div class="form-status" role="status" aria-live="polite"></div>
           <div><button class="btn btn--primary" type="submit">${icon("check")} Approve shop</button></div>
@@ -347,14 +347,14 @@
         main.innerHTML = `<a class="wz-back" href="#/applications">${icon("chev-left")} All applications</a>
           ${head(`${result.shop.name} is approved`, `Shop ID <strong>${esc(result.shop.shopCode)}</strong> · ${esc(SHOP_STATUS[result.shop.status])}`)}
           ${credentialsHtml(result.credentials)}
-          <div class="ad-actions"><a class="btn btn--dark btn--sm" href="#/shops/${esc(result.shop.uuid)}">Open shop</a><a class="btn btn--outline btn--sm" href="#/applications">Back to applications</a></div>`;
-        $(".ad-credentials", main).focus();
+          <div class="adm-actions"><a class="btn btn--dark btn--sm" href="#/shops/${esc(result.shop.uuid)}">Open shop</a><a class="btn btn--outline btn--sm" href="#/applications">Back to applications</a></div>`;
+        $(".adm-credentials", main).focus();
       },
     });
   }
 
   /* ---------------------------------------------------------------- Shops */
-  const shopRow = (s) => `<li class="sd-item ad-item" data-shop="${esc(s.uuid)}">
+  const shopRow = (s) => `<li class="sd-item adm-item" data-shop="${esc(s.uuid)}">
       <div class="sd-item__main"><a class="sd-item__name" href="#/shops/${esc(s.uuid)}">${esc(s.name)}</a>
         <span class="sd-item__meta"><code>${esc(s.shopCode)}</code> · ${esc([s.address.city, s.address.state].filter(Boolean).join(", "))}${s.account ? ` · login: ${esc(ACCOUNT_STATUS[s.account.status] || s.account.status)}` : " · no login yet"}</span>
         ${s.isDemo ? `<span class="sd-item__source">Development sample data</span>` : ""}</div>
@@ -386,7 +386,7 @@
   function newShop(main) {
     main.innerHTML = `<a class="wz-back" href="#/shops">${icon("chev-left")} All shops</a>
       ${head("Add a shop", "For shops FrameX has already verified (for example, in person). The shop gets a Shop ID and a link to set its own password.")}
-      <form id="shop-form" class="ad-form" novalidate>${shopFields({}, { account: true })}
+      <form id="shop-form" class="adm-form" novalidate>${shopFields({}, { account: true })}
         <div class="form-status" role="status" aria-live="polite"></div>
         <div><button class="btn btn--primary" type="submit">Create approved shop</button></div></form>`;
     const form = $("#shop-form", main);
@@ -398,7 +398,7 @@
         main.innerHTML = `<a class="wz-back" href="#/shops">${icon("chev-left")} All shops</a>
           ${head(`${result.shop.name} was added`, `Shop ID <strong>${esc(result.shop.shopCode)}</strong>`)}
           ${result.credentials ? credentialsHtml(result.credentials) : ""}
-          <div class="ad-actions"><a class="btn btn--dark btn--sm" href="#/shops/${esc(result.shop.uuid)}">Open shop</a></div>`;
+          <div class="adm-actions"><a class="btn btn--dark btn--sm" href="#/shops/${esc(result.shop.uuid)}">Open shop</a></div>`;
       },
     });
   }
@@ -409,14 +409,14 @@
     main.innerHTML = `<a class="wz-back" href="#/shops">${icon("chev-left")} All shops</a>
       ${head(s.name, `<code>${esc(s.shopCode)}</code>${s.isDemo ? " · Development sample data" : ""}`, badge(s.status, SHOP_STATUS))}
       <div data-credentials>${credentials ? credentialsHtml(credentials) : ""}</div>
-      <div class="ad-cards">
+      <div class="adm-cards">
         <section class="account-card"><h2>${icon("pin")} Location</h2>
           <p>${esc(address(s)) || "No address"}</p>
-          ${hasPin ? `<p class="ad-coords"><code>${s.location.latitude.toFixed(6)}, ${s.location.longitude.toFixed(6)}</code></p><a class="btn btn--outline btn--sm" href="${mapUrl(s.location.latitude, s.location.longitude)}" target="_blank" rel="noopener noreferrer">${icon("pin")} View on map</a>` : `<p class="pp-muted">No coordinates yet. The shop can't be approved without them.</p>`}
+          ${hasPin ? `<p class="adm-coords"><code>${s.location.latitude.toFixed(6)}, ${s.location.longitude.toFixed(6)}</code></p><a class="btn btn--outline btn--sm" href="${mapUrl(s.location.latitude, s.location.longitude)}" target="_blank" rel="noopener noreferrer">${icon("pin")} View on map</a>` : `<p class="pp-muted">No coordinates yet. The shop can't be approved without them.</p>`}
         </section>
         <section class="account-card"><h2>${icon("store")} Status</h2>
           <p>${s.status === "ACTIVE" ? "Listed: customers can find this shop." : s.status === "INACTIVE" ? "Approved but hidden from customers." : s.status === "PENDING" ? "Waiting for approval. Not listed." : "Rejected. Not listed, and its login is blocked."}</p>
-          <div class="ad-actions">
+          <div class="adm-actions">
             ${s.status === "ACTIVE" ? `<button class="btn btn--outline btn--sm" type="button" data-act="deactivate">Deactivate</button>` : ""}
             ${s.status === "INACTIVE" ? `<button class="btn btn--dark btn--sm" type="button" data-act="activate">Activate</button>` : ""}
             ${s.approvalStatus !== "APPROVED" ? `<button class="btn btn--dark btn--sm" type="button" data-act="approve">Approve</button>` : ""}
@@ -426,13 +426,13 @@
         <section class="account-card"><h2>${icon("lock")} Shop login</h2>
           ${s.account
             ? `<dl class="account-list"><div><dt>Email</dt><dd>${esc(s.account.email)}</dd></div><div><dt>Status</dt><dd>${badge(s.account.status, ACCOUNT_STATUS)}</dd></div><div><dt>Last login</dt><dd>${esc(when(s.account.lastLoginAt)) || "Never"}</dd></div></dl>
-               <div class="ad-actions">${s.account.status !== "DISABLED" ? `<button class="btn btn--outline btn--sm" type="button" data-act="credentials">${s.account.status === "PENDING_SETUP" ? "New setup link" : "Send password reset link"}</button><button class="btn btn--outline btn--sm sd-danger" type="button" data-act="disable">Disable login</button>` : `<button class="btn btn--dark btn--sm" type="button" data-act="enable">Enable login</button>`}</div>`
+               <div class="adm-actions">${s.account.status !== "DISABLED" ? `<button class="btn btn--outline btn--sm" type="button" data-act="credentials">${s.account.status === "PENDING_SETUP" ? "New setup link" : "Send password reset link"}</button><button class="btn btn--outline btn--sm sd-danger" type="button" data-act="disable">Disable login</button>` : `<button class="btn btn--dark btn--sm" type="button" data-act="enable">Enable login</button>`}</div>`
             : `<p class="pp-muted">This shop has no login yet.</p>
                <form id="account-form" class="form-grid" novalidate>${forms().field("accountEmail", "Login email", { required: true, type: "email", prefix: "ac" })}<div class="form-status" role="status"></div><div><button class="btn btn--dark btn--sm" type="submit">Create login</button></div></form>`}
         </section>
       </div>
-      <h2 class="ad-subtitle">Shop information</h2>
-      <form id="shop-form" class="ad-form" novalidate>${shopFields({ name: s.name, ownerName: s.ownerName, phone: s.phone, email: s.email, description: s.description, addressLine1: s.address.line1, area: s.address.area, city: s.address.city, state: s.address.state, postalCode: s.address.postalCode, country: s.address.country, latitude: s.location.latitude, longitude: s.location.longitude, catalogRef: s.catalogRef, fulfilment: s.fulfilment })}
+      <h2 class="adm-subtitle">Shop information</h2>
+      <form id="shop-form" class="adm-form" novalidate>${shopFields({ name: s.name, ownerName: s.ownerName, phone: s.phone, email: s.email, description: s.description, addressLine1: s.address.line1, area: s.address.area, city: s.address.city, state: s.address.state, postalCode: s.address.postalCode, country: s.address.country, latitude: s.location.latitude, longitude: s.location.longitude, catalogRef: s.catalogRef, fulfilment: s.fulfilment })}
         <div class="form-status" role="status" aria-live="polite"></div>
         <div><button class="btn btn--dark" type="submit">Save changes</button></div></form>`;
 
@@ -474,7 +474,7 @@
         if (act === "credentials") creds = (await http().post(`/admin/shops/${id}/credentials`, {})).credentials;
         FrameX.toast.show({ activate: "Shop activated.", deactivate: "Shop deactivated.", approve: "Shop approved.", reject: "Approval withdrawn.", disable: "Shop login disabled.", enable: "Shop login enabled.", credentials: "New link created." }[act]);
         await shop(main, id, creds);
-        if (creds) $(".ad-credentials", main).focus();
+        if (creds) $(".adm-credentials", main).focus();
       } catch (error) {
         FrameX.toast.show(error.fields ? Object.values(error.fields)[0] : error.message);
       }
@@ -508,7 +508,7 @@
           ${items
             .map(
               (p) => `<tr data-product="${esc(p.id)}">
-              <td><div class="ad-product">${p.image ? `<img src="${esc(http().asset(p.image))}" alt="" width="48" height="48" loading="lazy">` : ""}<div><strong>${esc(p.name)}</strong><br><span class="sd-item__meta">${esc(PRODUCT_TYPE[p.productType] || "Type not chosen")}</span></div></div></td>
+              <td><div class="adm-product">${p.image ? `<img src="${esc(http().asset(p.image))}" alt="" width="48" height="48" loading="lazy">` : ""}<div><strong>${esc(p.name)}</strong><br><span class="sd-item__meta">${esc(PRODUCT_TYPE[p.productType] || "Type not chosen")}</span></div></div></td>
               <td><a href="#/shops">${esc(p.shopName)}</a><br><span class="sd-item__meta"><code>${esc(p.shopCode)}</code></span></td>
               <td><span class="sd-status sd-status--${tone[p.status] || "draft"}">${esc(LISTING[p.status] || p.status)}</span><br><span class="sd-item__meta">${p.onSale ? "On sale" : "Not on sale"}</span></td>
               <td>${esc(when(p.updatedAt))}</td>
@@ -552,7 +552,7 @@
     const { items } = await http().get("/admin/audit", { limit: 150 });
     main.innerHTML = `${head("Activity", "Who approved, rejected or changed what. Entries can't be edited.")}
       ${items.length ? `<div class="sd-table-wrap"><table class="sd-table"><thead><tr><th scope="col">When</th><th scope="col">Action</th><th scope="col">On</th><th scope="col">By</th></tr></thead><tbody>
-        ${items.map((l) => `<tr><td>${esc(when(l.at))}</td><td>${esc(ACTIONS[l.action] || l.action)}</td><td>${esc(["shop", "order", "artist", "artwork", "painting_request", "settings"].includes(l.targetType) ? l.targetId : l.targetType.replace("_", " "))}</td><td>${l.actor ? `${esc(l.actor.name)} <span class="pp-muted">(${esc(l.actor.role.toLowerCase())})</span>` : `<span class="pp-muted">Public form</span>`}</td></tr>`).join("")}
+        ${items.map((l) => `<tr><td>${esc(when(l.at))}</td><td>${esc(ACTIONS[l.action] || l.action)}</td><td>${l.targetType === "shop_application" && l.targetId ? `<a href="#/applications/${esc(l.targetId)}">Shop application: open</a>` : l.targetType === "artist_application" ? `<a href="#/artists">Artist application: see Artists</a>` : esc(["shop", "order", "artist", "artwork", "painting_request", "settings"].includes(l.targetType) ? l.targetId : l.targetType.replace("_", " "))}</td><td>${l.actor ? `${esc(l.actor.name)} <span class="pp-muted">(${esc(l.actor.role.toLowerCase())})</span>` : `<span class="pp-muted">Public form</span>`}</td></tr>`).join("")}
       </tbody></table></div>` : `<div class="sd-empty">${icon("clock")}<strong>No activity yet</strong></div>`}`;
   }
 

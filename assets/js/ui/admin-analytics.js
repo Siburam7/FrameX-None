@@ -77,7 +77,7 @@
     return `<span class="an-delta ${pct > 0 ? "is-up" : pct < 0 ? "is-down" : ""}">${pct > 0 ? "▲" : pct < 0 ? "▼" : "="} ${Math.abs(pct)}% vs ${before(days)}</span>`;
   }
   const cards = (list) => `<div class="an-cards">${list.join("")}</div>`;
-  const section = (title, body, lead = "") => `<section class="an-section"><h2 class="ad-subtitle">${esc(title)}</h2>${lead ? `<p class="sd-lead">${lead}</p>` : ""}${body}</section>`;
+  const section = (title, body, lead = "") => `<section class="an-section"><h2 class="adm-subtitle">${esc(title)}</h2>${lead ? `<p class="sd-lead">${lead}</p>` : ""}${body}</section>`;
   const note = (html, tone = "") => `<p class="an-note ${tone}">${icon(tone === "an-note--warn" ? "alert" : "shield")}<span>${html}</span></p>`;
   const empty = (title, text = "") => `<div class="sd-empty an-empty">${icon("chart")}<strong>${esc(title)}</strong>${text ? `<span>${esc(text)}</span>` : ""}</div>`;
 
