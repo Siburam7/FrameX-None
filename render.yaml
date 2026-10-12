@@ -40,8 +40,12 @@ services:
         value: production
       - key: SERVE_FRONTEND
         value: "false"
+      # How many proxies stand between a visitor and this server. On Render that is 3 (Cloudflare, Render's
+      # router and the one in front of the service). With a smaller number every visitor looks like the same
+      # address, and they all share one request limit. Check it at /api/health/client: "seenAs" must be the
+      # start of your own address, not 10.x or 172.x.
       - key: TRUST_PROXY
-        value: "1"
+        value: "3"
       - key: DATABASE_SSL
         value: require
       - key: DATABASE_URL

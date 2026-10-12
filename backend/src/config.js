@@ -16,7 +16,13 @@ export const PROJECT_ROOT = path.resolve(BACKEND_ROOT, "..");
 const envFile = path.join(BACKEND_ROOT, ".env");
 if (fs.existsSync(envFile) && typeof process.loadEnvFile === "function") process.loadEnvFile(envFile);
 
-const env = process.env;
+// A value typed into a host's dashboard easily picks up a space at the end, or quotes around it ("live").
+// Both are removed here once, so that such a slip cannot stop the server from starting.
+const tidy = (value) => {
+  const s = String(value ?? "").trim();
+  return s.length >= 2 && ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) ? s.slice(1, -1).trim() : s;
+};
+const env = Object.fromEntries(Object.entries(process.env).map(([name, value]) => [name, tidy(value)]));
 const bool = (v, fallback) => (v === undefined || v === "" ? fallback : /^(1|true|yes|on)$/i.test(v));
 const int = (v, fallback) => (v !== undefined && v !== "" && Number.isFinite(Number(v)) ? Number(v) : fallback);
 const list = (v) =>
@@ -289,7 +295,7 @@ export function assertConfig() {
   if (!EMAIL_PROVIDERS.includes(config.email.provider)) problems.push(`EMAIL_PROVIDER must be one of: ${EMAIL_PROVIDERS.join(", ")}.`);
   if (!SMS_PROVIDERS.includes(config.sms.provider)) problems.push(`SMS_PROVIDER must be one of: ${SMS_PROVIDERS.join(", ")}.`);
   if (!PAYMENT_PROVIDERS.includes(config.payments.provider)) problems.push(`PAYMENT_PROVIDER must be one of: ${PAYMENT_PROVIDERS.join(", ")}.`);
-  if (!["test", "live"].includes(config.payments.mode)) problems.push("PAYMENT_MODE must be test or live.");
+  if (!["test", "live"].includes(config.payments.mode)) problems.push(`PAYMENT_MODE must be test or live (it is set to "${config.payments.mode.slice(0, 20)}").`);
   if (isProd && config.payments.razorpay.apiBase !== RAZORPAY_API) problems.push("RAZORPAY_API_BASE must not be set in production.");
   if (isProd && !Object.values(CASHFREE_API).includes(config.payments.cashfree.apiBase)) problems.push("CASHFREE_API_BASE must not be set in production.");
   // Missing email / SMS credentials do not stop the server: accounts keep working, the start-up

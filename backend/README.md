@@ -455,7 +455,7 @@ Copy `.env.example` to `.env`. Nothing secret is in the code or in Git (`.env` a
 | `PRODUCT_MODERATION` | no | `true` = a shop's first Publish waits for a FrameX admin (`false`) |
 | `MEDIA_MAX_MB`, `MEDIA_MAX_PER_SHOP` | no | largest product picture (`12`) and how many pictures one shop may keep (`600`) |
 | `CATALOG_DIR` | no | folder that holds the website's `js/` and `assets/js/` folders (the catalogue and pricing code). Default: the project folder, one level above `backend/` |
-| `TRUST_PROXY` | hosted | `1` behind Render / Railway / Fly, so rate limits see the real client address |
+| `TRUST_PROXY` | hosted | the number of proxies in front of the server, so that request limits count each visitor separately. **`3` on Render** (measured 2026-10-12: Cloudflare, Render's router, and one more in front of the service); usually `1` on Railway / Fly. Check with `GET /api/health/client`: `seenAs` must be the start of your own public address. With too small a number every visitor shares one address and one limit |
 | `EMAIL_PROVIDER` | for email | `brevo` (default when a key is set), `resend`, `gmail`, `smtp`, `none`. `dev` (test mode) is refused in production |
 | `EMAIL_PROVIDER_API_KEY` | with `brevo` / `resend` | the provider's API key |
 | `EMAIL_FROM` | with `brevo` / `resend` / `smtp` | sender, verified with the provider: `"FrameX <support@example.com>"` |
