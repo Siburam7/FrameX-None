@@ -279,6 +279,33 @@
     });
   }
 
+  /* WhatsApp for a shop's login details: nothing is sent by FrameX. The button opens the admin's OWN WhatsApp in a
+     chat with the shop's phone number, with the message written; the admin presses Send there. The message carries
+     the one-time password link, so it must only go to the shop's own number: the page says so. */
+  const waDigits = (phone) => {
+    const digits = String(phone || "").replace(/\D/g, "").replace(/^0+/, "");
+    if (digits.length === 10) return "91" + digits;
+    return digits.length >= 11 && digits.length <= 15 ? digits : "";
+  };
+  function shopWaText(c) {
+    const first = String(c.ownerName || "").trim().split(/\s+/)[0];
+    const site = `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, "")}`;
+    return [
+      `Hello${first ? " " + first : ""}, this is FrameX.`,
+      "",
+      c.firstSetup ? `Good news: ${c.shopName} has been approved on FrameX.` : `Here is a new password link for ${c.shopName} on FrameX.`,
+      "",
+      `Your Shop ID: ${c.shopCode}`,
+      `${c.firstSetup ? "Set your password" : "Choose a new password"} with this link. It works once, until ${when(c.expiresAt)}:`,
+      c.setupUrl,
+      "",
+      `Then log in with your Shop ID or ${c.accountEmail}:`,
+      `${site}login.html?type=shop`,
+      "",
+      c.firstSetup ? "Welcome to FrameX." : "Thank you.",
+    ].join("\n");
+  }
+
   /** One-time credentials panel: Shop ID + setup link. The password is never shown because nobody but the shop knows it. */
   function credentialsHtml(c) {
     return `<div class="adm-credentials" role="status" tabindex="-1">
@@ -289,6 +316,14 @@
         <div><dt>One-time password link</dt><dd><input class="input adm-credentials__link" readonly value="${esc(c.setupUrl)}" aria-label="One-time password link"><button class="iu-btn" type="button" data-copy="${esc(c.setupUrl)}">${icon("copy")} Copy link</button></dd></div>
         <div><dt>Link expires</dt><dd>${esc(when(c.expiresAt))}</dd></div>
       </dl>
+      ${
+        c.shopName && waDigits(c.phone)
+          ? `<div class="adm-actions"><a class="btn btn--dark btn--sm" href="https://wa.me/${waDigits(c.phone)}?text=${encodeURIComponent(shopWaText(c))}" target="framex-whatsapp" rel="noopener" data-wa-shop>${icon("phone")} Send these details on WhatsApp</a></div>
+        <p class="wz-note">${icon("alert")} This opens your own WhatsApp in a chat with the shop's number (${esc(c.phone)}), with the message written: you press Send there. The link lets whoever holds it set the shop's password, so send it only to the shop's own number.</p>`
+          : c.shopName
+            ? `<p class="wz-note">${icon("alert")} No WhatsApp button: this shop has no mobile number WhatsApp can use. Copy the link and pass it on yourself.</p>`
+            : ""
+      }
       <p class="wz-note">${icon("alert")} ${c.emailed ? "The link was emailed to the shop." : `${{ not_configured: "No email was sent: the email service is not configured.", dev: "No email was sent: this server is in development mode.", provider_error: "The email could NOT be sent: the email provider refused it." }[c.emailStatus] || "No email was sent."} Send this link to the shop owner yourself, for example on WhatsApp.`} It works once and is shown only now; you can always create a new one.</p>
     </div>`;
   }

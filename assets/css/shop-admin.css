@@ -1778,3 +1778,44 @@ p.iu-errors {
 .wz-types + .wz-empty {
   margin-top: 0;
 }
+
+/* The welcome pop-up a shop sees once, after FrameX approved it (ui/shop-dashboard.js). It uses the login dialog's frame. */
+.sd-welcome {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 36px 28px 28px;
+  text-align: center;
+}
+
+.sd-welcome__mark {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(31, 157, 85, 0.12);
+  color: #14693f;
+}
+
+.sd-welcome__mark .icon {
+  width: 32px;
+  height: 32px;
+}
+
+.sd-welcome__title {
+  font-size: var(--text-h3);
+  line-height: 1.25;
+}
+
+.sd-welcome__text {
+  color: var(--muted, #5b5f6b);
+}
+
+.sd-welcome__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}

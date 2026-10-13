@@ -11,6 +11,7 @@ import { boundingBox, haversineSql } from "../lib/geo.js";
 import { messages, sendMail } from "../lib/mailer.js";
 import { newId } from "../lib/tokens.js";
 import { issueToken, revokeSessions } from "./auth-service.js";
+import { notifyUser } from "./notification-service.js";
 
 const PUBLIC = "approval_status = 'APPROVED' AND active_status = 'ACTIVE'";
 export const FULFILMENT = ["pickup", "shop_delivery", "delivery_partner"];
@@ -253,10 +254,34 @@ async function createShopAccount(q, shop, { email, name }, actor, ip) {
   return { userId, setup };
 }
 
-async function deliverSetup(shop, email, setup) {
+/**
+ * "Your shop is approved": one notification in the account of every login of the shop. The shop dashboard shows it
+ * as a welcome the first time the owner opens it, and marks it read. Stored once per login and shop, however often
+ * this is called (an approval that is taken back and given again does not welcome twice).
+ */
+async function welcomeShop(q, shop) {
+  const users = (await q.query("SELECT id FROM users WHERE shop_id = $1 AND role = 'SHOP'", [shop.id])).rows;
+  for (const u of users)
+    await notifyUser(u.id, { kind: "SHOP_APPROVED", ref: shop.shop_code, title: `${shop.name} is approved on FrameX`, body: "Your shop has been approved. You can now add your products, and orders for your shop will appear in this dashboard.", link: "shop-dashboard.html" }, q);
+}
+
+/** firstSetup: the link is for choosing the login's first password (false = it resets a password the shop already has). */
+async function deliverSetup(shop, email, setup, { firstSetup = true } = {}) {
   const mail = await sendMail({ to: email, ...messages.shopSetup(shop.name, shop.shop_code, setup.url, config.tokens.accountSetupHours) });
   // The link is also handed to the admin once, to pass on (e.g. by WhatsApp) if email isn't set up.
-  return { shopCode: shop.shop_code, accountEmail: email, setupUrl: setup.url, expiresAt: setup.expiresAt, emailed: Boolean(mail.delivered), emailStatus: mail.delivered ? "sent" : mail.reason };
+  // The shop's name, owner and phone come along so the admin page can write that message.
+  return {
+    shopCode: shop.shop_code,
+    shopName: shop.name,
+    ownerName: shop.owner_name || "",
+    phone: shop.phone || "",
+    accountEmail: email,
+    setupUrl: setup.url,
+    expiresAt: setup.expiresAt,
+    firstSetup,
+    emailed: Boolean(mail.delivered),
+    emailStatus: mail.delivered ? "sent" : mail.reason
+  };
 }
 
 /**
@@ -271,6 +296,7 @@ export async function adminApproveApplication(id, { shop, accountEmail, accountN
     if (!["PENDING", "UNDER_REVIEW"].includes(app.status)) throw errors.conflict("This application has already been decided.");
     const created = await insertShop(q, shop, { approval: "APPROVED", active: activate ? "ACTIVE" : "INACTIVE", applicationId: id, actor });
     const account = await createShopAccount(q, created, { email: accountEmail, name: accountName || app.owner_name }, actor, ip);
+    await welcomeShop(q, created);
     await q.query("UPDATE shop_applications SET status = 'APPROVED', reviewed_by = $2, reviewed_at = now(), shop_id = $3, updated_at = now() WHERE id = $1", [id, actor.id, created.id]);
     await audit(q, { actor, action: ACTIONS.SHOP_APPROVED, targetType: "shop", targetId: created.shop_code, metadata: { applicationId: id, active: activate }, ip });
     return { created, account };
@@ -284,6 +310,7 @@ export async function adminCreateShop({ shop, accountEmail, accountName, approve
     const created = await insertShop(q, shop, { approval: approve ? "APPROVED" : "PENDING", active: approve && activate ? "ACTIVE" : "INACTIVE", actor });
     await audit(q, { actor, action: approve ? ACTIONS.SHOP_APPROVED : ACTIONS.SHOP_CREATED, targetType: "shop", targetId: created.shop_code, ip });
     const account = accountEmail ? await createShopAccount(q, created, { email: accountEmail, name: accountName || shop.ownerName }, actor, ip) : null;
+    if (account && approve) await welcomeShop(q, created);
     return { created, account };
   });
   return {
@@ -359,6 +386,7 @@ export async function adminSetApproval(id, status, actor, ip) {
         WHERE id = $1`,
       [id, status, actor.id]
     );
+    if (status === "APPROVED") await welcomeShop(q, { id, name: shop.name, shop_code: shop.shopCode });
     // A shop that is no longer approved can't stay logged in.
     if (status !== "APPROVED") await q.query("UPDATE sessions SET revoked_at = now() WHERE revoked_at IS NULL AND user_id IN (SELECT id FROM users WHERE shop_id = $1)", [id]);
     await audit(q, { actor, action: status === "APPROVED" ? ACTIONS.SHOP_APPROVED : status === "REJECTED" ? ACTIONS.SHOP_REJECTED : ACTIONS.SHOP_UPDATED, targetType: "shop", targetId: shop.shopCode, metadata: { approval: status }, ip });
@@ -391,6 +419,7 @@ export async function adminIssueCredentials(id, { accountEmail, accountName }, a
   const { email, setup } = await db.tx(async (q) => {
     if (!existing) {
       const account = await createShopAccount(q, row, { email: accountEmail, name: accountName || shop.ownerName }, actor, ip);
+      await welcomeShop(q, row);
       return { email: accountEmail, setup: account.setup };
     }
     if (existing.status === "DISABLED") throw errors.conflict("This shop's login is disabled. Enable it first.");
@@ -398,7 +427,7 @@ export async function adminIssueCredentials(id, { accountEmail, accountName }, a
     await audit(q, { actor, action: ACTIONS.SHOP_CREDENTIALS_ISSUED, targetType: "shop", targetId: shop.shopCode, ip });
     return { email: existing.email, setup: token };
   });
-  return deliverSetup(row, email, setup);
+  return deliverSetup(row, email, setup, { firstSetup: !existing || !existing.password_hash });
 }
 
 /** Disable / enable the shop's login without touching the listing. */

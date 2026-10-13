@@ -675,6 +675,52 @@
       return message("Your shop couldn't be loaded", esc(error.message), `<a class="btn btn--dark" href="shop-dashboard.html">Try again</a>`);
     }
     route();
+    welcomeOnce();
+  }
+
+  /* The welcome after approval. When FrameX approves a shop, the backend leaves one "your shop is approved" notice in
+     the shop's account. The first time the owner opens the dashboard it is shown as a pop-up; closing it marks the
+     notice as read, so it never comes back, on this device or any other. */
+  async function welcomeOnce() {
+    let notice;
+    try {
+      notice = (await http().get("/notifications", { limit: 50 })).items.find((n) => n.kind === "SHOP_APPROVED" && !n.read);
+    } catch (error) {
+      return; // nothing to show, and nothing lost: it is still unread
+    }
+    if (!notice || $("#sd-welcome")) return;
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `<div class="auth-gate" id="sd-welcome" role="dialog" aria-modal="true" aria-labelledby="sd-welcome-title">
+        <div class="auth-gate__panel sd-welcome">
+          <button class="auth-gate__close" type="button" aria-label="Close" data-welcome-close>${icon("close")}</button>
+          <span class="sd-welcome__mark">${icon("badge-check")}</span>
+          <h2 class="sd-welcome__title" id="sd-welcome-title">${esc(notice.title)}</h2>
+          <p class="sd-welcome__text">Welcome to FrameX. ${esc(notice.body)}</p>
+          <p class="sd-welcome__text">Your Shop ID is <strong>${esc(shop.shopCode || "")}</strong>. You log in with it, or with your email address.</p>
+          <div class="sd-welcome__actions">
+            <a class="btn btn--primary" href="#/products/new" data-welcome-close>${icon("plus")} Add my first product</a>
+            <button class="btn btn--outline" type="button" data-welcome-close>Look around first</button>
+          </div>
+        </div>
+      </div>`,
+    );
+    const el = $("#sd-welcome");
+    const close = () => {
+      FrameX.overlay.hide(close);
+      document.removeEventListener("keydown", onKey);
+      el.remove();
+      http().post(`/notifications/${encodeURIComponent(notice.id)}/read`).catch(() => {});
+    };
+    const onKey = (event) => (event.key === "Escape" ? close() : FrameX.overlay.trapFocus(el, event));
+    el.addEventListener("click", (event) => (event.target === el || event.target.closest("[data-welcome-close]")) && close());
+    document.addEventListener("keydown", onKey);
+    FrameX.overlay.show(close);
+    requestAnimationFrame(() => {
+      el.classList.add("is-open");
+      const first = $(".sd-welcome__actions .btn", el);
+      if (first) first.focus();
+    });
   }
 
   function init() {
