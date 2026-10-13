@@ -238,6 +238,13 @@
   .sd-side__note {
     display: none;
   }
+
+  /* The menu of a dashboard (shop, artist, admin): all of it is shown, on as many rows as it needs.
+     It used to be a single row that scrolled sideways with nothing to say so: "Products" and "Orders" were out of sight. */
+  .sd-nav ul {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
 }
 
 .sd-main {
