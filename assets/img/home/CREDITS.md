@@ -20,3 +20,13 @@ they are not photos of any FrameX shop or product.
 | `hero-newborn.webp` | Kelly Sikkema | https://unsplash.com/photos/woman-holding-baby-beside-man-smiling-WvVyudMd1Es |
 | `hero-family.webp` | Fotos | https://unsplash.com/photos/a-group-of-people-posing-for-a-photo-M6we0b1vruE |
 | `hero-play.webp` | BenMoses M | https://unsplash.com/photos/a-man-holding-a-small-child-up-in-the-air-oG6mE4Z6UME |
+
+`offer-*.webp` (same licence, downloaded on 2026-10-15) are the pictures of the offer banners under the home hero.
+
+| File | Photographer | Source |
+| ---- | ------------ | ------ |
+| `offer-gift.webp` | Vitaly Gariev | https://unsplash.com/photos/woman-happily-receiving-a-gift-from-man-VtRXNeBpknA |
+| `offer-delivery.webp` | RoseBox رز باکس | https://unsplash.com/photos/person-giving-brown-box-BFdSCxmqvYc |
+| `offer-decor.webp` | Barney Goodman | https://unsplash.com/photos/woman-hanging-framed-picture-on-wall-4B6KyujJMwE |
+| `offer-diwali.webp` | Umesh Soni | https://unsplash.com/photos/lighted-candle-on-brown-round-holder-H4ilfu3vftk |
+| `offer-art.webp` | Caroline Veronez | https://unsplash.com/photos/a-woman-painting-outside-XW17Q7NWWIU |

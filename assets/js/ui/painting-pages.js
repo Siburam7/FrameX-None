@@ -51,7 +51,7 @@
     if (!root) return;
     const user = await FrameX.auth.guard(["CUSTOMER", "ADMIN", "ARTIST", "SHOP"]);
     if (!user) return;
-    root.innerHTML = `<div class="skeleton" style="height:220px"></div>`;
+    root.innerHTML = FrameX.templates.skeletonPage("list");
     try {
       const r = await http().get("/paintings", { limit: 50 });
       root.innerHTML = r.items.length
@@ -236,7 +236,7 @@
         });
     }
 
-    root.innerHTML = `<div class="skeleton" style="height:320px"></div>`;
+    root.innerHTML = FrameX.templates.skeletonPage("painting");
     try {
       let r = (await http().get(`/paintings/${encodeURIComponent(number)}`)).request;
       // Coming back from the bank's page, or reloading while a payment is being confirmed: ask the server.

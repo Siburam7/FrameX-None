@@ -48,7 +48,8 @@
             <li><a href="#s1">Information we may handle</a></li>
             <li><a href="#s2">Why we collect it</a></li>
             <li><a href="#s3">How information may be used</a></li>
-            <li><a href="#s4">What this site stores on your device</a></li>
+            <li><a href="#s4">What this site stores on your device</a>
+              <ul class="legal__toc-sub"><li><a href="#cookies">Cookies and storage</a></li></ul></li>
             <li><a href="#s5">Data security</a></li>
             <li><a href="#s6">Data retention</a></li>
             <li><a href="#s7">Third-party services</a></li>
@@ -109,15 +110,17 @@
                 FrameX's own address through our email provider. If you are logged in, the message is linked to your
                 account. Your message is not published and is not used for advertising. You can ask us to delete it
                 (see &ldquo;Contact us&rdquo; below).</li>
-              <li><strong>Your analytics choice.</strong> When you answer the analytics question (see below), the answer
-                is kept in your browser's local storage so that you are not asked again. If you allow analytics, your
+              <li><strong>Your cookie choice.</strong> When you answer the cookie banner (see &ldquo;Cookies and storage
+                on your device&rdquo; below), the answer is kept in your browser's local storage so that you are not
+                asked again. If you allow analytics, your
                 browser also keeps a random visitor number and a visit number. If you say no, neither is created.</li>
             </ul>
           </section>
           <section class="legal-section" id="analytics">
             <h2>Analytics: only if you allow it</h2>
-            <p>The first time you visit, FrameX asks whether it may count visits. Until you answer, and if you answer
-              &ldquo;No thanks&rdquo;, nothing is counted and no visitor number is made. If your browser sends a
+            <p>The first time you visit, the cookie banner asks whether FrameX may count visits. Until you answer, and if
+              you press &ldquo;Reject&rdquo; (or leave Analytics switched off in Cookie settings), nothing is counted and
+              no visitor number is made. If your browser sends a
               &ldquo;Do Not Track&rdquo; or &ldquo;Global Privacy Control&rdquo; signal, we treat that as a no and do
               not ask.</p>
             <p><strong>If you allow it, we record:</strong> which pages are opened (the page's address without
@@ -135,8 +138,49 @@
               removes those cookies and stops sending.</p>
             <p><strong>Not analytics:</strong> your orders, payments and account (section 9) are records FrameX needs
               to run the shop. They exist whether or not you allow analytics, and they are not sent to Google.</p>
-            <p class="legal__choice"><strong data-analytics-status>Analytics is OFF: you have not been asked yet.</strong>
+            <p class="legal__choice"><strong data-analytics-status>Analytics cookies are OFF: you have not chosen yet.</strong>
               <button class="btn btn--outline btn--sm" type="button" data-analytics-choice>Change my choice</button></p>
+          </section>
+          <section class="legal-section" id="cookies">
+            <h2>Cookies and storage on your device</h2>
+            <p>A cookie is a small piece of text that a website keeps in your browser, so that it can remember you on the
+              next page or the next visit. FrameX also keeps a few things in your browser&rsquo;s own storage (&ldquo;local
+              storage&rdquo;, which stays until it is cleared, and &ldquo;session storage&rdquo;, which is gone when you
+              close the tab). Both are listed here. The first time you visit, a banner asks you to accept or reject the
+              optional ones; <strong>&ldquo;Cookie settings&rdquo;</strong> at the bottom of every page lets you change
+              your choice at any time.</p>
+            <h3>Necessary: always on</h3>
+            <p>The site needs these to work. They don&rsquo;t track you and are not used for advertising.</p>
+            <div class="legal-table"><table>
+              <thead><tr><th scope="col">Name</th><th scope="col">Kept in</th><th scope="col">What it does</th><th scope="col">How long</th></tr></thead>
+              <tbody>
+                <tr><td><code>fx_session</code></td><td>Cookie (from the FrameX server)</td><td>Keeps you logged in. It holds a random number, not your password.</td><td>90 days, renewed while you use the site; removed when you log out</td></tr>
+                <tr><td><code>framex.session.v1</code></td><td>Local storage</td><td>Keeps you logged in where the website and the FrameX server are on different addresses (it holds the same kind of random number).</td><td>Until you log out, or 90 days</td></tr>
+                <tr><td><code>framex.consent.v1</code></td><td>Local storage</td><td>Your cookie choice, so the banner doesn&rsquo;t ask again.</td><td>Until you change it or clear your browser</td></tr>
+                <tr><td><code>framex.cartPending.v1, framex.checkoutKey.v1</code></td><td>Session storage</td><td>An item waiting while you log in; one checkout makes only one order, even if the button is pressed twice.</td><td>Until the tab is closed</td></tr>
+                <tr><td><code>framex.wishlist.v1</code></td><td>Local storage</td><td>Your wishlist.</td><td>Until you remove the items or clear your browser</td></tr>
+                <tr><td><code>framex.designs.v1, framex.studioDrafts.v1, framex.templateDrafts.v1, framex.wallArt.v1, framex.productPhotos.v1</code></td><td>Local storage</td><td>Your saved designs, unfinished designs and the photos you chose for them, so they survive a reload or a login.</td><td>Until you delete them; unused photos are removed automatically</td></tr>
+                <tr><td><code>framex.shopProducts.v1, framex.shopEditor.v1</code></td><td>Local storage</td><td>For shops: products being edited in the shop dashboard on this device.</td><td>Until saved or cleared</td></tr>
+                <tr><td><code>framex.visit, framex.welcome, framex.logoWidth</code></td><td>Session / local storage</td><td>Shows the FrameX logo animation only when the site is first opened, reloaded or right after logging in.</td><td>Until the tab is closed (logo size: until cleared)</td></tr>
+              </tbody>
+            </table></div>
+            <h3>Analytics: only if you allow them</h3>
+            <p>Used only after you press &ldquo;Accept all&rdquo;, or switch Analytics on in Cookie settings. See
+              &ldquo;Analytics: only if you allow it&rdquo; above for what is counted.</p>
+            <div class="legal-table"><table>
+              <thead><tr><th scope="col">Name</th><th scope="col">Kept in</th><th scope="col">What it does</th><th scope="col">How long</th></tr></thead>
+              <tbody>
+                <tr><td><code>framex.visitor.v1</code></td><td>Local storage</td><td>A random visitor number, so that two visits by the same browser are counted as one visitor. It does not say who you are.</td><td>Until you switch analytics off (then it is deleted) or clear your browser</td></tr>
+                <tr><td><code>framex.visit.v1</code></td><td>Session storage</td><td>A random number for this visit.</td><td>Until 30 minutes without activity, or the tab is closed</td></tr>
+                <tr><td><code>framex.purchases.v1</code></td><td>Local storage</td><td>Which orders were already reported, so an order is counted once.</td><td>Until you switch analytics off or clear your browser</td></tr>
+                <tr><td><code>_ga, _ga_&lt;ID&gt;</code></td><td>Cookies set by Google</td><td>Google Analytics, only where FrameX has switched it on. Advertising features are off.</td><td>Up to 2 years (Google&rsquo;s setting); removed by FrameX if you switch analytics off</td></tr>
+              </tbody>
+            </table></div>
+            <h3>Advertising</h3>
+            <p>FrameX does not use advertising or tracking cookies, and does not share your visits with advertisers. If this
+              ever changes, it will be listed here and asked for in the cookie banner first.</p>
+            <p class="legal__choice"><strong data-analytics-status>Analytics cookies are OFF: you have not chosen yet.</strong>
+              <button class="btn btn--outline btn--sm" type="button" data-cookie-settings>Cookie settings</button></p>
           </section>
           <section class="legal-section" id="s5">
             <h2>5. Data security</h2>

@@ -10,6 +10,7 @@ import { paymentStatus } from "../payments/index.js";
 import { isLoadTest, rateLimit } from "../lib/rate-limit.js";
 import { v, validate } from "../lib/validate.js";
 import { SEARCH_KINDS, searchAll } from "../services/search-service.js";
+import { activeCoupons } from "../services/coupon-service.js";
 
 const router = Router();
 
@@ -40,6 +41,11 @@ router.get("/health/client", (req, res) => {
 });
 
 // Settings the website needs (nothing secret).
+// The coupons that can be used now (code, what it gives, the minimum order): for the checkout page and the home page.
+router.get("/coupons", async (req, res) => {
+  res.json({ items: await activeCoupons() });
+});
+
 router.get("/config", (req, res) => {
   res.json({
     nearby: { radiusOptionsKm: config.nearby.radiusOptionsKm, defaultRadiusKm: config.nearby.defaultRadiusKm, maxRadiusKm: config.nearby.maxRadiusKm },
@@ -61,6 +67,8 @@ router.get("/config", (req, res) => {
     // What a customer photo may be (the website checks the same before sending; the server checks again).
     uploads: { maxBytes: config.uploads.maxBytes, formats: ["jpeg", "png", "webp"], maxSide: config.uploads.maxSide },
     giftWrap: { enabled: config.checkout.giftWrap.enabled, fee: config.checkout.giftWrap.fee },
+    // Delivery: its fee, and whether a customer's first order has free delivery (the home page's offer banner).
+    delivery: { fee: config.checkout.shippingFee, freeAbove: config.checkout.freeShippingAbove, firstOrderFree: config.checkout.firstOrderFreeDelivery },
     // Visitor statistics: whether the website may send them (only ever for visitors who said yes there),
     // and the Google Analytics 4 Measurement ID when one is set. Neither is a secret.
     analytics: { enabled: config.analytics.enabled, ga4MeasurementId: config.analytics.ga4MeasurementId || null },

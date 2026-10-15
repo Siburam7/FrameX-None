@@ -974,7 +974,7 @@
     const previewId = q("preview");
     const ref = q("slug") || q("id");
     if (!ref && !previewId) return notFound(root, "No product was selected.");
-    root.innerHTML = `<div class="pp-top"><div class="skeleton" style="aspect-ratio:1"></div><div class="skeleton" style="min-height:420px"></div></div>`;
+    root.innerHTML = FrameX.templates.skeletonPage("pdp");
     let product, shop, categories;
     try {
       product = previewId

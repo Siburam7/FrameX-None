@@ -10,13 +10,12 @@
   const NAV = [
     ["home", "Home"],
     ["art", "Art & Artists"],
-    ["services", "Services"],
     ["shop", "Shop"],
     ["decor", "Home Decor"],
     ["templates", "Templates"],
-    ["contact", "Contact"],
     ["faq", "FAQ"],
   ];
+  // Services and Contact are in the footer (Support), not in the header.
 
   /* The header's main button follows the section the visitor is in: [label, link]. */
   const CTA = {
@@ -149,7 +148,6 @@
           ["Our Story", pages.story],
           ["About FrameX", pages.about],
           ["Customer Gallery", pages.customerGallery],
-          ["Contact", pages.contact],
         ])}
         ${col("Shop", [
           ["All Frames", pages.shop],
@@ -162,6 +160,8 @@
           ["Gallery", pages.gallery],
         ])}
         ${col("Support", [
+          ["Services", pages.services],
+          ["Contact Us", pages.contact],
           ["FAQ", pages.faq],
           ["How It Works", pages.services + "#journey"],
           ["Partner With FrameX", pages.partner],
@@ -177,6 +177,7 @@
         <span>© 2026 FrameX. All rights reserved.</span>
         <a href="${pages.terms}">Terms of Use</a>
         <a href="${pages.privacy}">Privacy Notice</a>
+        <button class="site-footer__cookies" type="button" data-cookie-settings>Cookie settings</button>
       </div>
     </footer>`;
   }

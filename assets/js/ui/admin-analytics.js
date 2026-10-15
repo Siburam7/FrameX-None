@@ -413,7 +413,7 @@
       out.innerHTML = empty("Choose the first and the last day", "Pick two dates above and press Show. A period can be up to one year long.");
       return;
     }
-    out.innerHTML = `<div class="skeleton" style="height:120px"></div><div class="skeleton" style="height:260px;margin-top:16px"></div>`;
+    out.innerHTML = FrameX.templates.skeletonPage("dash");
     let data;
     try {
       data = await http().get(`/admin/analytics/${s.tab}`, { range: s.range, from: s.range === "custom" ? s.from : "", to: s.range === "custom" ? s.to : "", page: s.page });

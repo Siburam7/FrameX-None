@@ -105,7 +105,7 @@
   async function init() {
     const grid = $("#cg-grid");
     if (!grid) return;
-    grid.innerHTML = `<div class="skeleton" style="min-height:240px"></div>`;
+    grid.innerHTML = FrameX.templates.skeletons(6, "photo");
     let loaded = false;
     if (FrameX.http.enabled()) {
       try {

@@ -17,6 +17,7 @@ process.env.CORS_ORIGINS = "http://localhost:5500";
 process.env.PAYMENT_PROVIDER = "none";
 process.env.TAX_PERCENT = "0";
 process.env.SHIPPING_FEE = "60";
+process.env.FIRST_ORDER_FREE_DELIVERY = "false"; // the first-order offer is tested on its own (checkout.test.js)
 process.env.SHIPPING_FREE_ABOVE = "0";
 process.env.COD_ENABLED = "true";
 process.env.COD_FEE = "40";

@@ -29,7 +29,16 @@
      FrameX.analytics.track("search", { query })
      FrameX.analytics.consent()            "granted" | "denied" | null (not asked yet)
      FrameX.analytics.setConsent(true|false)
-     FrameX.analytics.openChoices()        show the question again
+     FrameX.analytics.openChoices()        open the cookie settings
+
+   The question is asked as a cookie banner on the first visit: "Accept all",
+   "Reject" or "Settings". Settings opens a panel with one switch per kind of
+   cookie: Necessary (always on: logging in, the cart, checkout, saved designs,
+   this choice) and Analytics (the counting described above). There are no
+   advertising cookies. The banner is shown on every page except the staff
+   pages, also when analytics is not in use on the site (the visitor's choice
+   is then kept for when it is). "Cookie settings" in the footer and "Change
+   my choice" on the Privacy Notice page open the panel again.
    ========================================================================== */
 (function (FrameX) {
   const CONSENT_KEY = "framex.consent.v1";
@@ -57,6 +66,8 @@
   let gaLoaded = false;
   let googleOff = false; // Google's tag is on the page but was told to stop
   let banner = null;
+  let panel = null; // the cookie settings panel, while it is open
+  let privatePage = false;
   let timer = 0;
   let beats = 0;
   const waiting = []; // what happened on this page before the visitor chose (sent only if they say yes)
@@ -328,18 +339,26 @@
     document.dispatchEvent(new CustomEvent("framex:consent-change", { detail: { analytics: choice } }));
   }
 
-  /* ---------------------------------------------------------------- The question */
+  /* ---------------------------------------------------------------- The cookie banner and settings */
+
+  /** Who counts the visits, in words, for the banner and the panel. */
+  const counters = () => (settings && settings.ga4 ? (settings.firstParty ? "our own counter and Google Analytics" : "Google Analytics") : "our own counter");
 
   function showBanner() {
-    if (banner || inert) return;
-    const esc = FrameX.dom.escapeHtml;
+    if (banner || privatePage) return;
     banner = document.createElement("section");
-    banner.className = "consent";
+    banner.className = "consent consent--cookies";
     banner.setAttribute("role", "region");
-    banner.setAttribute("aria-label", "Analytics choice");
-    banner.innerHTML = `<div class="consent__text"><strong>Help us improve FrameX?</strong>
-        <p>With your OK we count visits and which pages and products people look at${settings && settings.ga4 ? (settings.firstParty ? ", with our own counter and Google Analytics" : ", with Google Analytics") : ""}. No ads, and nothing that says who you are. <a href="privacy-notice.html#analytics">${esc("What is counted")}</a></p></div>
-      <div class="consent__actions"><button class="btn btn--outline btn--sm" type="button" data-consent="no">No thanks</button><button class="btn btn--dark btn--sm" type="button" data-consent="yes">Allow analytics</button></div>`;
+    banner.setAttribute("aria-label", "Cookies");
+    banner.innerHTML = `<div class="consent__text"><strong>We use cookies</strong>
+        <p>Necessary cookies keep you logged in and remember your cart, your designs and this choice. With your OK we
+          also use analytics cookies to count visits and see which pages and products people like. No advertising
+          cookies, and nothing that says who you are. <a href="privacy-notice.html#cookies">Cookie policy</a></p></div>
+      <div class="consent__actions">
+        <button class="btn btn--ghost btn--sm consent__settings" type="button" data-cookie-settings>Settings</button>
+        <button class="btn btn--outline btn--sm" type="button" data-consent="no">Reject</button>
+        <button class="btn btn--dark btn--sm" type="button" data-consent="yes">Accept all</button>
+      </div>`;
     banner.addEventListener("click", (e) => {
       const btn = e.target.closest("[data-consent]");
       if (btn) setConsent(btn.dataset.consent === "yes");
@@ -351,20 +370,100 @@
     banner = null;
   }
 
+  /** The cookie settings: one short line and a switch per kind of cookie, the details behind "More about cookies", then Reject all / Save / Accept all. */
+  function openSettings() {
+    if (panel) return;
+    const opener = document.activeElement;
+    const on = choice === "granted";
+    panel = document.createElement("div");
+    panel.className = "cookie-prefs";
+    panel.innerHTML = `<div class="cookie-prefs__backdrop" data-cookie-close></div>
+      <div class="cookie-prefs__box" role="dialog" aria-modal="true" aria-labelledby="cookie-prefs-title">
+        <div class="cookie-prefs__head">
+          <h2 id="cookie-prefs-title">Cookie settings</h2>
+          <button class="cookie-prefs__close" type="button" data-cookie-close aria-label="Close">${FrameX.dom.icon ? FrameX.dom.icon("close") : "×"}</button>
+        </div>
+        <div class="cookie-prefs__item">
+          <div><strong>Necessary</strong><span>Login, cart and your saved designs</span></div>
+          <span class="cookie-prefs__always">Always on</span>
+        </div>
+        <div class="cookie-prefs__item">
+          <div><strong id="cookie-analytics-label">Analytics</strong><span>Count visits, without knowing who you are</span></div>
+          <label class="cookie-switch"><input type="checkbox" role="switch" data-cookie-analytics aria-labelledby="cookie-analytics-label"${on ? " checked" : ""}><span class="cookie-switch__track" aria-hidden="true"></span></label>
+        </div>
+        <div class="cookie-prefs__item">
+          <div><strong>Advertising</strong><span>FrameX doesn't use them</span></div>
+          <span class="cookie-prefs__always cookie-prefs__always--off">Not used</span>
+        </div>
+        <button class="cookie-prefs__more-btn" type="button" data-cookie-more aria-expanded="false" aria-controls="cookie-prefs-more">More about cookies ${FrameX.dom.icon ? FrameX.dom.icon("chev-down") : ""}</button>
+        <div class="cookie-prefs__more" id="cookie-prefs-more" hidden>
+          <p>A cookie is a small piece of text a website keeps in your browser, so it can remember you on the next page or
+            the next visit.</p>
+          <p><strong>Necessary</strong> cookies keep you logged in, remember your cart, checkout, wishlist and saved
+            designs, and remember this choice. The site can't work without them, so they are always on.</p>
+          <p><strong>Analytics</strong> cookies count visits and which pages, products and templates people look at, with
+            ${counters()}. They never hold your name, email, phone, address or payment details.${inert && settings ? " Analytics is not in use on this site right now: your choice is kept for when it is." : ""}</p>
+          <p><strong>Advertising</strong> cookies are not used: FrameX doesn't track you for ads.</p>
+          <p>You can change your choice at any time from "Cookie settings" at the bottom of every page.
+            <a href="privacy-notice.html#cookies">Read the full cookie policy</a></p>
+        </div>
+        <div class="cookie-prefs__actions">
+          <button class="btn btn--outline btn--sm" type="button" data-cookie-save="no">Reject all</button>
+          <button class="btn btn--outline btn--sm" type="button" data-cookie-save="mine">Save</button>
+          <button class="btn btn--dark btn--sm" type="button" data-cookie-save="yes">Accept all</button>
+        </div>
+      </div>`;
+    const close = () => {
+      if (!panel) return;
+      panel.remove();
+      panel = null;
+      document.removeEventListener("keydown", keys);
+      if (opener && opener.focus && document.contains(opener)) opener.focus();
+    };
+    const keys = (e) => {
+      if (e.key === "Escape") return close();
+      if (e.key !== "Tab") return;
+      // Keep the keyboard inside the panel
+      const items = [...panel.querySelectorAll("button, input, a[href]")];
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) (e.preventDefault(), last.focus());
+      else if (!e.shiftKey && document.activeElement === last) (e.preventDefault(), first.focus());
+    };
+    panel.addEventListener("click", (e) => {
+      if (e.target.closest("[data-cookie-close]")) return close();
+      const more = e.target.closest("[data-cookie-more]");
+      if (more) {
+        const open = more.getAttribute("aria-expanded") !== "true";
+        more.setAttribute("aria-expanded", String(open));
+        panel.querySelector("#cookie-prefs-more").hidden = !open;
+        return;
+      }
+      const save = e.target.closest("[data-cookie-save]");
+      if (!save) return;
+      const how = save.dataset.cookieSave;
+      setConsent(how === "yes" ? true : how === "no" ? false : panel.querySelector("[data-cookie-analytics]").checked);
+      close();
+      if (FrameX.toast && FrameX.toast.show) FrameX.toast.show("Your cookie choices are saved.");
+    });
+    document.addEventListener("keydown", keys);
+    document.body.appendChild(panel);
+    panel.querySelector("[data-cookie-analytics]").focus();
+  }
+
   /** The Privacy Notice page shows the current choice and a button to change it. */
   function paintStatus() {
     document.querySelectorAll("[data-analytics-status]").forEach((el) => {
       el.textContent = inert
-        ? "Analytics is not in use on this site at the moment."
+        ? "Analytics cookies are not in use on this site at the moment."
         : choice === "granted"
-          ? "Analytics is ON for this browser: you allowed it."
+          ? "Analytics cookies are ON for this browser: you allowed them."
           : choice === "denied"
-            ? "Analytics is OFF for this browser: you said no."
+            ? "Analytics cookies are OFF for this browser: you said no."
             : browserSaysNo()
-              ? "Analytics is OFF: your browser asks sites not to track, and we follow that."
-              : "Analytics is OFF: you have not been asked yet.";
+              ? "Analytics cookies are OFF: your browser asks sites not to track, and we follow that."
+              : "Analytics cookies are OFF: you have not chosen yet.";
     });
-    document.querySelectorAll("[data-analytics-choice]").forEach((el) => (el.hidden = inert));
   }
 
   /* ---------------------------------------------------------------- Public */
@@ -384,8 +483,11 @@
     choice = readChoice();
     if (PRIVATE_PAGES.includes(page)) {
       inert = true;
+      privatePage = true;
       return;
     }
+    // The cookie banner, at once (not after the server's settings): the first visit, unless the browser already says no
+    if (choice === null && !browserSaysNo()) showBanner();
     track("page_view");
     const server = FrameX.http && FrameX.http.serverConfig ? await FrameX.http.serverConfig() : null;
     const own = (FrameX.config && FrameX.config.analytics) || {};
@@ -397,8 +499,7 @@
       return paintStatus();
     }
     if (choice === "granted") begin();
-    else if (choice === null && !browserSaysNo()) showBanner();
-    else waiting.length = 0;
+    else if (choice !== null || browserSaysNo()) waiting.length = 0;
     paintStatus();
   }
 
@@ -419,17 +520,15 @@
     if (typeof d.event === "string" && /^live_demo_/.test(d.event)) track(d.event, d.productId ? { itemType: "product", itemId: d.productId } : {});
   });
   document.addEventListener("click", (e) => {
-    if (e.target.closest && e.target.closest("[data-analytics-choice]")) {
-      hideBanner();
-      if (settings && !inert) showBanner();
-    }
+    // "Cookie settings" (footer, banner) and "Change my choice" (Privacy Notice) open the settings
+    if (e.target.closest && e.target.closest("[data-cookie-settings], [data-analytics-choice]")) openSettings();
   });
 
   FrameX.analytics = {
     track,
     consent: () => choice,
     setConsent,
-    openChoices: () => (hideBanner(), settings && !inert && showBanner()),
+    openChoices: openSettings,
     // For the tests and for anyone curious in the console: what this page is set up to do.
     inspect: () => ({ page, inert, choice, running, settings, waiting: waiting.length, queued: queue.length, googleLoaded: gaLoaded, hasVisitorId: Boolean(visitorId), browserSaysNo: browserSaysNo() }),
   };

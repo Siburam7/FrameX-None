@@ -613,3 +613,23 @@
     grid-column: auto;
   }
 }
+
+/* "Cookie settings" at the end of the footer's bottom line: looks like the links next to it */
+.site-footer__cookies {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 14px;
+  border: 0;
+  border-left: 1px solid rgba(228, 229, 231, 0.3);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.site-footer__cookies:hover,
+.site-footer__cookies:focus-visible {
+  color: var(--white);
+}

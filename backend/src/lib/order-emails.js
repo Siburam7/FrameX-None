@@ -26,6 +26,7 @@ function tables(order) {
       rows: [
         ["Subtotal", rupees(order.subtotal)],
         order.discount ? ["Discount", "−" + rupees(order.discount)] : null,
+        order.couponDiscount ? [`Coupon ${order.couponCode}`, "−" + rupees(order.couponDiscount)] : null,
         ["Delivery", rupees(order.shippingFee)],
         order.tax ? [`Tax (${order.taxPercent}%)`, rupees(order.tax)] : null,
         order.giftWrap ? ["Gift wrapping", rupees(order.giftWrapFee)] : null,
@@ -48,6 +49,7 @@ function plainSummary(order) {
     ...order.items.map((i) => `- ${i.name}${i.size ? ` (${i.size})` : ""} x ${i.quantity}: ${rupees(i.lineTotal)}`),
     `Subtotal: ${rupees(order.subtotal)}`,
     order.discount ? `Discount: -${rupees(order.discount)}` : "",
+    order.couponDiscount ? `Coupon ${order.couponCode}: -${rupees(order.couponDiscount)}` : "",
     `Delivery: ${rupees(order.shippingFee)}`,
     order.tax ? `Tax: ${rupees(order.tax)}` : "",
     order.giftWrap ? `Gift wrapping: ${rupees(order.giftWrapFee)}` : "",

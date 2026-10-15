@@ -526,3 +526,45 @@
     text-overflow: ellipsis;
   }
 }
+
+/* Phones: the home page's four reasons ("Local framing shops" …) as a compact 2 × 2 grid: a small icon and the
+   short heading; the longer line under each heading is left out on a phone. */
+@media (max-width: 639px) {
+  .trust {
+    padding-block: 12px;
+  }
+
+  .trust__list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+  }
+
+  .trust__item {
+    gap: 8px;
+    font-size: var(--text-xs);
+    line-height: 1.3;
+  }
+
+  .trust__item strong {
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .trust__item span:not(.trust__icon) {
+    font-size: 0;
+  }
+
+  .trust__item span:not(.trust__icon) strong {
+    display: block;
+  }
+
+  .trust__icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .trust__icon .icon {
+    width: 15px;
+    height: 15px;
+  }
+}

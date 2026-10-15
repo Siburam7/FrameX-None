@@ -471,7 +471,7 @@
     const section = NAV.some(([id]) => id === parts[0]) ? parts[0] : "overview";
     const main = layout(section);
     main.onclick = null;
-    main.innerHTML = `<div class="skeleton" style="height:120px"></div>`;
+    main.innerHTML = FrameX.templates.skeletonPage("dash");
     document.title = `${NAV.find(([id]) => id === section)[1]} — FrameX artist dashboard`;
     try {
       if (section === "overview") await overview(main);

@@ -114,7 +114,7 @@
       if (reset) {
         state.page = 1;
         shown = [];
-        list.innerHTML = `<div class="skeleton" style="height:280px"></div>`;
+        list.innerHTML = state.view === "artists" ? `<div class="artist-grid">${FrameX.templates.skeletons(6, "artist")}</div>` : `<div class="product-grid">${FrameX.templates.skeletons(8, "artwork")}</div>`;
       }
       try {
         if (state.view === "artists") {
@@ -293,7 +293,7 @@
               <textarea class="input" id="cp-notes" rows="4" maxlength="1500" placeholder="Anything the artist should know: who is in the photo, the background you want, colours, a date you need it by.">${esc(state.notes || "")}</textarea>
             </div>
             <div class="cp-step"><h3><span>4</span>Where should it be delivered?</h3>
-              <div id="cp-address">${loggedIn ? `<div class="skeleton" style="height:60px"></div>` : `<p class="pp-muted">Log in to choose your delivery address.</p>`}</div>
+              <div id="cp-address">${loggedIn ? `${FrameX.templates.skeletons(1, "row")}` : `<p class="pp-muted">Log in to choose your delivery address.</p>`}</div>
             </div>
           </div>
 

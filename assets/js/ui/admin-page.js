@@ -599,7 +599,7 @@
     main.onclick = null;
     typed = false;
     main.oninput = () => (typed = true);
-    main.innerHTML = `<div class="skeleton" style="height:120px"></div>`;
+    main.innerHTML = FrameX.templates.skeletonPage("dash");
     const loaded = (ok) => {
       const stamp = $("[data-refreshed]", root);
       if (stamp) stamp.textContent = ok ? `Updated ${new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Couldn't be updated";

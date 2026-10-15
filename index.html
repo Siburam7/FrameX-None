@@ -102,6 +102,7 @@
       </div>
     </section>
 
+
     <div class="marquee ticker" id="ticker" data-speed="40" aria-label="Highlights">
       <div class="marquee__track">
         <div class="marquee__group">
@@ -132,6 +133,102 @@
                 <use href="#i-truck"></use>
               </svg></span><span><strong>Pickup or delivery</strong>Choose from what each shop offers.</span></li>
         </ul>
+      </div>
+    </section>
+
+    <!-- Offer banners under the strip of reasons ("Local framing shops" …): they slide by themselves (ui/offers.js), can be swiped, and have arrows and
+         dots. To change one, change its words, link and picture here; keep every line true (an offer written here
+         must be one the checkout really gives). Pictures: assets/img/home/offer-*.webp (CREDITS.md). -->
+    <section class="offers" aria-roledescription="carousel" aria-label="Offers and news" data-offers>
+      <div class="container offers__wrap">
+        <div class="offers__track" data-offers-track>
+          <!-- The Diwali coupon (backend: coupons table, migration 011). ui/offers.js copies the code, and takes this
+               banner away when the backend says the coupon can no longer be used. -->
+          <div class="offer offer--diwali" role="group" aria-roledescription="slide" aria-label="1 of 5: Diwali offer"
+            data-offer-coupon="XUSE10">
+            <img src="assets/img/home/offer-diwali.webp" alt="" width="1400" height="700" decoding="async">
+            <span class="offer__body">
+              <span class="offer__tag">Diwali offer</span>
+              <span class="offer__title">Flat 10% off on orders of ₹399 and more</span>
+              <span class="offer__coupon"><span class="offer__code">XUSE10</span><button class="offer__copy"
+                  type="button" data-copy-coupon="XUSE10">Copy code</button></span>
+              <span class="offer__text">Apply the code at checkout. 10% comes off your items.</span>
+              <a class="offer__cta" href="shop.html">Shop now <svg class="icon" aria-hidden="true">
+                  <use href="#i-arrow-right"></use>
+                </svg></a>
+            </span>
+          </div>
+          <!-- Art & Artists, with the first-order offer (backend: FIRST_ORDER_FREE_DELIVERY; ui/offers.js takes this
+               banner away when the backend says the offer is off). -->
+          <div class="offer offer--art" role="group" aria-roledescription="slide" aria-label="2 of 5: Art and Artists"
+            data-offer-feature="firstOrderFree">
+            <img src="assets/img/home/offer-art.webp" alt="" width="1400" height="700" loading="lazy" decoding="async">
+            <span class="offer__body">
+              <span class="offer__tag">Art &amp; Artists</span>
+              <span class="offer__title">Make your photo your wall&rsquo;s canvas</span>
+              <span class="offer__perk">Free delivery on your first order</span>
+              <span class="offer__text">Turn your own photo into wall art, or find original paintings by artists.</span>
+              <span class="offer__ctas">
+                <a class="offer__cta" href="wall-art-studio.html">Create with your photo <svg class="icon"
+                    aria-hidden="true">
+                    <use href="#i-arrow-right"></use>
+                  </svg></a>
+                <a class="offer__cta offer__cta--ghost" href="art.html">Explore art</a>
+              </span>
+            </span>
+          </div>
+          <a class="offer offer--gift" href="shop.html?category=gifts#collection" role="group"
+            aria-roledescription="slide" aria-label="3 of 5: Gift a memory">
+            <img src="assets/img/home/offer-gift.webp" alt="" width="1400" height="700" loading="lazy" decoding="async">
+            <span class="offer__body">
+              <span class="offer__tag">Gift idea</span>
+              <span class="offer__title">Gift a memory, not just a frame</span>
+              <span class="offer__text">Birthday, anniversary or wedding: put their favourite photo in a frame from a
+                local
+                shop.</span>
+              <span class="offer__cta">Shop gift frames <svg class="icon" aria-hidden="true">
+                  <use href="#i-arrow-right"></use>
+                </svg></span>
+            </span>
+          </a>
+          <a class="offer offer--delivery" href="#shops" role="group" aria-roledescription="slide"
+            aria-label="4 of 5: Pick it up or get it delivered">
+            <img src="assets/img/home/offer-delivery.webp" alt="" width="1400" height="700" loading="lazy"
+              decoding="async">
+            <span class="offer__body">
+              <span class="offer__tag">Pickup or delivery</span>
+              <span class="offer__title">Collect it nearby or get it at your door</span>
+              <span class="offer__text">Every frame comes from a named local shop. Choose pickup or delivery, as the
+                shop
+                offers.</span>
+              <span class="offer__cta">Find a shop <svg class="icon" aria-hidden="true">
+                  <use href="#i-arrow-right"></use>
+                </svg></span>
+            </span>
+          </a>
+          <a class="offer offer--decor" href="home-decor.html" role="group" aria-roledescription="slide"
+            aria-label="5 of 5: Wall art for every room">
+            <img src="assets/img/home/offer-decor.webp" alt="" width="1400" height="700" loading="lazy"
+              decoding="async">
+            <span class="offer__body">
+              <span class="offer__tag">Home decor</span>
+              <span class="offer__title">Wall art that makes it home</span>
+              <span class="offer__text">Posters, prints and multi-panel sets for every room.</span>
+              <span class="offer__cta">Shop wall art <svg class="icon" aria-hidden="true">
+                  <use href="#i-arrow-right"></use>
+                </svg></span>
+            </span>
+          </a>
+        </div>
+        <button class="offers__arrow offers__arrow--prev" type="button" data-offers-prev
+          aria-label="Previous offer"><svg class="icon" aria-hidden="true">
+            <use href="#i-chev-left"></use>
+          </svg></button>
+        <button class="offers__arrow offers__arrow--next" type="button" data-offers-next aria-label="Next offer"><svg
+            class="icon" aria-hidden="true">
+            <use href="#i-chev-right"></use>
+          </svg></button>
+        <div class="offers__dots" data-offers-dots></div>
       </div>
     </section>
 
@@ -500,7 +597,7 @@
               <a class="btn btn--outline btn--sm" href="customer-gallery.html">Customer gallery</a>
             </div>
           </div>
-          <div class="review-rail" id="review-rail"></div>
+          <div class="review-rail" id="review-rail" data-skeleton="review" data-skeleton-count="3"></div>
         </div>
       </div>
     </section>
@@ -730,6 +827,7 @@
   <script src="assets/js/ui/rail-nav.js" defer></script>
   <script src="assets/js/ui/site.js" defer></script>
   <script src="assets/js/ui/hero.js" defer></script>
+  <script src="assets/js/ui/offers.js" defer></script>
   <script src="assets/js/ui/featured.js" defer></script>
   <script src="assets/js/ui/categories.js" defer></script>
   <script src="assets/js/services/template-engine.js" defer></script>

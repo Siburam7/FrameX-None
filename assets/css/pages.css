@@ -1463,3 +1463,50 @@
   background: rgba(31, 157, 85, 0.12);
   color: #14693f;
 }
+
+/* Tables in the Privacy Notice (the cookie list): scroll sideways on a narrow screen instead of squeezing */
+.legal-table {
+  max-width: 100%;
+  margin: 12px 0 18px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+}
+
+.legal-table table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.legal-table th,
+.legal-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.legal-table th {
+  background: var(--surface-soft);
+  font-weight: 700;
+}
+
+.legal-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.legal-table code {
+  font-size: 0.85em;
+  word-break: break-word;
+}
+
+/* A sub-entry in the Privacy Notice contents (the cookie list, under section 4) */
+.legal__toc-sub {
+  margin: 4px 0 0;
+  padding-left: 14px;
+  list-style: none;
+  font-size: 0.92em;
+}

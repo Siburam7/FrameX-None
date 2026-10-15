@@ -122,6 +122,8 @@ function summary(row) {
     currency: row.currency,
     subtotal: row.subtotal,
     discount: row.discount,
+    couponCode: row.coupon_code || null,
+    couponDiscount: row.coupon_discount || 0,
     tax: row.tax,
     taxPercent: Number(row.tax_percent),
     shippingFee: row.shipping_fee,

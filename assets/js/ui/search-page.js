@@ -42,7 +42,7 @@
       const mine = (last += 1);
       history.replaceState(null, "", q ? `search.html?q=${encodeURIComponent(q)}` : "search.html");
       if (q.length < 2) return (out.innerHTML = `<p class="pp-muted">Type at least two letters: a frame, a design, a shop, an artist, a style or a city.</p>`);
-      out.innerHTML = `<div class="skeleton" style="height:160px"></div>`;
+      out.innerHTML = FrameX.templates.skeletonPage("list");
       try {
         const r = await FrameX.http.get("/search", { q, limit: 6 });
         if (mine !== last) return; // an older answer arriving late

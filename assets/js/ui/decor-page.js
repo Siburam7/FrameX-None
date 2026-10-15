@@ -275,7 +275,7 @@
       all = items.filter((p) => p.decor);
     } catch (error) {
       console.error("Wall art failed to load", error);
-      $$("main .product-grid").forEach((el) => (el.innerHTML = ""));
+      $$("main .product-grid, main [data-skeleton]").forEach((el) => (el.innerHTML = "")); // (the placeholders go too)
       return FrameX.templates.showError(grid, "Wall art couldn't be loaded.", init);
     }
     const param = FrameX.qs.param;

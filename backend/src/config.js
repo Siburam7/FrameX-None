@@ -207,6 +207,8 @@ export const config = {
     taxPercent: Math.min(100, Math.max(0, Number(env.TAX_PERCENT) || 0)), // added on top of item prices; 0 = prices already include tax
     shippingFee: money(env.SHIPPING_FEE, 0),
     freeShippingAbove: money(env.SHIPPING_FREE_ABOVE, 0), // 0 = the shipping fee always applies
+    // A customer's first order (no order of theirs placed before, cancelled ones not counted) has free delivery.
+    firstOrderFreeDelivery: bool(env.FIRST_ORDER_FREE_DELIVERY, true),
     cod: {
       enabled: bool(env.COD_ENABLED, true),
       fee: money(env.COD_FEE, 0),

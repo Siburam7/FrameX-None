@@ -135,6 +135,7 @@
     return `<dl class="co-rows">
       ${row(`Subtotal (${o.itemCount} ${o.itemCount === 1 ? "item" : "items"})`, formatPrice(o.subtotal))}
       ${row("Discount", o.discount ? "− " + formatPrice(o.discount) : formatPrice(0), o.discount ? "co-row--good" : "")}
+      ${o.couponDiscount ? row(`Coupon (${esc(o.couponCode)})`, "− " + formatPrice(o.couponDiscount), "co-row--good") : ""}
       ${row("Delivery", formatPrice(o.shippingFee))}
       ${row(o.tax ? `Tax (${o.taxPercent}%)` : "Tax", formatPrice(o.tax))}
       ${o.giftWrap ? row("Gift wrapping", o.giftWrapFee ? formatPrice(o.giftWrapFee) : "Free", "co-row--gift") : ""}
@@ -159,7 +160,7 @@
 
   /* ---------------------------------------------------------------- orders.html */
   async function list(root, page = 1) {
-    root.innerHTML = `<div class="skeleton" style="height:260px"></div>`;
+    root.innerHTML = FrameX.templates.skeletonPage("orders");
     let r;
     try {
       r = await http().get("/orders", { page, limit: 10 });

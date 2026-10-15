@@ -6,9 +6,14 @@
    worked out here from the database:
      items + their prices    the cart, re-checked against the catalogue now
      discounts               each product's own discount
-     tax, shipping, COD fee  the server's settings (config.checkout)
+     coupon                  optional; a code from the coupons table (coupon-service.js),
+                             a percentage of the items total after product discounts
+     tax, shipping, COD fee  the server's settings (config.checkout); tax is on the items
+                             after the coupon; free delivery counts the items before it,
+                             and a customer's first order has free delivery
+                             (FIRST_ORDER_FREE_DELIVERY, on unless switched off)
      gift wrapping           optional; the server's fee, shown before paying
-     total                   subtotal - discount + tax + shipping + gift wrapping + COD fee
+     total                   subtotal - discount - coupon + tax + shipping + gift wrapping + COD fee
    The total the browser sent is only compared with the server's: if they
    differ (a price changed meanwhile), nothing is charged and the customer is
    shown the new total first.
@@ -28,6 +33,7 @@ import { addressSnapshot, ownAddress, publicAddress } from "./address-service.js
 import { gatewayInTestMode } from "./analytics-service.js";
 import { checkoutLines, directLines, removePurchased } from "./cart-service.js";
 import { reserveStock } from "./catalog-service.js";
+import * as coupons from "./coupon-service.js";
 import * as orders from "./order-service.js";
 import * as payments from "./payment-service.js";
 import { attachUploads } from "./upload-service.js";
@@ -75,6 +81,15 @@ function giftWrapFor({ lines, noWrapShops }) {
   return { available: true, fee: g.fee, reason: null };
 }
 
+/* ---------------------------------------------------------------- First order */
+
+/** Has this customer never had an order placed? (Unpaid and cancelled orders don't count.) */
+async function isFirstOrder(userId, q = db) {
+  if (!config.checkout.firstOrderFreeDelivery) return false;
+  const { rows } = await q.query("SELECT count(*) AS n FROM orders WHERE user_id = $1 AND placed_at IS NOT NULL AND status <> 'CANCELLED'", [userId]);
+  return Number(rows[0].n) === 0;
+}
+
 /* ---------------------------------------------------------------- The price */
 
 /**
@@ -82,7 +97,7 @@ function giftWrapFor({ lines, noWrapShops }) {
  * paymentMethod (COD | ONLINE | null) decides whether the COD fee is included;
  * giftWrap (true | false) whether the gift-wrapping fee is.
  */
-function compute({ cart, lines, address, paymentMethod, direct = false, giftWrap = false, noWrapShops = new Set() }) {
+function compute({ cart, lines, address, paymentMethod, direct = false, giftWrap = false, noWrapShops = new Set(), coupon = null, firstOrder = false }) {
   const issues = [];
   if (!cart.items.length) issues.push({ code: "CART_EMPTY", message: "Your cart is empty.", itemId: null });
   for (const item of cart.items) if (item.issue) issues.push({ ...item.issue, itemId: item.id, name: item.name });
@@ -91,13 +106,19 @@ function compute({ cart, lines, address, paymentMethod, direct = false, giftWrap
   const subtotal = good.reduce((sum, l) => sum + l.item.unitListPrice * l.item.quantity, 0);
   const discount = good.reduce((sum, l) => sum + l.item.unitDiscount * l.item.quantity, 0);
   const itemsTotal = subtotal - discount;
+  // A coupon code, if one was given: what it takes off the items (0 when it doesn't apply, with the reason).
+  const couponResult = coupons.apply(coupon, itemsTotal);
+  const couponDiscount = couponResult && couponResult.applied ? couponResult.discount : 0;
+  const afterCoupon = itemsTotal - couponDiscount;
   const k = config.checkout;
-  const tax = Math.round((itemsTotal * k.taxPercent) / 100);
-  const shippingFee = itemsTotal > 0 && !(k.freeShippingAbove && itemsTotal >= k.freeShippingAbove) ? k.shippingFee : 0;
+  const tax = Math.round((afterCoupon * k.taxPercent) / 100);
+  // Why delivery is free, if it is: the customer's first order, or items above the free-delivery amount.
+  const freeDelivery = !(itemsTotal > 0 && k.shippingFee > 0) ? null : firstOrder ? "FIRST_ORDER" : k.freeShippingAbove && itemsTotal >= k.freeShippingAbove ? "ABOVE_LIMIT" : null;
+  const shippingFee = itemsTotal > 0 && !freeDelivery ? k.shippingFee : 0;
   const wrap = giftWrapFor({ lines: good, noWrapShops });
   const wrapped = Boolean(giftWrap && wrap.available);
   const giftWrapFee = wrapped ? wrap.fee : 0;
-  const cod = codFor({ lines: good, payable: itemsTotal + tax + shippingFee + giftWrapFee, address });
+  const cod = codFor({ lines: good, payable: afterCoupon + tax + shippingFee + giftWrapFee, address });
   const codFee = paymentMethod === "COD" && cod.available ? cod.fee : 0;
   const gw = paymentStatus();
 
@@ -112,14 +133,18 @@ function compute({ cart, lines, address, paymentMethod, direct = false, giftWrap
     currency: "INR",
     subtotal,
     discount,
+    // The coupon: { code, title, percentOff, minOrder, applied, discount, reason }, or null when none was given.
+    coupon: couponResult,
+    couponDiscount,
     tax,
     taxPercent: k.taxPercent,
     shippingFee,
+    freeDelivery,
     // Gift wrapping: whether it can be chosen for this order, what it costs, and whether it is in this total.
     giftWrap: { ...wrap, selected: wrapped },
     giftWrapFee,
     codFee,
-    total: itemsTotal + tax + shippingFee + giftWrapFee + codFee,
+    total: afterCoupon + tax + shippingFee + giftWrapFee + codFee,
     paymentMethod: paymentMethod || null,
     address: address ? publicAddress(address) : null,
     payment: {
@@ -137,11 +162,13 @@ const publicQuote = ({ lines, ...quote }) => quote;
 const linesFor = (userId, buyNow, q = db) => (buyNow ? directLines(userId, buyNow, q) : checkoutLines(userId, q));
 
 /** The quote for the checkout page. */
-export async function getQuote(userId, { addressId = null, paymentMethod = null, buyNow = null, giftWrap = false } = {}) {
+export async function getQuote(userId, { addressId = null, paymentMethod = null, buyNow = null, giftWrap = false, coupon = null } = {}) {
   const { cart, lines } = await linesFor(userId, buyNow);
   const address = addressId ? await ownAddress(userId, addressId) : null;
   const noWrapShops = await shopsWithoutGiftWrap(lines.map((l) => l.item.shopId));
-  return publicQuote(compute({ cart, lines, address, paymentMethod, direct: Boolean(buyNow), giftWrap, noWrapShops }));
+  const found = await coupons.lookup(coupon, userId);
+  const firstOrder = await isFirstOrder(userId);
+  return publicQuote(compute({ cart, lines, address, paymentMethod, direct: Boolean(buyNow), giftWrap, noWrapShops, coupon: found, firstOrder }));
 }
 
 /* ---------------------------------------------------------------- Placing an order */
@@ -218,15 +245,16 @@ async function insertOrder(q, user, { quote, address, paymentMethod, idempotency
     `INSERT INTO orders (id, order_number, user_id, idempotency_key, status, payment_method, payment_status, currency,
                          subtotal, discount, tax, tax_percent, shipping_fee, cod_fee, total, item_count,
                          address_id, shipping_address, customer_name, customer_email, customer_phone, placed_at, expires_at,
-                         gift_wrap, gift_wrap_fee, is_test)
+                         gift_wrap, gift_wrap_fee, is_test, coupon_code, coupon_discount)
      VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
              CASE WHEN $21 THEN now() ELSE NULL END,
              CASE WHEN $21 THEN NULL ELSE now() + interval '${config.payments.pendingMinutes} minutes' END,
-             $22, $23, $24)`,
+             $22, $23, $24, $25, $26)`,
     [id, number, user.id, idempotencyKey, cod ? "PLACED" : "PENDING_PAYMENT", paymentMethod, quote.currency, quote.subtotal, quote.discount, quote.tax, quote.taxPercent, quote.shippingFee, quote.codFee, quote.total, quote.itemCount,
       address.id, JSON.stringify(addressSnapshot(address)), user.name, user.email, address.phone || user.phone || null, cod, quote.giftWrap.selected, quote.giftWrapFee,
       // Paid through a gateway that is in TEST mode: not real money, so the reports keep it out of sales.
-      !cod && gatewayInTestMode()]
+      !cod && gatewayInTestMode(),
+      quote.couponDiscount ? quote.coupon.code : null, quote.couponDiscount]
   );
   const sellers = await sellersOf(q, quote.lines);
   let position = 0;
@@ -270,8 +298,10 @@ async function insertOrder(q, user, { quote, address, paymentMethod, idempotency
  * the gateway's checkout (null for COD).
  * buyNow (optional): order this one item instead of the cart; the cart stays as it is.
  * giftWrap (optional): the customer asked for gift wrapping; its fee is part of the total they saw.
+ * coupon (optional): the coupon code the customer applied; it is checked again here, and an order
+ *   whose coupon no longer applies is not placed (the customer sees why first).
  */
-export async function placeOrder(user, { addressId, paymentMethod, paymentChannel = null, expectedTotal, idempotencyKey, buyNow = null, giftWrap = false }) {
+export async function placeOrder(user, { addressId, paymentMethod, paymentChannel = null, expectedTotal, idempotencyKey, buyNow = null, giftWrap = false, coupon = null }) {
   if (!KEY.test(String(idempotencyKey || ""))) throw errors.validation({ idempotencyKey: "The checkout could not be identified. Reload the page and try again." });
   const find = async () => (await db.query("SELECT * FROM orders WHERE user_id = $1 AND idempotency_key = $2", [user.id, idempotencyKey])).rows[0];
   const existing = await find();
@@ -286,10 +316,13 @@ export async function placeOrder(user, { addressId, paymentMethod, paymentChanne
       const { cart, lines } = await linesFor(user.id, buyNow, q);
       const address = await ownAddress(user.id, addressId, q);
       const noWrapShops = await shopsWithoutGiftWrap(lines.map((l) => l.item.shopId), q);
-      const quote = compute({ cart, lines, address, paymentMethod, direct: Boolean(buyNow), giftWrap, noWrapShops });
+      const found = await coupons.lookup(coupon, user.id, q);
+      const firstOrder = await isFirstOrder(user.id, q);
+      const quote = compute({ cart, lines, address, paymentMethod, direct: Boolean(buyNow), giftWrap, noWrapShops, coupon: found, firstOrder });
       if (!quote.ok) throw new HttpError(quote.issues[0].code === "PHOTOS_REQUIRED" ? 422 : 409, quote.issues[0].code === "PHOTOS_REQUIRED" ? "PHOTOS_REQUIRED" : "CART_NOT_READY", quote.issues[0].message, { details: { issues: quote.issues } });
       if (paymentMethod === "COD" && !quote.payment.cod.available) throw new HttpError(409, "COD_UNAVAILABLE", quote.payment.cod.reason);
       if (giftWrap && !quote.giftWrap.available) throw new HttpError(409, "GIFT_WRAP_UNAVAILABLE", quote.giftWrap.reason);
+      if (quote.coupon && !quote.coupon.applied) throw new HttpError(409, "COUPON_UNAVAILABLE", quote.coupon.reason, { details: { coupon: quote.coupon.code } });
       // The customer must have seen this exact total. If a price or a fee changed since, show it first.
       if (expectedTotal !== quote.total) throw new HttpError(409, "TOTAL_CHANGED", `The total is now ${rupees(quote.total)}. Please review your order before you continue.`, { details: { total: quote.total } });
 

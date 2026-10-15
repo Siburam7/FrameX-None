@@ -21,33 +21,35 @@ const METHODS = ["COD", "ONLINE"];
 const CHANNELS = ["upi", "card", "netbanking", "wallet"];
 
 // What the checkout page shows: items, discounts, tax, shipping, gift wrapping, COD fee, total, and the ways to pay.
-// giftWrap=true adds the gift-wrapping fee when the order can be wrapped.
+// giftWrap=true adds the gift-wrapping fee when the order can be wrapped; coupon=<code> tries that coupon
+// (quote.coupon says whether it applies, and why not).
 router.get("/quote", async (req, res) => {
-  const { addressId, paymentMethod, giftWrap } = validate(req.query, { addressId: v.string({ max: 40 }), paymentMethod: v.enumOf(METHODS, { required: false, label: "Payment method" }), giftWrap: v.boolean() });
-  res.json({ quote: await checkout.getQuote(req.auth.user.id, { addressId: addressId || null, paymentMethod: paymentMethod || null, giftWrap }) });
+  const { addressId, paymentMethod, giftWrap, coupon } = validate(req.query, { addressId: v.string({ max: 40 }), paymentMethod: v.enumOf(METHODS, { required: false, label: "Payment method" }), giftWrap: v.boolean(), coupon: v.string({ max: 40 }) });
+  res.json({ quote: await checkout.getQuote(req.auth.user.id, { addressId: addressId || null, paymentMethod: paymentMethod || null, giftWrap, coupon: coupon || null }) });
 });
 
 // The same quote for "Buy Now": one item sent in the body instead of the cart.
-//   { addressId?, paymentMethod?, giftWrap?, buyNow: { productId, quantity, selection, note, photos? } | { kind: "studio", design, photos?, quantity } }
+//   { addressId?, paymentMethod?, giftWrap?, coupon?, buyNow: { productId, quantity, selection, note, photos? } | { kind: "studio", design, photos?, quantity } }
 router.post("/quote", rateLimit("quote", { windowMs: 60_000, max: 120 }), async (req, res) => {
-  const { addressId, paymentMethod, giftWrap } = validate(req.body, { addressId: v.string({ max: 40 }), paymentMethod: v.enumOf(METHODS, { required: false, label: "Payment method" }), giftWrap: v.boolean() });
+  const { addressId, paymentMethod, giftWrap, coupon } = validate(req.body, { addressId: v.string({ max: 40 }), paymentMethod: v.enumOf(METHODS, { required: false, label: "Payment method" }), giftWrap: v.boolean(), coupon: v.string({ max: 40 }) });
   const buyNow = req.body && req.body.buyNow ? readItem(req.body.buyNow) : null;
-  res.json({ quote: await checkout.getQuote(req.auth.user.id, { addressId: addressId || null, paymentMethod: paymentMethod || null, buyNow, giftWrap }) });
+  res.json({ quote: await checkout.getQuote(req.auth.user.id, { addressId: addressId || null, paymentMethod: paymentMethod || null, buyNow, giftWrap, coupon: coupon || null }) });
 });
 
-// buyNow (optional) = order that one item instead of the cart.
+// buyNow (optional) = order that one item instead of the cart. coupon (optional) = the coupon code applied.
 router.post("/orders", rateLimit("place-order", { windowMs: 10 * 60_000, max: 30 }), async (req, res) => {
   const data = validate(req.body, {
     addressId: v.string({ min: 1, max: 40, label: "Delivery address" }),
     paymentMethod: v.enumOf(METHODS, { label: "Payment method" }),
     paymentChannel: v.enumOf(CHANNELS, { required: false, label: "Payment option" }),
     idempotencyKey: v.string({ min: 16, max: 80, label: "Checkout" }),
-    giftWrap: v.boolean()
+    giftWrap: v.boolean(),
+    coupon: v.string({ max: 40 })
   });
   const expectedTotal = req.body ? req.body.expectedTotal : undefined;
   if (!Number.isInteger(expectedTotal) || expectedTotal < 0) throw errors.validation({ expectedTotal: "Reload the page and try again." });
   const buyNow = req.body.buyNow ? readItem(req.body.buyNow) : null;
-  const result = await checkout.placeOrder(req.auth.user, { ...data, paymentChannel: data.paymentChannel || null, expectedTotal, buyNow });
+  const result = await checkout.placeOrder(req.auth.user, { ...data, paymentChannel: data.paymentChannel || null, expectedTotal, buyNow, coupon: data.coupon || null });
   res.status(result.repeated ? 200 : 201).json({ order: result.order, payment: result.payment, paymentError: result.paymentError || null });
 });
 

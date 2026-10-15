@@ -13,6 +13,9 @@
                            The charge is the backend's (GIFT_WRAP_FEE) and is its
                            own line in the price before anything is paid.
      4. Payment method     online (through the payment gateway) or Cash on Delivery
+     Coupons & offers      a coupon code typed in, or one of the coupons that can be
+                           used now (GET /api/coupons). The backend says whether it
+                           applies and what it takes off; this page only shows it.
      Price details + "Pay ₹…" / "Place Order • ₹…"
 
    Every amount on this page comes from GET /api/checkout/quote. The page
@@ -45,6 +48,9 @@
   let waiting = null; // { orderNumber, message }: an online order that still needs its payment
   let giftWrap = false; // the customer's answer to "gift wrap this order?"
   let giftWrapOffered = true; // false = the shop doesn't offer gift wrapping at all (GET /api/config)
+  let couponCode = ""; // the coupon the customer applied (sent with every quote and with the order)
+  let couponNote = null; // { ok, text }: what happened to the last coupon tried
+  let couponList = []; // the coupons that can be used now (GET /api/coupons)
   const buyMode = FrameX.qs.param("buy") === "1";
   let buying = null; // "Buy Now": { name, item } — this one item is ordered instead of the cart
 
@@ -83,8 +89,8 @@
   /** The backend's price for the cart, or for the one "Buy Now" item. */
   const askQuote = () =>
     buying
-      ? http().post("/checkout/quote", { addressId: addressId || undefined, paymentMethod: paymentMethod() || undefined, buyNow: buying.item, giftWrap })
-      : http().get("/checkout/quote", { addressId, paymentMethod: paymentMethod(), giftWrap: giftWrap ? "true" : "" });
+      ? http().post("/checkout/quote", { addressId: addressId || undefined, paymentMethod: paymentMethod() || undefined, buyNow: buying.item, giftWrap, coupon: couponCode || undefined })
+      : http().get("/checkout/quote", { addressId, paymentMethod: paymentMethod(), giftWrap: giftWrap ? "true" : "", coupon: couponCode });
 
   /** Is gift wrapping part of this order? Only when it was chosen AND the backend says this order can be wrapped. */
   const wrapped = () => Boolean(quote && quote.giftWrap && quote.giftWrap.selected);
@@ -94,6 +100,11 @@
     quote = r.quote;
     // An order that can't be wrapped (a shop or a product doesn't offer it) drops the choice.
     if (giftWrap && quote.giftWrap && !quote.giftWrap.available) giftWrap = false;
+    // A coupon that doesn't apply (wrong code, order too small, ended) is dropped, with the backend's reason.
+    if (quote.coupon && !quote.coupon.applied) {
+      couponNote = { ok: false, text: quote.coupon.reason };
+      couponCode = "";
+    }
     // Pick a way to pay that is really available.
     const online = quote.payment.online;
     const ok = method === "COD" ? quote.payment.cod.available : method ? online.available && online.methods.some((m) => m.id === method) : false;
@@ -259,6 +270,61 @@
       ${!online.available && !cod.available ? `<div class="form-status form-status--error is-visible" role="alert">${icon("alert")}<span>No way to pay is available for this order right now. Please <a href="contact.html">contact FrameX</a>.</span></div>` : ""}`;
   }
 
+  /* ---------------------------------------------------------------- Coupons */
+  /** The coupon the order has now (only when the backend applied it). */
+  const appliedCoupon = () => (quote && quote.coupon && quote.coupon.applied ? quote.coupon : null);
+
+  function renderCoupon() {
+    const box = $("#co-coupon", root);
+    if (!box) return;
+    const applied = appliedCoupon();
+    const items = quote.subtotal - quote.discount;
+    const ticket = (c) => {
+      const short = c.minOrder > items ? `Add ${formatPrice(c.minOrder - items)} more to use it` : "";
+      return `<li class="co-coupon"><span class="co-coupon__code">${esc(c.code)}</span>
+        <span class="co-coupon__body"><strong>${esc(c.title)}</strong>${short ? `<span>${short}</span>` : ""}</span>
+        <button class="btn btn--outline btn--sm" type="button" data-coupon-apply="${esc(c.code)}"${short || busy ? " disabled" : ""}>Apply</button></li>`;
+    };
+    const others = couponList.filter((c) => !applied || c.code !== applied.code);
+    box.innerHTML = `<h2 class="co-card__title">Coupons &amp; offers</h2>
+      ${
+        applied
+          ? `<div class="co-coupon co-coupon--on"><span class="co-coupon__code">${esc(applied.code)}</span>
+              <span class="co-coupon__body"><strong>Applied: you save ${formatPrice(quote.couponDiscount)}</strong><span>${esc(applied.title || "")}</span></span>
+              <button class="btn btn--outline btn--sm" type="button" data-coupon-remove${busy ? " disabled" : ""}>Remove</button></div>`
+          : `<form class="co-coupon-form" data-coupon-form novalidate>
+              <label class="visually-hidden" for="co-coupon-code">Coupon code</label>
+              <input class="input" id="co-coupon-code" name="coupon" type="text" maxlength="30" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Enter coupon code">
+              <button class="btn btn--dark btn--sm" type="submit"${busy ? " disabled" : ""}>Apply</button>
+            </form>`
+      }
+      ${couponNote ? `<p class="co-fine ${couponNote.ok ? "co-fine--good" : "co-fine--warn"}" role="status">${icon(couponNote.ok ? "check" : "alert")}<span>${esc(couponNote.text)}</span></p>` : ""}
+      ${others.length ? `<ul class="co-coupons" aria-label="Coupons you can use">${others.map(ticket).join("")}</ul>` : ""}`;
+  }
+
+  async function useCoupon(code) {
+    const c = String(code || "").replace(/\s+/g, "").toUpperCase();
+    if (!c) {
+      couponNote = { ok: false, text: "Type a coupon code first." };
+      renderCoupon();
+      return;
+    }
+    couponCode = c;
+    couponNote = null;
+    waiting = null; // the total changes: this is a new checkout, not a retry of an unpaid order
+    await refresh();
+    const applied = appliedCoupon();
+    if (applied) couponNote = { ok: true, text: `${applied.code} applied. ${formatPrice(quote.couponDiscount)} comes off your items.` };
+    renderCoupon();
+  }
+
+  async function dropCoupon() {
+    couponCode = "";
+    couponNote = null;
+    waiting = null;
+    await refresh();
+  }
+
   /* ---------------------------------------------------------------- Price details + button */
   function renderTotal() {
     const q = quote;
@@ -270,7 +336,8 @@
       <dl class="co-rows">
         ${row(`Subtotal (${q.itemCount} ${q.itemCount === 1 ? "item" : "items"})`, formatPrice(q.subtotal))}
         ${q.discount ? row("Discount", "− " + formatPrice(q.discount), "co-row--good") : ""}
-        ${row("Delivery", formatPrice(q.shippingFee))}
+        ${q.couponDiscount ? row(`Coupon (${esc(q.coupon.code)})`, "− " + formatPrice(q.couponDiscount), "co-row--good") : ""}
+        ${row(q.freeDelivery === "FIRST_ORDER" ? "Delivery (first order)" : "Delivery", q.freeDelivery ? "Free" : formatPrice(q.shippingFee), q.freeDelivery ? "co-row--good" : "")}
         ${q.tax ? row(`Tax (${q.taxPercent}%)`, formatPrice(q.tax)) : ""}
         ${wrapped() ? row("Gift wrapping", q.giftWrapFee ? formatPrice(q.giftWrapFee) : "Free", "co-row--gift") : ""}
         ${q.codFee ? row("Cash on Delivery fee", formatPrice(q.codFee)) : ""}
@@ -312,7 +379,7 @@
             <section class="co-card" id="co-gift" aria-labelledby="co-h-gift"${giftWrapOffered ? "" : " hidden"}><h2 class="co-card__title" id="co-h-gift"><span class="co-num">3</span> Gift wrapping</h2><div id="co-gift-body"></div></section>
             <section class="co-card" aria-labelledby="co-h-pay"><h2 class="co-card__title" id="co-h-pay"><span class="co-num">${giftWrapOffered ? 4 : 3}</span> Payment method</h2><div id="co-pay-body"></div></section>
           </div>
-          <aside class="co-side"><div class="co-card co-card--total" id="co-total" aria-live="polite"></div></aside>
+          <aside class="co-side"><div class="co-card co-card--coupon" id="co-coupon"></div><div class="co-card co-card--total" id="co-total" aria-live="polite"></div></aside>
         </div>
       </div>`;
     }
@@ -320,6 +387,7 @@
     renderItems();
     renderGift();
     renderPayment();
+    renderCoupon();
     renderTotal();
   }
 
@@ -368,7 +436,7 @@
         // The order already exists: a new payment attempt on the same order.
         settle(await FrameX.payments.retry(waiting.orderNumber, method), waiting.orderNumber);
       } else {
-        const r = await http().post("/checkout/orders", { addressId, paymentMethod: paymentMethod(), paymentChannel: method === "COD" ? undefined : method, expectedTotal: quote.total, idempotencyKey: checkoutKey(), buyNow: buying ? buying.item : undefined, giftWrap: wrapped() });
+        const r = await http().post("/checkout/orders", { addressId, paymentMethod: paymentMethod(), paymentChannel: method === "COD" ? undefined : method, expectedTotal: quote.total, idempotencyKey: checkoutKey(), buyNow: buying ? buying.item : undefined, giftWrap: wrapped(), coupon: appliedCoupon() ? appliedCoupon().code : undefined });
         const number = r.order.orderNumber;
         if (r.order.paymentMethod === "COD" || r.order.paymentStatus === "PAID") {
           forgetKey();
@@ -440,6 +508,14 @@
       if (e.target.closest("[data-open-cart]")) return void FrameX.cartDrawer.open();
       if (e.target.closest("[data-back]")) return void window.history.back();
       if (e.target.closest("[data-place]")) place();
+      const pick = e.target.closest("[data-coupon-apply]");
+      if (pick) useCoupon(pick.dataset.couponApply);
+      if (e.target.closest("[data-coupon-remove]")) dropCoupon();
+    });
+    root.addEventListener("submit", (e) => {
+      if (!e.target.matches("[data-coupon-form]")) return;
+      e.preventDefault();
+      useCoupon(e.target.elements.coupon.value);
     });
     // The cart changed in the drawer (or on another device): price it again.
     document.addEventListener("framex:cart-change", (e) => {
@@ -450,9 +526,10 @@
   }
 
   async function start() {
-    root.innerHTML = `<div class="skeleton" style="height:420px"></div>`;
+    root.innerHTML = FrameX.templates.skeletonPage("checkout");
     try {
-      const [r, settings] = await Promise.all([http().get("/addresses"), http().serverConfig()]);
+      const [r, settings, offers] = await Promise.all([http().get("/addresses"), http().serverConfig(), http().get("/coupons").catch(() => ({ items: [] }))]);
+      couponList = (offers && offers.items) || [];
       giftWrapOffered = !settings || !settings.giftWrap || settings.giftWrap.enabled !== false;
       addresses = r.items;
       states = r.states;

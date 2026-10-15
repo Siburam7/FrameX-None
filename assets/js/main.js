@@ -13,6 +13,7 @@
       await Promise.all([
         call("site"),
         call("homeHero"),
+        call("offers"),
         call("featured"),
         call("categories"),
         call("shops"),

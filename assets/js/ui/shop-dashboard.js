@@ -176,7 +176,7 @@
   }
 
   async function productsView(main) {
-    main.innerHTML = `<div class="sd-loading"><div class="skeleton" style="height:84px"></div><div class="skeleton" style="height:84px"></div><div class="skeleton" style="height:84px"></div></div>`;
+    main.innerHTML = FrameX.templates.skeletonPage("dash");
     const all = await svc().forShop(shop.id);
     const counts = all.reduce(
       (m, p) => ((m[p.status] = (m[p.status] || 0) + 1), m),
@@ -400,7 +400,7 @@
   async function ordersView(main, params) {
     const filter = ORDER_FILTERS.some(([id]) => id === params.get("filter")) ? params.get("filter") : "open";
     const page = Number(params.get("page")) || 1;
-    main.innerHTML = `<div class="sd-loading"><div class="skeleton" style="height:84px"></div><div class="skeleton" style="height:84px"></div></div>`;
+    main.innerHTML = FrameX.templates.skeletonPage("dash");
     const r = await http().get(api("/orders"), { filter: filter === "all" ? "" : filter, page });
     const v = view();
     const link = (extra) => {
@@ -503,7 +503,7 @@
   }
 
   async function orderView(main, orderNumber) {
-    main.innerHTML = `<div class="sd-loading"><div class="skeleton" style="height:120px"></div><div class="skeleton" style="height:220px"></div></div>`;
+    main.innerHTML = FrameX.templates.skeletonPage("dash");
     let order;
     try {
       order = (await http().get(api("/orders/" + encodeURIComponent(orderNumber)))).order;

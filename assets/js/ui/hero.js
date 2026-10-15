@@ -50,6 +50,99 @@
     }, 1600);
   }
 
+  /*
+   * Scrolling stirs the air: the pictures on the wall swing on their nails.
+   *
+   * Each picture is a small damped pendulum (its angle is the CSS `rotate` property, turning around the nail:
+   * transform-origin in layout-hero.css). The scroll speed is the wind: the faster the page moves, the harder it
+   * pushes, so a quick flick swings them far and a slow scroll only rocks them. Every picture has its own weight
+   * (how fast it swings back and forth), its own friction (how soon it settles) and its own gusts (the wind on it
+   * rises and falls on its own rhythm), so the three never move together. When the scrolling stops they swing
+   * back and come to rest. Nothing runs while the hero is off screen or after they are still; visitors who asked
+   * for less motion get still pictures.
+   */
+  const SWING = [
+    // hz: how fast it swings; damping: how soon it settles (part of the critical); push: how much the wind moves it
+    { hz: 1.05, damping: 0.09, push: 1.0 }, // the large upright picture: slow, heavy
+    { hz: 0.85, damping: 0.07, push: 0.8 }, // the wide one: slowest, swings longest
+    { hz: 1.45, damping: 0.12, push: 1.25 }, // the small square: quick and light
+  ];
+  const MAX_ANGLE = 14; // degrees; bigger pushes are softened toward this
+
+  function swing(hero) {
+    if (prefersReducedMotion()) return;
+    const wall = () => $$(".home-hero__slide.is-active .page-hero__wall > .page-hero__piece", hero);
+    const state = new WeakMap(); // picture -> { angle, speed, phase, gust }
+    let lastY = window.scrollY;
+    let lastT = performance.now();
+    let wind = 0; // the scroll speed, smoothed (px per second; + = scrolling down)
+    let running = false;
+    let onScreen = true;
+
+    const stateOf = (el, i) => {
+      let s = state.get(el);
+      if (!s) {
+        const k = SWING[i % SWING.length];
+        const w = 2 * Math.PI * k.hz;
+        s = { angle: 0, speed: 0, k: w * w, c: 2 * k.damping * w, push: k.push, phase: Math.random() * 100, gust: 0.6 + Math.random() * 0.9 };
+        state.set(el, s);
+      }
+      return s;
+    };
+
+    const step = (now) => {
+      const dt = Math.min(0.05, (now - lastT) / 1000) || 0.016;
+      lastT = now;
+      const y = window.scrollY;
+      const raw = (y - lastY) / dt;
+      lastY = y;
+      wind += (raw - wind) * Math.min(1, dt * 9);
+      let moving = Math.abs(wind) > 4;
+      wall().forEach((el, i) => {
+        const s = stateOf(el, i);
+        // The wind on this picture: the scroll speed, with gusts of its own that rise and fall
+        const t = now / 1000;
+        const gusts = 1 + 0.45 * Math.sin(t * s.gust * 2.3 + s.phase) + 0.25 * Math.sin(t * s.gust * 5.1 + s.phase * 1.7);
+        // (a power below 1: a slow scroll still rocks them visibly, a fast one doesn't throw them about)
+        const force = Math.sign(wind) * 340 * Math.pow(Math.abs(wind) / 1000, 0.6) * s.push * gusts;
+        // A picture under the mouse is held still, so it can be clicked
+        const held = el.matches(":hover") ? 6 : 1;
+        // Springing back to hang straight, friction, and the drag of the air (stronger the faster it swings)
+        const accel = force - s.k * s.angle - s.c * held * s.speed - 0.004 * s.speed * Math.abs(s.speed);
+        s.speed += accel * dt;
+        s.angle += s.speed * dt;
+        const shown = MAX_ANGLE * Math.tanh(s.angle / MAX_ANGLE);
+        if (Math.abs(s.angle) < 0.01 && Math.abs(s.speed) < 0.02 && Math.abs(wind) <= 4) {
+          s.angle = 0;
+          s.speed = 0;
+          el.style.removeProperty("rotate");
+        } else {
+          el.style.rotate = `${shown.toFixed(2)}deg`;
+          moving = true;
+        }
+      });
+      if (moving && onScreen) requestAnimationFrame(step);
+      else running = false;
+    };
+
+    const start = () => {
+      if (running || !onScreen) return;
+      running = true;
+      lastT = performance.now();
+      requestAnimationFrame(step);
+    };
+    window.addEventListener("scroll", start, { passive: true });
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver((entries) => {
+        onScreen = entries[entries.length - 1].isIntersecting;
+        if (onScreen) {
+          lastY = window.scrollY;
+          start();
+        }
+      }).observe(hero);
+    }
+  }
+
   const slideHtml = (s, i, total) => `<div class="home-hero__slide page-hero__grid" role="group" aria-roledescription="slide" aria-label="${esc(s.label)}, ${i + 1} of ${total}" data-slide="${esc(s.id)}">
       <div class="home-hero__copy">
         <p class="eyebrow">${esc(s.eyebrow)}</p>
@@ -107,6 +200,7 @@
     if (stage) {
       lean(hero);
       spotlight(hero);
+      swing(hero);
     }
     if (!stage || all.length < 2) return;
     const slides = await withTemplates(all.map((s) => ({ ...s, pieces: s.pieces.map((p) => ({ ...p })) })));

@@ -1059,3 +1059,83 @@ div.co-choice--pay {
     justify-content: flex-start;
   }
 }
+
+/* Coupons & offers (above the price details): a code box, the coupons that can be used now as tickets, and
+   the coupon in use with what it saves. Whether a coupon applies is the backend's answer. */
+.co-coupon-form {
+  display: flex;
+  gap: 8px;
+}
+
+.co-coupon-form .input {
+  flex: 1;
+  min-width: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.co-coupon-form .input::placeholder {
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.co-coupons {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.co-coupon {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1.5px dashed rgba(201, 106, 10, 0.55);
+  border-radius: var(--radius-md);
+  background: #fff8ef;
+}
+
+.co-coupon--on {
+  border-style: solid;
+  border-color: var(--success);
+  background: #eefaf3;
+}
+
+.co-coupon__code {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.co-coupon--on .co-coupon__code {
+  background: var(--success);
+}
+
+.co-coupon__body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--text-xs);
+  line-height: 1.4;
+}
+
+.co-coupon__body strong {
+  font-size: var(--text-sm);
+}
+
+.co-coupon__body span {
+  color: var(--taupe);
+}
+
+.co-fine--good {
+  color: var(--success);
+  font-weight: 700;
+}

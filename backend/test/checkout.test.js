@@ -32,6 +32,7 @@ process.env.PAYMENT_PENDING_MINUTES = "30";
 // Non-zero fees, so the arithmetic is really tested.
 process.env.TAX_PERCENT = "5";
 process.env.SHIPPING_FEE = "60";
+process.env.FIRST_ORDER_FREE_DELIVERY = "false"; // the first-order offer is tested on its own (checkout.test.js)
 process.env.SHIPPING_FREE_ABOVE = "5000";
 process.env.COD_FEE = "40";
 process.env.COD_MAX_ORDER_VALUE = "20000";
@@ -1017,5 +1018,134 @@ describe("Buy Now: one item ordered directly, without the cart", () => {
     assert.equal(unfinished.json.quote.ok, false);
     assert.equal(unfinished.json.quote.issues[0].code, "PHOTOS_REQUIRED");
     assert.equal((await asha.post("/api/checkout/quote", { addressId: S.home, buyNow: { kind: "studio", design: { id: "../etc", config: cfg } } })).status, 422);
+  });
+});
+
+describe("coupons", () => {
+  // The Diwali coupon from migration 011: 10% off the items, for orders of ₹399 and more.
+  const cheap = all.find((p) => model.orderLimits(p).orderable && !p.pricing.discountPercent && unit(p, model.defaultSelection(p)) < 399);
+  const withCoupon = async (client, addressId, method, code) => (await client.get(`/api/checkout/quote?addressId=${addressId}&paymentMethod=${method}&coupon=${encodeURIComponent(code)}`)).json.quote;
+
+  test("the public list shows the coupons that can be used now", async () => {
+    const r = await new Client().get("/api/coupons");
+    assert.equal(r.status, 200);
+    const x = r.json.items.find((c) => c.code === "XUSE10");
+    assert.ok(x, "XUSE10 is listed");
+    assert.equal(x.percentOff, 10);
+    assert.equal(x.minOrder, 399);
+  });
+
+  test("XUSE10 takes 10% off the items; tax is on what is left; the code is read without case or spaces", async () => {
+    await fillCart(asha, [{ productId: roomy.id, quantity: 3, selection: { sizeId: roomy.sizes[0].id } }]);
+    const plain = await getQuote(asha, S.home, "COD");
+    const items = plain.subtotal - plain.discount;
+    assert.ok(items >= 399, "the cart is big enough for the coupon");
+    const q = await withCoupon(asha, S.home, "COD", " xuse 10 ");
+    assert.equal(q.coupon.code, "XUSE10");
+    assert.equal(q.coupon.applied, true);
+    assert.equal(q.couponDiscount, Math.round(items * 0.1));
+    assert.equal(q.tax, Math.round(((items - q.couponDiscount) * 5) / 100));
+    assert.equal(q.total, items - q.couponDiscount + q.tax + q.shippingFee + q.codFee);
+    assert.ok(q.total < plain.total);
+    assert.equal(plain.coupon, null, "no code given: no coupon");
+  });
+
+  test("below ₹399, or a wrong code, the coupon doesn't apply and says why; the total stays the same", async () => {
+    assert.ok(cheap, "a product under ₹399 exists in the catalogue");
+    await fillCart(asha, [{ productId: cheap.id, quantity: 1 }]);
+    const plain = await getQuote(asha, S.home, "COD");
+    const small = await withCoupon(asha, S.home, "COD", "XUSE10");
+    assert.equal(small.coupon.applied, false);
+    assert.match(small.coupon.reason, /₹399 and more/);
+    assert.equal(small.couponDiscount, 0);
+    assert.equal(small.total, plain.total);
+    const wrong = await withCoupon(asha, S.home, "COD", "FREE100");
+    assert.equal(wrong.coupon.applied, false);
+    assert.match(wrong.coupon.reason, /not a valid coupon/);
+    assert.equal(wrong.total, plain.total);
+  });
+
+  test("an order with XUSE10 keeps the coupon and is charged the discounted total", async () => {
+    await fillCart(asha, [{ productId: roomy.id, quantity: 3, selection: { sizeId: roomy.sizes[0].id } }]);
+    const q = await withCoupon(asha, S.home, "ONLINE", "XUSE10");
+    const r = await asha.post("/api/checkout/orders", { addressId: S.home, paymentMethod: "ONLINE", paymentChannel: "upi", expectedTotal: q.total, idempotencyKey: newKey(), coupon: "xuse10" });
+    assert.equal(r.status, 201, r.text);
+    assert.equal(r.json.order.couponCode, "XUSE10");
+    assert.equal(r.json.order.couponDiscount, q.couponDiscount);
+    assert.equal(r.json.order.total, q.total);
+    assert.equal(r.json.payment.amount, q.total * 100, "the gateway is asked for the discounted total");
+    const stored = await orderRow(r.json.order.orderNumber);
+    assert.equal(stored.coupon_code, "XUSE10");
+    assert.equal(stored.coupon_discount, q.couponDiscount);
+  });
+
+  test("a coupon that no longer applies stops the order; the full price is never charged in its place", async () => {
+    await fillCart(asha, [{ productId: cheap.id, quantity: 1 }]);
+    const plain = await getQuote(asha, S.home, "COD");
+    const r = await asha.post("/api/checkout/orders", { addressId: S.home, paymentMethod: "COD", expectedTotal: plain.total, idempotencyKey: newKey(), coupon: "XUSE10" });
+    assert.equal(r.status, 409);
+    assert.equal(r.json.error.code, "COUPON_UNAVAILABLE");
+    // The discount can't be taken without the coupon: the server works out the total, the browser's number is only compared.
+    await fillCart(asha, [{ productId: roomy.id, quantity: 3, selection: { sizeId: roomy.sizes[0].id } }]);
+    const q = await withCoupon(asha, S.home, "COD", "XUSE10");
+    const cheat = await asha.post("/api/checkout/orders", { addressId: S.home, paymentMethod: "COD", expectedTotal: q.total, idempotencyKey: newKey() });
+    assert.equal(cheat.status, 409);
+    assert.equal(cheat.json.error.code, "TOTAL_CHANGED");
+  });
+
+  test("a coupon that was switched off, has ended or reached its limit is refused", async () => {
+    await db.query("INSERT INTO coupons (code, title, percent_off, min_order, per_user_limit) VALUES ('ONCE5', 'Test: 5% once', 5, 0, 1)");
+    await db.query("INSERT INTO coupons (code, title, percent_off, ends_at) VALUES ('OLD20', 'Test: ended', 20, now() - interval '1 day')");
+    await db.query("INSERT INTO coupons (code, title, percent_off, active) VALUES ('OFF30', 'Test: off', 30, false)");
+    await fillCart(asha, [{ productId: roomy.id, quantity: 1, selection: { sizeId: roomy.sizes[0].id } }]);
+    assert.match((await withCoupon(asha, S.home, "COD", "OLD20")).coupon.reason, /has ended/);
+    assert.match((await withCoupon(asha, S.home, "COD", "OFF30")).coupon.reason, /has ended/);
+    const listed = (await new Client().get("/api/coupons")).json.items.map((c) => c.code);
+    assert.equal(listed.includes("OLD20") || listed.includes("OFF30"), false);
+    const q = await withCoupon(asha, S.home, "COD", "ONCE5");
+    assert.equal(q.coupon.applied, true);
+    const first = await asha.post("/api/checkout/orders", { addressId: S.home, paymentMethod: "COD", expectedTotal: q.total, idempotencyKey: newKey(), coupon: "ONCE5" });
+    assert.equal(first.status, 201, first.text);
+    await fillCart(asha, [{ productId: roomy.id, quantity: 1, selection: { sizeId: roomy.sizes[0].id } }]);
+    assert.match((await withCoupon(asha, S.home, "COD", "ONCE5")).coupon.reason, /already used/);
+  });
+});
+
+describe("free delivery on the first order", () => {
+  test("a new customer's first order has free delivery; after it is placed, delivery is charged again", async () => {
+    const { config } = await import("../src/config.js");
+    config.checkout.firstOrderFreeDelivery = true;
+    try {
+      const chitra = new Client();
+      const signup = await chitra.post("/api/auth/signup", { name: "Chitra Nayak", email: "chitra@example.com", phone: "9876500033", password: PASSWORD, confirmPassword: PASSWORD });
+      assert.equal(signup.status, 201, signup.text);
+      const home = (await chitra.post("/api/addresses", { ...HOME, fullName: "Chitra Nayak", phone: "9876500033" })).json.address.id;
+      await fillCart(chitra, [{ productId: roomy.id, quantity: 1, selection: { sizeId: roomy.sizes[0].id } }]);
+      const first = await getQuote(chitra, home, "ONLINE");
+      assert.equal(first.shippingFee, 0);
+      assert.equal(first.freeDelivery, "FIRST_ORDER");
+      assert.equal(first.total, first.subtotal - first.discount + first.tax);
+
+      // An online order that is never paid doesn't use up the offer
+      const unpaid = await chitra.post("/api/checkout/orders", { addressId: home, paymentMethod: "ONLINE", paymentChannel: "upi", expectedTotal: first.total, idempotencyKey: newKey() });
+      assert.equal(unpaid.status, 201, unpaid.text);
+      assert.equal(unpaid.json.order.shippingFee, 0);
+      assert.equal((await getQuote(chitra, home, "COD")).freeDelivery, "FIRST_ORDER");
+
+      // Placed (cash on delivery): free delivery on it, and not on the next one
+      const cod = await getQuote(chitra, home, "COD");
+      const placed = await chitra.post("/api/checkout/orders", { addressId: home, paymentMethod: "COD", expectedTotal: cod.total, idempotencyKey: newKey() });
+      assert.equal(placed.status, 201, placed.text);
+      assert.equal(placed.json.order.shippingFee, 0);
+      await fillCart(chitra, [{ productId: roomy.id, quantity: 1, selection: { sizeId: roomy.sizes[0].id } }]);
+      const second = await getQuote(chitra, home, "COD");
+      assert.equal(second.shippingFee, 60);
+      assert.equal(second.freeDelivery, null);
+      // A customer who ordered before (Asha) pays delivery
+      await fillCart(asha, [{ productId: roomy.id, quantity: 1, selection: { sizeId: roomy.sizes[0].id } }]);
+      assert.equal((await getQuote(asha, S.home, "COD")).shippingFee, 60);
+    } finally {
+      config.checkout.firstOrderFreeDelivery = false;
+    }
   });
 });

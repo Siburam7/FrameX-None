@@ -626,7 +626,7 @@
       root.innerHTML = `<div class="state-message"><strong>The customiser couldn't be loaded</strong><a class="btn btn--outline btn--sm" href="home-decor.html">Back to Home Decor</a></div>`;
       return;
     }
-    root.innerHTML = `<div class="skeleton" style="aspect-ratio:4/3"></div><div class="skeleton" style="min-height:420px"></div>`;
+    root.innerHTML = FrameX.templates.skeletonPage("studio");
     await FrameX.uploadService.limits(); // the largest photo the server takes
     try {
       const { items } = await FrameX.api.getProducts({ category: "hd-multi-panel", limit: 500 });

@@ -1291,22 +1291,139 @@ textarea.input {
   }
 }
 
-/* Skeleton cards ----------------------------------------------------------------
-   Loading placeholders with the shape of the real cards (templates.skeletons in
-   ui/templates.js): the same frame, picture and padding, grey bars where the
-   words and buttons will be. The real cards fade in when they arrive. */
+/* Skeleton loading ---------------------------------------------------------------
+   Placeholders with the shape of what is coming (templates.skeletons and
+   templates.skeletonPage in ui/templates.js): the real card frames and
+   paddings, grey bars where the words, pictures and buttons will be, and the
+   moving light of .skeleton (base.css) over them. The real content fades in
+   when it arrives. */
+.sk-page {
+  display: grid;
+  gap: var(--grid-gap, 20px);
+  min-width: 0;
+}
+
+/* Bars and boxes. Grey a shade darker than the plain placeholder, so they show on white cards. */
+.sk-page .skeleton,
+.sk-card .skeleton,
+.sk-row .skeleton,
+.sk-faq .skeleton,
+.sk-chip.skeleton,
+.sk-photo.skeleton,
+.sk-piece.skeleton {
+  background: #e8eaee;
+}
+
+.sk-l {
+  display: block;
+  flex: none;
+  width: var(--w, 100%);
+  max-width: 100%;
+  height: var(--h, 12px);
+  border-radius: 6px;
+}
+
+.sk-box {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  border-radius: var(--radius-md);
+}
+
+.sk-round {
+  display: block;
+  flex: none;
+  border-radius: 50%;
+}
+
+.sk-chip {
+  display: block;
+  flex: none;
+  border-radius: var(--radius-pill);
+}
+
+.sk-btn {
+  display: block;
+  flex: 1;
+  height: 34px;
+  border-radius: var(--radius-pill);
+}
+
+.sk-input {
+  display: block;
+  width: 100%;
+  height: 44px;
+  border-radius: var(--radius-md);
+}
+
+.sk-drop {
+  display: block;
+  height: 120px;
+  border-radius: var(--radius-md);
+  outline: 2px dashed rgba(13, 27, 62, 0.08);
+  outline-offset: -8px;
+}
+
+.sk-rule {
+  height: 1px;
+  background: var(--line);
+}
+
+/* Groups */
+.sk-stack {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+}
+
+.sk-stack--lg {
+  gap: 18px;
+}
+
+.sk-split {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sk-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.sk-who {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.sk-who > .sk-stack {
+  flex: 1;
+}
+
+.sk-head {
+  flex-wrap: wrap;
+}
+
+/* Cards */
 .sk-card {
   display: flex;
   flex-direction: column;
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--white);
   overflow: hidden;
 }
 
-/* (a shade darker than the plain placeholder, so the bars show on the white card) */
-.sk-card .skeleton {
-  background: #e8eaee;
+.sk-card--pad {
+  gap: 14px;
+  padding: clamp(14px, 2vw, 20px);
 }
 
 .sk-card .sk-media {
@@ -1331,47 +1448,11 @@ textarea.input {
   padding: 36px 20px 20px;
 }
 
-.sk-line {
-  display: block;
-  height: 12px;
-  border-radius: 6px;
-}
-
-.sk-line--label {
-  width: 42%;
-  height: 10px;
-}
-
-.sk-line--title {
-  width: 82%;
-  height: 15px;
-}
-
-.sk-line--price {
-  width: 38%;
-  height: 17px;
-}
-
-.sk-line--meta {
-  width: 60%;
-  height: 10px;
-}
-
-.sk-line--short {
-  width: 30%;
-}
-
 .sk-actions {
   display: flex;
   gap: 8px;
   margin-top: auto;
   padding: var(--space-sm) var(--card-pad) var(--card-pad);
-}
-
-.sk-btn {
-  flex: 1;
-  height: 34px;
-  border-radius: var(--radius-pill);
 }
 
 /* The shop's round logo, half over the cover, as on the real card */
@@ -1385,31 +1466,229 @@ textarea.input {
   border-radius: 50%;
 }
 
-.sk-chips,
-.sk-split {
+.sk-card--review {
+  min-width: min(300px, 80vw);
+}
+
+.sk-stars {
   display: flex;
-  align-items: center;
+  gap: 4px;
+}
+
+.sk-star {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+/* A collection tile: the picture with its name at the bottom */
+.sk-tile {
+  position: relative;
+  display: block;
+  min-height: clamp(190px, 30vw, 300px);
+  border-radius: var(--radius-lg);
+}
+
+.sk-tile__text {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  display: grid;
   gap: 8px;
 }
 
-.sk-split {
+.sk-tile__text .sk-l {
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.sk-photo {
+  display: block;
+  width: 100%;
+  border-radius: var(--radius-md);
+}
+
+.sk-piece {
+  display: block;
+  aspect-ratio: 4 / 5;
+}
+
+/* A list line: picture, two lines, then status and amount on the right */
+.sk-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 6px 0;
+}
+
+.sk-row > .sk-stack {
+  flex: 1;
+}
+
+.sk-thumb {
+  display: block;
+  flex: none;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+}
+
+.sk-row__end {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  flex: none;
+}
+
+.sk-faq {
+  display: flex;
+  align-items: center;
   justify-content: space-between;
-  margin-top: 4px;
+  gap: 16px;
+  min-height: 60px;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--white);
 }
 
-.sk-split .sk-btn {
-  flex: 0 0 110px;
+/* Page layouts */
+.sk-2col,
+.sk-side {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(20px, 3vw, 40px);
+  align-items: start;
 }
 
-.sk-chip {
-  width: 76px;
-  height: 22px;
-  border-radius: var(--radius-pill);
+.sk-thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sk-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.sk-grid3,
+.sk-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+
+.sk-dash {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.sk-dash__side {
+  gap: 16px;
+}
+
+.sk-track {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sk-track__step {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.sk-profile {
+  position: relative;
+}
+
+.sk-cover {
+  display: block;
+  height: clamp(120px, 18vw, 200px);
+  border-radius: 0;
+}
+
+.sk-profile__body {
+  display: grid;
+  gap: 14px;
+  padding: 0 clamp(16px, 3vw, 28px) clamp(16px, 3vw, 28px);
+}
+
+.sk-profile__photo {
+  margin-top: -44px;
+  border: 4px solid var(--white);
+}
+
+.sk-masonry {
+  columns: 2 160px;
+  column-gap: 12px;
+}
+
+.sk-masonry .sk-photo {
+  margin-bottom: 12px;
+  break-inside: avoid;
+}
+
+@media (min-width: 640px) {
+  .sk-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .sk-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sk-masonry {
+    columns: 3 200px;
+  }
+}
+
+@media (min-width: 900px) {
+  .sk-2col {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  }
+
+  .sk-2col--studio {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+
+  .sk-side {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  }
+
+  .sk-grid3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .sk-dash {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+}
+
+/* Phones: fewer tracker labels, a narrower thumbnail row */
+@media (max-width: 639px) {
+  .sk-track .sk-l {
+    display: none;
+  }
+
+  .sk-row__end .sk-chip {
+    display: none;
+  }
 }
 
 /* Real cards come in gently in place of the placeholders */
 .product-card,
-.shop-card {
+.shop-card,
+.artist-card,
+.artwork-card,
+.review-card {
   animation: card-in 420ms var(--ease-out) both;
 }
 
