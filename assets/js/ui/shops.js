@@ -91,7 +91,7 @@
   /* ---------------------------------------------------------------- Loading */
   async function load() {
     els.grid.setAttribute("aria-busy", "true");
-    if (!lastResult.items.length) els.grid.innerHTML = templates.skeletons(3, "skeleton-card--shop");
+    if (!lastResult.items.length) els.grid.innerHTML = templates.skeletons(3, "shop");
     const o = state.origin;
     try {
       lastResult = await FrameX.api.getShops({

@@ -361,6 +361,13 @@ button:disabled {
   }
 }
 
+/* Visitors who asked for less motion get still grey placeholders, without the moving light */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    content: none;
+  }
+}
+
 /* Respect reduced-motion preferences --------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   html {

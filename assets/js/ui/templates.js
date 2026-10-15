@@ -175,11 +175,37 @@
     </article>`;
   }
 
-  const skeletons = (count, className = "skeleton-card") =>
-    Array.from(
-      { length: count },
-      () => `<div class="skeleton ${className}" aria-hidden="true"></div>`,
-    ).join("");
+  /* Loading placeholders shaped like the real cards (components.css, "Skeleton
+     cards"), so the page shows its layout while the data is on its way:
+       product   picture, shop line, name, price, details, two buttons
+       shop      cover, round logo, name, address, two badges, count + button
+       template  design, label, name, price, one button */
+  const line = (kind) => `<span class="skeleton sk-line sk-line--${kind}"></span>`;
+  const SKELETON = {
+    product: `<div class="sk-card" aria-hidden="true"><div class="skeleton sk-media"></div>
+      <div class="sk-body">${line("label")}${line("title")}${line("price")}${line("meta")}</div>
+      <div class="sk-actions"><span class="skeleton sk-btn"></span><span class="skeleton sk-btn"></span></div></div>`,
+    shop: `<div class="sk-card sk-card--shop" aria-hidden="true"><div class="skeleton sk-media"></div>
+      <div class="sk-body"><span class="skeleton sk-logo"></span>${line("title")}${line("meta")}
+      <span class="sk-chips"><span class="skeleton sk-chip"></span><span class="skeleton sk-chip"></span></span>
+      <span class="sk-split">${line("short")}<span class="skeleton sk-btn"></span></span></div></div>`,
+    template: `<div class="sk-card" aria-hidden="true"><div class="skeleton sk-media"></div>
+      <div class="sk-body">${line("label")}${line("title")}${line("price")}</div>
+      <div class="sk-actions"><span class="skeleton sk-btn"></span></div></div>`,
+  };
+
+  /** `count` placeholder cards of one kind: "product" (default), "shop" or "template". */
+  const skeletons = (count, kind = "product") => {
+    const k = kind === "skeleton-card--shop" ? "shop" : SKELETON[kind] ? kind : "product";
+    return Array.from({ length: count }, () => SKELETON[k]).join("");
+  };
+
+  // Lists that load their cards after the page: an empty one marked data-skeleton="<kind>" (and
+  // data-skeleton-count, default 4) shows its placeholders straight away; its script replaces them.
+  document.querySelectorAll("[data-skeleton]").forEach((el) => {
+    if (el.children.length) return;
+    el.innerHTML = skeletons(Number(el.dataset.skeletonCount) || 4, el.dataset.skeleton);
+  });
 
   /** Replace a container's content with an error + retry button. */
   function showError(container, message, retry) {

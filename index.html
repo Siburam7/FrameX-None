@@ -59,13 +59,15 @@
               </div>
             </div>
             <div class="page-hero__wall">
-              <a class="page-hero__piece" href="product.html?id=p-004" aria-label="Signature Frame"><img
-                  src="assets/img/products/signature-frame.webp" alt="" width="800" height="1000" fetchpriority="high"
-                  decoding="async"></a>
-              <a class="page-hero__piece" href="product.html?id=p-001" aria-label="Ace of Us"><img
-                  src="assets/img/products/ace-of-us.webp" alt="" width="800" height="1000" decoding="async"></a>
-              <a class="page-hero__piece" href="product.html?id=p-002" aria-label="Classic Square"><img
-                  src="assets/img/products/classic-square.webp" alt="" width="800" height="1000" decoding="async"></a>
+              <a class="page-hero__piece page-hero__piece--framed" href="product.html?id=p-004"
+                aria-label="Signature Frame"><span class="page-hero__mat"><img src="assets/img/home/hero-newborn.webp"
+                    alt="" width="800" height="1000" fetchpriority="high" decoding="async"></span></a>
+              <a class="page-hero__piece page-hero__piece--framed" href="product.html?id=p-001"
+                aria-label="Ace of Us"><span class="page-hero__mat"><img src="assets/img/home/hero-family.webp" alt=""
+                    width="1000" height="750" decoding="async"></span></a>
+              <a class="page-hero__piece page-hero__piece--framed" href="product.html?id=p-002"
+                aria-label="Classic Square"><span class="page-hero__mat"><img src="assets/img/home/hero-play.webp"
+                    alt="" width="800" height="800" decoding="async"></span></a>
             </div>
           </div>
         </div>
@@ -139,14 +141,72 @@
           <div class="section-head" data-reveal>
             <div>
               <h2 class="section-title" id="categories-title">Shop by category</h2>
-              <p class="section-lead">Frame styles from local shops. Pick one to see every frame in it.</p>
+              <p class="section-lead">Everything on FrameX in one place: shops near you, art, your own frame, ready
+                designs and
+                wall decor.</p>
             </div>
             <a class="btn btn--outline btn--sm" href="shop.html">Shop all frames <svg class="icon icon--nudge"
                 aria-hidden="true">
                 <use href="#i-arrow-right"></use>
               </svg></a>
           </div>
-          <div class="category-row" id="category-row"></div>
+          <!-- The parts of FrameX, in the order the owner chose. The frame categories follow as links
+               (ui/categories.js fills #category-more). -->
+          <div class="category-row" id="category-row">
+            <div class="collection-grid" data-reveal-stagger>
+              <a class="collection-card" href="#shops">
+                <img src="assets/img/home/home-shop.webp" alt="" width="1200" height="900" loading="lazy"
+                  decoding="async">
+                <span><span class="collection-card__name">Nearby Shops</span><span
+                    class="collection-card__blurb">Framing shops
+                    near you. Browse their frames, then pick up or get it delivered.</span>
+                  <span class="collection-card__count">Find a shop <svg class="icon" aria-hidden="true">
+                      <use href="#i-arrow-right"></use>
+                    </svg></span></span>
+              </a>
+              <a class="collection-card" href="art.html">
+                <img src="assets/img/art/hero-artist.webp" alt="" width="720" height="900" loading="lazy"
+                  decoding="async">
+                <span><span class="collection-card__name">Art &amp; Artists</span>
+                  <span class="collection-card__count">Explore art <svg class="icon" aria-hidden="true">
+                      <use href="#i-arrow-right"></use>
+                    </svg></span></span>
+              </a>
+              <a class="collection-card" href="studio.html?mode=photo">
+                <img src="assets/img/home/home-studio.webp" alt="" width="900" height="720" loading="lazy"
+                  decoding="async">
+                <span><span class="collection-card__name">Make Your Frame</span>
+                  <span class="collection-card__count">FrameX Studio <svg class="icon" aria-hidden="true">
+                      <use href="#i-arrow-right"></use>
+                    </svg></span></span>
+              </a>
+              <a class="collection-card" href="templates.html">
+                <img src="assets/img/home/home-templates.webp" alt="" width="900" height="720" loading="lazy"
+                  decoding="async">
+                <span><span class="collection-card__name">Templates</span>
+                  <span class="collection-card__count">Browse designs <svg class="icon" aria-hidden="true">
+                      <use href="#i-arrow-right"></use>
+                    </svg></span></span>
+              </a>
+              <a class="collection-card" href="home-decor.html">
+                <img src="assets/img/home/home-decor.webp" alt="" width="900" height="720" loading="lazy"
+                  decoding="async">
+                <span><span class="collection-card__name">Home Decor &amp; Wall Art</span>
+                  <span class="collection-card__count">Shop decor <svg class="icon" aria-hidden="true">
+                      <use href="#i-arrow-right"></use>
+                    </svg></span></span>
+              </a>
+              <a class="collection-card" href="shop.html#collection">
+                <img src="assets/img/home/home-trend.webp" alt="" width="1400" height="780" loading="lazy"
+                  decoding="async">
+                <span><span class="collection-card__name">Trending Frames</span>
+                  <span class="collection-card__count">See frames <svg class="icon" aria-hidden="true">
+                      <use href="#i-arrow-right"></use>
+                    </svg></span></span>
+              </a>
+            </div>
+            <div id="category-more"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -176,7 +236,8 @@
                 </svg></a>
             </div>
           </div>
-          <div class="product-grid product-grid--rail" id="recommended-rail" data-limit="10"></div>
+          <div class="product-grid product-grid--rail" id="recommended-rail" data-limit="10" data-skeleton="product"
+            data-skeleton-count="5"></div>
           <div class="shelf__more"><a class="btn btn--dark" href="shop.html">Shop all frames <svg
                 class="icon icon--nudge" aria-hidden="true">
                 <use href="#i-arrow-right"></use>
@@ -247,7 +308,8 @@
                 </svg></a>
             </div>
           </div>
-          <div class="product-grid product-grid--rail" id="home-templates" data-limit="8"></div>
+          <div class="product-grid product-grid--rail" id="home-templates" data-limit="8" data-skeleton="template">
+          </div>
           <div class="shelf__more"><a class="btn btn--dark" href="templates.html">View all templates <svg
                 class="icon icon--nudge" aria-hidden="true">
                 <use href="#i-arrow-right"></use>
@@ -354,7 +416,8 @@
             </div>
             <p class="shops-toolbar__status" id="shops-status" role="status" aria-live="polite"></p>
           </div>
-          <div class="shop-grid" id="shop-grid" data-limit="3" aria-busy="true"></div>
+          <div class="shop-grid" id="shop-grid" data-limit="3" aria-busy="true" data-skeleton="shop"
+            data-skeleton-count="3"></div>
         </div>
       </div>
     </section>

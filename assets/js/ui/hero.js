@@ -20,15 +20,34 @@
   /** Two-line headline: the second line carries the gradient. */
   const title = (lines) => `${esc(lines[0])}${lines[1] ? ` <span>${esc(lines[1])}</span>` : ""}`;
 
+  /** One picture of the gallery wall (layout-hero.css): artwork and designs hang in a frame, photos as prints. */
   function piece(p) {
     const label = esc(p.alt || "");
     // A personalised design is drawn by the template engine, like on the Templates page.
     if (p.template) {
       // Its sample photos wait with the slide's other pictures (see loadImages).
       const html = p.templateData ? FrameX.templateEngine.render(p.templateData, { mode: "sample", label: p.alt || p.templateData.title }).replace(/<img src="/g, '<img data-src="') : "";
-      return `<a class="page-hero__piece page-hero__piece--design" href="${esc(p.href)}" aria-label="${label}">${html}</a>`;
+      return `<a class="page-hero__piece page-hero__piece--design page-hero__piece--framed" href="${esc(p.href)}" aria-label="${label}"><span class="page-hero__mat">${html}</span></a>`;
+    }
+    // The artwork alone, in a frame drawn by the page (the product photo already shows one).
+    if (p.art) {
+      return `<a class="page-hero__piece page-hero__piece--framed" href="${esc(p.href)}" aria-label="${label}"><span class="page-hero__mat"><img data-src="${esc(p.art)}" alt="" width="800" height="1000" decoding="async"></span></a>`;
     }
     return `<a class="page-hero__piece" href="${esc(p.href)}" aria-label="${label}"><img data-src="${esc(p.image)}" alt="" width="800" height="1000" decoding="async"></a>`;
+  }
+
+  /** A light that moves from one picture of the wall to the next (layout-hero.css: .is-lit). */
+  function spotlight(hero) {
+    if (prefersReducedMotion()) return;
+    let at = -1;
+    setInterval(() => {
+      if (document.hidden) return;
+      const pieces = $$(".home-hero__slide.is-active .page-hero__piece", hero);
+      if (!pieces.length) return;
+      at = (at + 1) % pieces.length;
+      $$(".page-hero__piece.is-lit", hero).forEach((el) => el.classList.remove("is-lit"));
+      pieces[at].classList.add("is-lit");
+    }, 1600);
   }
 
   const slideHtml = (s, i, total) => `<div class="home-hero__slide page-hero__grid" role="group" aria-roledescription="slide" aria-label="${esc(s.label)}, ${i + 1} of ${total}" data-slide="${esc(s.id)}">
@@ -60,10 +79,35 @@
     return slides.filter((s) => s.pieces.every((p) => !p.template || p.templateData));
   }
 
+  /** Laptops: the wall of pictures leans a little toward the pointer (layout-hero.css reads --tilt-x / --tilt-y). */
+  function lean(hero) {
+    if (prefersReducedMotion() || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    let waiting = 0;
+    hero.addEventListener("pointermove", (e) => {
+      if (waiting) return;
+      waiting = requestAnimationFrame(() => {
+        waiting = 0;
+        const r = hero.getBoundingClientRect();
+        const x = Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width) * 2 - 1));
+        const y = Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height) * 2 - 1));
+        hero.style.setProperty("--tilt-x", `${(x * 10).toFixed(2)}deg`);
+        hero.style.setProperty("--tilt-y", `${(-y * 7).toFixed(2)}deg`);
+      });
+    });
+    hero.addEventListener("pointerleave", () => {
+      hero.style.setProperty("--tilt-x", "0deg");
+      hero.style.setProperty("--tilt-y", "0deg");
+    });
+  }
+
   async function init() {
     const hero = $("[data-hero]");
     const stage = hero && $("[data-hero-stage]", hero);
     const all = (FrameX.seed.site && FrameX.seed.site.heroSlides) || [];
+    if (stage) {
+      lean(hero);
+      spotlight(hero);
+    }
     if (!stage || all.length < 2) return;
     const slides = await withTemplates(all.map((s) => ({ ...s, pieces: s.pieces.map((p) => ({ ...p })) })));
     if (slides.length < 2) return;

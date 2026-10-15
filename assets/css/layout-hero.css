@@ -114,6 +114,204 @@
   transition-delay: 320ms;
 }
 
+/* The three pictures as a gallery wall: three sizes (a large upright one, a wide one, a square one), each
+   on its own nail. Artwork and designs hang in a frame (black, oak and gold mouldings with a mat; the
+   pictures carry .page-hero__piece--framed, from ui/hero.js); photos hang as prints with a white border.
+   When a slide comes in its pictures drop onto their nails one after another and swing to a stop, then
+   sway gently; a light moves from one to the next (.is-lit, ui/hero.js). On a laptop the whole wall leans
+   toward the pointer (--tilt-x / --tilt-y). With less motion asked for, the wall stands still. */
+.home-hero .page-hero__wall {
+  display: block;
+  aspect-ratio: 16 / 11;
+  transform: perspective(1300px) rotateX(var(--tilt-y, 0deg)) rotateY(var(--tilt-x, 0deg));
+  transition: transform 600ms var(--ease-out);
+}
+
+.home-hero .page-hero__wall > .page-hero__piece {
+  position: absolute;
+  overflow: visible;
+  border-radius: 3px;
+  padding: 4.5%;
+  background: #fff;
+  border: 0;
+  box-shadow: 0 22px 34px -18px rgba(5, 8, 22, 0.5);
+  outline: 3px solid rgba(234, 120, 14, 0);
+  outline-offset: 4px;
+  transform: none;
+  transform-origin: 50% -9%;
+  transition:
+    opacity 420ms var(--ease-out),
+    outline-color 500ms var(--ease-out),
+    box-shadow 500ms var(--ease-out),
+    scale 300ms var(--ease-out);
+}
+
+/* No band of light across these: the moving light does that job here */
+.home-hero .page-hero__wall > .page-hero__piece::after {
+  content: none;
+}
+
+/* The nail each picture hangs on */
+.home-hero .page-hero__wall > .page-hero__piece::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  width: 7px;
+  height: 7px;
+  margin-left: -3.5px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #c4c8cf, #6b717c);
+  box-shadow: 0 2px 3px rgba(5, 8, 22, 0.3);
+}
+
+.home-hero .page-hero__wall > .page-hero__piece img {
+  border-radius: 1px;
+}
+
+/* Where each one hangs, and its shape */
+.home-hero .page-hero__wall > .page-hero__piece:nth-child(1) {
+  left: 9%;
+  top: 11%;
+  width: 34%;
+  aspect-ratio: 4 / 5;
+  --d: 0ms;
+}
+
+.home-hero .page-hero__wall > .page-hero__piece:nth-child(2) {
+  left: 48%;
+  top: 4%;
+  width: 41%;
+  aspect-ratio: 4 / 3;
+  --d: 220ms;
+}
+
+.home-hero .page-hero__wall > .page-hero__piece:nth-child(3) {
+  left: 55%;
+  top: 59%;
+  width: 26%;
+  aspect-ratio: 1;
+  --d: 440ms;
+}
+
+/* A frame: the moulding, then a mat with a bevelled edge, then the picture */
+.home-hero .page-hero__wall > .page-hero__piece--framed {
+  display: block;
+  padding: 5.5%;
+  box-shadow:
+    inset 2px 2px 3px rgba(255, 255, 255, 0.4),
+    inset -2px -2px 4px rgba(0, 0, 0, 0.35),
+    0 22px 34px -18px rgba(5, 8, 22, 0.55);
+}
+
+.home-hero .page-hero__wall > .page-hero__piece--framed:nth-child(1) {
+  background: linear-gradient(135deg, #3a3a3d, #0d0d0f 55%, #2a2a2e);
+}
+
+.home-hero .page-hero__wall > .page-hero__piece--framed:nth-child(2) {
+  background:
+    repeating-linear-gradient(92deg, rgba(90, 50, 20, 0.12) 0 2px, transparent 2px 7px),
+    linear-gradient(135deg, #d4a56a, #a8733f 55%, #c08a50);
+}
+
+.home-hero .page-hero__wall > .page-hero__piece--framed:nth-child(3) {
+  background: linear-gradient(135deg, #f3dc95, #c39a45 35%, #f0d48a 55%, #a87c30 80%, #e0bf6c);
+}
+
+.home-hero .page-hero__mat {
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr); /* the picture fits the frame's shape, never stretches it */
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: 7%;
+  background: #f8f6f1;
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.home-hero .page-hero__mat img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-hero .page-hero__mat .tpl-canvas {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* The light moving across the wall */
+.home-hero .page-hero__wall > .page-hero__piece.is-lit {
+  z-index: 1;
+  outline-color: rgba(234, 120, 14, 0.55);
+}
+
+/* Hanging: each picture drops onto its nail, swings and comes to rest, then keeps swaying a little */
+.home-hero__slide .page-hero__wall > .page-hero__piece {
+  scale: 1;
+  rotate: none;
+}
+
+.home-hero__slide.is-active .page-hero__wall > .page-hero__piece {
+  animation:
+    hero-hang 1500ms cubic-bezier(0.3, 0.7, 0.3, 1) var(--d) backwards,
+    hero-sway 6s ease-in-out calc(var(--d) + 1500ms) infinite;
+}
+
+@keyframes hero-hang {
+  0% {
+    opacity: 0;
+    transform: translateY(-60px) rotate(-14deg);
+  }
+
+  35% {
+    opacity: 1;
+    transform: translateY(0) rotate(9deg);
+  }
+
+  55% {
+    transform: rotate(-5deg);
+  }
+
+  72% {
+    transform: rotate(3deg);
+  }
+
+  86% {
+    transform: rotate(-1deg);
+  }
+
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes hero-sway {
+  50% {
+    transform: rotate(1.2deg);
+  }
+}
+
+@media (hover: hover) {
+  .home-hero .page-hero__wall > .page-hero__piece:hover {
+    z-index: 2;
+    scale: 1.04;
+    animation-play-state: paused;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-hero .page-hero__wall,
+  .home-hero__slide .page-hero__wall > .page-hero__piece {
+    transition: none;
+  }
+
+  .home-hero__slide.is-active .page-hero__wall > .page-hero__piece {
+    animation: none;
+  }
+}
+
 /* A personalised design shown as a piece: the design on a warm mat */
 .page-hero__piece--design {
   display: grid;

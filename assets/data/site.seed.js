@@ -32,8 +32,10 @@
        title    two short lines (about 16 letters each at most); the second is the highlighted one
        lead     one or two sentences under the headline
        actions  one or two buttons: { label, href }. The first is the main one.
-       pieces   exactly three framed pictures: { image, alt, href }
-                or, for a personalised design, { template: "<template slug>", alt, href }
+       pieces   exactly three pictures for the gallery wall: { image, alt, href }, hung as a photo print;
+                with art: "<the picture alone>" that picture is hung in a frame instead (the product photo
+                already shows a frame, so it is not used there); or, for a personalised design,
+                { template: "<template slug>", alt, href }, hung in a frame
        glow     the colour of the light behind the slide, as "red, green, blue"
 
        The FIRST slide is also written in index.html (it is on screen before
@@ -50,9 +52,9 @@
           { label: "Create Your Frame", href: "studio.html?mode=photo" }
         ],
         pieces: [
-          { image: "assets/img/products/signature-frame.webp", alt: "Signature Frame", href: "product.html?id=p-004" },
-          { image: "assets/img/products/ace-of-us.webp", alt: "Ace of Us", href: "product.html?id=p-001" },
-          { image: "assets/img/products/classic-square.webp", alt: "Classic Square", href: "product.html?id=p-002" }
+          { image: "assets/img/products/signature-frame.webp", art: "assets/img/home/hero-newborn.webp", alt: "Signature Frame", href: "product.html?id=p-004" },
+          { image: "assets/img/products/ace-of-us.webp", art: "assets/img/home/hero-family.webp", alt: "Ace of Us", href: "product.html?id=p-001" },
+          { image: "assets/img/products/classic-square.webp", art: "assets/img/home/hero-play.webp", alt: "Classic Square", href: "product.html?id=p-002" }
         ],
         glow: "234, 120, 14",
         tint: "#e2ecfb"
@@ -68,9 +70,9 @@
           { label: "Browse collections", href: "home-decor.html#collections" }
         ],
         pieces: [
-          { image: "assets/img/decor/hd-mountain-dawn.webp", alt: "Mountain Dawn", href: "product.html?id=hd-mountain-dawn" },
-          { image: "assets/img/decor/hd-terracotta-arches.webp", alt: "Terracotta Arches", href: "product.html?id=hd-terracotta-arches" },
-          { image: "assets/img/decor/hd-great-wave.webp", alt: "The Great Wave", href: "product.html?id=hd-great-wave" }
+          { image: "assets/img/decor/hd-mountain-dawn.webp", art: "assets/img/decor/art/hd-mountain-dawn.webp", alt: "Mountain Dawn", href: "product.html?id=hd-mountain-dawn" },
+          { image: "assets/img/decor/hd-terracotta-arches.webp", art: "assets/img/decor/art/hd-terracotta-arches.webp", alt: "Terracotta Arches", href: "product.html?id=hd-terracotta-arches" },
+          { image: "assets/img/decor/hd-great-wave.webp", art: "assets/img/decor/art/hd-great-wave.webp", alt: "The Great Wave", href: "product.html?id=hd-great-wave" }
         ],
         glow: "216, 161, 93",
         tint: "#dff3ea"
@@ -86,9 +88,9 @@
           { label: "Use your own photo", href: "wall-art-studio.html?product=hd-custom-split-3" }
         ],
         pieces: [
-          { image: "assets/img/decor/hd-mp-golden-tree-3.webp", alt: "Golden Tree at Night, 3 panels", href: "product.html?id=hd-mp-golden-tree-3" },
-          { image: "assets/img/decor/hd-mp-cherry-tree-3.webp", alt: "Cherry Blossom Tree, 3 panels", href: "product.html?id=hd-mp-cherry-tree-3" },
-          { image: "assets/img/decor/hd-mp-night-skyline-5.webp", alt: "City Skyline at Night, 5 panels", href: "product.html?id=hd-mp-night-skyline-5" }
+          { image: "assets/img/decor/hd-mp-golden-tree-3.webp", art: "assets/img/decor/art/hd-mp-golden-tree-3.webp", alt: "Golden Tree at Night, 3 panels", href: "product.html?id=hd-mp-golden-tree-3" },
+          { image: "assets/img/decor/hd-mp-cherry-tree-3.webp", art: "assets/img/decor/art/hd-mp-cherry-tree-3.webp", alt: "Cherry Blossom Tree, 3 panels", href: "product.html?id=hd-mp-cherry-tree-3" },
+          { image: "assets/img/decor/hd-mp-night-skyline-5.webp", art: "assets/img/decor/art/hd-mp-night-skyline-5.webp", alt: "City Skyline at Night, 5 panels", href: "product.html?id=hd-mp-night-skyline-5" }
         ],
         glow: "236, 96, 150",
         tint: "#ebe5fb"
@@ -104,9 +106,9 @@
           { label: "All wall art", href: "home-decor.html" }
         ],
         pieces: [
-          { image: "assets/img/decor/hd-dream-big.webp", alt: "Dream Big", href: "product.html?id=hd-dream-big" },
-          { image: "assets/img/decor/hd-never-give-up.webp", alt: "Never Give Up", href: "product.html?id=hd-never-give-up" },
-          { image: "assets/img/decor/hd-hardest-climb.webp", alt: "The Hardest Climb", href: "product.html?id=hd-hardest-climb" }
+          { image: "assets/img/decor/hd-dream-big.webp", art: "assets/img/decor/art/hd-dream-big.webp", alt: "Dream Big", href: "product.html?id=hd-dream-big" },
+          { image: "assets/img/decor/hd-never-give-up.webp", art: "assets/img/decor/art/hd-never-give-up.webp", alt: "Never Give Up", href: "product.html?id=hd-never-give-up" },
+          { image: "assets/img/decor/hd-hardest-climb.webp", art: "assets/img/decor/art/hd-hardest-climb.webp", alt: "The Hardest Climb", href: "product.html?id=hd-hardest-climb" }
         ],
         glow: "234, 120, 14",
         tint: "#fdebd8"
@@ -122,9 +124,9 @@
           { label: "All wall art", href: "home-decor.html" }
         ],
         pieces: [
-          { image: "assets/img/decor/hd-pixel-invaders.webp", alt: "Pixel Invaders", href: "product.html?id=hd-pixel-invaders" },
-          { image: "assets/img/decor/hd-retro-grid.webp", alt: "Retro Grid", href: "product.html?id=hd-retro-grid" },
-          { image: "assets/img/decor/hd-level-up.webp", alt: "Level Up", href: "product.html?id=hd-level-up" }
+          { image: "assets/img/decor/hd-pixel-invaders.webp", art: "assets/img/decor/art/hd-pixel-invaders.webp", alt: "Pixel Invaders", href: "product.html?id=hd-pixel-invaders" },
+          { image: "assets/img/decor/hd-retro-grid.webp", art: "assets/img/decor/art/hd-retro-grid.webp", alt: "Retro Grid", href: "product.html?id=hd-retro-grid" },
+          { image: "assets/img/decor/hd-level-up.webp", art: "assets/img/decor/art/hd-level-up.webp", alt: "Level Up", href: "product.html?id=hd-level-up" }
         ],
         glow: "124, 92, 255",
         tint: "#e1e6fd"
@@ -140,9 +142,9 @@
           { label: "All wall art", href: "home-decor.html" }
         ],
         pieces: [
-          { image: "assets/img/decor/hd-sakura-moon.webp", alt: "Sakura Moon", href: "product.html?id=hd-sakura-moon" },
-          { image: "assets/img/decor/hd-moonlit-wanderer.webp", alt: "Moonlit Wanderer", href: "product.html?id=hd-moonlit-wanderer" },
-          { image: "assets/img/decor/hd-fuji-sunrise.webp", alt: "Fuji Sunrise", href: "product.html?id=hd-fuji-sunrise" }
+          { image: "assets/img/decor/hd-sakura-moon.webp", art: "assets/img/decor/art/hd-sakura-moon.webp", alt: "Sakura Moon", href: "product.html?id=hd-sakura-moon" },
+          { image: "assets/img/decor/hd-moonlit-wanderer.webp", art: "assets/img/decor/art/hd-moonlit-wanderer.webp", alt: "Moonlit Wanderer", href: "product.html?id=hd-moonlit-wanderer" },
+          { image: "assets/img/decor/hd-fuji-sunrise.webp", art: "assets/img/decor/art/hd-fuji-sunrise.webp", alt: "Fuji Sunrise", href: "product.html?id=hd-fuji-sunrise" }
         ],
         glow: "236, 96, 150",
         tint: "#fce4ec"
@@ -158,9 +160,9 @@
           { label: "All wall art", href: "home-decor.html" }
         ],
         pieces: [
-          { image: "assets/img/decor/hd-midnight-run.webp", alt: "Midnight Run", href: "product.html?id=hd-midnight-run" },
-          { image: "assets/img/decor/hd-driven.webp", alt: "Driven", href: "product.html?id=hd-driven" },
-          { image: "assets/img/decor/hd-ride-free.webp", alt: "Ride Free", href: "product.html?id=hd-ride-free" }
+          { image: "assets/img/decor/hd-midnight-run.webp", art: "assets/img/decor/art/hd-midnight-run.webp", alt: "Midnight Run", href: "product.html?id=hd-midnight-run" },
+          { image: "assets/img/decor/hd-driven.webp", art: "assets/img/decor/art/hd-driven.webp", alt: "Driven", href: "product.html?id=hd-driven" },
+          { image: "assets/img/decor/hd-ride-free.webp", art: "assets/img/decor/art/hd-ride-free.webp", alt: "Ride Free", href: "product.html?id=hd-ride-free" }
         ],
         glow: "255, 94, 58",
         tint: "#dcf1f7"
@@ -176,9 +178,9 @@
           { label: "All wall art", href: "home-decor.html" }
         ],
         pieces: [
-          { image: "assets/img/decor/hd-and-action.webp", alt: "And… Action", href: "product.html?id=hd-and-action" },
-          { image: "assets/img/decor/hd-last-reel.webp", alt: "The Last Reel", href: "product.html?id=hd-last-reel" },
-          { image: "assets/img/decor/hd-movie-night-marquee.webp", alt: "Now Showing: Movie Night", href: "product.html?id=hd-movie-night-marquee" }
+          { image: "assets/img/decor/hd-and-action.webp", art: "assets/img/decor/art/hd-and-action.webp", alt: "And… Action", href: "product.html?id=hd-and-action" },
+          { image: "assets/img/decor/hd-last-reel.webp", art: "assets/img/decor/art/hd-last-reel.webp", alt: "The Last Reel", href: "product.html?id=hd-last-reel" },
+          { image: "assets/img/decor/hd-movie-night-marquee.webp", art: "assets/img/decor/art/hd-movie-night-marquee.webp", alt: "Now Showing: Movie Night", href: "product.html?id=hd-movie-night-marquee" }
         ],
         glow: "216, 161, 93",
         tint: "#f8efd4"

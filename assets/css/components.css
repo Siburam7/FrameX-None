@@ -305,6 +305,15 @@
   padding-left: 42px;
 }
 
+/* A text box of several lines is a rounded box, not a pill: in a pill the first and last lines are cut off
+   at the round ends (the product description in the shop dashboard was). */
+textarea.input {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-radius: var(--radius-md);
+  line-height: 1.5;
+}
+
 .input:focus,
 .select:focus {
   outline: none;
@@ -1282,14 +1291,132 @@
   }
 }
 
-/* Skeleton placeholders sized like the real cards ----------------------------- */
-.skeleton-card {
+/* Skeleton cards ----------------------------------------------------------------
+   Loading placeholders with the shape of the real cards (templates.skeletons in
+   ui/templates.js): the same frame, picture and padding, grey bars where the
+   words and buttons will be. The real cards fade in when they arrive. */
+.sk-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  aspect-ratio: 3 / 4;
+  background: var(--white);
+  overflow: hidden;
 }
 
-.skeleton-card--shop {
-  aspect-ratio: 4 / 3.2;
+/* (a shade darker than the plain placeholder, so the bars show on the white card) */
+.sk-card .skeleton {
+  background: #e8eaee;
+}
+
+.sk-card .sk-media {
+  aspect-ratio: 4 / 5;
+  border-radius: 0;
+}
+
+.sk-card--shop .sk-media {
+  aspect-ratio: 16 / 9;
+}
+
+.sk-body {
+  position: relative;
+  display: grid;
+  gap: 9px;
+  padding: var(--card-pad) var(--card-pad) var(--space-sm);
+}
+
+.sk-card--shop .sk-body {
+  gap: 10px;
+  flex: 1;
+  padding: 36px 20px 20px;
+}
+
+.sk-line {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+}
+
+.sk-line--label {
+  width: 42%;
+  height: 10px;
+}
+
+.sk-line--title {
+  width: 82%;
+  height: 15px;
+}
+
+.sk-line--price {
+  width: 38%;
+  height: 17px;
+}
+
+.sk-line--meta {
+  width: 60%;
+  height: 10px;
+}
+
+.sk-line--short {
+  width: 30%;
+}
+
+.sk-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+  padding: var(--space-sm) var(--card-pad) var(--card-pad);
+}
+
+.sk-btn {
+  flex: 1;
+  height: 34px;
+  border-radius: var(--radius-pill);
+}
+
+/* The shop's round logo, half over the cover, as on the real card */
+.sk-logo {
+  position: absolute;
+  top: -28px;
+  left: 20px;
+  width: 56px;
+  height: 56px;
+  border: 3px solid var(--white);
+  border-radius: 50%;
+}
+
+.sk-chips,
+.sk-split {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sk-split {
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.sk-split .sk-btn {
+  flex: 0 0 110px;
+}
+
+.sk-chip {
+  width: 76px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+}
+
+/* Real cards come in gently in place of the placeholders */
+.product-card,
+.shop-card {
+  animation: card-in 420ms var(--ease-out) both;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+  }
 }
 
 /* Customer photo tiles ----------------------------------------------------------
