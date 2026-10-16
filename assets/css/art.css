@@ -12,7 +12,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-sm);
   white-space: nowrap;
 }
@@ -25,7 +25,7 @@
 }
 
 .stars strong {
-  color: var(--ink);
+  color: var(--on-surface);
 }
 
 /* Toolbar: search, the Artists / Artworks switch, filters -------------------- */
@@ -53,7 +53,7 @@
   left: 16px;
   width: 18px;
   height: 18px;
-  color: var(--muted);
+  color: var(--text-muted);
   transform: translateY(-50%);
   pointer-events: none;
 }
@@ -65,7 +65,7 @@
 }
 
 .art-count {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-sm);
 }
 
@@ -101,8 +101,8 @@
   padding: 18px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--white);
-  color: var(--ink);
+  background: var(--surface);
+  color: var(--on-surface);
   transition:
     transform var(--dur-base) var(--ease-out),
     box-shadow var(--dur-base) var(--ease-out),
@@ -161,7 +161,7 @@
 
 .artist-card__user,
 .artist-card__place {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-sm);
 }
 
@@ -212,8 +212,8 @@
   flex-direction: column;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--white);
-  color: var(--ink);
+  background: var(--surface);
+  color: var(--on-surface);
   overflow: hidden;
   transition:
     transform var(--dur-base) var(--ease-out),
@@ -258,7 +258,7 @@
 }
 
 .artwork-card__label {
-  color: var(--gold-muted);
+  color: var(--text-gold);
   font-size: var(--text-label);
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -272,7 +272,7 @@
 }
 
 .artwork-card__meta {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-xs);
 }
 
@@ -290,7 +290,7 @@
   padding: clamp(20px, 4vw, 40px);
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
-  background: var(--white);
+  background: var(--surface);
 }
 
 @media (min-width: 900px) {
@@ -307,7 +307,7 @@
   padding: clamp(18px, 3vw, 32px);
   border: 1px solid var(--line);
   border-radius: var(--radius-xl);
-  background: linear-gradient(180deg, var(--surface-soft), var(--white) 70%);
+  background: linear-gradient(180deg, var(--surface-soft), var(--surface) 70%);
 }
 
 @media (min-width: 760px) {
@@ -330,7 +330,7 @@
   align-items: center;
   gap: 6px 16px;
   margin-top: 6px;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-sm);
 }
 
@@ -367,7 +367,7 @@
   padding: clamp(16px, 2.4vw, 26px);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background: var(--white);
+  background: var(--surface);
 }
 
 .art-panel > h2,
@@ -401,7 +401,7 @@
 }
 
 .art-facts dt {
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .art-facts dd {
@@ -432,7 +432,7 @@
   padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--white);
+  background: var(--surface);
   cursor: pointer;
   transition:
     border-color var(--dur-fast) var(--ease-out),
@@ -440,7 +440,7 @@
 }
 
 .svc:hover {
-  border-color: var(--ink);
+  border-color: var(--outline-strong);
 }
 
 .svc:has(input:checked) {
@@ -461,7 +461,7 @@
 
 .svc__meta {
   display: block;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-sm);
 }
 
@@ -507,8 +507,8 @@ textarea.input {
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: var(--ink);
-  color: var(--white);
+  background: var(--inverse);
+  color: var(--on-inverse);
   font-size: var(--text-xs);
 }
 
@@ -518,7 +518,7 @@ textarea.input {
   gap: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--white);
+  background: var(--surface);
   overflow: hidden;
 }
 
@@ -558,7 +558,7 @@ textarea.input {
   padding: 12px 14px;
   border-radius: var(--radius-md);
   background: var(--surface-soft);
-  color: var(--umber);
+  color: var(--text-umber);
   font-size: var(--text-sm);
   line-height: 1.5;
 }
@@ -585,8 +585,8 @@ textarea.input {
   aspect-ratio: 1;
   border: 1px dashed var(--slate);
   border-radius: var(--radius-md);
-  background: var(--stone-soft);
-  color: var(--muted);
+  background: var(--surface-stone-soft);
+  color: var(--text-muted);
   font-size: var(--text-sm);
   text-align: center;
   overflow: hidden;
@@ -604,8 +604,8 @@ textarea.input {
 }
 
 .ref-tile--add:hover {
-  border-color: var(--ink);
-  color: var(--ink);
+  border-color: var(--outline-strong);
+  color: var(--on-surface);
 }
 
 .ref-tile--add .icon {
@@ -663,7 +663,7 @@ textarea.input {
   border: 1px solid var(--line);
   border-left: 4px solid var(--accent);
   border-radius: var(--radius-md);
-  background: var(--white);
+  background: var(--surface);
 }
 
 .cp-status--pay {
@@ -677,7 +677,7 @@ textarea.input {
 
 .cp-status--closed {
   border-left-color: var(--slate);
-  background: var(--stone-soft);
+  background: var(--surface-stone-soft);
 }
 
 .cp-status strong {
@@ -714,7 +714,7 @@ textarea.input {
   display: grid;
   gap: 2px;
   padding: 0 0 16px 28px;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-sm);
 }
 
@@ -727,7 +727,7 @@ textarea.input {
   height: 12px;
   border: 2px solid var(--slate);
   border-radius: 50%;
-  background: var(--white);
+  background: var(--surface);
 }
 
 .cp-track li::after {
@@ -745,7 +745,7 @@ textarea.input {
 }
 
 .cp-track li.is-done {
-  color: var(--ink);
+  color: var(--on-surface);
 }
 
 .cp-track li.is-done::before {
@@ -759,7 +759,7 @@ textarea.input {
 }
 
 .cp-track li.is-now {
-  color: var(--ink);
+  color: var(--on-surface);
   font-weight: 700;
 }
 
@@ -782,7 +782,7 @@ textarea.input {
 }
 
 .cp-history small {
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .cp-row {
@@ -793,8 +793,8 @@ textarea.input {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--white);
-  color: var(--ink);
+  background: var(--surface);
+  color: var(--on-surface);
 }
 
 .cp-row + .cp-row {
@@ -802,7 +802,7 @@ textarea.input {
 }
 
 .cp-row__meta {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-sm);
 }
 
@@ -829,7 +829,7 @@ textarea.input {
   padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--white);
+  background: var(--surface);
   font-size: var(--text-sm);
 }
 
@@ -842,7 +842,7 @@ textarea.input {
 }
 
 .rev__by {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-xs);
 }
 
@@ -914,7 +914,7 @@ textarea.input {
 .aw-gallery__main {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background: var(--stone-soft);
+  background: var(--surface-stone-soft);
   overflow: hidden;
 }
 
@@ -937,12 +937,12 @@ textarea.input {
   height: 72px;
   border: 2px solid transparent;
   border-radius: var(--radius-sm);
-  background: var(--stone-soft);
+  background: var(--surface-stone-soft);
   overflow: hidden;
 }
 
 .aw-thumbs button[aria-pressed="true"] {
-  border-color: var(--ink);
+  border-color: var(--outline-strong);
 }
 
 .aw-thumbs img {
@@ -970,8 +970,8 @@ textarea.input {
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--white);
-  color: var(--ink);
+  background: var(--surface);
+  color: var(--on-surface);
 }
 
 .aw-by .artist-photo {
@@ -1004,7 +1004,7 @@ textarea.input {
   padding: 10px 0 10px 14px;
   border-top: 1px solid var(--line);
   border-left: 3px solid transparent;
-  color: var(--ink);
+  color: var(--on-surface);
   font-size: var(--text-sm);
 }
 
@@ -1021,7 +1021,7 @@ textarea.input {
 .acc-news__item span,
 .acc-news__item small,
 .acc-news__empty {
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .acc-news__count {
@@ -1041,7 +1041,7 @@ textarea.input {
   width: 56px;
   height: 56px;
   border-radius: var(--radius-sm);
-  background: var(--stone-soft);
+  background: var(--surface-stone-soft);
   object-fit: cover;
 }
 
@@ -1106,7 +1106,7 @@ textarea.input {
   padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--white);
+  background: var(--surface);
 }
 
 @media (min-width: 640px) {
@@ -1118,7 +1118,7 @@ textarea.input {
 
 .set-row small {
   display: block;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .set-row .input,
@@ -1164,4 +1164,22 @@ textarea.input {
 .rev-photo__note {
   margin-top: 6px;
   font-size: var(--text-xs);
+}
+
+/* Dark theme: the request and reason notes, the empty stars, the "new" badge */
+:root[data-theme="dark"] .cp-status--pay {
+  background: var(--tint-warn);
+}
+
+:root[data-theme="dark"] .adm-reason {
+  background: var(--tint-bad);
+  color: var(--on-tint-bad);
+}
+
+:root[data-theme="dark"] .rev-stars label {
+  color: rgba(255, 255, 255, 0.22);
+}
+
+:root[data-theme="dark"] .acc-news__count {
+  color: var(--on-inverse);
 }

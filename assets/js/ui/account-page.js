@@ -14,6 +14,17 @@
   const SHOP_STATUS = { ACTIVE: "Approved · Active", INACTIVE: "Approved · Not listed (inactive)", PENDING: "Waiting for approval", REJECTED: "Not approved" };
   const date = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) : "");
 
+  // The theme chosen on this browser (the script in each page's head draws the page with it). Light if none.
+  const THEME_KEY = "framex.theme.v1";
+  const themeChoice = () => {
+    try {
+      const t = localStorage.getItem(THEME_KEY);
+      return t === "dark" || t === "system" ? t : "light";
+    } catch (error) {
+      return "light";
+    }
+  };
+
   function render(root, user) {
     const rows = [
       ["Name", user.name],
@@ -52,6 +63,18 @@
         </dl>
         <a class="btn btn--dark btn--sm" href="artist-dashboard.html">Open artist dashboard</a>
       </section>` : ""}
+
+      <section class="account-card" aria-labelledby="acc-theme">
+        <h2 id="acc-theme">${icon("moon")} Appearance</h2>
+        <p class="account-card__lead">How FrameX looks on this browser.</p>
+        <div class="theme-pick" role="radiogroup" aria-labelledby="acc-theme">${[
+          ["dark", "Dark", "moon"],
+          ["light", "Light", "sun"],
+          ["system", "Same as my device", "settings"],
+        ]
+          .map(([id, label, ic]) => `<label class="theme-pick__item"><input type="radio" name="theme" value="${id}"${themeChoice() === id ? " checked" : ""}><span>${icon(ic)}${label}</span></label>`)
+          .join("")}</div>
+      </section>
 
       <section class="account-card" aria-labelledby="acc-paintings">
         <h2 id="acc-paintings">${icon("image")} Custom paintings</h2>
@@ -101,6 +124,19 @@
     </div>`;
 
     loadNews(root);
+    // Appearance: saved in this browser and shown at once
+    root.querySelectorAll('input[name="theme"]').forEach((input) =>
+      input.addEventListener("change", () => {
+        try {
+          localStorage.setItem(THEME_KEY, input.value);
+        } catch (error) {
+          /* storage blocked: the choice lasts for this page */
+        }
+        if (window.FrameXTheme) window.FrameXTheme.apply();
+        else document.documentElement.setAttribute("data-theme", input.value === "dark" ? "dark" : "light");
+        FrameX.toast.show(input.value === "system" ? "FrameX now follows your device's light or dark setting." : `${input.value === "dark" ? "Dark" : "Light"} theme on.`);
+      }),
+    );
     $("[data-logout]", root).addEventListener("click", async () => {
       await auth().logout();
       window.location.href = "index.html";

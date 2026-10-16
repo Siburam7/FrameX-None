@@ -39,8 +39,8 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: var(--champagne);
-  color: var(--brown-deep);
+  background: var(--surface-selected);
+  color: var(--text-brown);
   font-family: var(--font-display);
   font-weight: 700;
 }
@@ -50,7 +50,7 @@
 }
 
 .hd-steps span {
-  color: var(--taupe);
+  color: var(--text-taupe);
   font-size: var(--text-sm);
 }
 
@@ -79,7 +79,7 @@
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   background: var(--ivory);
-  color: var(--umber);
+  color: var(--text-umber);
   font-size: var(--text-sm);
 }
 
@@ -88,7 +88,7 @@
   width: 18px;
   height: 18px;
   margin-top: 2px;
-  color: var(--gold-muted);
+  color: var(--text-gold);
 }
 
 /* ==========================================================================
@@ -106,7 +106,7 @@
   flex-wrap: wrap;
   gap: 4px;
   margin-bottom: 10px;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-sm);
 }
 
@@ -117,7 +117,7 @@
 .was__lead {
   max-width: 62ch;
   margin-top: 6px;
-  color: var(--taupe);
+  color: var(--text-taupe);
 }
 
 .was__grid {
@@ -278,7 +278,7 @@
   justify-content: space-between;
   gap: 8px 16px;
   padding: 10px 14px;
-  background: var(--white);
+  background: var(--surface);
   font-size: var(--text-sm);
 }
 
@@ -286,19 +286,19 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .was-wall {
   width: 28px;
   height: 28px;
-  border: 2px solid var(--white);
+  border: 2px solid var(--surface);
   border-radius: 50%;
   box-shadow: 0 0 0 1px var(--line);
 }
 
 .was-wall[aria-pressed="true"] {
-  box-shadow: 0 0 0 2px var(--ink);
+  box-shadow: 0 0 0 2px var(--outline-strong);
 }
 
 .was-photo {
@@ -306,12 +306,12 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .was-photo strong {
   overflow: hidden;
-  color: var(--ink);
+  color: var(--on-surface);
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 22ch;
@@ -329,8 +329,8 @@
 
 /* Plain facts about the customer's file (its pixel size): no judgement of how it will print. */
 .was-quality {
-  background: var(--stone-soft);
-  color: var(--umber);
+  background: var(--surface-stone-soft);
+  color: var(--text-umber);
 }
 
 .was-quality .icon {
@@ -362,7 +362,7 @@
 }
 
 .was-card h2 span {
-  color: var(--muted);
+  color: var(--text-muted);
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
@@ -382,7 +382,7 @@
   padding: 8px 6px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  background: var(--white);
+  background: var(--surface);
   font-size: var(--text-sm);
   font-weight: 700;
   text-align: center;
@@ -392,23 +392,23 @@
 }
 
 .was-option small {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: 0.6875rem;
   font-weight: 600;
 }
 
 .was-option:hover {
-  border-color: var(--ink);
+  border-color: var(--outline-strong);
 }
 
 .was-option[aria-checked="true"] {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--white);
+  border-color: var(--outline-strong);
+  background: var(--inverse);
+  color: var(--on-inverse);
 }
 
 .was-option[aria-checked="true"] small {
-  color: var(--mist);
+  color: var(--on-inverse-muted);
 }
 
 .was-swatches {
@@ -424,24 +424,24 @@
   min-width: 52px;
   font-size: 0.6875rem;
   font-weight: 600;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .was-swatch i {
   width: 38px;
   height: 38px;
-  border: 3px solid var(--white);
+  border: 3px solid var(--surface);
   border-radius: 50%;
   background: var(--swatch);
   box-shadow: 0 0 0 1px var(--line);
 }
 
 .was-swatch[aria-checked="true"] {
-  color: var(--ink);
+  color: var(--on-surface);
 }
 
 .was-swatch[aria-checked="true"] i {
-  box-shadow: 0 0 0 2px var(--ink);
+  box-shadow: 0 0 0 2px var(--outline-strong);
 }
 
 .was-range {
@@ -471,14 +471,14 @@
 }
 
 .was-upload__meta {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-xs);
 }
 
 .was-progress {
   height: 6px;
   border-radius: var(--radius-pill);
-  background: var(--stone);
+  background: var(--surface-stone);
   overflow: hidden;
 }
 
@@ -495,7 +495,7 @@
 }
 
 .was-error {
-  color: var(--danger);
+  color: var(--text-danger);
   font-size: var(--text-sm);
   font-weight: 600;
 }
@@ -510,8 +510,8 @@
   gap: 12px;
   padding: 16px;
   border-radius: var(--radius-md);
-  background: var(--ink);
-  color: var(--white);
+  background: var(--inverse);
+  color: var(--on-inverse);
 }
 
 .was-order__price {
@@ -551,8 +551,8 @@
 }
 
 .was-order__buttons .qty {
-  background: var(--white);
-  color: var(--ink);
+  background: var(--surface);
+  color: var(--on-surface);
 }
 
 .was-order__buttons .btn--dark {
@@ -630,7 +630,7 @@
 
 /* The original on its way to FrameX when the set is ordered */
 .was-status {
-  color: var(--brown-deep);
+  color: var(--text-brown);
   font-size: var(--text-sm);
   font-weight: 700;
 }
@@ -691,8 +691,8 @@
   height: 44px;
   border: 1px solid var(--line-warm);
   border-radius: 50%;
-  background: var(--white);
-  color: var(--charcoal);
+  background: var(--surface);
+  color: var(--on-surface);
   cursor: pointer;
   transition:
     background-color var(--dur-base) var(--ease-out),
@@ -702,9 +702,9 @@
 
 @media (hover: hover) {
   .hd-rail-arrows .showcase__arrow:not(:disabled):hover {
-    border-color: var(--charcoal);
-    background: var(--charcoal);
-    color: var(--champagne);
+    border-color: var(--outline-strong);
+    background: var(--inverse);
+    color: var(--on-inverse-accent);
   }
 }
 
@@ -712,4 +712,11 @@
   .collection-grid--rail {
     scroll-behavior: auto;
   }
+}
+
+/* Dark theme: the order box stays a dark box (its grey and gold words are made for one) */
+:root[data-theme="dark"] .was-order {
+  border: 1px solid var(--line);
+  background: var(--surface-stone);
+  color: var(--on-surface);
 }

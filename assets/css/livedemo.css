@@ -528,3 +528,10 @@ html.ld-lock body {
     display: inline-flex;
   }
 }
+
+/* Dark theme: the camera view keeps its own light cards */
+:root[data-theme="dark"] .ld {
+  --surface-soft: #eef3fb;
+  --accent: #1d4ed8;
+  --line: rgba(5, 8, 22, 0.12);
+}

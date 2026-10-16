@@ -60,6 +60,11 @@
    * rises and falls on its own rhythm), so the three never move together. When the scrolling stops they swing
    * back and come to rest. Nothing runs while the hero is off screen or after they are still; visitors who asked
    * for less motion get still pictures.
+   *
+   * On a phone that is tilted (tilt(), below) "straight" is where the real ground is: the pictures keep hanging
+   * straight down like on a real wall, so on the screen they turn the other way from the phone. A turning phone
+   * drags them round a little on their nails, then they swing back. `angle` is how far a picture is from hanging
+   * straight; what is drawn is the phone's tilt plus that.
    */
   const SWING = [
     // hz: how fast it swings; damping: how soon it settles (part of the critical); push: how much the wind moves it
@@ -68,9 +73,11 @@
     { hz: 1.45, damping: 0.12, push: 1.25 }, // the small square: quick and light
   ];
   const MAX_ANGLE = 14; // degrees; bigger pushes are softened toward this
+  const MAX_TILT = 22; // the same while the phone's tilt is followed (a tilted phone turns them further)
+  const DRAG = 0.35; // how much of a turn of the phone the nails pass on to the pictures
 
   function swing(hero) {
-    if (prefersReducedMotion()) return;
+    if (prefersReducedMotion()) return null;
     const wall = () => $$(".home-hero__slide.is-active .page-hero__wall > .page-hero__piece", hero);
     const state = new WeakMap(); // picture -> { angle, speed, phase, gust }
     let lastY = window.scrollY;
@@ -78,6 +85,9 @@
     let wind = 0; // the scroll speed, smoothed (px per second; + = scrolling down)
     let running = false;
     let onScreen = true;
+    let target = 0; // the angle on the screen at which the pictures hang straight down (0 unless the phone is tilted)
+    let leaning = 0; // target, smoothed
+    let tilting = false;
 
     const stateOf = (el, i) => {
       let s = state.get(el);
@@ -97,7 +107,13 @@
       const raw = (y - lastY) / dt;
       lastY = y;
       wind += (raw - wind) * Math.min(1, dt * 9);
-      let moving = Math.abs(wind) > 4;
+      // The phone's tilt, smoothed (a hand is never quite still), and how far it turned since the last frame
+      const before = leaning;
+      leaning += (target - leaning) * Math.min(1, dt * 10);
+      if (Math.abs(target - leaning) < 0.05) leaning = target;
+      const turned = leaning - before;
+      const cap = tilting ? MAX_TILT : MAX_ANGLE;
+      let moving = Math.abs(wind) > 4 || leaning !== target;
       wall().forEach((el, i) => {
         const s = stateOf(el, i);
         // The wind on this picture: the scroll speed, with gusts of its own that rise and fall
@@ -107,15 +123,18 @@
         const force = Math.sign(wind) * 340 * Math.pow(Math.abs(wind) / 1000, 0.6) * s.push * gusts;
         // A picture under the mouse is held still, so it can be clicked
         const held = el.matches(":hover") ? 6 : 1;
+        // A turning phone carries the picture round a little on its nail
+        s.angle -= turned * DRAG;
         // Springing back to hang straight, friction, and the drag of the air (stronger the faster it swings)
         const accel = force - s.k * s.angle - s.c * held * s.speed - 0.004 * s.speed * Math.abs(s.speed);
         s.speed += accel * dt;
         s.angle += s.speed * dt;
-        const shown = MAX_ANGLE * Math.tanh(s.angle / MAX_ANGLE);
+        const shown = cap * Math.tanh((leaning + s.angle) / cap);
         if (Math.abs(s.angle) < 0.01 && Math.abs(s.speed) < 0.02 && Math.abs(wind) <= 4) {
           s.angle = 0;
           s.speed = 0;
-          el.style.removeProperty("rotate");
+          if (leaning === 0) el.style.removeProperty("rotate");
+          else el.style.rotate = `${shown.toFixed(2)}deg`;
         } else {
           el.style.rotate = `${shown.toFixed(2)}deg`;
           moving = true;
@@ -141,6 +160,76 @@
         }
       }).observe(hero);
     }
+
+    return {
+      /** The phone's tilt (degrees on the screen at which the pictures hang straight down). */
+      tiltTo(deg) {
+        tilting = true;
+        if (Math.abs(deg - target) < 0.3) return; // the small shake of a hand is not a turn
+        target = deg;
+        start();
+      },
+      /** A new slide came in: its pictures take the phone's tilt at once. */
+      wake: start,
+      get onScreen() {
+        return onScreen;
+      },
+    };
+  }
+
+  /*
+   * The phone's tilt moves the pictures (swing(), above). Android phones send it without asking; iPhone and iPad
+   * send nothing until the visitor allows it, and Safari only asks after a tap: when no tilt has arrived a moment
+   * after the page opened, a small button on the hero ("Tilt your phone") asks. Laptops have no tilt sensor, so
+   * nothing changes there. Visitors who asked for less motion get still pictures.
+   */
+  function tilt(hero, pictures) {
+    if (!pictures || !("DeviceOrientationEvent" in window)) return;
+    const stage = $("[data-hero-stage]", hero);
+    const screenTurn = () => (screen.orientation && typeof screen.orientation.angle === "number" ? screen.orientation.angle : Number(window.orientation) || 0);
+    const rad = Math.PI / 180;
+    let felt = false; // a real tilt has arrived
+    const feltWithin = (ms) =>
+      new Promise((done) => {
+        const until = performance.now() + ms;
+        const look = () => (felt || performance.now() > until ? done(felt) : setTimeout(look, 100));
+        look();
+      });
+    const onTurn = (e) => {
+      if (e.beta == null || e.gamma == null) return;
+      felt = true;
+      if (!pictures.onScreen) return;
+      // Which way is down on the screen: the earth's "down" seen from the phone (beta: tipped forward or back,
+      // gamma: tipped to a side), then turned with the screen when it is shown sideways
+      const b = e.beta * rad;
+      const g = e.gamma * rad;
+      const x = Math.sin(g) * Math.cos(b);
+      const y = -Math.sin(b);
+      let down = Math.atan2(x, -y) / rad + screenTurn();
+      down = ((down + 540) % 360) - 180;
+      // A phone lying flat has no "down" on its screen: the pictures hang as usual
+      const upright = Math.max(0, Math.min(1, (Math.hypot(x, y) - 0.2) / 0.3));
+      pictures.tiltTo(-down * upright);
+    };
+    window.addEventListener("deviceorientation", onTurn);
+    const ask = DeviceOrientationEvent.requestPermission;
+    if (typeof ask !== "function" || !(navigator.maxTouchPoints > 0)) return;
+    feltWithin(1200).then((already) => {
+      if (already) return;
+      stage.insertAdjacentHTML("beforeend", `<button class="home-hero__tilt" type="button" data-hero-tilt>${icon("tilt")}<span>Tilt your phone</span></button>`);
+      const button = $("[data-hero-tilt]", stage);
+      button.addEventListener("click", async () => {
+        let answer = "denied";
+        try {
+          answer = await ask.call(DeviceOrientationEvent);
+        } catch {
+          /* Safari refused to ask */
+        }
+        button.hidden = true;
+        if (answer !== "granted") return FrameX.toast.show("Motion access wasn't allowed, so the frames stay as they are.");
+        FrameX.toast.show((await feltWithin(1500)) ? "Tilt your phone: the frames hang straight, like on a real wall." : "This device doesn't share its tilt, so the frames stay as they are.");
+      });
+    });
   }
 
   const slideHtml = (s, i, total) => `<div class="home-hero__slide page-hero__grid" role="group" aria-roledescription="slide" aria-label="${esc(s.label)}, ${i + 1} of ${total}" data-slide="${esc(s.id)}">
@@ -197,10 +286,12 @@
     const hero = $("[data-hero]");
     const stage = hero && $("[data-hero-stage]", hero);
     const all = (FrameX.seed.site && FrameX.seed.site.heroSlides) || [];
+    let pictures = null;
     if (stage) {
       lean(hero);
       spotlight(hero);
-      swing(hero);
+      pictures = swing(hero);
+      tilt(hero, pictures);
     }
     if (!stage || all.length < 2) return;
     const slides = await withTemplates(all.map((s) => ({ ...s, pieces: s.pieces.map((p) => ({ ...p })) })));
@@ -244,6 +335,7 @@
       else hero.style.removeProperty("--hero-tint");
       index = next;
       loadImages(next + 1);
+      if (pictures) pictures.wake();
       // Keep the current tab in view without moving the page.
       const row = tabs;
       const tab = tabEls[next];

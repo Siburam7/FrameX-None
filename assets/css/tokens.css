@@ -70,6 +70,33 @@
   --line-on-dark: rgba(255, 255, 255, 0.16);
   --focus-ring: 0 0 0 3px rgba(234, 120, 14, 0.55);
 
+  /* What each colour is for (the stylesheets use these names; the dark theme below gives them other values).
+     In the light theme each stands for the colour that was used there before. */
+  --surface: var(--white);                 /* cards, panels, inputs */
+  --surface-selected: var(--champagne);    /* a selected choice */
+  --surface-stone: var(--stone);
+  --surface-stone-soft: var(--stone-soft);
+  --surface-beige: var(--beige);
+  --surface-cream: var(--cream);
+  --surface-sand: var(--sand);
+  --glass: 255 255 255;                    /* see-through white panels: rgb(var(--glass) / 0.8) */
+  --inverse: var(--ink);                   /* dark buttons, selected tabs */
+  --on-inverse: var(--white);              /* the words on them */
+  --on-surface: var(--ink);                /* the words on cards and the page */
+  --text-muted: var(--muted);
+  --text-taupe: var(--taupe);
+  --text-umber: var(--umber);
+  --outline-strong: var(--ink);            /* a strong outline (selected, hovered) */
+  --text-brown: var(--brown-deep);         /* warm brown words: small links and labels */
+  --text-gold: var(--gold-muted);          /* gold numerals and small labels */
+  --text-wine: var(--wine);
+  --text-danger: var(--danger);            /* words that say something went wrong */
+  --on-inverse-accent: var(--champagne);   /* a gold mark on a dark button: a +, a step number */
+  --on-inverse-muted: var(--mist);         /* small grey words on a chosen chip or option */
+  --on-inverse-gold: var(--gold);          /* a gold word on a dark note (the toast's button) */
+  --surface-bar: rgba(250, 246, 238, 0.97); /* the add-to-cart bar at the bottom of Studio and a template */
+  --skeleton: #e8eaee;                     /* the grey bars shown while something loads */
+
   /* Typography ----------------------------------------------------------
      The scale below is the one Home Decor uses; it is the reference for the
      whole site. Every heading takes its size and weight from here: don't set
@@ -162,4 +189,63 @@
     --grid-gap: 20px;
     --gutter: 7.5vw; /* content = 85% of the screen */
   }
+}
+
+/* ==========================================================================
+   Dark theme: a choice on the account page (Light is the default; a visitor
+   can choose Dark, or the same as their device; see the script in each
+   page's head). The same deep navy, orange and blue, on a dark navy page. Product
+   pictures, frames and personalised designs keep their own colours.
+   ========================================================================== */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0a1020;
+  --surface: #121a2d;
+  --surface-soft: #0e1527;
+  --ivory: var(--surface-soft);
+  --hero-tint: #0f1831;
+  --surface-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0) 100%), var(--hero-tint);
+  --soft-mint: #0d211d;
+  --soft-peach: #24190f;
+  --soft-indigo: #151b37;
+  --surface-selected: #2c2618;
+  --surface-stone: #1a2236;
+  --surface-stone-soft: #161d30;
+  --surface-beige: #1d2232;
+  --surface-cream: #221d15;
+  --surface-sand: #271f14;
+  --glass: 18 26 45;
+  --inverse: #e8ecf6;
+  --on-inverse: #0a1020;
+  --on-surface: #e8ecf6;
+  --text: #e8ecf6;
+  --text-muted: #a3abbf;
+  --text-taupe: #b4ab9f;
+  --text-umber: #cfc5b8;
+  --outline-strong: #e8ecf6;
+  --line: rgba(255, 255, 255, 0.12);
+  --line-warm: rgba(255, 255, 255, 0.12);
+  --accent: #7ea4ff;
+  --accent-deep: #a3bdff;
+  --text-gradient: linear-gradient(90deg, #7ea4ff, #b4c8ff);
+  --footer-bg: #060a15;
+  --text-brown: #e2b98f;
+  --text-gold: #d9b57c;
+  --text-wine: #ff8fab;
+  --text-danger: #ff8a80;
+  --on-inverse-accent: #7a5a26;
+  --on-inverse-muted: #5d6478;
+  --on-inverse-gold: #8a5a12;
+  --surface-bar: rgba(18, 26, 45, 0.97);
+  --skeleton: #1d263b;
+
+  /* The small notes and badges that say "waiting", "done" or "something is wrong" (used by the dark rules at
+     the end of each stylesheet) */
+  --tint-warn: rgba(234, 120, 14, 0.14);
+  --tint-ok: rgba(31, 157, 85, 0.16);
+  --tint-bad: rgba(198, 40, 40, 0.2);
+  --on-tint-warn: #f3b673;
+  --on-tint-ok: #74d39c;
+  --on-tint-bad: #ff9b9b;
+  --on-tint-info: #f3c58a;
 }

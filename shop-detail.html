@@ -25,7 +25,7 @@
   <link rel="stylesheet" href="assets/css/pages.css">
   <link rel="stylesheet" href="assets/css/pdp.css">
   <link rel="stylesheet" href="assets/css/mobile.css">
-  <script>document.documentElement.classList.add("js");</script>
+  <script>document.documentElement.classList.add("js");(function(){var d=document.documentElement,m=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)");function pick(){var t;try{t=localStorage.getItem("framex.theme.v1")}catch(e){}t=t||"light";if(t==="system")t=m&&m.matches?"dark":"light";d.setAttribute("data-theme",t==="dark"?"dark":"light")}pick();if(m&&m.addEventListener)m.addEventListener("change",pick);window.FrameXTheme={key:"framex.theme.v1",apply:pick}})();</script>
   <script src="assets/js/ui/welcome.js"></script>
 </head>
 

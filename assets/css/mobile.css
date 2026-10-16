@@ -210,7 +210,7 @@
     grid-column: 1 / -1;
     min-height: 28px;
     border-color: transparent;
-    background: var(--stone-soft);
+    background: var(--surface-stone-soft);
     font-size: 0.71875rem;
   }
 
@@ -518,7 +518,7 @@
   }
 
   .sd-nav a[aria-current="page"] {
-    border-color: var(--ink);
+    border-color: var(--outline-strong);
   }
 
   .sd-nav a span {
@@ -756,5 +756,55 @@
   .final-cta__actions .btn {
     padding-inline: 7px;
     font-size: 0.68rem;
+  }
+}
+
+/* Phones: the hero and the ticker under it fill the first screen exactly. The hero is the screen's height less the
+   ticker; the words and the tabs keep their size and the wall of frames takes the room that is left (it stays in
+   shape, so the frames hang as before). */
+@media (max-width: 639px) {
+  .home-hero {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - var(--ticker-h));
+    height: calc(100svh - var(--ticker-h));
+    min-height: 540px;
+    padding-top: calc(var(--header-h) + 14px);
+    padding-bottom: 12px;
+  }
+
+  .home-hero > .container {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .home-hero__stage {
+    flex: 1;
+    min-height: 0;
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .home-hero__slide.page-hero__grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .home-hero__slide .page-hero__wall {
+    flex: 1 1 0;
+    align-self: center;
+    width: auto;
+    max-width: 100%;
+    min-height: 0;
+    margin-top: 10px;
+  }
+
+  .home-hero__bar {
+    margin-top: 8px;
+    padding-top: 10px;
   }
 }

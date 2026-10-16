@@ -14,7 +14,7 @@
 
 .shops-toolbar__status {
   flex-basis: 100%;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-sm);
   min-height: 1.5em;
 }
@@ -55,7 +55,7 @@
 
 .category-more__label {
   margin-right: 4px;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-sm);
   font-weight: 600;
 }
@@ -92,7 +92,7 @@
   gap: 8px 16px;
   padding: 12px 16px;
   border-radius: var(--radius-md);
-  background: var(--cream);
+  background: var(--surface-cream);
   font-size: var(--text-sm);
 }
 
@@ -101,7 +101,7 @@
 }
 
 .catalog-count {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-sm);
 }
 
@@ -145,7 +145,7 @@
 .catalog-filters {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--white);
+  background: var(--surface);
 }
 
 .catalog-filters[hidden] {
@@ -202,7 +202,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 14px;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 .shops-nearby__why .icon,
@@ -215,11 +215,11 @@
   padding: 10px 14px;
   border-radius: var(--radius-md);
   background: var(--ivory);
-  color: var(--ink);
+  color: var(--on-surface);
 }
 
 .shops-nearby__bar em {
-  color: var(--taupe);
+  color: var(--text-taupe);
   font-style: normal;
   font-weight: 500;
 }
@@ -242,7 +242,7 @@
 
 .shops-nearby__link {
   min-height: 32px;
-  color: var(--brown-deep);
+  color: var(--text-brown);
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -288,4 +288,14 @@
 /* A shop without a cover photo gets a calm branded panel instead of an empty grey block. */
 .shop-card__cover:not(:has(img)) {
   background: radial-gradient(120% 90% at 30% 20%, #fbf7f0 0%, var(--beige) 60%, var(--champagne) 100%);
+}
+
+/* Dark theme: the nearby-shops note and a shop without a cover picture */
+:root[data-theme="dark"] .shops-nearby__alert {
+  background: var(--tint-warn);
+  color: var(--on-tint-warn);
+}
+
+:root[data-theme="dark"] .shop-card__cover:not(:has(img)) {
+  background: radial-gradient(120% 90% at 30% 20%, #2a3349 0%, var(--surface-beige) 60%, var(--surface-selected) 100%);
 }

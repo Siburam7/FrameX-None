@@ -124,8 +124,8 @@ button:disabled {
   z-index: calc(var(--z-toast) + 1);
   padding: 10px 16px;
   border-radius: var(--radius-pill);
-  background: var(--white);
-  color: var(--ink);
+  background: var(--surface);
+  color: var(--on-surface);
   font-weight: 600;
   transform: translateY(-160%);
   transition: transform var(--dur-base) var(--ease-out);
@@ -285,7 +285,7 @@ button:disabled {
 .section-lead {
   max-width: 56ch;
   margin-top: 8px;
-  color: var(--muted);
+  color: var(--text-muted);
 }
 
 /* Gradient text used in the Original's headings */
@@ -343,7 +343,7 @@ button:disabled {
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-md);
-  background: var(--stone-soft);
+  background: var(--surface-stone-soft);
 }
 
 .skeleton::after {
@@ -351,7 +351,7 @@ button:disabled {
   position: absolute;
   inset: 0;
   transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  background: linear-gradient(90deg, transparent, rgb(var(--glass) / 0.7), transparent);
   animation: skeleton-shimmer 1.4s ease-in-out infinite;
 }
 
@@ -398,7 +398,7 @@ html.fx-welcoming::before {
   position: fixed;
   inset: 0;
   z-index: 2999;
-  background: #fff;
+  background: var(--surface);
 }
 
 .fx-welcome {
@@ -429,4 +429,13 @@ html.fx-welcoming::before {
 
 .fx-welcome.is-playing video {
   opacity: 1;
+}
+
+:root[data-theme="dark"] .fx-welcome,
+:root[data-theme="dark"] .fx-welcome video {
+  background: #000;
+}
+
+:root[data-theme="dark"] .fx-welcome video {
+  filter: invert(1) hue-rotate(180deg);
 }

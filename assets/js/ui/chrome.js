@@ -82,7 +82,7 @@
 
     return `<header class="site-header${solid}" data-site-header>
       <div class="site-header__bar">
-        <a class="brand" href="${pages.home}" aria-label="FrameX home"><img src="assets/img/ui/logo-framex.png" alt="FrameX" width="160" height="40"></a>
+        <a class="brand" href="${pages.home}" aria-label="FrameX home"><img class="brand__logo brand__logo--light-bg" src="assets/img/ui/logo-framex.png" alt="FrameX" width="160" height="40"><img class="brand__logo brand__logo--dark-bg" src="assets/img/ui/logo-framex-light.png" alt="FrameX" width="160" height="40" loading="lazy"></a>
         <nav class="primary-nav" id="primary-nav" aria-label="Primary">
           <ul class="primary-nav__list">${links}</ul>
           <div class="primary-nav__mobile-extras">${locationChip}

@@ -22,7 +22,7 @@
 
 .home-hero {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0) 100%),
+    linear-gradient(180deg, rgb(var(--glass) / 0.72) 0%, rgb(var(--glass) / 0) 100%),
     var(--hero-tint);
   transition:
     --hero-glow 900ms var(--ease-out),
@@ -54,6 +54,39 @@
   opacity: 1;
   pointer-events: auto;
   transition-delay: 0s;
+}
+
+/* iPhone and iPad only: the small button that lets the frames follow the phone's tilt (Safari asks for motion
+   access after a tap; ui/hero.js). It sits in the corner of the hero, over the slides. */
+.home-hero__tilt {
+  grid-area: 1 / 1;
+  align-self: end;
+  justify-self: end;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 0 14px 0 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: rgb(var(--glass) / 0.88);
+  color: var(--on-surface);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  box-shadow: 0 8px 20px -10px rgba(5, 8, 22, 0.4);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.home-hero__tilt[hidden] {
+  display: none;
+}
+
+.home-hero__tilt .icon {
+  width: 17px;
+  height: 17px;
+  color: var(--amber-strong);
 }
 
 /* The words rise in one after another; the frames settle onto the wall */
@@ -351,8 +384,8 @@
   padding: 0 var(--space-lg);
   border: 1px solid var(--line);
   border-radius: var(--radius-pill);
-  background: var(--white);
-  color: var(--muted);
+  background: var(--surface);
+  color: var(--text-muted);
   font-size: var(--text-sm);
   font-weight: 600;
   white-space: nowrap;
@@ -364,14 +397,14 @@
 }
 
 .home-hero__tab:hover {
-  border-color: var(--ink);
-  color: var(--ink);
+  border-color: var(--outline-strong);
+  color: var(--on-surface);
 }
 
 .home-hero__tab[aria-current="true"] {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--white);
+  border-color: var(--outline-strong);
+  background: var(--inverse);
+  color: var(--on-inverse);
 }
 
 /* How long until the next slide: a warm tint fills the current tab from left to right */
@@ -380,7 +413,7 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgb(var(--glass) / 0.2);
   transform-origin: left;
   transform: scaleX(0);
 }
@@ -412,8 +445,8 @@
   height: 44px;
   border: 1px solid var(--line);
   border-radius: 50%;
-  background: var(--white);
-  color: var(--ink);
+  background: var(--surface);
+  color: var(--on-surface);
   transition:
     background-color var(--dur-base) var(--ease-out),
     border-color var(--dur-base) var(--ease-out),
@@ -421,7 +454,7 @@
 }
 
 .home-hero__control:hover {
-  border-color: var(--ink);
+  border-color: var(--outline-strong);
 }
 
 .home-hero__control:active {
@@ -441,7 +474,7 @@
 }
 
 .hero__socials-label {
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-xs);
 }
 
@@ -452,8 +485,8 @@
   height: 44px;
   border: 1px solid var(--line);
   border-radius: 50%;
-  background: var(--white);
-  color: var(--ink);
+  background: var(--surface);
+  color: var(--on-surface);
   cursor: pointer;
   transition:
     background-color var(--dur-base) var(--ease-out),
@@ -461,7 +494,7 @@
 }
 
 .hero__social:hover {
-  border-color: var(--ink);
+  border-color: var(--outline-strong);
 }
 
 /* Phones: the arrows give way to swiping; the tabs run to the left edge of the screen */
@@ -524,8 +557,8 @@
 /* Ticker ------------------------------------------------------------------- */
 .ticker {
   border-block: 1px solid var(--line);
-  background: var(--white);
-  color: var(--muted);
+  background: var(--surface);
+  color: var(--text-muted);
 }
 
 .ticker__item {
@@ -541,7 +574,7 @@
 }
 
 .ticker__item:nth-child(even) {
-  color: var(--ink);
+  color: var(--on-surface);
 }
 
 .ticker__item::before {
@@ -577,8 +610,8 @@
   height: 48px;
   border: 1px solid var(--line-warm);
   border-radius: 50%;
-  background: var(--white);
-  color: var(--charcoal);
+  background: var(--surface);
+  color: var(--on-surface);
   transition:
     background-color var(--dur-base) var(--ease-out),
     border-color var(--dur-base) var(--ease-out),
@@ -703,7 +736,7 @@
 }
 
 .frame-card__from {
-  color: var(--taupe);
+  color: var(--text-taupe);
   font-size: var(--text-sm);
 }
 
@@ -736,7 +769,7 @@
   }
 
   .frame-card:hover .frame-card__name {
-    color: var(--brown-deep);
+    color: var(--text-brown);
   }
 }
 
@@ -758,7 +791,7 @@
 .trust {
   padding-block: clamp(20px, 3vw, 32px);
   border-bottom: 1px solid var(--line);
-  background: var(--white);
+  background: var(--surface);
 }
 
 .trust__list {
@@ -784,21 +817,21 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  color: var(--taupe);
+  color: var(--text-taupe);
   font-size: var(--text-sm);
   line-height: 1.4;
 }
 
 .trust__item strong {
   display: block;
-  color: var(--charcoal);
+  color: var(--on-surface);
   font-weight: 700;
 }
 
 .frame-card__desc {
   display: -webkit-box;
   overflow: hidden;
-  color: var(--taupe);
+  color: var(--text-taupe);
   font-size: var(--text-xs);
   line-height: 1.45;
   -webkit-box-orient: vertical;
@@ -807,7 +840,7 @@
 
 .frame-card__from {
   margin-top: 4px;
-  color: var(--ink);
+  color: var(--on-surface);
   font-family: var(--font-display);
   font-size: var(--text-base);
   font-weight: var(--weight-strong);
@@ -836,7 +869,7 @@ body[data-page="home"] main {
   padding: clamp(16px, 2.4vw, 28px);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background: var(--white);
+  background: var(--surface);
 }
 
 .shelf .section-head {
@@ -984,7 +1017,7 @@ body[data-page="home"] main {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: var(--soft-indigo);
-  color: var(--ink);
+  color: var(--on-surface);
   overflow: hidden;
   transition: box-shadow var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }
@@ -1031,7 +1064,7 @@ body[data-page="home"] main {
 .promo-tile__text {
   display: block;
   margin: 6px 0 14px;
-  color: var(--muted);
+  color: var(--text-muted);
   font-size: var(--text-sm);
 }
 
@@ -1078,7 +1111,7 @@ body[data-page="home"] main {
 .shelf-section .guide,
 .shelf-section .final-cta {
   border: 1px solid var(--line);
-  background: var(--white);
+  background: var(--surface);
 }
 
 /* ==========================================================================
@@ -1430,5 +1463,22 @@ body[data-page="home"] main {
 
   .offer img {
     transition: none;
+  }
+}
+
+/* The first screen: the hero and the ticker under it fill it exactly (the header is fixed over the hero's top
+   padding). Tablets and laptops: the hero is at least the screen's height less the ticker, its content in the
+   middle. Phones: assets/css/mobile.css. */
+.home-hero {
+  --ticker-h: 46px;
+}
+
+@media (min-width: 640px) {
+  .home-hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100vh - var(--ticker-h));
+    min-height: calc(100svh - var(--ticker-h));
   }
 }
