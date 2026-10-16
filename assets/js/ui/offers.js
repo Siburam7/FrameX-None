@@ -48,6 +48,7 @@
       if (!button) return;
       e.preventDefault();
       const code = button.dataset.copyCoupon;
+      button.dataset.label = button.dataset.label || button.innerHTML; // its own words, put back afterwards
       try {
         await navigator.clipboard.writeText(code);
         button.textContent = "Copied!";
@@ -61,7 +62,7 @@
         sel.addRange(range);
         button.textContent = "Select & copy";
       }
-      setTimeout(() => (button.textContent = "Copy code"), 2200);
+      setTimeout(() => (button.innerHTML = button.dataset.label), 2200);
     });
 
     // An offer the backend has switched off takes its banner with it

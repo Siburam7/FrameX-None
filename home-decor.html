@@ -48,7 +48,6 @@
             <a class="btn btn--primary" href="#browse">Browse all wall art</a>
             <a class="btn btn--light" href="#custom">Create from your photo</a>
           </div>
-          <dl class="page-hero__facts" id="hd-facts"></dl>
         </div>
         <div class="page-hero__wall" id="hd-hero-wall" data-skeleton="piece" data-skeleton-count="3"></div>
       </div>
@@ -62,8 +61,21 @@
             <p class="eyebrow">Start here</p>
             <h2 class="section-title" id="featured-title">Featured collections</h2>
           </div>
+          <div class="section-head__tools">
+            <div class="rail-arrows hd-rail-arrows" data-rail-arrows="hd-featured" role="group" aria-label="Scroll collections" hidden>
+              <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous collections"><svg class="icon"
+                  aria-hidden="true">
+                  <use href="#i-chev-left"></use>
+                </svg></button>
+              <button class="showcase__arrow" type="button" data-rail-next aria-label="Next collections"><svg class="icon"
+                  aria-hidden="true">
+                  <use href="#i-chev-right"></use>
+                </svg></button>
+            </div>
+          </div>
         </div>
-        <div class="collection-grid" id="hd-featured" data-skeleton="tile" data-skeleton-count="6" aria-busy="true"></div>
+        <!-- One sliding row (swipe, scroll sideways or the arrows above; ui/rail-nav.js) -->
+        <div class="collection-grid collection-grid--rail" id="hd-featured" data-skeleton="tile" data-skeleton-count="6" aria-busy="true"></div>
       </div>
     </section>
 
@@ -241,6 +253,7 @@
   <script src="assets/js/ui/cart-drawer.js" defer></script>
   <script src="assets/js/ui/auth-gate.js" defer></script>
   <script src="assets/js/ui/actions.js" defer></script>
+  <script src="assets/js/ui/rail-nav.js" defer></script>
   <script src="assets/js/ui/decor-page.js" defer></script>
   <script src="assets/js/services/analytics.js" defer></script>
   <script src="assets/js/main.js" defer></script>

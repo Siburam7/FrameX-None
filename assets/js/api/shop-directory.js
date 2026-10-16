@@ -20,8 +20,10 @@
 
    A SLOW backend must not hold the pages up either (a free host sleeps when
    nobody visits and needs most of a minute to wake):
-   - the shops' own products are remembered in this browser for ten minutes
-     and shown at once from there, while the fresh list is fetched;
+   - the shops' own products are remembered in this browser for ten minutes.
+     A page still waits PATIENCE_MS for the fresh list (so a product a shop
+     has just removed or changed is not shown as it was); only when the
+     backend is slower than that does the remembered list stand in for it;
    - without a remembered list, a page waits PATIENCE_MS for them and then
      shows the catalogue file's products; the shops' products join the next
      page that is opened. A product page for one of them waits as long as it
@@ -160,7 +162,8 @@
         .then(() => {
           answered = true;
         });
-      shopProductsPromise = saved ? Promise.resolve() : within(freshShopProducts, PATIENCE_MS);
+      // (with a remembered list, it is already in place if the fresh one is late)
+      shopProductsPromise = within(freshShopProducts, PATIENCE_MS);
       return shopProductsPromise;
     }
     /** A reading method of the provider that waits (a little) for the shop products first. */

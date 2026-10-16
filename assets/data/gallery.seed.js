@@ -24,7 +24,7 @@
       t(P("royal-arch"), "Portrait in an arched red mat frame"),
       t(P("midnight-luxe"), "Black and white portrait in a black frame")] },
     { id: "wall-art", title: "Wall art", items: [
-      t(S("step-2"), "Gallery wall of framed family photos"),
+      t("assets/img/home/home-decor.webp", "Living room with a wall of framed pictures above the sofa"),
       t(P("collage-set"), "Collage of family photos in one frame"),
       t(P("modern-wooden"), "Wooden wall frames arranged on a white wall"),
       t(P("luxury-hd"), "Table display of assorted framed photos")] },
@@ -34,8 +34,8 @@
       t(P("nordic-oak"), "Oak frame above a sofa"),
       t(P("white-texture-set"), "Set of four white textured frames")] },
     { id: "custom", title: "Custom designs", items: [
-      t(S("step-3"), "Craftsman assembling a custom frame in a workshop"),
-      t(S("step-4"), "Framed print packed securely for shipping"),
+      t(S("how-make"), "Hands putting picture frames together"),
+      t(S("how-receive"), "A parcel delivered to the door"),
       t(O("3-1"), "Abstract marble pattern"),
       t(O("3-3"), "Colourful artist palette")] },
     { id: "gifts", title: "Gift inspiration", items: [

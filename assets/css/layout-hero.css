@@ -1371,6 +1371,7 @@ body[data-page="home"] main {
 }
 
 .offers__dot {
+  position: relative;
   width: 8px;
   height: 8px;
   padding: 0;
@@ -1379,6 +1380,13 @@ body[data-page="home"] main {
   background: rgba(13, 27, 62, 0.2);
   cursor: pointer;
   transition: width var(--dur-base) var(--ease-out), background-color var(--dur-base) var(--ease-out);
+}
+
+/* A finger-sized touch area around each small dot (the dot itself looks the same) */
+.offers__dot::before {
+  content: "";
+  position: absolute;
+  inset: -8px -4px;
 }
 
 .offers__dot[aria-current="true"] {

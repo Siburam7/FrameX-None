@@ -199,15 +199,6 @@
 
   function renderStatic() {
     const d = decor();
-    const multi = all.filter((p) => p.decor.panelCount > 1).length;
-    $("#hd-facts").innerHTML = [
-      [all.length, "framed designs"],
-      [d.collections.length, "collections"],
-      [multi, "multi-panel sets"],
-    ]
-      .map(([value, label]) => `<div><dt class="visually-hidden">${esc(label)}</dt><dd><strong>${value}</strong>${esc(label)}</dd></div>`)
-      .join("");
-
     // Three pieces on the hero wall.
     const wall = ["hd-moonlit-wanderer", "hd-never-give-up", "hd-terracotta-arches"].map(byId).filter(Boolean);
     $("#hd-hero-wall").innerHTML = wall.map((p) => `<a class="page-hero__piece" href="${FrameX.qs.productUrl(p)}" aria-label="${esc(p.name)}"><img src="${esc(p.image)}" alt="" width="800" height="1000" decoding="async"></a>`).join("");
@@ -223,6 +214,8 @@
       )
       .join("");
     box.setAttribute("aria-busy", "false");
+    // A sliding row: the arrows next to the heading move it one collection at a time
+    if (FrameX.railNav) FrameX.railNav.attach(box);
 
     const chip = (c) => `<button class="chip" type="button" data-collection="${esc(c.id)}" aria-pressed="false">${esc(c.name)} <small>${c.count}</small></button>`;
     const allChip = `<button class="chip" type="button" data-collection="" aria-pressed="true">All <small>${all.length}</small></button>`;

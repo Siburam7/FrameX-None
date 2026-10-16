@@ -642,3 +642,74 @@
 .was-upload__quality {
   margin-top: 2px;
 }
+
+/* "Featured collections" as one sliding row: four at a time on a laptop, three on a tablet, one and a bit on a
+   phone; it swipes or scrolls sideways and snaps to each collection, and the arrows next to the heading move it */
+.collection-grid--rail {
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: 78%;
+  gap: var(--grid-gap);
+  padding-bottom: 6px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.collection-grid--rail::-webkit-scrollbar {
+  display: none;
+}
+
+.collection-grid--rail > * {
+  scroll-snap-align: start;
+}
+
+.collection-grid--rail .collection-card,
+.collection-grid--rail .sk-tile {
+  min-height: clamp(200px, 21vw, 260px);
+}
+
+@media (min-width: 640px) {
+  .collection-grid--rail {
+    grid-auto-columns: calc((100% - 2 * var(--grid-gap)) / 3);
+  }
+}
+
+@media (min-width: 1000px) {
+  .collection-grid--rail {
+    grid-auto-columns: calc((100% - 3 * var(--grid-gap)) / 4);
+  }
+}
+
+/* The arrows (the same round buttons as the home page's rows) */
+.hd-rail-arrows .showcase__arrow {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line-warm);
+  border-radius: 50%;
+  background: var(--white);
+  color: var(--charcoal);
+  cursor: pointer;
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .hd-rail-arrows .showcase__arrow:not(:disabled):hover {
+    border-color: var(--charcoal);
+    background: var(--charcoal);
+    color: var(--champagne);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collection-grid--rail {
+    scroll-behavior: auto;
+  }
+}

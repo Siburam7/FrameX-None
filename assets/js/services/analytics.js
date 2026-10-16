@@ -351,9 +351,7 @@
     banner.setAttribute("role", "region");
     banner.setAttribute("aria-label", "Cookies");
     banner.innerHTML = `<div class="consent__text"><strong>We use cookies</strong>
-        <p>Necessary cookies keep you logged in and remember your cart, your designs and this choice. With your OK we
-          also use analytics cookies to count visits and see which pages and products people like. No advertising
-          cookies, and nothing that says who you are. <a href="privacy-notice.html#cookies">Cookie policy</a></p></div>
+        <p data-cookie-text>${bannerText()}</p></div>
       <div class="consent__actions">
         <button class="btn btn--ghost btn--sm consent__settings" type="button" data-cookie-settings>Settings</button>
         <button class="btn btn--outline btn--sm" type="button" data-consent="no">Reject</button>
@@ -368,6 +366,12 @@
   function hideBanner() {
     if (banner) banner.remove();
     banner = null;
+  }
+  /** The banner's words. Who counts the visits is named once the server's settings are known. */
+  function bannerText() {
+    return `Necessary cookies keep you logged in and remember your cart, your designs and this choice. With your OK we
+      also use analytics cookies to count visits and see which pages and products people like${settings && !inert ? `, with ${counters()}` : ""}.
+      No advertising cookies, and nothing that says who you are. <a href="privacy-notice.html#cookies">Cookie policy</a>`;
   }
 
   /** The cookie settings: one short line and a switch per kind of cookie, the details behind "More about cookies", then Reject all / Save / Accept all. */
@@ -464,6 +468,10 @@
               ? "Analytics cookies are OFF: your browser asks sites not to track, and we follow that."
               : "Analytics cookies are OFF: you have not chosen yet.";
     });
+    document.querySelectorAll("[data-analytics-choice]").forEach((el) => (el.hidden = inert));
+    // The banner, if it is up, now says who counts the visits
+    const words = banner && banner.querySelector("[data-cookie-text]");
+    if (words) words.innerHTML = bannerText();
   }
 
   /* ---------------------------------------------------------------- Public */

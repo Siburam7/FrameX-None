@@ -129,7 +129,7 @@
       ${asksPhoto ? photosHtml(need, { preview }) : ""}
 
       <details class="pp-note"><summary>Add a note for the shop <span>(optional)</span></summary>
-        <div class="form-field"><textarea data-note maxlength="200" rows="2" placeholder="e.g. text to include, a size not listed"></textarea></div></details>
+        <div class="form-field"><textarea data-note maxlength="200" rows="2" aria-label="Note for the shop" placeholder="e.g. text to include, a size not listed"></textarea></div></details>
 
       ${
         customPhoto

@@ -568,3 +568,193 @@
     height: 15px;
   }
 }
+
+/* Phones: the offer banners' dots a little further apart, so each one's touch area (24 px, layout-hero.css)
+   doesn't overlap the next one's */
+@media (max-width: 639px) {
+  .offers__dots {
+    gap: 16px;
+  }
+
+  .offers__dot::before {
+    inset: -8px;
+  }
+}
+
+/* Phones: the offer banners. Diwali: "Shop now" and the coupon code side by side. Art & Artists: its two
+   buttons side by side, the first one short ("Create"). */
+@media (max-width: 639px) {
+  .offer--diwali .offer__body {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: "tag tag" "title title" "cta coupon";
+    justify-content: start;
+    align-items: center;
+    column-gap: 8px;
+    max-width: 100%;
+  }
+
+  .offer--diwali .offer__tag {
+    grid-area: tag;
+  }
+
+  .offer--diwali .offer__title {
+    grid-area: title;
+    max-width: 82%;
+  }
+
+  .offer--diwali .offer__cta {
+    grid-area: cta;
+    margin-top: 0;
+  }
+
+  .offer--diwali .offer__coupon {
+    grid-area: coupon;
+    margin-top: 0;
+  }
+
+  .offer--diwali .offer__code {
+    padding: 5px 10px;
+    font-size: 0.95rem;
+  }
+
+  .offer--diwali .offer__code {
+    letter-spacing: 0.08em;
+  }
+
+  .offer--diwali .offer__copy {
+    padding: 5px 9px;
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+
+  .offer--diwali .offer__cta {
+    white-space: nowrap;
+  }
+
+  /* Art & Artists: the offer in one line */
+  .offer--art .offer__body {
+    max-width: 94%;
+  }
+
+  .offer--art .offer__perk {
+    padding: 4px 10px;
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+
+  .offer__ctas {
+    flex-wrap: nowrap;
+  }
+
+  .offer__cta-long {
+    display: none;
+  }
+}
+
+/* Phones: the offer banners' words and buttons a size smaller; the banner (and its picture) keeps its height */
+@media (max-width: 639px) {
+  .offers .offer {
+    min-height: 206px;
+  }
+
+  .offers .offer__body {
+    gap: 5px;
+  }
+
+  .offers .offer__tag {
+    padding: 3px 8px;
+    font-size: 0.6rem;
+  }
+
+  .offers .offer__title {
+    font-size: 1.15rem;
+    line-height: 1.15;
+  }
+
+  .offers .offer__perk {
+    padding: 3px 9px;
+    font-size: 0.68rem;
+  }
+
+  .offers .offer__cta {
+    gap: 6px;
+    margin-top: 4px;
+    padding: 6px 12px;
+    font-size: 0.78rem;
+  }
+
+  .offers .offer__cta .icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .offers .offer--diwali .offer__cta {
+    margin-top: 0;
+  }
+
+  .offers .offer__ctas {
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .offers .offer__ctas .offer__cta {
+    margin-top: 0;
+  }
+
+  .offers .offer--diwali .offer__code {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+  }
+
+  .offers .offer--diwali .offer__copy {
+    padding: 4px 8px;
+    font-size: 0.68rem;
+  }
+}
+
+/* Phones: the home page's "Shop by category" tiles show only their names (the line under each name is left out) */
+@media (max-width: 639px) {
+  #categories .collection-card__count,
+  #categories .collection-card__blurb {
+    display: none;
+  }
+}
+
+/* Phones: the closing panel's three buttons ("Shop Frames", "Explore wall art", "Contact us") in one line */
+@media (max-width: 639px) {
+  .final-cta {
+    padding-inline: 14px;
+  }
+
+  /* the row spans the panel and its buttons sit in the middle of it */
+  .final-cta__actions {
+    justify-self: stretch;
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .final-cta__actions .btn {
+    flex: 0 1 auto;
+    min-width: 0;
+    padding-inline: 10px;
+    font-size: 0.74rem;
+    white-space: nowrap;
+  }
+}
+
+/* Very narrow phones (under 360 px): the same three buttons a little tighter, so they still fit in one line */
+@media (max-width: 359px) {
+  .final-cta {
+    padding-inline: 10px;
+  }
+
+  .final-cta__actions {
+    gap: 4px;
+  }
+
+  .final-cta__actions .btn {
+    padding-inline: 7px;
+    font-size: 0.68rem;
+  }
+}
