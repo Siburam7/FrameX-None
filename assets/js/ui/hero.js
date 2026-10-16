@@ -64,7 +64,8 @@
    * On a phone that is tilted (tilt(), below) "straight" is where the real ground is: the pictures keep hanging
    * straight down like on a real wall, so on the screen they turn the other way from the phone. A turning phone
    * drags them round a little on their nails, then they swing back. `angle` is how far a picture is from hanging
-   * straight; what is drawn is the phone's tilt plus that.
+   * straight; what is drawn is the phone's tilt plus that. A shaken phone moves the nails with it; the pictures,
+   * slower to follow, swing the other way and settle again (as hard as a real picture of that swing would).
    */
   const SWING = [
     // hz: how fast it swings; damping: how soon it settles (part of the critical); push: how much the wind moves it
@@ -88,6 +89,8 @@
     let target = 0; // the angle on the screen at which the pictures hang straight down (0 unless the phone is tilted)
     let leaning = 0; // target, smoothed
     let tilting = false;
+    let jolt = 0; // the phone being shaken: how hard it is pushed sideways on the screen (m/s²)
+    let joltAt = 0;
 
     const stateOf = (el, i) => {
       let s = state.get(el);
@@ -113,7 +116,8 @@
       if (Math.abs(target - leaning) < 0.05) leaning = target;
       const turned = leaning - before;
       const cap = tilting ? MAX_TILT : MAX_ANGLE;
-      let moving = Math.abs(wind) > 4 || leaning !== target;
+      if (now - joltAt > 120) jolt = 0; // the shaking stopped (or its sensor went quiet)
+      let moving = Math.abs(wind) > 4 || leaning !== target || jolt !== 0;
       wall().forEach((el, i) => {
         const s = stateOf(el, i);
         // The wind on this picture: the scroll speed, with gusts of its own that rise and fall
@@ -125,12 +129,15 @@
         const held = el.matches(":hover") ? 6 : 1;
         // A turning phone carries the picture round a little on its nail
         s.angle -= turned * DRAG;
+        // A shaken phone: the nail is pushed sideways and the picture swings the other way, as hard as a real
+        // pendulum of this picture's swing would (its length is g / k; the push, in degrees, is k / g per m/s²)
+        const shaken = ((jolt * s.k) / 9.81) * (180 / Math.PI);
         // Springing back to hang straight, friction, and the drag of the air (stronger the faster it swings)
-        const accel = force - s.k * s.angle - s.c * held * s.speed - 0.004 * s.speed * Math.abs(s.speed);
+        const accel = force + shaken - s.k * s.angle - s.c * held * s.speed - 0.004 * s.speed * Math.abs(s.speed);
         s.speed += accel * dt;
         s.angle += s.speed * dt;
         const shown = cap * Math.tanh((leaning + s.angle) / cap);
-        if (Math.abs(s.angle) < 0.01 && Math.abs(s.speed) < 0.02 && Math.abs(wind) <= 4) {
+        if (Math.abs(s.angle) < 0.01 && Math.abs(s.speed) < 0.02 && Math.abs(wind) <= 4 && jolt === 0) {
           s.angle = 0;
           s.speed = 0;
           if (leaning === 0) el.style.removeProperty("rotate");
@@ -169,6 +176,12 @@
         target = deg;
         start();
       },
+      /** The phone is shaken: pushed sideways on the screen this hard (m/s²; 0 when it is still). */
+      shake(push) {
+        jolt = push;
+        joltAt = performance.now();
+        if (push) start();
+      },
       /** A new slide came in: its pictures take the phone's tilt at once. */
       wake: start,
       get onScreen() {
@@ -178,10 +191,10 @@
   }
 
   /*
-   * The phone's tilt moves the pictures (swing(), above). Android phones send it without asking; iPhone and iPad
-   * send nothing until the visitor allows it, and Safari only asks after a tap: when no tilt has arrived a moment
-   * after the page opened, a small button on the hero ("Tilt your phone") asks. Laptops have no tilt sensor, so
-   * nothing changes there. Visitors who asked for less motion get still pictures.
+   * The phone's tilt and shaking move the pictures (swing(), above). Android phones send them without asking;
+   * iPhone and iPad send nothing until the visitor allows it, and Safari only asks after a tap: when no tilt has
+   * arrived a moment after the page opened, a small button on the hero ("Tilt your phone") asks for both. Laptops
+   * have no such sensors, so nothing changes there. Visitors who asked for less motion get still pictures.
    */
   function tilt(hero, pictures) {
     if (!pictures || !("DeviceOrientationEvent" in window)) return;
@@ -211,7 +224,17 @@
       const upright = Math.max(0, Math.min(1, (Math.hypot(x, y) - 0.2) / 0.3));
       pictures.tiltTo(-down * upright);
     };
+    const HAND = 0.5; // m/s²: a hand is never quite still, and walking sways a phone; below this nothing moves
+    const onShake = (e) => {
+      const m = e.acceleration; // without gravity (null on phones that can't tell them apart)
+      if (!m || m.x == null || !pictures.onScreen) return;
+      // Sideways on the screen, also when the screen is shown sideways
+      const turn = screenTurn() * rad;
+      const side = m.x * Math.cos(turn) - (m.y || 0) * Math.sin(turn);
+      pictures.shake(Math.abs(side) > HAND ? side - Math.sign(side) * HAND : 0);
+    };
     window.addEventListener("deviceorientation", onTurn);
+    window.addEventListener("devicemotion", onShake);
     const ask = DeviceOrientationEvent.requestPermission;
     if (typeof ask !== "function" || !(navigator.maxTouchPoints > 0)) return;
     feltWithin(1200).then((already) => {
@@ -219,15 +242,14 @@
       stage.insertAdjacentHTML("beforeend", `<button class="home-hero__tilt" type="button" data-hero-tilt>${icon("tilt")}<span>Tilt your phone</span></button>`);
       const button = $("[data-hero-tilt]", stage);
       button.addEventListener("click", async () => {
-        let answer = "denied";
-        try {
-          answer = await ask.call(DeviceOrientationEvent);
-        } catch {
-          /* Safari refused to ask */
-        }
+        // Tilt and shaking are asked for together, both straight from the tap (Safari asks only then)
+        const asks = [DeviceOrientationEvent, window.DeviceMotionEvent]
+          .filter((sensor) => sensor && typeof sensor.requestPermission === "function")
+          .map((sensor) => sensor.requestPermission().catch(() => "denied"));
+        const answers = await Promise.all(asks);
         button.hidden = true;
-        if (answer !== "granted") return FrameX.toast.show("Motion access wasn't allowed, so the frames stay as they are.");
-        FrameX.toast.show((await feltWithin(1500)) ? "Tilt your phone: the frames hang straight, like on a real wall." : "This device doesn't share its tilt, so the frames stay as they are.");
+        if (!answers.includes("granted")) return FrameX.toast.show("Motion access wasn't allowed, so the frames stay as they are.");
+        FrameX.toast.show((await feltWithin(1500)) ? "Tilt or shake your phone: the frames move like on a real wall." : "This device doesn't share its tilt, so the frames stay as they are.");
       });
     });
   }
