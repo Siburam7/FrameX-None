@@ -55,6 +55,7 @@
     services: () => Promise.all([call("media"), call("orderInfo")]),
     about: () => undefined,
     art: () => call("artPage"),
+    "join-artist": () => call("artJoinPage"),
     artist: () => call("artistPage"),
     artwork: () => call("artworkPage"),
     paintings: () => call("paintingsPage"),

@@ -29,6 +29,7 @@
     terms: "terms-of-use.html",
     privacy: "privacy-notice.html",
     art: "art.html",
+    joinArtist: "join-artist.html",
     artist: "artist.html",
     artwork: "artwork.html",
     paintings: "paintings.html",

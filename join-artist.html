@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Join as an Artist — FrameX</title>
+  <meta name="description" content="Are you an artist? Apply to show your work on FrameX and take custom painting requests at prices you set. FrameX reviews every application.">
+  <meta name="theme-color" content="#02030a">
+  <link rel="icon" type="image/png" href="assets/img/ui/FrameX-icon-transparent-512.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@300;400;600;700;800&display=swap">
+
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/base.css">
+  <link rel="stylesheet" href="assets/css/components.css">
+  <link rel="stylesheet" href="assets/css/chrome.css">
+  <link rel="stylesheet" href="assets/css/catalog.css">
+  <link rel="stylesheet" href="assets/css/overlays.css">
+  <link rel="stylesheet" href="assets/css/footer-faq.css">
+  <link rel="stylesheet" href="assets/css/pages.css">
+  <link rel="stylesheet" href="assets/css/auth.css">
+  <link rel="stylesheet" href="assets/css/mobile.css">
+  <script>document.documentElement.classList.add("js");(function(){var d=document.documentElement,m=window.matchMedia&&matchMedia("(prefers-color-scheme: dark)");function pick(){var t;try{t=localStorage.getItem("framex.theme.v1")}catch(e){}t=t||"light";if(t==="system")t=m&&m.matches?"dark":"light";d.setAttribute("data-theme",t==="dark"?"dark":"light")}pick();if(m&&m.addEventListener)m.addEventListener("change",pick);window.FrameXTheme={key:"framex.theme.v1",apply:pick}})();</script>
+  <script src="assets/js/ui/welcome.js"></script>
+</head>
+
+<body data-page="join-artist">
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="site-header-root"></div>
+
+  <main id="main">
+    <section class="page-hero" aria-labelledby="page-title">
+      <div class="container">
+        <nav class="page-hero__crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span aria-hidden="true">/</span> <a href="art.html">Art &amp; Artists</a> <span aria-hidden="true">/</span> <span aria-current="page">Join as an artist</span></nav>
+        <p class="eyebrow">For artists</p>
+        <h1 class="page-hero__title" id="page-title">Join FrameX <span>as an artist</span></h1>
+        <p class="page-hero__lead">Show your finished work and take custom painting requests at prices you set. FrameX reviews every application.</p>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="apply-title">
+      <div class="container split split--asym">
+        <div data-reveal>
+          <h2 class="section-title" id="apply-title">Send your application</h2>
+          <div id="join-form" data-skeleton="form" style="margin-top:20px">
+            <div class="skeleton" style="height:420px"></div>
+          </div>
+        </div>
+        <aside data-reveal aria-labelledby="why-title">
+          <h2 class="section-title" id="why-title">What you get</h2>
+          <ul class="check-list" style="margin-top:16px">
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg><span><strong>Your own profile and gallery.</strong> FrameX reviews each artwork before it is shown.</span></li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg><span><strong>You decide.</strong> Accept or decline every custom request.</span></li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg><span><strong>An advance before you start.</strong> The customer pays part of the price before you begin, and the rest before you send it.</span></li>
+              <li><svg class="icon" aria-hidden="true"><use href="#i-check"></use></svg><span><strong>Your address stays private.</strong> Customers see your city, never your street.</span></li>
+          </ul>
+          <h2 class="section-title" id="how-title" style="margin-top:32px">How it works</h2>
+          <ol class="partner-steps">
+            <li><strong>Send your application</strong><span>Fill in the form. This is a request, not an account.</span></li>
+            <li><strong>FrameX looks at your work</strong><span>We check your details and your work, and contact you by phone or email.</span></li>
+            <li><strong>Set your password</strong><span>When you're approved, we send you a link to set your own password.</span></li>
+            <li><strong>Add your work</strong><span>Log in to your artist dashboard and add your artworks and custom painting prices.</span></li>
+          </ol>
+          <p class="partner-steps__note">Already approved? <a href="login.html">Log in to your dashboard</a></p>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div id="site-footer-root"></div>
+  <div id="overlay-root"></div>
+
+  <script src="assets/js/config.js" defer></script>
+  <script src="assets/js/core/dom.js" defer></script>
+  <script src="assets/js/core/qs.js" defer></script>
+  <script src="assets/js/core/constants.js" defer></script>
+  <script src="assets/js/services/pricing.js" defer></script>
+  <script src="assets/js/services/location.js" defer></script>
+  <script src="assets/js/services/shop-utils.js" defer></script>
+  <script src="assets/data/site.seed.js" defer></script>
+  <script src="js/edit.js" defer></script>
+  <script src="assets/data/reviews.seed.js" defer></script>
+  <script src="assets/data/community.seed.js" defer></script>
+  <script src="assets/data/faq.seed.js" defer></script>
+  <script src="assets/data/gallery.seed.js" defer></script>
+  <script src="assets/js/api/client.js" defer></script>
+  <script src="assets/js/store/auth.js" defer></script>
+  <script src="assets/js/api/seed-provider.js" defer></script>
+  <script src="assets/js/api/http-provider.js" defer></script>
+  <script src="assets/js/api/shop-directory.js" defer></script>
+  <script src="assets/js/api/api.js" defer></script>
+  <script src="assets/js/store/cart.js" defer></script>
+  <script src="assets/js/store/wishlist.js" defer></script>
+  <script src="assets/js/ui/icons.js" defer></script>
+  <script src="assets/js/ui/templates.js" defer></script>
+  <script src="assets/js/ui/toast.js" defer></script>
+  <script src="assets/js/ui/overlay.js" defer></script>
+  <script src="assets/js/ui/reveal.js" defer></script>
+  <script src="assets/js/ui/nav.js" defer></script>
+  <script src="assets/js/ui/chrome.js" defer></script>
+  <script src="assets/js/ui/cart-drawer.js" defer></script>
+  <script src="assets/js/ui/auth-gate.js" defer></script>
+  <script src="assets/js/ui/actions.js" defer></script>
+  <script src="assets/js/ui/forms.js" defer></script>
+  <script src="assets/js/ui/art-pages.js" defer></script>
+  <script src="assets/js/services/analytics.js" defer></script>
+  <script src="assets/js/main.js" defer></script>
+</body>
+
+</html>

@@ -494,7 +494,7 @@
     if (!root) return;
     me = await FrameX.auth.guard(["ARTIST"], {
       onForbidden() {
-        root.innerHTML = `<div class="not-found">${icon("lock")}<h1 class="section-title">Artists only</h1><p class="section-lead">This page is for artists who sell on FrameX.</p><a class="btn btn--dark" href="art.html#join">Join as an artist</a></div>`;
+        root.innerHTML = `<div class="not-found">${icon("lock")}<h1 class="section-title">Artists only</h1><p class="section-lead">This page is for artists who sell on FrameX.</p><a class="btn btn--dark" href="join-artist.html">Join as an artist</a></div>`;
       },
     });
     if (!me) return;

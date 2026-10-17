@@ -1,8 +1,10 @@
 /* ==========================================================================
    Art & Artists: the public pages.
 
-     art.html       the artist directory and approved artworks, with search;
-                    "Join as an artist" (an application, reviewed by FrameX)
+     art.html       the artist directory and approved artworks, with search,
+                    and a box that leads to join-artist.html
+     join-artist.html  "Join as an artist": an application, reviewed by FrameX
+                    (a page of its own, so its link can be shared with artists)
      artist.html    one artist: profile, artworks, the custom painting price
                     list and the form to send a custom painting request
      artwork.html   one approved artwork: pictures, details, Buy artwork
@@ -158,13 +160,24 @@
       }
     });
     await load();
-    joinForm();
   }
 
+  /* ====================================================================== join-artist.html */
+
   /** "Join as an artist": an application FrameX reviews. It creates no login. */
-  function joinForm() {
+  async function joinPage() {
     const box = $("#join-form");
     if (!box) return;
+    const state = await FrameX.auth.ready;
+    if (!state.available || !state.reachable) {
+      // No backend to receive the form: say so and give the real contact routes (as the shops' page does).
+      const c = (FrameX.seed.site && FrameX.seed.site.contact) || {};
+      box.innerHTML = `<div class="state-message"><strong>Online applications aren't open ${state.available ? "right now" : "yet"}</strong>
+        <span>Contact FrameX directly and we'll take your details and look at your work.</span>
+        <div class="auth-card__actions">${c.whatsapp ? `<a class="btn btn--dark btn--sm" href="${esc(FrameX.contact.whatsappUrl(c.whatsapp))}" target="_blank" rel="noopener noreferrer">${icon("phone")} WhatsApp FrameX</a>` : ""}
+        ${c.email ? `<a class="btn btn--outline btn--sm" href="mailto:${esc(c.email)}?subject=${encodeURIComponent("Join FrameX as an artist")}">${icon("mail")} Email FrameX</a>` : ""}</div></div>`;
+      return;
+    }
     const f = forms().field;
     box.innerHTML = `<form class="form-grid" novalidate>
         <div class="form-grid form-grid--2">${f("name", "Your name", { required: true, autocomplete: "name", maxlength: 80, prefix: "ja" })}${f("email", "Email", { required: true, type: "email", autocomplete: "email", prefix: "ja" })}</div>
@@ -520,6 +533,7 @@
 
   FrameX.homeArt = { init: homeArt };
   FrameX.artPage = { init: artPage };
+  FrameX.artJoinPage = { init: joinPage };
   FrameX.artistPage = { init: artistPage };
   FrameX.artworkPage = { init: artworkPage };
   FrameX.artView = { rupees, img, stars, photo, artistCard, artworkCard, reviewList, empty, place };

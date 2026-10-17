@@ -70,6 +70,7 @@
         studio: "templates",
         artist: "art",
         artwork: "art",
+        "join-artist": "art",
         painting: "art",
         paintings: "art",
       }[current] || current;
@@ -164,8 +165,8 @@
           ["Contact Us", pages.contact],
           ["FAQ", pages.faq],
           ["How It Works", pages.services + "#journey"],
-          ["Partner With FrameX", pages.partner],
-          ["Join as an Artist", pages.art + "#join"],
+          ["Register Your Shop", pages.partner],
+          ["Join as an Artist", pages.joinArtist],
           ["Shop Login", pages.login + "?type=shop"],
         ])}
         ${col("Legal", [

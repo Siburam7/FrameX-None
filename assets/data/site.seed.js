@@ -216,7 +216,7 @@
         pieces: [
           { image: "assets/img/art/hero-artist.webp", alt: "An artist painting flowers on a canvas", href: "art.html" },
           { image: "assets/img/art/hero-canvas.webp", alt: "A finished painting on an easel", href: "art.html?view=artworks" },
-          { image: "assets/img/art/hero-brushes.webp", alt: "Brushes on a palette of oil paint", href: "art.html#join" }
+          { image: "assets/img/art/hero-brushes.webp", alt: "Brushes on a palette of oil paint", href: "join-artist.html" }
         ],
         glow: "124, 92, 255",
         tint: "#ece8fb"

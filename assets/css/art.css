@@ -300,6 +300,20 @@
   }
 }
 
+/* On art.html: a short box that leads to the page of its own (join-artist.html) */
+.art-join__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (min-width: 900px) {
+  .art-join--cta {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
 /* Artist profile ------------------------------------------------------------ */
 .artist-head {
   display: grid;
