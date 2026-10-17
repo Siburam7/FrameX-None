@@ -61,11 +61,14 @@
    * back and come to rest. Nothing runs while the hero is off screen or after they are still; visitors who asked
    * for less motion get still pictures.
    *
-   * On a phone that is tilted (tilt(), below) "straight" is where the real ground is: the pictures keep hanging
-   * straight down like on a real wall, so on the screen they turn the other way from the phone. A turning phone
-   * drags them round a little on their nails, then they swing back. `angle` is how far a picture is from hanging
-   * straight; what is drawn is the phone's tilt plus that. A shaken phone moves the nails with it; the pictures,
-   * slower to follow, swing the other way and settle again (as hard as a real picture of that swing would).
+   * On a phone that follows its tilt (tilt(), below) "straight" is where the real ground is: the pictures keep
+   * hanging straight down like on a real wall, so on the screen they turn the other way from the phone, as far as
+   * it turns: a phone turned upside down shows them upside down over the words, a full turn turns them right
+   * round. A turning phone drags them a little on their nails, then they swing back. A shaken phone moves the
+   * nails with it; the pictures, slower to follow, swing the other way (as hard as a real picture of that swing
+   * would; a hard enough shake throws one right over its nail). There each is a real pendulum, with no limit;
+   * everywhere else the swing is softened toward MAX_ANGLE as before. `angle` is how far a picture is from
+   * hanging straight; what is drawn is the phone's tilt plus that.
    */
   const SWING = [
     // hz: how fast it swings; damping: how soon it settles (part of the critical); push: how much the wind moves it
@@ -73,9 +76,9 @@
     { hz: 0.85, damping: 0.07, push: 0.8 }, // the wide one: slowest, swings longest
     { hz: 1.45, damping: 0.12, push: 1.25 }, // the small square: quick and light
   ];
-  const MAX_ANGLE = 14; // degrees; bigger pushes are softened toward this
-  const MAX_TILT = 22; // the same while the phone's tilt is followed (a tilted phone turns them further)
+  const MAX_ANGLE = 14; // degrees; bigger pushes are softened toward this (not while the phone's tilt is followed)
   const DRAG = 0.35; // how much of a turn of the phone the nails pass on to the pictures
+  const RAD = Math.PI / 180;
 
   function swing(hero) {
     if (prefersReducedMotion()) return null;
@@ -88,6 +91,7 @@
     let onScreen = true;
     let target = 0; // the angle on the screen at which the pictures hang straight down (0 unless the phone is tilted)
     let leaning = 0; // target, smoothed
+    let heading = 0; // the last way down the phone gave (-180° to 180°); target counts on from it, so it never jumps
     let tilting = false;
     let jolt = 0; // the phone being shaken: how hard it is pushed sideways on the screen (m/s²)
     let joltAt = 0;
@@ -115,7 +119,6 @@
       leaning += (target - leaning) * Math.min(1, dt * 10);
       if (Math.abs(target - leaning) < 0.05) leaning = target;
       const turned = leaning - before;
-      const cap = tilting ? MAX_TILT : MAX_ANGLE;
       if (now - joltAt > 120) jolt = 0; // the shaking stopped (or its sensor went quiet)
       let moving = Math.abs(wind) > 4 || leaning !== target || jolt !== 0;
       wall().forEach((el, i) => {
@@ -131,12 +134,22 @@
         s.angle -= turned * DRAG;
         // A shaken phone: the nail is pushed sideways and the picture swings the other way, as hard as a real
         // pendulum of this picture's swing would (its length is g / k; the push, in degrees, is k / g per m/s²)
-        const shaken = ((jolt * s.k) / 9.81) * (180 / Math.PI);
-        // Springing back to hang straight, friction, and the drag of the air (stronger the faster it swings)
-        const accel = force + shaken - s.k * s.angle - s.c * held * s.speed - 0.004 * s.speed * Math.abs(s.speed);
+        const shaken = ((jolt * s.k) / 9.81) / RAD;
+        // Friction, and the drag of the air (stronger the faster it swings)
+        const slowing = s.c * held * s.speed + 0.004 * s.speed * Math.abs(s.speed);
+        // Springing back to hang straight. Following the phone: a real pendulum, pulled back by the sine of how far
+        // it is from hanging straight, and a push along the screen turns it by the cosine of its angle there. The
+        // scrolling's wind stays a breeze (at most what would hold a picture 25° out), so a jump down the page
+        // never throws one over its nail; the phone's own turns and shakes have no such limit.
+        const breeze = (s.k * 0.42) / RAD;
+        const accel = tilting
+          ? (Math.max(-breeze, Math.min(breeze, force)) + shaken) * Math.cos((leaning + s.angle) * RAD) - (s.k * Math.sin(s.angle * RAD)) / RAD - slowing
+          : force + shaken - s.k * s.angle - slowing;
         s.speed += accel * dt;
         s.angle += s.speed * dt;
-        const shown = cap * Math.tanh((leaning + s.angle) / cap);
+        // Thrown right over its nail and round: hanging straight again is the same as before the turn
+        if (Math.abs(s.angle) > 180) s.angle -= 360 * Math.sign(s.angle);
+        const shown = tilting ? leaning + s.angle : MAX_ANGLE * Math.tanh(s.angle / MAX_ANGLE);
         if (Math.abs(s.angle) < 0.01 && Math.abs(s.speed) < 0.02 && Math.abs(wind) <= 4 && jolt === 0) {
           s.angle = 0;
           s.speed = 0;
@@ -169,11 +182,18 @@
     }
 
     return {
-      /** The phone's tilt (degrees on the screen at which the pictures hang straight down). */
+      /** The phone's tilt (degrees on the screen at which the pictures hang straight down, -180° to 180°). */
       tiltTo(deg) {
-        tilting = true;
-        if (Math.abs(deg - target) < 0.3) return; // the small shake of a hand is not a turn
-        target = deg;
+        if (!tilting) {
+          tilting = true;
+          // The pictures may now turn over the words and buttons and out of the hero (layout-hero.css)
+          hero.classList.add("is-tilting");
+        }
+        // Turned the short way from the last one (179° to -179° is 2° on, not 358° back)
+        const turn = ((deg - heading + 540) % 360) - 180;
+        if (Math.abs(turn) < 0.3) return; // the small shake of a hand is not a turn
+        heading = deg;
+        target += turn;
         start();
       },
       /** The phone is shaken: pushed sideways on the screen this hard (m/s²; 0 when it is still). */
@@ -182,8 +202,19 @@
         joltAt = performance.now();
         if (push) start();
       },
-      /** A new slide came in: its pictures take the phone's tilt at once. */
-      wake: start,
+      /**
+       * A new slide came in. Following the phone, its pictures start again hanging straight down at the phone's
+       * tilt (they kept the angle they had when their slide went, maybe upside down, and would show it again).
+       */
+      wake() {
+        if (tilting)
+          wall().forEach((el) => {
+            state.delete(el);
+            if (leaning) el.style.rotate = `${leaning.toFixed(2)}deg`;
+            else el.style.removeProperty("rotate");
+          });
+        start();
+      },
       get onScreen() {
         return onScreen;
       },
@@ -218,11 +249,11 @@
       const g = e.gamma * rad;
       const x = Math.sin(g) * Math.cos(b);
       const y = -Math.sin(b);
+      // A phone lying flat has no "down" on its screen: the pictures stay as they are
+      if (Math.hypot(x, y) < 0.35) return;
       let down = Math.atan2(x, -y) / rad + screenTurn();
       down = ((down + 540) % 360) - 180;
-      // A phone lying flat has no "down" on its screen: the pictures hang as usual
-      const upright = Math.max(0, Math.min(1, (Math.hypot(x, y) - 0.2) / 0.3));
-      pictures.tiltTo(-down * upright);
+      pictures.tiltTo(-down);
     };
     const HAND = 0.5; // m/s²: a hand is never quite still, and walking sways a phone; below this nothing moves
     const onShake = (e) => {

@@ -89,6 +89,24 @@
   color: var(--amber-strong);
 }
 
+/* While the frames follow the phone's tilt (ui/hero.js: .is-tilting) they turn as far as the phone does, right
+   round their nails: they are drawn over the words, the buttons and the tabs, and may leave the hero (over the
+   ticker below; the header stays on top). The lower soft light, which would then show below the hero, is left
+   out (on a phone it lies outside the hero anyway); the upper one only reaches above the page and off its side. */
+.home-hero.is-tilting {
+  z-index: 3;
+  overflow: visible;
+}
+
+.home-hero.is-tilting::after {
+  content: none;
+}
+
+.home-hero.is-tilting .home-hero__stage {
+  position: relative;
+  z-index: 2;
+}
+
 /* The words rise in one after another; the frames settle onto the wall */
 .home-hero__copy > *,
 .home-hero__slide .page-hero__piece {
