@@ -34,6 +34,7 @@ import { gatewayInTestMode } from "./analytics-service.js";
 import { checkoutLines, directLines, removePurchased } from "./cart-service.js";
 import { reserveStock } from "./catalog-service.js";
 import * as coupons from "./coupon-service.js";
+import { alertSellers } from "./notification-service.js";
 import * as orders from "./order-service.js";
 import * as payments from "./payment-service.js";
 import { attachUploads } from "./upload-service.js";
@@ -358,6 +359,7 @@ export async function placeOrder(user, { addressId, paymentMethod, paymentChanne
 
   if (paymentMethod === "COD") {
     orders.notify(created.id, "ORDER_PLACED_COD");
+    alertSellers(created.id); // the shops and artists in the order hear about their items
     return { order: await orders.getOwnOrder(user.id, created.number), payment: null };
   }
   // The order exists and holds its stock. If the gateway can't be reached now, the customer retries the payment on the same order.

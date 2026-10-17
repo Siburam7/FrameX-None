@@ -53,13 +53,31 @@ const SPEC = {
     set: (v) => (config.checkout.taxPercent = v)
   },
   commissionPercent: {
-    label: "FrameX commission",
-    hint: "FrameX's share of a sale. Recorded for reports only: payouts to shops and artists are not automated.",
-    group: "Platform",
+    label: "FrameX commission: shops",
+    hint: "FrameX's share of each item a shop sells (not of delivery, gift wrap or tax). Taken from the shop's payout.",
+    group: "Commission and payouts",
     unit: "percent",
     check: percent(0, 90),
     get: () => config.platform.commissionPercent,
     set: (v) => (config.platform.commissionPercent = v)
+  },
+  artistCommissionPercent: {
+    label: "FrameX commission: artists",
+    hint: "FrameX's share of each artwork and custom painting an artist sells. Taken from the artist's payout.",
+    group: "Commission and payouts",
+    unit: "percent",
+    check: percent(0, 90),
+    get: () => config.platform.artistCommissionPercent,
+    set: (v) => (config.platform.artistCommissionPercent = v)
+  },
+  payoutFeePercent: {
+    label: "Payout charge",
+    hint: "Taken from every payout to a shop or an artist (after the commission). Shown to them on their Payouts page.",
+    group: "Commission and payouts",
+    unit: "percent",
+    check: percent(0, 20),
+    get: () => config.payouts.feePercent,
+    set: (v) => (config.payouts.feePercent = v)
   }
 };
 

@@ -8,6 +8,7 @@
 import { config } from "../src/config.js";
 import { checkEmailProvider, emailStatus, parseFrom } from "../src/lib/mailer.js";
 import { checkSmsProvider, smsStatus } from "../src/lib/sms.js";
+import { sealingKeyInvalid, sealingReady } from "../src/lib/sealed.js";
 import { storageStatus } from "../src/lib/storage.js";
 import { gateway, paymentStatus } from "../src/payments/index.js";
 
@@ -67,6 +68,15 @@ else
   );
 }
 line(null, `Custom paintings: ${config.paintings.advancePercent}% advance when the artist accepts, ${100 - config.paintings.advancePercent}% when the painting is finished`, "Change it in the admin dashboard (Settings) or with CUSTOM_PAINTING_ADVANCE_PERCENT. Requests already made keep the split they were made with.");
+line(
+  sealingReady(),
+  `Payouts: commission ${config.platform.commissionPercent}% (shops), ${config.platform.artistCommissionPercent}% (artists), payout charge ${config.payouts.feePercent}%; payout accounts ${sealingReady() ? "can be saved (bank and UPI details are sealed)" : "can NOT be saved yet"}`,
+  sealingReady()
+    ? "Keep PAYOUT_ENCRYPTION_KEY: details sealed with it can't be opened with another key."
+    : sealingKeyInvalid()
+      ? "PAYOUT_ENCRYPTION_KEY is set but is not 32 bytes of base64 or hex."
+      : "Set PAYOUT_ENCRYPTION_KEY to 32 random bytes (node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"). Rates: admin dashboard -> Settings."
+);
 line(null, `Shop products: ${config.catalog.productModeration ? "a shop's first Publish waits for FrameX approval (PRODUCT_MODERATION=true)" : "go on sale when the shop publishes them (PRODUCT_MODERATION=false)"}`);
 
 console.log("\nThe settings file is backend/.env (copy backend/.env.example). Restart the backend after changing it.\n");

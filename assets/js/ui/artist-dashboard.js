@@ -8,6 +8,8 @@
      #/services            your custom painting price list
      #/orders[/FX-…]       orders of your artworks
      #/profile             your public profile
+     #/payouts             what FrameX owes you, your payout account (bank or
+                           UPI), payouts so far (ui/payout-panel.js)
 
    The page shows and asks; the backend decides. Which artist you are comes
    from your login, never from this page, and every step the backend refuses
@@ -33,6 +35,7 @@
     ["services", "Price list", "receipt"],
     ["orders", "Artwork orders", "package"],
     ["profile", "Profile", "user"],
+    ["payouts", "Payouts", "wallet"],
   ];
   const ART_STATUS = { PENDING_REVIEW: "Waiting for review", APPROVED: "Approved", REJECTED: "Rejected", CANCELLED: "Withdrawn", INACTIVE: "Paused" };
   const ART_TONE = { PENDING_REVIEW: "pending_review", APPROVED: "published", REJECTED: "unpublished", CANCELLED: "draft", INACTIVE: "draft" };
@@ -480,6 +483,7 @@
       if (section === "services") await services(main);
       if (section === "orders") await (parts[1] ? order(main, parts[1]) : orders(main));
       if (section === "profile") await profile(main);
+      if (section === "payouts") await FrameX.payoutPanel.show(main, { base: "/artist" });
     } catch (error) {
       if (error.status === 401) return window.location.replace(FrameX.auth.loginUrl());
       if (error.status === 403) return window.location.replace("index.html");

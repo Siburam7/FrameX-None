@@ -1863,3 +1863,189 @@ p.iu-errors {
 :root[data-theme="dark"] .wz-preview {
   background: repeating-linear-gradient(45deg, #121a2d 0 12px, #162036 12px 24px);
 }
+
+/* Payouts: a seller's page (ui/payout-panel.js) and the admin's (ui/admin-payouts.js) ------------------------ */
+.po-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 14px;
+}
+
+@media (min-width: 900px) {
+  .po-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.po-due,
+.po-account {
+  justify-items: stretch;
+}
+
+.po-owes {
+  color: var(--text-danger);
+}
+
+.po-rows {
+  display: grid;
+  gap: 6px;
+  margin: 4px 0 0;
+  font-size: var(--text-sm);
+}
+
+.po-rows div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.po-rows dt {
+  color: var(--text-taupe);
+}
+
+.po-rows dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.po-rows__sub dt {
+  padding-left: 14px;
+  font-size: var(--text-xs);
+}
+
+.po-rows__sub dd {
+  color: var(--text-taupe);
+  font-weight: 500;
+}
+
+.po-rows__total {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+
+.po-rows__total dt,
+.po-rows__total dd {
+  color: var(--on-surface);
+  font-weight: 700;
+}
+
+.po-orders summary {
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.po-orders[open] summary {
+  margin-bottom: 8px;
+}
+
+.po-method {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.po-method legend {
+  margin-bottom: 6px;
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.po-choice {
+  position: relative;
+  cursor: pointer;
+}
+
+.po-choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.po-choice span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--on-surface);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.po-choice input:checked + span {
+  border-color: var(--inverse);
+  background: var(--inverse);
+  color: var(--on-inverse);
+}
+
+.po-choice input:focus-visible + span {
+  box-shadow: var(--focus-ring);
+}
+
+.po-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.po-account-now {
+  display: grid;
+  gap: 8px;
+}
+
+.po-account-now__method {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sd-card .po-account-now__method {
+  color: var(--on-surface);
+}
+
+.po-history {
+  display: grid;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.po-history h2 {
+  font-family: var(--font-display);
+  font-size: var(--text-h4);
+}
+
+.po-history .po-orders {
+  margin-top: 6px;
+}
+
+.po-history .po-rows {
+  min-width: 260px;
+}
+
+/* The admin's view of a payout account: the full details, to copy into the bank or UPI app */
+.po-reveal {
+  display: grid;
+  gap: 8px;
+}
+
+.po-reveal div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.po-reveal code {
+  font-size: 1rem;
+  font-weight: 700;
+}

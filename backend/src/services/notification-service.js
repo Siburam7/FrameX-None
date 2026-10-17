@@ -19,7 +19,10 @@ import { isUuid } from "../lib/validate.js";
 
 const sending = new Set();
 /** Tests: wait until every notification email that was started has been handed to the mailer. */
-export const notificationsSettled = () => Promise.all([...sending]);
+export const notificationsSettled = async () => {
+  // (a job may start others, e.g. a new-order alert sends one email per seller)
+  while (sending.size) await Promise.all([...sending]);
+};
 
 const absolute = (link) => (link ? `${linkBase()}/${String(link).replace(/^\/+/, "")}` : "");
 
@@ -67,6 +70,54 @@ export const adminUserIds = async (q = db) => (await q.query("SELECT id FROM use
 /* ---------------------------------------------------------------- Orders */
 
 const rupees = (n) => "₹" + Number(n).toLocaleString("en-IN");
+
+/**
+ * A new order is placed (Cash on Delivery straight away, an online order once its payment is verified): every
+ * shop and artist with items in it is told, by email and in their account, about THEIR items only (never another
+ * seller's items or amounts). Safe to call twice for the same order: each seller hears once.
+ */
+export function alertSellers(orderId) {
+  const job = (async () => {
+    try {
+      const order = (await db.query("SELECT order_number, payment_method, gift_wrap FROM orders WHERE id = $1 AND status <> 'PENDING_PAYMENT'", [orderId])).rows[0];
+      if (!order) return;
+      const lines = (await db.query("SELECT shop_ref, seller_type, artist_id, quantity, line_total, name FROM order_items WHERE order_id = $1 ORDER BY position", [orderId])).rows;
+      const sellers = new Map(); // "shop:<id>" | "artist:<id>" -> { kind, link, users, lines }
+      for (const ref of new Set(lines.filter((l) => l.seller_type === "SHOP").map((l) => l.shop_ref))) {
+        const shop = (await db.query("SELECT id FROM shops WHERE catalog_ref = $1 OR shop_code = $1 LIMIT 1", [ref])).rows[0];
+        if (!shop) continue; // a catalogue shop that isn't on FrameX: FrameX makes those items itself
+        const key = `shop:${shop.id}`;
+        if (!sellers.has(key)) {
+          const users = (await db.query("SELECT id FROM users WHERE shop_id = $1 AND role = 'SHOP' AND status <> 'DISABLED'", [shop.id])).rows.map((r) => r.id);
+          sellers.set(key, { kind: "SHOP_NEW_ORDER", link: `shop-dashboard.html#/orders/${order.order_number}`, users, lines: [] });
+        }
+        sellers.get(key).lines.push(...lines.filter((l) => l.seller_type === "SHOP" && l.shop_ref === ref));
+      }
+      for (const artistId of new Set(lines.filter((l) => l.seller_type === "ARTIST" && l.artist_id).map((l) => l.artist_id)))
+        sellers.set(`artist:${artistId}`, { kind: "ARTIST_NEW_ORDER", link: `artist-dashboard.html#/orders/${order.order_number}`, users: await artistUserIds(artistId), lines: lines.filter((l) => l.artist_id === artistId) });
+      for (const s of sellers.values()) {
+        const count = s.lines.reduce((n, l) => n + l.quantity, 0);
+        const total = s.lines.reduce((n, l) => n + l.line_total, 0);
+        const what = s.lines.length === 1 ? s.lines[0].name : `${s.lines[0].name} and ${s.lines.length - 1} more`;
+        const pay = order.payment_method === "COD" ? "Cash on Delivery: collect the cash on handover." : "Paid online.";
+        await notifyUsers(s.users, {
+          kind: s.kind,
+          ref: order.order_number,
+          title: `New order ${order.order_number}`,
+          body: `${count} ${count === 1 ? "item" : "items"} for you: ${what} (${rupees(total)}). ${pay}${order.gift_wrap ? " The customer asked for gift wrapping." : ""} Open the order in your dashboard to accept it.`,
+          link: s.link,
+          email: true,
+          button: "Open the order"
+        });
+      }
+    } catch (error) {
+      console.error(`[notifications] new-order alert for order ${orderId} failed: ${error.message}`);
+    }
+  })();
+  sending.add(job);
+  job.finally(() => sending.delete(job));
+  return job;
+}
 const ORDER_COPY = {
   ORDER_PLACED_COD: (o) => ({ title: `Order ${o.order_number} placed`, body: `Your order is placed. Pay ${rupees(o.total)} in cash on delivery.` }),
   ORDER_PLACED_PAID: (o) => ({ title: `Payment received for order ${o.order_number}`, body: `We received ${rupees(o.total)}. Your order is placed.` }),

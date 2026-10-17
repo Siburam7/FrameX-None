@@ -23,6 +23,7 @@ import { newId } from "../lib/tokens.js";
 import { gateway, gatewayNamed } from "../payments/index.js";
 import { removePurchased } from "./cart-service.js";
 import { reserveStock } from "./catalog-service.js";
+import { alertSellers } from "./notification-service.js";
 import * as orders from "./order-service.js";
 import { webhookPayment as paintingWebhook } from "./painting-payment-service.js";
 
@@ -179,6 +180,7 @@ export async function confirmPaid(orderId, gp, via) {
   if (outcome.placed) {
     log(`order ${orderId} paid (${via})`);
     orders.notify(orderId, "ORDER_PLACED_PAID");
+    alertSellers(orderId); // the shops and artists in the order hear about their items
   }
   if (outcome.late) await refundPayment(orderId, { reason: "The order had already been cancelled.", actor: orders.SYSTEM }).catch((error) => console.error(`[payments] automatic refund for order ${orderId} failed: ${error.message}`));
   if (outcome.duplicate) console.error(`[payments] order ${orderId} is already paid; a second payment ${gp.gatewayPaymentId} was reported and needs a manual refund.`);

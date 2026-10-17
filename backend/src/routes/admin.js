@@ -13,6 +13,7 @@ import * as contact from "../services/contact-service.js";
 import * as orders from "../services/order-service.js";
 import * as paintings from "../services/painting-service.js";
 import * as payments from "../services/payment-service.js";
+import * as payouts from "../services/payout-service.js";
 import * as reviews from "../services/review-service.js";
 import * as settings from "../services/settings-service.js";
 import * as shopProducts from "../services/shop-product-service.js";
@@ -344,6 +345,14 @@ router.post("/users/:id/status", async (req, res) => {
   const { enabled } = validate(req.body, { enabled: v.boolean() });
   res.json({ user: await users.setEnabled(idParam(req), enabled, { actor: req.auth.user, ip: req.ip }) });
 });
+
+/* ---- Payouts to shops and artists ---- */
+// Who is owed what now, and the last payouts made.
+router.get("/payouts", async (req, res) => res.json(await payouts.adminOverview()));
+// One seller: what is due order by order, their FULL payout account (the look is logged), their payouts.
+router.get("/payouts/:type/:id", async (req, res) => res.json(await payouts.adminSeller(req.params.type, req.params.id, { actor: req.auth.user, ip: req.ip })));
+// FrameX has paid them (outside the site): record it with the bank's reference.
+router.post("/payouts/:type/:id", async (req, res) => res.status(201).json(await payouts.adminRecord(req.params.type, req.params.id, req.body, { actor: req.auth.user, ip: req.ip })));
 
 router.get("/audit", async (req, res) => {
   const { limit } = validate(req.query, { limit: v.number({ min: 1, max: 500, required: false }) });

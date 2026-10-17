@@ -527,7 +527,7 @@ export async function artistEarnings(artist) {
       WHERE i.artist_id = $1 AND o.payment_status = 'PAID' AND o.status NOT IN ('CANCELLED', 'RETURNED')`,
     [artist.id]
   )).rows[0];
-  return { paintings: { received: r.received, outstanding: r.outstanding, delivered: r.delivered }, artworks: { paid: art.total, lines: art.lines }, commissionPercent: config.platform.commissionPercent, note: "Amounts customers have paid. Payouts to artists are arranged by FrameX and are not automated." };
+  return { paintings: { received: r.received, outstanding: r.outstanding, delivered: r.delivered }, artworks: { paid: art.total, lines: art.lines }, commissionPercent: config.platform.artistCommissionPercent, note: "Amounts customers have paid. FrameX sends your share to your payout account: see Payouts." };
 }
 
 /* ---------------------------------------------------------------- FrameX staff */

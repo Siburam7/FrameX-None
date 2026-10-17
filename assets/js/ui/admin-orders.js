@@ -22,7 +22,7 @@
    the audit log). Gift wrapping and each shop's progress are shown too.
    ========================================================================== */
 (function (FrameX) {
-  const { $, escapeHtml: esc, icon } = FrameX.dom;
+  const { $, $$, escapeHtml: esc, icon } = FrameX.dom;
   const { formatPrice } = FrameX.pricing;
   const http = () => FrameX.http;
   const view = () => FrameX.orderView;
@@ -108,6 +108,33 @@
     waRemember(o);
     return true;
   }
+  // The shops and artists of an order (o.sellers, admin only): a message to tell each one about it.
+  const dashLink = (s, o) => `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, "")}${s.type === "ARTIST" ? "artist-dashboard.html" : "shop-dashboard.html"}#/orders/${encodeURIComponent(o.orderNumber)}`;
+  function sellerText(s, o) {
+    const lines = [`Hello ${s.name}, this is FrameX.`, "", `New order ${o.orderNumber} for you: ${s.items} ${s.items === 1 ? "item" : "items"} (${s.firstItem}${s.items > 1 ? " and more" : ""}), ${formatPrice(s.itemsTotal)}.`];
+    lines.push(o.paymentMethod === "COD" ? "Cash on Delivery: collect the cash on handover." : "Paid online.");
+    if (o.giftWrap) lines.push("The customer asked for gift wrapping.");
+    lines.push("", `Please accept it in your dashboard: ${dashLink(s, o)}`, "", "Thank you.");
+    return lines.join("\n");
+  }
+  const sellerWa = (s, o) => (waNumber(s.phone) ? `https://wa.me/${waNumber(s.phone)}?text=${encodeURIComponent(sellerText(s, o))}` : "");
+  function sellersCard(o) {
+    const list = o.sellers || [];
+    const body =
+      o.status === "PENDING_PAYMENT"
+        ? `<p class="co-lead">Shops and artists see this order once it is paid.</p>`
+        : list.length
+          ? list
+              .map(
+                (s, i) => `<div class="ao-seller"><p><strong>${esc(s.name)}</strong> <span class="sd-item__meta">${esc(s.code || "")} · ${s.items} ${s.items === 1 ? "item" : "items"} · ${esc(formatPrice(s.itemsTotal))}</span></p>
+                ${sellerWa(s, o) ? `<button class="btn btn--dark btn--sm" type="button" data-wa-seller="${i}">${icon("phone")} WhatsApp ${esc(s.name)}</button>` : `<p class="co-lead">No mobile number on file for this ${s.type === "ARTIST" ? "artist" : "shop"}.</p>`}</div>`
+              )
+              .join("")
+          : `<p class="co-lead">Every item in this order is made by FrameX itself.</p>`;
+    return `<section class="co-card" data-sellers-card><h2 class="co-card__title">${icon("store")} Tell the ${list.length === 1 ? (list[0].type === "ARTIST" ? "artist" : "shop") : "sellers"} on WhatsApp</h2>${body}
+      <p class="co-fine">${icon("alert")}<span>They were emailed when the order was placed. This opens your own WhatsApp with the message ready; you press Send there.</span></p></section>`;
+  }
+
   const waButton = (o, label = "WhatsApp") =>
     waUrl(o) ? `<button class="iu-btn" type="button" data-wa="${esc(o.orderNumber)}" title="Open WhatsApp with this order's status ready to send">${icon("phone")} ${esc(label)}</button>` : `<span class="sd-item__meta" title="This order has no mobile number WhatsApp can use">No number</span>`;
 
@@ -306,6 +333,7 @@
                 : `<p class="co-lead">This order has no mobile number WhatsApp can use.</p>`
             }
           </section>
+          ${sellersCard(o)}
           ${gatewayPaid ? `<section class="co-card"><h2 class="co-card__title">Gateway</h2><dl class="ao-facts">${fact("Gateway", esc(o.paymentGateway || "—"))}${fact("Gateway order", `<code>${esc(o.gatewayOrderId || "—")}</code>`)}</dl></section>` : ""}
         </div>
       </div>`;
@@ -316,6 +344,17 @@
         render(main, o, { head, message: error.message });
       });
 
+    $$("[data-wa-seller]", main).forEach((b) =>
+      b.addEventListener("click", () => {
+        const tab = window.open(sellerWa(o.sellers[Number(b.dataset.waSeller)], o), "framex-whatsapp");
+        if (!tab) return FrameX.toast.show("Your browser stopped the WhatsApp window from opening. Allow pop-ups for this site, then press again.", { duration: 7000 });
+        try {
+          tab.opener = null;
+        } catch (e) {
+          /* another site already */
+        }
+      })
+    );
     const waOne = $("[data-wa-one]", main);
     if (waOne) waOne.addEventListener("click", () => waOpen(o) || render(main, o, { head, message: "Your browser stopped the WhatsApp window from opening. Allow pop-ups for this site, then press again." }));
     const statusForm = $("[data-status-form]", main);

@@ -347,6 +347,28 @@ Every change goes through one function (`move()` in `painting-service.js`) that 
 
 **Not decided, so not automated:** delivery charge and tax for a custom painting (the artist's fixed price is the whole price), commission and payouts to artists (`PLATFORM_COMMISSION_PERCENT` is only recorded), and what happens if an artist can't finish (they contact FrameX; an admin cancels).
 
+## Payouts to shops and artists
+
+Customers who pay online pay FrameX; Cash on Delivery is collected by the seller. FrameX sends each shop and
+artist their share by bank transfer or UPI, outside the site, and records it in the admin dashboard (Payouts).
+
+- **Payout account.** A shop (dashboard -> Payouts) or an artist (dashboard -> Payouts) adds a bank account
+  (holder, account number, IFSC) or a UPI ID. Changing it needs their password and is emailed to them. The number /
+  UPI ID is sealed in the database with `PAYOUT_ENCRYPTION_KEY` (`src/lib/sealed.js`); pages show a masked
+  hint. Only admins see the full details, and every look is in the audit log. Without the key, accounts can't be
+  saved (`npm run doctor` says so).
+- **What is due.** Over the seller's sales not paid out yet (delivered, paid, not refunded, not test orders):
+  online sales + their part of delivery, gift wrap and tax on those orders - FrameX's commission on ALL their sales
+  (Cash on Delivery included, since that cash is with them) - the payout charge (`PAYOUT_FEE_PERCENT`, default 2%)
+  on what is left. If Cash on Delivery commissions are larger than the online money, the seller owes FrameX and
+  nothing is payable until later online sales cover it.
+- **Recording a payout.** The admin pays the amount shown, then records the bank's reference (UTR). The server works
+  the amount out again and refuses if it changed in between. Each order line and painting is paid out once only.
+  The seller is emailed and sees the payout, with its breakdown, in their dashboard.
+- **New orders.** When an order is placed (Cash on Delivery at once, online once the payment is verified), every
+  shop and artist with items in it is emailed about their items only. The admin's order page also has a WhatsApp
+  button per seller (it opens the admin's own WhatsApp with the message ready; nothing is sent automatically).
+
 ## Platform settings, reviews, notifications and search
 
 **Settings.** A FrameX admin can change these in the dashboard without touching the server: the custom-painting advance percent, gift wrapping (on/off, fee), Cash on Delivery (on/off, fee), the delivery fee and the free-delivery threshold, the tax percent, and the commission percent (recorded only). A saved value is kept in `platform_settings` and replaces the environment's default; putting a setting "back to default" removes it. Each change is in the activity log. Keys and passwords are never settings.

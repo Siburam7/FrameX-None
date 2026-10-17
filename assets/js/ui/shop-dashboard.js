@@ -14,6 +14,8 @@
      #/orders/<FX-number>          one order: the shop's own items, the
                                    customer's original photos, progress
      #/inventory                   stock and availability
+     #/payouts                     what FrameX owes the shop, its payout account
+                                   (bank or UPI), payouts so far (ui/payout-panel.js)
      #/account                     login details, password, log out
 
    Access: the page asks the backend who is logged in (FrameX.auth.guard) and
@@ -36,6 +38,7 @@
     ["products", "Products", "image"],
     ["orders", "Orders", "bag"],
     ["inventory", "Inventory", "package"],
+    ["payouts", "Payouts", "wallet"],
     ["account", "Account", "settings"],
   ];
   const SHOP_STATUS = {
@@ -605,6 +608,7 @@
       if (section === "overview") return await overviewView(main);
       if (section === "profile") return profileView(main);
       if (section === "account") return accountView(main);
+      if (section === "payouts") return await FrameX.payoutPanel.show(main, { base: api("") });
       if (section === "orders") {
         if (parts[1]) {
           document.title = `Order ${decodeURIComponent(parts[1])} · ${shop.name} — FrameX`;

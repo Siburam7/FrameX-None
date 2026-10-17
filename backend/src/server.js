@@ -6,6 +6,7 @@ import { migrate } from "./db/migrate.js";
 import { emailStatus } from "./lib/mailer.js";
 import { smsStatus } from "./lib/sms.js";
 import { paymentStatus } from "./payments/index.js";
+import { sealingKeyInvalid, sealingReady } from "./lib/sealed.js";
 import { storageStatus } from "./lib/storage.js";
 import { syncCatalog } from "./services/catalog-service.js";
 import { labelOlderOrders, sweepAnalytics } from "./services/analytics-service.js";
@@ -75,6 +76,7 @@ async function main() {
     console.log(`Gift wrapping:  ${config.checkout.giftWrap.enabled ? `ON (₹${config.checkout.giftWrap.fee} per order)` : "OFF"}`);
     console.log(`Analytics:      visitor statistics ${config.analytics.enabled ? "ON (only for visitors who allow them)" : "OFF"}; Google Analytics 4 ${config.analytics.ga4MeasurementId || (config.analytics.ga4Invalid ? "NOT USED - GA4_MEASUREMENT_ID is not a Measurement ID (G-XXXXXXXXXX)" : "not used")}`);
     console.log(`Custom paintings: ${config.paintings.advancePercent}% advance, ${100 - config.paintings.advancePercent}% when the painting is finished`);
+    console.log(`Payouts:        commission ${config.platform.commissionPercent}% (shops), ${config.platform.artistCommissionPercent}% (artists), payout charge ${config.payouts.feePercent}%; payout accounts ${sealingReady() ? "READY (details sealed)" : sealingKeyInvalid() ? "NOT READY - PAYOUT_ENCRYPTION_KEY must be 32 bytes (base64 or hex)" : "NOT READY - set PAYOUT_ENCRYPTION_KEY (see backend/README.md -> Payouts)"}`);
     if (config.devMailbox) console.log(`Dev mailbox:    http://localhost:${config.port}/dev/mailbox`);
     console.log("Check setup:    npm run doctor");
     if (!admins) console.log('No admin account yet. Create one with:  npm run admin:create');

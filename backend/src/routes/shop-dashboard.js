@@ -20,6 +20,10 @@
        DELETE /:shopCode/products/:id
        POST   /:shopCode/media                       upload a product picture (raw bytes)
        POST   /:shopCode/media/:id/thumb             its small copy
+
+     Payouts
+       GET   /:shopCode/payouts                       the payout account (masked), what is due, payouts made
+       PUT   /:shopCode/payout-account                add or change it (bank account or UPI; needs the password)
    ========================================================================== */
 import { Router } from "express";
 import { errors } from "../lib/errors.js";
@@ -28,10 +32,19 @@ import { isUuid, v, validate } from "../lib/validate.js";
 import { requireOwnShop } from "../middleware/auth.js";
 import { FULFILMENT_STATUSES } from "../services/order-service.js";
 import * as shopOrders from "../services/shop-order-service.js";
+import * as payouts from "../services/payout-service.js";
 import * as products from "../services/shop-product-service.js";
 
 const router = Router();
 const who = (req) => ({ actor: req.auth.user, ip: req.ip });
+
+/* ---- Payouts ---- */
+
+const payoutOwner = async (req) => ({ type: "shop", ...(await shopOrders.shopContext(req.auth.user.shopId)) });
+router.get("/:shopCode/payouts", requireOwnShop, async (req, res) => res.json(await payouts.ownView(await payoutOwner(req))));
+router.put("/:shopCode/payout-account", requireOwnShop, rateLimit("payout-account", { windowMs: 60 * 60_000, max: 10 }), async (req, res) => {
+  res.json(await payouts.saveAccount(await payoutOwner(req), req.body, who(req)));
+});
 
 /* ---- Orders ---- */
 

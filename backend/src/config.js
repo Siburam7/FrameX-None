@@ -234,8 +234,16 @@ export const config = {
     // An accepted request waits this long for its advance before it is closed.
     advanceDays: Math.max(1, int(env.CUSTOM_PAINTING_ADVANCE_DAYS, 7))
   },
-  // FrameX's share of a sale, in percent. Recorded for reports; payouts to sellers are not automated.
-  platform: { commissionPercent: Math.min(90, Math.max(0, Number(env.PLATFORM_COMMISSION_PERCENT) || 0)) },
+  // FrameX's share of a sale, in percent: of a shop's items, and of an artist's artworks and custom paintings
+  // (ARTIST_COMMISSION_PERCENT; the shops' rate when it isn't set). Taken from the seller's payout.
+  platform: {
+    commissionPercent: Math.min(90, Math.max(0, Number(env.PLATFORM_COMMISSION_PERCENT) || 0)),
+    artistCommissionPercent: Math.min(90, Math.max(0, Number(env.ARTIST_COMMISSION_PERCENT ?? env.PLATFORM_COMMISSION_PERCENT) || 0))
+  },
+  // Payouts to shops and artists (made by FrameX by bank transfer or UPI; see services/payout-service.js).
+  // feePercent: the payout charge, taken from each payout. The account details are sealed with
+  // PAYOUT_ENCRYPTION_KEY, which is read by lib/sealed.js only (it is never part of this object).
+  payouts: { feePercent: String(env.PAYOUT_FEE_PERCENT ?? "").trim() !== "" && Number.isFinite(Number(env.PAYOUT_FEE_PERCENT)) ? Math.min(20, Math.max(0, Number(env.PAYOUT_FEE_PERCENT))) : 2 },
   // Where uploaded files are kept: "disk" (uploads.dir below) or "s3" (a private bucket). See lib/storage.js.
   storage: { provider: storageProvider, s3 },
   // Customer photos (the originals that are printed). Private: only served through

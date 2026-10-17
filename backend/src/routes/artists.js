@@ -33,6 +33,7 @@ import * as artists from "../services/artist-service.js";
 import * as artworks from "../services/artwork-service.js";
 import { FULFILMENT_STATUSES } from "../services/order-service.js";
 import * as paintings from "../services/painting-service.js";
+import * as payouts from "../services/payout-service.js";
 import * as reviews from "../services/review-service.js";
 import * as shopOrders from "../services/shop-order-service.js";
 
@@ -98,6 +99,13 @@ artworkRoutes.get("/:ref", async (req, res) => {
 export const artistDashboardRoutes = Router();
 artistDashboardRoutes.use(requireArtist);
 const me = (req) => artists.artistContext(req.auth.user.artistId);
+
+// Payouts: the payout account (masked), what is due, payouts made; add or change the account (needs the password).
+const payoutOwner = async (req) => ({ type: "artist", ...(await me(req)) });
+artistDashboardRoutes.get("/payouts", async (req, res) => res.json(await payouts.ownView(await payoutOwner(req))));
+artistDashboardRoutes.put("/payout-account", rateLimit("payout-account", { windowMs: 60 * 60_000, max: 10 }), async (req, res) => {
+  res.json(await payouts.saveAccount(await payoutOwner(req), req.body, { actor: req.auth.user, ip: req.ip }));
+});
 
 artistDashboardRoutes.get("/overview", async (req, res) => {
   const artist = await me(req);

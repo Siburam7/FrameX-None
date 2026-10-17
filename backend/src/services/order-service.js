@@ -309,8 +309,39 @@ export async function adminOrderRow(orderNumber, q = db) {
 
 export const adminGetOrder = async (orderNumber) => {
   const row = await adminOrderRow(orderNumber);
-  return shape(row, await partsOf(row.id), { admin: true });
+  return { ...shape(row, await partsOf(row.id), { admin: true }), sellers: await sellersOf(row.id) };
 };
+
+/**
+ * FrameX staff: who sells the items of an order (each shop and artist on FrameX), their items in it and the phone
+ * FrameX can reach them on, so the admin can tell them about it on WhatsApp. Items of catalogue shops that aren't
+ * on FrameX are FrameX's own to make and are not listed.
+ */
+async function sellersOf(orderId) {
+  const lines = (await db.query("SELECT shop_ref, seller_type, artist_id, quantity, line_total, name FROM order_items WHERE order_id = $1 ORDER BY position", [orderId])).rows;
+  const out = new Map();
+  for (const l of lines) {
+    let key = null;
+    if (l.seller_type === "ARTIST" && l.artist_id) {
+      key = `artist:${l.artist_id}`;
+      if (!out.has(key)) {
+        const a = (await db.query("SELECT id, artist_code, name, phone FROM artists WHERE id = $1", [l.artist_id])).rows[0];
+        if (!a) continue;
+        out.set(key, { type: "ARTIST", id: a.id, code: a.artist_code, name: a.name, phone: a.phone || null, items: 0, itemsTotal: 0, firstItem: l.name });
+      }
+    } else if (l.seller_type === "SHOP") {
+      const s = (await db.query("SELECT id, shop_code, name, phone FROM shops WHERE catalog_ref = $1 OR shop_code = $1 LIMIT 1", [l.shop_ref])).rows[0];
+      if (!s) continue;
+      key = `shop:${s.id}`;
+      if (!out.has(key)) out.set(key, { type: "SHOP", id: s.id, code: s.shop_code, name: s.name, phone: s.phone || null, items: 0, itemsTotal: 0, firstItem: l.name });
+    }
+    if (!key) continue;
+    const e = out.get(key);
+    e.items += l.quantity;
+    e.itemsTotal += l.line_total;
+  }
+  return [...out.values()];
+}
 
 /**
  * An admin says an order is (or is not) a test: an order someone placed to try the shop, for example

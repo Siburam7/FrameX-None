@@ -1165,3 +1165,16 @@ div.co-choice--pay {
 :root[data-theme="dark"] .co-coupon {
   background: var(--tint-warn);
 }
+
+/* Admin order: the shops and artists of the order, each with a WhatsApp button (ui/admin-orders.js) */
+.ao-seller {
+  display: grid;
+  justify-items: start;
+  gap: 6px;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ao-seller:last-of-type {
+  border-bottom: 0;
+}
