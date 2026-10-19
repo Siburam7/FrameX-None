@@ -129,7 +129,7 @@
         ${
           user.role === "CUSTOMER"
             ? `<details class="account-edit" data-delete-box><summary>Delete my account</summary>
-          <p class="account-card__lead">Deleting your account can't be undone. Your login, addresses, saved photos and cart are removed at once. Records of your past orders are kept only as FrameX needs them for tax, without your name, email, phone or address. Your reviews stay without your name. An order or custom painting that is still under way has to be delivered or cancelled first.</p>
+          <p class="account-card__lead">Deleting your account can't be undone. Your login, addresses, saved photos, saved designs and cart are removed at once. Records of your past orders are kept only as FrameX needs them for tax, without your name, email, phone or address. Your reviews stay without your name. An order or custom painting that is still under way has to be delivered or cancelled first.</p>
           <form id="delete-form" class="form-grid" novalidate>
             ${forms().field("password", "Your password", { required: true, type: "password", autocomplete: "current-password", toggle: true, prefix: "del" })}
             ${forms().field("confirm", "Type DELETE to confirm", { required: true, autocomplete: "off", maxlength: 10, prefix: "del", placeholder: "DELETE" })}

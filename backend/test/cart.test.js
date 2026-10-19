@@ -394,6 +394,17 @@ describe("FrameX Studio designs", () => {
     assert.equal((await asha.del(`/api/cart/items/${line.id}`)).status, 200);
   });
 
+  test("a design saved in the account (its id is a uuid) goes into the cart too; other ids are refused", async () => {
+    const { cfg } = templateDesign(template);
+    const id = crypto.randomUUID();
+    const r = await asha.post("/api/cart/items", { kind: "studio", design: { id, config: cfg } });
+    assert.equal(r.status, 201, r.text);
+    assert.equal(lines(r).find((l) => l.id === r.json.itemId).design.id, id);
+    const bad = await asha.post("/api/cart/items", { kind: "studio", design: { id: "../etc/passwd", config: cfg } });
+    assert.equal(bad.status, 422, bad.text);
+    await asha.del(`/api/cart/items/${r.json.itemId}`);
+  });
+
   test("adding the same design again replaces it and counts one more", async () => {
     const { cfg } = templateDesign(template);
     const r = await asha.post("/api/cart/items", { kind: "studio", design: { id: "d-test0001", config: cfg } });

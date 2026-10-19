@@ -8,7 +8,7 @@
    Delete (customers only; shops, artists and admins ask FrameX):
      - only with the account's password AND the word DELETE typed;
      - refused while an order or a custom painting is still under way;
-     - the login, addresses, cart, sessions, alerts and every uploaded photo go;
+     - the login, addresses, cart, saved designs, sessions, alerts and every uploaded photo go;
      - orders and custom paintings stay as records for tax (number, items, amounts,
        dates, state for the place of supply) without the name, email, phone,
        address, personal texts or instructions;
@@ -53,6 +53,7 @@ export async function exportData(userId) {
   const reviews = await q("SELECT target_type, target_id, rating, body, author_name, status, created_at FROM reviews WHERE user_id = $1 ORDER BY created_at");
   const messages = await q("SELECT subject, message, created_at FROM contact_messages WHERE user_id = $1 OR lower(email) = lower($2) ORDER BY created_at", [userId, user.email]);
   const photos = await q("SELECT original_name, format, bytes, width, height, status, created_at FROM uploads WHERE user_id = $1 AND status <> 'DELETED' ORDER BY created_at");
+  const designs = await q("SELECT title, mode, template_id, product_id, created_at, updated_at FROM saved_designs WHERE user_id = $1 ORDER BY updated_at DESC");
   return {
     about: "Everything FrameX keeps about your account, as of the date below. Photo files are not included: open them from your order pages.",
     exportedAt: new Date().toISOString(),
@@ -62,7 +63,8 @@ export async function exportData(userId) {
     customPaintings: paintings,
     reviews,
     messagesToFrameX: messages,
-    photos
+    photos,
+    savedDesigns: designs
   };
 }
 
@@ -123,7 +125,7 @@ export async function deleteAccount(actor, { password, confirm } = {}, { ip = nu
     await q.query("UPDATE contact_messages SET name = $3, email = '', phone = '', user_id = NULL WHERE user_id = $1 OR lower(email) = lower($2)", [user.id, user.email, DELETED_NAME]);
 
     // What only made sense for the login
-    for (const table of ["addresses", "sessions", "auth_tokens", "otp_codes", "notifications"]) await q.query(`DELETE FROM ${table} WHERE user_id = $1`, [user.id]);
+    for (const table of ["addresses", "sessions", "auth_tokens", "otp_codes", "notifications", "saved_designs"]) await q.query(`DELETE FROM ${table} WHERE user_id = $1`, [user.id]);
     await q.query("DELETE FROM carts WHERE user_id = $1", [user.id]);
     await q.query("UPDATE auth_events SET user_id = NULL WHERE user_id = $1", [user.id]);
 

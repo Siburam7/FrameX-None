@@ -23,6 +23,7 @@ import shopDashboardRoutes, { catalogRoutes } from "./routes/shop-dashboard.js";
 import shopRoutes from "./routes/shops.js";
 import uploadRoutes, { fileRoutes } from "./routes/uploads.js";
 import userRoutes from "./routes/users.js";
+import designRoutes from "./routes/designs.js";
 import { handleWebhook } from "./services/payment-service.js";
 import { sendReviewPhoto } from "./services/review-service.js";
 import { sendMedia } from "./services/shop-product-service.js";
@@ -46,6 +47,7 @@ export function createApp() {
   app.use("/api", rateLimit("api", { windowMs: 60_000, max: 300, skip: isLoadTest }));
   // A shop's product record (text, sizes, components) is larger than other requests.
   app.use("/api/shops/:shopCode/products", express.json({ limit: "400kb" }));
+  app.use("/api/designs", express.json({ limit: "400kb" })); // a Studio design + its small picture
   // Uploaded files are not JSON: their bytes are read as a stream by the upload routes.
   app.use("/api", express.json({ limit: "64kb" }));
   app.use("/api", csrfGuard);
@@ -54,6 +56,7 @@ export function createApp() {
 
   app.use("/api/auth", authRoutes);
   app.use("/api/users", userRoutes);
+  app.use("/api/designs", designRoutes); // FrameX Studio designs saved in the account
   app.use("/api/shops", shopDashboardRoutes); // a shop's own orders and products
   app.use("/api/shops", shopRoutes);
   app.use("/api/catalog", catalogRoutes);

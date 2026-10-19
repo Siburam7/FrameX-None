@@ -27,10 +27,11 @@
       .slice(0, limit)
       .map(dated);
 
-  /** Was this design made in this browser? Only then can the Studio reopen it (designs are saved per browser). */
+  /** Can the Studio reopen this design: kept in this browser, or saved in the account (the cart is the account's own,
+      so an account design in it is this customer's)? */
   function designIsHere(id) {
     if (!id) return false;
-    if (FrameX.designs) return Boolean(FrameX.designs.get(id));
+    if (FrameX.designs) return FrameX.designs.isKnown(id) || FrameX.designs.isAccountId(id);
     try {
       return JSON.parse(localStorage.getItem("framex.designs.v1") || "[]").some(
         (d) => d && d.id === id,

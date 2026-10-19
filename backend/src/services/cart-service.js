@@ -127,7 +127,8 @@ const productLineKey = (productId, selection, note, customization = null, photos
 /* ---------------------------------------------------------------- Studio designs */
 
 const SAFE_ID = /^[A-Za-z0-9][\w.:-]{0,79}$/;
-const DESIGN_ID = /^d-[a-z0-9]{4,40}$/;
+// A design kept in the browser ("d-…") or saved in the account (a uuid, /api/designs)
+const DESIGN_ID = /^(d-[a-z0-9]{4,40}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i;
 const safeId = (value) => (typeof value === "string" && SAFE_ID.test(value) ? value : null);
 const within = (value, min, max, fallback) => {
   const n = Number(value);

@@ -1,7 +1,7 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-10-20 (account deletion).
+> Last updated: 2026-10-20 (saved designs).
 
 ## Now
 
@@ -12,7 +12,8 @@
       is applied quietly ("you save ₹499"); a second use shows "You have already used the coupon XUSE10." (browser 20/20)
 - [x] 2026-10-20 F-23 automatic tests on GitHub + F-24 README test count — local
 - [x] 2026-10-20 F-16 account deletion + data download — local (backend 398/398; browser 13/13)
-- [ ] Next candidates (owner chooses): F-17 Studio designs saved to the account ·
+- [x] 2026-10-20 F-17 Studio designs saved in the account — local (backend 406/406; browser: designs 14/14, Studio 37, decor 26, frame 55, CSP 8)
+- [ ] Next candidates (owner chooses):
       F-11 photo retention · F-14 moderation · F-13 button contrast (design change)
 
 ## Waiting for the end of development (one combined step, owner's approval needed)
@@ -65,7 +66,7 @@ On branch `phase2a-wip` (pushed 2026-10-20; not live — `main` = `eb23ecf` is w
 | F-14 | Product moderation off | open — owner decides |
 | F-15 | SMS not configured | open — Fast2SMS (DLT) or hide phone option |
 | F-16 | No account deletion / data download | **done locally 2026-10-20**: Account → Your data → Download my data (one JSON file) and Delete my account (customers; password + DELETE; refused while an order / painting is under way; login, addresses, photos, cart go; orders and paintings kept for tax without name, email, phone, address; reviews without name). Migration 014 (`users.deleted_at`). Privacy Notice §8 updated |
-| F-17 | Studio designs saved in the browser only | open |
+| F-17 | Studio designs saved in the browser only | **done locally 2026-10-20**: logged in → "Save design" keeps it in the account with its photos (`/api/designs`, migration 015, max 30), so it opens on any device; not logged in → this browser, as before (marked "this device only"); saving it again after logging in moves it into the account. Photos a saved design uses are kept (not tidied away, not deletable). Account deletion removes designs; the data download lists them |
 | F-18 | 18% tax added at checkout — check GST registration with a CA | open — owner / CA |
 | F-20 | No custom 404 / robots.txt / sitemap.xml | **done locally 2026-10-19** (`404.html` in the site's design, `robots.txt`, `sitemap.xml` with 17 public pages; the Pages workflow copies them) |
 | F-21 | `noindex` missing on `artist-dashboard`, `paintings`, `painting` | **done locally 2026-10-19** |

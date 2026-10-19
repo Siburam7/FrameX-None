@@ -765,7 +765,27 @@
       thumbnail: await thumbnail(),
       config: clone(cfg),
     };
-    const saved = FrameX.designs.save(record);
+    let saved = null;
+    const button = $("[data-save]");
+    if (!quiet && button) button.setAttribute("aria-busy", "true");
+    try {
+      // Logged in: into the account, with the originals of its photos, so the design opens on any device
+      let photos = {};
+      if (await FrameX.designs.signedIn()) {
+        const filled = Object.fromEntries(Object.entries(cfg.photos).filter(([, id]) => id));
+        if (Object.keys(filled).length) photos = await FrameX.uploadService.uploadAll(filled);
+      }
+      saved = await FrameX.designs.save(record, { photos });
+    } catch (error) {
+      if (!quiet) {
+        FrameX.toast.show(error.message || "Your design couldn't be saved. Please try again.", { duration: 6000 });
+        return null;
+      }
+      // Ordering never waits on this: the design is kept in this browser instead
+      saved = await FrameX.designs.save(record, { device: true }).catch(() => null);
+    } finally {
+      if (button) button.removeAttribute("aria-busy");
+    }
     if (!saved) {
       FrameX.toast.show(
         "This browser couldn't save your design (storage is full or blocked).",
@@ -775,12 +795,15 @@
     cfg.designId = saved.id;
     saveDraft();
     if (!quiet)
-      FrameX.toast.show("Design saved on this device.", {
-        action: {
-          label: "View saved",
-          onClick: () => (location.href = "templates.html#tpl-saved"),
+      FrameX.toast.show(
+        saved.where === "account" ? "Design saved in your account. You can open it on any device." : "Design saved on this device. Log in to keep it in your account.",
+        {
+          action: {
+            label: "View saved",
+            onClick: () => (location.href = "templates.html#tpl-saved"),
+          },
         },
-      });
+      );
     return saved;
   }
 
@@ -900,7 +923,7 @@
   /* ---------------------------------------------------------------- Start */
   async function load() {
     const q = (k) => FrameX.qs.param(k);
-    let record = q("design") ? FrameX.designs.get(q("design")) : null;
+    let record = q("design") ? await FrameX.designs.get(q("design")) : null;
     let template = null;
     let product = null;
     // Older template-only designs are converted on the fly.
@@ -970,6 +993,17 @@
       }
     }
     cfg = engine.normalize(start || base, ctx);
+
+    // A design from the account, opened on another device: its photos come from FrameX (the account's uploads)
+    if (record && record.where === "account" && record.photos) {
+      await Promise.all(
+        Object.entries(record.photos).map(async ([slot, uploadId]) => {
+          if (cfg.photos[slot] && (await FrameX.uploadService.has(cfg.photos[slot]))) return;
+          const here = await FrameX.uploadService.adopt(uploadId);
+          if (here) cfg.photos[slot] = here;
+        }),
+      );
+    }
 
     // Photos come back from this browser's storage. One whose original is no
     // longer here (and was never uploaded) can't be printed: it has to be added again.

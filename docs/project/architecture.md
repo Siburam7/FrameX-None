@@ -1,7 +1,7 @@
 # FrameX — Architecture
 
 > Living document. Update it whenever the structure, hosting or a service changes (see `rules.md` → "Project docs").
-> Last updated: 2026-10-20 (account deletion). Deeper references: `docs/ARCHITECTURE.md` (frontend data contract, Live Demo),
+> Last updated: 2026-10-20 (saved designs). Deeper references: `docs/ARCHITECTURE.md` (frontend data contract, Live Demo),
 > `backend/README.md` (every backend feature, settings and API).
 
 ## 1. Overview
@@ -42,9 +42,11 @@ API after 1.2 s; login, cart and checkout wait for it.
   paintings, admin, analytics, contact, misc (`/api/health`, `/api/config`). `GET /api/shops/:ref?optional=1`
   answers `{ shop: null }` for a catalogue shop that isn't on FrameX (the website asks that way; without the flag: 404).
   Admin coupons: `GET / POST /api/admin/coupons`, `PATCH /api/admin/coupons/:code` (no delete; audited).
+  Saved Studio designs: `/api/designs` (the account's own, max 30; photos are the account's uploads). Own data:
+  `GET /api/users/me/data`, `POST /api/users/me/delete`.
 - `src/services/` — business logic (cart, checkout, orders, payments, payouts, uploads, analytics, settings…).
 - `src/db/` — `index.js` (PostgreSQL via `pg` when `DATABASE_URL` is set, else embedded PGlite in `backend/.data`),
-  `migrations/001…014` (applied automatically at start, never reset; 013 sets the XUSE10 limits, 014 adds `users.deleted_at`), `backup.js`, `ssl.js` (local, not deployed).
+  `migrations/001…015` (applied automatically at start, never reset; 013 XUSE10 limits, 014 `users.deleted_at`, 015 `saved_designs`), `backup.js`, `ssl.js` (local, not deployed).
 - `src/payments/` — one payment system, gateway adapters `razorpay.js`, `cashfree.js`.
 - `src/lib/` — security (CORS, CSRF, cookies), storage (disk or bucket), sealed (AES-256-GCM for payout details),
   mailer, sms, file links (signed URLs).

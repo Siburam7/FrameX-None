@@ -1,7 +1,7 @@
 # FrameX — Product Requirements (PRD)
 
 > Living document. Update it whenever a feature, rule or decision changes (see `rules.md` → "Project docs").
-> Last updated: 2026-10-20 (account deletion).
+> Last updated: 2026-10-20 (saved designs).
 
 ## 1. What FrameX is
 
@@ -31,7 +31,7 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
 | --- | --- | --- |
 | Catalogue | Shops, products, categories, Home Decor (multi-panel sets), templates, search | Built, live |
 | Product page | Gallery, options with live price, required photo upload, specs | Built, live |
-| FrameX Studio / Wall-art studio / Templates | Customise a frame, split a photo across 2-5 panels, photo templates | Built, live; Studio "Save design" is browser-only |
+| FrameX Studio / Wall-art studio / Templates | Customise a frame, split a photo across 2-5 panels, photo templates | Built, live. "Save design" in the account (any device) built locally 2026-10-20; live still browser-only |
 | Accounts | Sign-up, login, password reset by email (and SMS when configured) | Built, live; SMS not configured |
 | Cart | Account-only, stored in the database, prices set by the server | Built, live |
 | Checkout | Address → summary → payment; Buy Now; coupons (XUSE10) | Built, live |

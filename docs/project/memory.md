@@ -2,7 +2,7 @@
 
 > Decisions, current state and lessons learned, newest first within each section. Add every owner decision and every
 > change of status here (verified / not verified). No secrets or customer data: the repository is public.
-> Last updated: 2026-10-20 (account deletion).
+> Last updated: 2026-10-20 (saved designs).
 
 ## Current state (2026-10-20)
 
@@ -24,6 +24,10 @@
 
 ## Owner decisions (log)
 
+- 2026-10-20 F-17 (owner asked to build it): my choices, not asked — visitors who aren't logged in still save in the
+  browser (no login forced); logged-in saves go to the account with the photos uploaded at save time; at most 30 per
+  account; when the account limit refuses the quiet save before "Add to cart", the design is kept in the browser so
+  ordering never stops.
 - 2026-10-20 Account deletion (F-16): keep order/painting records for tax but remove name, email, phone, address; refuse
   while an order or painting is under way; confirm with password + DELETE; data download as one JSON file.
   My own choices inside that (not asked): reviews stay as "A FrameX customer" without their photo; messages to FrameX
@@ -82,5 +86,7 @@ header button labels per section.
 - When "section" is said, check whether a whole page is meant.
 - Small visual change → quick change, quick check, short answer.
 - The owner's editor may re-wrap HTML (seen 2026-10-19 on `index.html`): tests must not depend on a tag being on one line.
+- A new kind of id (a saved design's uuid) must be checked everywhere ids are validated: the cart only accepted
+  "d-…" design ids and "Add to cart" broke silently (caught by the Studio browser suite, 2026-10-20).
 - Accessibility crawl false positives: text inside a closed `<details>` has no `innerText`; a visually-hidden `h1`
   counts as "not visible"; a pseudo-element touch area isn't measured.

@@ -136,9 +136,9 @@
     });
   }
 
-  /** "Your saved designs": continue editing a design saved on this device. */
+  /** "Your saved designs": continue editing a design saved in the account (any device) or in this browser. */
   async function renderSaved() {
-    const saved = FrameX.designs.list();
+    const saved = await FrameX.designs.list();
     if (!els.saved || !saved.length) return;
     const rows = await Promise.all(
       saved.slice(0, 8).map(async (d) => {
@@ -168,7 +168,7 @@
           <a class="saved-design__link" href="${href}">
             <span class="saved-design__media">${media || icon("frame")}</span>
             <span class="saved-design__name">${esc(name)}</span>
-            <span class="saved-design__date">Saved ${new Date(d.updatedAt).toLocaleDateString(FrameX.config.locale, { day: "numeric", month: "short" })}</span>
+            <span class="saved-design__date">Saved ${new Date(d.updatedAt).toLocaleDateString(FrameX.config.locale, { day: "numeric", month: "short" })}${d.where === "device" ? " · this device only" : ""}</span>
           </a>
         </li>`;
       }),

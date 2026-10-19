@@ -136,6 +136,8 @@ export async function deleteOwnUpload(userId, id) {
   if (row.status === "ATTACHED") throw new HttpError(409, "UPLOAD_IN_ORDER", "This photo belongs to an order, so it is kept with that order.");
   const inCart = (await db.query("SELECT 1 FROM cart_items i JOIN carts c ON c.id = i.cart_id WHERE c.user_id = $1 AND i.photos @> $2::jsonb LIMIT 1", [userId, JSON.stringify([{ uploadId: id }])])).rows.length;
   if (inCart) throw new HttpError(409, "UPLOAD_IN_CART", "This photo is used by an item in your cart. Remove that item first.");
+  const inDesign = (await db.query("SELECT 1 FROM saved_designs d, jsonb_each_text(d.photos) dp WHERE d.user_id = $1 AND dp.value = $2 LIMIT 1", [userId, id])).rows.length;
+  if (inDesign) throw new HttpError(409, "UPLOAD_IN_DESIGN", "This photo is used by one of your saved designs, so it is kept with that design.");
   await db.query("UPDATE uploads SET status = 'DELETED', deleted_at = now() WHERE id = $1", [id]);
   await storage.remove(row.storage_key);
 }
@@ -192,6 +194,7 @@ export async function sweepUnusedUploads() {
       WHERE u.status = 'UPLOADED' AND u.created_at < now() - ($1 || ' days')::interval
         AND NOT EXISTS (SELECT 1 FROM cart_items i WHERE i.photos @> jsonb_build_array(jsonb_build_object('uploadId', u.id::text)))
         AND NOT EXISTS (SELECT 1 FROM order_item_photos p WHERE p.upload_id = u.id)
+        AND NOT EXISTS (SELECT 1 FROM saved_designs d, jsonb_each_text(d.photos) dp WHERE dp.value = u.id::text)
       LIMIT 500`,
     [String(config.uploads.unusedDays)]
   );

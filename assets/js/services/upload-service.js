@@ -446,7 +446,50 @@
     return [photo.name, photo.width && photo.height ? `${photo.width} × ${photo.height} px` : "", photo.size || photo.bytes ? sizeText(photo.size || photo.bytes) : ""].filter(Boolean).join(" · ");
   }
 
+  /* ---------------------------------------------------------------- A photo from the account (another device) */
+  /**
+   * A photo this account already uploaded (a design saved in the account, opened on another device) made usable
+   * here: it is fetched once through a short-lived link and its preview is kept in this browser. It is marked as
+   * already with FrameX, so it is never sent again (the original stays with FrameX). -> its id here, or null.
+   */
+  async function adopt(uploadId) {
+    if (!uploadId || !FrameX.http || !FrameX.http.enabled()) return null;
+    const state = await FrameX.auth.ready;
+    const user = FrameX.auth.state.user || (state && state.user);
+    if (!user) return null;
+    // Already on this device for this account?
+    const keys = (await tx(META, "readonly", (s) => s.getAllKeys())) || [...metas.keys()];
+    for (const key of keys) {
+      const known = await loadMeta(key);
+      if (known && known.uploadId === uploadId && known.userId === user.id && (await getUrl(key))) return key;
+    }
+    try {
+      const server = (await FrameX.http.get("/uploads/" + encodeURIComponent(uploadId))).upload;
+      const { link } = await FrameX.http.post("/uploads/" + encodeURIComponent(uploadId) + "/link", {});
+      const response = await fetch(FrameX.http.fileUrl(link.path));
+      if (!response.ok) return null;
+      const blob = await response.blob();
+      const { image, url } = await decode(blob);
+      let preview;
+      try {
+        preview = await makePreview(image);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+      if (!preview) return null;
+      const id = newId();
+      const meta = { name: server.name || "photo", type: server.mime || blob.type, size: server.bytes || blob.size, width: image.naturalWidth, height: image.naturalHeight, at: Date.now(), uploadId, userId: user.id, server };
+      previews.set(id, preview);
+      checked.add(uploadId);
+      await Promise.all([tx(PREVIEWS, "readwrite", (s) => s.put(preview, id)), saveMeta(id, meta)]);
+      return id;
+    } catch (error) {
+      return null; // removed, or not this account's: the Studio asks for the photo again
+    }
+  }
+
   FrameX.uploadService = {
+    adopt,
     prepare,
     getUrl,
     has,
