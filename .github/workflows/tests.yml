@@ -1,0 +1,42 @@
+# Runs the backend tests (npm test in backend/) on GitHub for every push and pull request, on any branch.
+# It only tests: nothing is deployed, published or changed anywhere, and it uses no secrets (the tests use an
+# in-memory database and stand-ins for the payment gateways, email and file storage).
+# Results: the repository's Actions tab -> "Tests" (a green tick or a red cross next to each commit).
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch replaces a run that is still going
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test
+        env:
+          NODE_ENV: test

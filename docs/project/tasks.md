@@ -1,7 +1,7 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-10-20 (coupons).
+> Last updated: 2026-10-20 (CI).
 
 ## Now
 
@@ -10,6 +10,7 @@
 - [x] 2026-10-20 F-12 coupons: XUSE10 limits + admin Coupons screen — local (backend 391/391; browser: new 16/16, coupon 25, CSP 8, payout 38, frame 55)
 - [x] 2026-10-20 Owner: the limits must NOT be shown in advance — banner and coupon title without them; the ₹499 cap
       is applied quietly ("you save ₹499"); a second use shows "You have already used the coupon XUSE10." (browser 20/20)
+- [x] 2026-10-20 F-23 automatic tests on GitHub + F-24 README test count — local
 - [ ] Next candidates (owner chooses): F-17 Studio designs saved to the account · F-16 account deletion / data download ·
       F-11 photo retention · F-14 moderation · F-13 button contrast (design change)
 
@@ -70,7 +71,9 @@ On branch `phase2a-wip` (pushed 2026-10-20; not live — `main` = `eb23ecf` is w
 | F-25 | Old-order email asked customers to send photos on WhatsApp | **done locally 2026-10-19** (now: "FrameX will contact you… please don't send photos by WhatsApp or email") |
 | F-26 | Small a11y issues | **done locally 2026-10-19**: labels on the admin On/Off settings, hidden `h1` on empty checkout and "order not found". The other crawl flags were false positives (text inside closed `<details>`, home `h1` is visually hidden on purpose, offer dots already have a 24 px touch area, card titles have a bigger equivalent link) |
 | F-27 | Product / shop page asked the API for a catalogue shop not on FrameX and got a 404 | **done locally 2026-10-19** (`GET /api/shops/:ref?optional=1` answers `{ shop: null }`; older API still works) |
-| F-19, F-22, F-23, F-24 | Partial-refund payouts by hand, many unminified scripts, no CI, outdated test count in README | open |
+| F-23 | No CI | **done locally 2026-10-20**: `.github/workflows/tests.yml` runs `npm test` on GitHub for every push / pull request (tests only, no deploy, no secrets). First real run on GitHub: when the branch is pushed next |
+| F-24 | Outdated test count in README | **done locally 2026-10-20** (391 tests; per-file counts corrected) |
+| F-19, F-22 | Partial-refund payouts by hand, many unminified scripts | open |
 | F-29 | View on My Wall / tilt never tried on a real phone | open — owner tests on Android + iPhone |
 | F-30 | Cashfree only against a stand-in | open — only if Cashfree will be used |
 

@@ -1,7 +1,7 @@
 # FrameX — Working Rules
 
 > These are the owner's rules for anyone (person or AI) working on FrameX. They override habits and defaults.
-> Last updated: 2026-10-19.
+> Last updated: 2026-10-20 (CI).
 
 ## 0. Project docs (always)
 
@@ -61,7 +61,8 @@ no guest cart; server-side prices; payment proven only by server verification; c
 
 ## 7. Testing
 
-- `npm test` in `backend/` (in-memory, safe while the owner's backend runs).
+- `npm test` in `backend/` (in-memory, safe while the owner's backend runs). GitHub runs it too on every push
+  (Actions → "Tests"): a red cross there means something broke — fix it before merging into `main`.
 - Browser tests only against a throw-away backend on **:4100** — never the owner's **:4000** or **:5500**.
 - Fresh database for every browser-test run.
 - Report test results exactly, including failures and what was not tested.

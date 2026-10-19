@@ -1,7 +1,7 @@
 # FrameX — Architecture
 
 > Living document. Update it whenever the structure, hosting or a service changes (see `rules.md` → "Project docs").
-> Last updated: 2026-10-20 (coupons). Deeper references: `docs/ARCHITECTURE.md` (frontend data contract, Live Demo),
+> Last updated: 2026-10-20 (CI). Deeper references: `docs/ARCHITECTURE.md` (frontend data contract, Live Demo),
 > `backend/README.md` (every backend feature, settings and API).
 
 ## 1. Overview
@@ -49,6 +49,7 @@ API after 1.2 s; login, cart and checkout wait for it.
 - `src/lib/` — security (CORS, CSRF, cookies), storage (disk or bucket), sealed (AES-256-GCM for payout details),
   mailer, sms, file links (signed URLs).
 - Tests: `node --test` (`npm test`), in-memory database, stand-in gateways and bucket (`test/support/`).
+  GitHub runs them for every push and pull request (`.github/workflows/tests.yml`, Node 24, no secrets, never deploys).
 
 ## 4. Data
 
