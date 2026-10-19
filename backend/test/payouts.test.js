@@ -43,7 +43,7 @@ const { newId } = await import("../src/lib/tokens.js");
 const { syncCatalog } = await import("../src/services/catalog-service.js");
 const { alertSellers, notificationsSettled } = await import("../src/services/notification-service.js");
 const { emailsSettled } = await import("../src/services/order-service.js");
-const { workOut } = await import("../src/services/payout-service.js");
+const { payoutReadiness, payoutsStatusLine, workOut } = await import("../src/services/payout-service.js");
 const { loadSettings } = await import("../src/services/settings-service.js");
 const { uploadPhoto } = await import("./support/photos.js");
 
@@ -460,5 +460,88 @@ describe("what is due, and paying it out", () => {
     assert.equal((await shopB.get(`/api/shops/${S.shopB.code}/payouts`)).json.due.feePercent, 3);
     assert.equal((await admin.patch("/api/admin/settings", { payoutFeePercent: 25 })).status, 422, "at most 20%");
     assert.equal((await admin.patch("/api/admin/settings", { payoutFeePercent: null })).status, 200);
+  });
+});
+
+describe("is the payout key working? (FrameX staff only, a plain yes or no)", () => {
+  const GOOD = process.env.PAYOUT_ENCRYPTION_KEY;
+  const withKey = async (value, fn) => {
+    if (value === undefined) delete process.env.PAYOUT_ENCRYPTION_KEY;
+    else process.env.PAYOUT_ENCRYPTION_KEY = value;
+    resetSealingKey();
+    try {
+      await fn();
+    } finally {
+      process.env.PAYOUT_ENCRYPTION_KEY = GOOD;
+      resetSealingKey();
+    }
+  };
+  // Nothing about the key may leave the server: not the key, not its bytes in hex, not a hash of it
+  const secretsIn = (text, key) => {
+    const bytes = Buffer.from(key || "", /^[0-9a-f]{64}$/i.test(key || "") ? "hex" : "base64");
+    const forms = [key, bytes.toString("hex"), bytes.toString("base64url"), crypto.createHash("sha256").update(key || "").digest("hex")].filter((f) => f && f.length >= 8);
+    return forms.filter((f) => text.includes(f));
+  };
+  const overview = async () => {
+    const r = await admin.get("/api/admin/payouts");
+    assert.equal(r.status, 200, r.text);
+    return r;
+  };
+
+  test("the right key: ready, and every saved account opens with it", async () => {
+    const saved = (await db.query("SELECT count(*)::int AS n FROM payout_accounts")).rows[0].n;
+    assert.ok(saved >= 2, "the earlier tests saved accounts");
+    assert.deepEqual(await payoutReadiness(), { ready: true, reason: "ok", saved, unreadable: 0 });
+    const r = await overview();
+    assert.equal(r.json.ready, true);
+    const line = await payoutsStatusLine();
+    assert.ok(line.endsWith(`payout accounts READY (details sealed; all ${saved} saved payout account(s) open with this key)`), line);
+    assert.deepEqual(secretsIn(r.text + line, GOOD), []);
+    // What is sealed never shows in full in the overview, and nothing of the key is in the public settings
+    assert.ok(!r.text.includes("123456789012"));
+    const told = await (await fetch(base + "/api/config")).text();
+    assert.deepEqual(secretsIn(told, GOOD), []);
+    assert.ok(!/payoutsReady|sealing|ENCRYPTION/i.test(told), "the public settings say nothing about payouts being ready");
+  });
+
+  test("no key: not ready", () =>
+    withKey(undefined, async () => {
+      assert.equal((await payoutReadiness()).reason, "no-key");
+      assert.equal((await overview()).json.ready, false);
+      assert.match(await payoutsStatusLine(), /payout accounts NOT READY - set PAYOUT_ENCRYPTION_KEY/);
+    }));
+
+  test("a key that is not 32 bytes: not ready, and the wrong value is not repeated back", async () => {
+    for (const bad of ["too-short-but-long-enough", crypto.randomBytes(31).toString("base64"), "z".repeat(64)])
+      await withKey(bad, async () => {
+        assert.equal((await payoutReadiness()).reason, "invalid-key", bad);
+        const r = await overview();
+        assert.equal(r.json.ready, false);
+        const line = await payoutsStatusLine();
+        assert.match(line, /NOT READY - PAYOUT_ENCRYPTION_KEY must be 32 bytes/);
+        assert.ok(!r.text.includes(bad) && !line.includes(bad));
+      });
+  });
+
+  test("a different valid key (the key was changed on the host): not ready, because the saved accounts no longer open", async () => {
+    const other = crypto.randomBytes(32).toString("base64");
+    await withKey(other, async () => {
+      const r = await payoutReadiness();
+      assert.equal(r.reason, "saved-accounts-unreadable");
+      assert.equal(r.unreadable, r.saved);
+      const o = await overview();
+      assert.equal(o.json.ready, false);
+      const line = await payoutsStatusLine();
+      assert.ok(line.includes(`NOT READY - ${r.saved} of ${r.saved} saved payout account(s) do not open with this PAYOUT_ENCRYPTION_KEY`), line);
+      assert.deepEqual(secretsIn(o.text + line, other), []);
+      assert.deepEqual(secretsIn(o.text + line, GOOD), []);
+    });
+    assert.equal((await payoutReadiness()).ready, true, "the right key back: ready again");
+  });
+
+  test("only FrameX staff can ask", async () => {
+    assert.equal((await new Client().get("/api/admin/payouts")).status, 401);
+    assert.equal((await asha.get("/api/admin/payouts")).status, 403);
+    assert.equal((await shopB.get("/api/admin/payouts")).status, 403);
   });
 });

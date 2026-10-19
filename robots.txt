@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /backend/
+Disallow: /tools/
+Disallow: /docs/
+
+Sitemap: https://shopframex.in/sitemap.xml

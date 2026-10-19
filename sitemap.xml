@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Public FrameX pages that open without a login or an id. Product, shop, artist and artwork pages are reached
+     from these. Pages with <meta name="robots" content="noindex"> are never listed here. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://shopframex.in/</loc></url>
+  <url><loc>https://shopframex.in/shop.html</loc></url>
+  <url><loc>https://shopframex.in/home-decor.html</loc></url>
+  <url><loc>https://shopframex.in/art.html</loc></url>
+  <url><loc>https://shopframex.in/templates.html</loc></url>
+  <url><loc>https://shopframex.in/studio.html</loc></url>
+  <url><loc>https://shopframex.in/services.html</loc></url>
+  <url><loc>https://shopframex.in/gallery.html</loc></url>
+  <url><loc>https://shopframex.in/customer-gallery.html</loc></url>
+  <url><loc>https://shopframex.in/about.html</loc></url>
+  <url><loc>https://shopframex.in/our-story.html</loc></url>
+  <url><loc>https://shopframex.in/faq.html</loc></url>
+  <url><loc>https://shopframex.in/contact.html</loc></url>
+  <url><loc>https://shopframex.in/partner.html</loc></url>
+  <url><loc>https://shopframex.in/join-artist.html</loc></url>
+  <url><loc>https://shopframex.in/terms-of-use.html</loc></url>
+  <url><loc>https://shopframex.in/privacy-notice.html</loc></url>
+</urlset>

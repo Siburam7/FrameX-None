@@ -13,12 +13,14 @@
      const s3 = await createMockS3().listen();  s3.url, s3.bucket, s3.keyId, s3.secret
      s3.objects   Map of key -> Buffer        s3.requests   ["PUT private/ab/…", …]
      s3.down = true   every request is answered 503 (an outage)
+     s3.publicRead = true   a public bucket: an unsigned GET of a file is answered with it
+     s3.unsignedKeys  ["GET probe/…", …]  the requests that came without a signature
    ========================================================================== */
 import http from "node:http";
 
 export function createMockS3({ bucket = "framex-test", keyId = "TESTKEYID0000000001", secret = "test-secret-not-a-real-one" } = {}) {
   const objects = new Map(); // key -> { body, at }
-  const state = { url: "", bucket, keyId, secret, objects, requests: [], down: false, unsigned: 0 };
+  const state = { url: "", bucket, keyId, secret, objects, requests: [], down: false, unsigned: 0, unsignedKeys: [], publicRead: false };
   const xml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
   const server = http.createServer((req, res) => {
@@ -36,6 +38,12 @@ export function createMockS3({ bucket = "framex-test", keyId = "TESTKEYID0000000
       const auth = req.headers.authorization || "";
       if (!auth.startsWith(`AWS4-HMAC-SHA256 Credential=${keyId}/`) || !/SignedHeaders=[^,]*host/.test(auth) || !/Signature=[0-9a-f]{64}/.test(auth) || !req.headers["x-amz-date"]) {
         state.unsigned += 1;
+        state.unsignedKeys.push(`${req.method} ${key || "(list)"}`);
+        // A PUBLIC bucket (state.publicRead = true) sends any of its files to anyone who asks
+        if (state.publicRead && req.method === "GET" && key && objects.has(key)) {
+          res.writeHead(200, { "Content-Type": "application/octet-stream" });
+          return res.end(objects.get(key).body);
+        }
         return send(403, "<Error><Code>AccessDenied</Code></Error>");
       }
       if (decodeURIComponent(inBucket) !== bucket) return send(404, "<Error><Code>NoSuchBucket</Code></Error>");

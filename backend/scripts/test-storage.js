@@ -47,6 +47,12 @@ try {
   const gone = !(await storage.exists(key));
   say(gone, gone ? "removed again" : "it could NOT be removed");
   failed = !(there && same && listed && gone);
+  if (config.storage.provider === "s3") {
+    // The start-up check again: a random test object, asked for once WITHOUT keys, then removed
+    const st = await storage.storageStatus();
+    say(st.private === true, st.private === true ? "the bucket is private: it refused a test file to a request without keys" : st.private === false ? "the bucket is PUBLIC: it sent a test file to a request without keys. Make it private." : `could not tell whether the bucket is private${st.problem ? ` (${st.problem})` : ""}`);
+    failed = failed || st.private !== true;
+  }
 } catch (error) {
   failed = true;
   say(false, error.message);

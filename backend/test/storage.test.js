@@ -42,6 +42,7 @@ const { db, initDb } = await import("../src/db/index.js");
 const { migrate } = await import("../src/db/migrate.js");
 const { makeFileToken } = await import("../src/lib/file-links.js");
 const storage = await import("../src/lib/storage.js");
+const { checkKnownFiles } = await import("../src/services/storage-check.js");
 const { sweepUnusedUploads } = await import("../src/services/upload-service.js");
 const { jpeg, uploadPhoto } = await import("./support/photos.js");
 
@@ -90,7 +91,39 @@ describe("uploaded files in a bucket", () => {
     assert.equal((await (await fetch(base + "/api/config")).json()).features.fileStorageReady, true);
     assert.equal(s3.objects.size, 0);
     assert.deepEqual(s3.requests.map((r) => r.split(" ")[0]), ["PUT", "GET", "DELETE"]);
-    assert.equal(s3.unsigned, 0, "every request was signed");
+    // One request on purpose without keys, for the test file only (is the bucket private?): refused
+    assert.equal(status.private, true, "a private bucket refuses a request without keys");
+    assert.equal(s3.unsignedKeys.length, 1);
+    assert.match(s3.unsignedKeys[0], /^GET probe\/[0-9a-f-]{36}$/, "the request without keys asked only for the test file");
+    s3.unsigned = 0;
+    s3.unsignedKeys.length = 0;
+  });
+
+  test("a PUBLIC bucket is found and reported, and the test file is still removed", async () => {
+    s3.publicRead = true;
+    try {
+      const status = await storage.storageStatus();
+      assert.deepEqual([status.ready, status.private], [true, false]);
+      assert.equal(s3.objects.size, 0, "the test file is removed");
+      const told = await (await fetch(base + "/api/config")).text();
+      assert.ok(!/private|public/i.test(JSON.stringify(JSON.parse(told).features)), "browsers are not told whether the bucket is private");
+    } finally {
+      s3.publicRead = false;
+      s3.unsigned = 0;
+      s3.unsignedKeys.length = 0;
+    }
+  });
+
+  test("no clear answer to a request without keys: 'could not tell', never 'private'", async () => {
+    const realFetch = globalThis.fetch;
+    // Only the request without keys gets an odd answer (as from a proxy in front of the bucket)
+    globalThis.fetch = (url, opts = {}) => (!opts.headers && String(url).includes("/probe/") ? Promise.resolve(new Response("odd", { status: 500 })) : realFetch(url, opts));
+    try {
+      const status = await storage.storageStatus();
+      assert.deepEqual([status.ready, status.private], [true, null]);
+    } finally {
+      globalThis.fetch = realFetch;
+    }
   });
 
   test("a customer photo goes to the bucket, not to the server's disk, and comes back byte for byte", async () => {
@@ -124,6 +157,25 @@ describe("uploaded files in a bucket", () => {
     assert.equal((await uploadPhoto(base, asha, { body: Buffer.alloc(0) })).status, 400);
     assert.equal(s3.objects.size, before);
     assert.deepEqual(filesOnDisk("tmp"), []);
+  });
+
+  test("every file the database knows is checked for in the storage: a lost one is counted, never named", async () => {
+    const r = await uploadPhoto(base, asha, { body: jpeg({ width: 1200, height: 900, bytes: 90_000, fill: 0x3a }), name: "kept.jpg" });
+    assert.equal(r.status, 201, r.text);
+    const key = (await db.query("SELECT storage_key FROM uploads WHERE id = $1", [r.json.upload.id])).rows[0].storage_key;
+    const known = (await db.query("SELECT count(*)::int AS n FROM uploads WHERE status <> 'DELETED'")).rows[0].n;
+    assert.deepEqual(await checkKnownFiles().then(({ known: k, missing }) => [k, missing]), [known, 0]);
+    // The stand-in bucket loses that file (as a wiped server disk would): found missing
+    const kept = s3.objects.get(key);
+    s3.objects.delete(key);
+    const lost = await checkKnownFiles();
+    assert.deepEqual([lost.known, lost.missing], [known, 1]);
+    assert.ok(!JSON.stringify(lost).includes(key) && !JSON.stringify(lost).includes("private/"), "only counts");
+    s3.objects.set(key, kept);
+    assert.equal((await checkKnownFiles()).missing, 0);
+    // Removed by its owner (status DELETED): no longer expected in the storage
+    await fetch(`${base}/api/uploads/${r.json.upload.id}`, { method: "DELETE", headers: { "X-FrameX-Client": "test", Cookie: asha.cookie } });
+    assert.deepEqual(await checkKnownFiles().then(({ known: k, missing }) => [k, missing]), [known - 1, 0]);
   });
 
   test("keep, look for, read, list (over several pages) and remove", async () => {

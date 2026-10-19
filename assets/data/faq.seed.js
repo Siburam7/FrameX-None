@@ -11,7 +11,7 @@
   FrameX.seed.faq = [
     { id: "about", title: "About FrameX", items: [
       { q: "What is FrameX?", a: "FrameX is a photo-frame marketplace. You browse frames from local shops, choose a size and frame colour, and place a request to pick it up or, where the shop offers it, have it delivered." },
-      { q: "Can I order from different local shops?", a: "Yes. Every product shows which shop sells it, and your cart can hold frames from more than one shop. Items from different shops are ordered separately, and each shop handles its own pickup or delivery." }
+      { q: "Can I order from different local shops?", a: "Yes. Every product shows which shop sells it, and your cart can hold frames from more than one shop. You pay for everything in one order, and each shop makes and handles its own items' pickup or delivery, so they may arrive separately." }
     ]},
     { id: "photo", title: "Your photo", items: [
       { q: "Do I have to add my own photo?", a: "For a photo frame, yes. A photo frame is made with your picture printed and fitted in it, so the product page asks for it under \"Your photo\" before you can add the frame to your cart or buy it. The pictures in the product gallery are samples. A set of frames needs one photo for each frame, and a template needs one for each photo space. Ready-made Home Decor and wall art need no photo at all." },

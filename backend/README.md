@@ -166,7 +166,7 @@ cart_items.photos  [{ slot, uploadId, placement }]                 the same, whi
   Any other id, order or shop answers `404`, exactly like one that doesn't exist. Every link made for staff or a shop is written to the audit log (`ORDER_PHOTO_ACCESSED`).
 - **Kept with the order.** When an order is placed its photos are marked `ATTACHED` and are never cleaned up. A photo that never reached an order and is in no cart is deleted after `UPLOAD_UNUSED_DAYS` (30); the clean-up runs every 6 hours. Keep the privacy notice in step with that number.
 - **Where the files live.** `UPLOAD_DIR`, by default `backend/.data/uploads` (ignored by Git). **In production this must be a disk that survives restarts and redeploys**, or every uploaded photo is lost when the service restarts. Back the folder up together with the database: an order row without its file can't be printed. `src/lib/storage.js` is the one file to replace to keep files in object storage (S3, R2…) instead; that is not built.
-- **Or in a bucket.** On a host whose disk does not survive a restart (Render's free plan), set `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` (Cloudflare R2, Backblaze B2 or any S3-compatible store). Every uploaded file (customer photos, product, artist and review pictures) is then kept in that bucket under the same random names (`private/…`, `public/…`); an upload is still received, counted and inspected on the server first. The bucket must stay **private**: the server reads each file and sends it itself, through the same signed links and `/media/…` addresses, so nothing changes for the website. `npm run storage:test` writes, reads back and removes a test file; start-up does the same and prints the result. `GET /api/config` says `features.fileStorage: "object"` when a bucket is in use (a word only). Files uploaded before the switch are not copied. Give a development machine its own bucket (or leave it on its disk): only a production server removes files its database does not know.
+- **Or in a bucket.** On a host whose disk does not survive a restart (Render's free plan), set `S3_ENDPOINT`, `S3_REGION`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` and `S3_SECRET_ACCESS_KEY` (Cloudflare R2, Backblaze B2 or any S3-compatible store). Every uploaded file (customer photos, product, artist and review pictures) is then kept in that bucket under the same random names (`private/…`, `public/…`); an upload is still received, counted and inspected on the server first. The bucket must stay **private**: the server reads each file and sends it itself, through the same signed links and `/media/…` addresses, so nothing changes for the website. `npm run storage:test` writes, reads back and removes a test file; start-up does the same and prints the result. Both also ask for that test file once **without keys**, as a stranger would: a private bucket refuses (the log says "the bucket is private"); if it is sent, the log and `npm run doctor` warn that the bucket is PUBLIC. At every start the server also checks that every file its database knows (customer photos, product, artist and review pictures) is in the storage and prints the count ("Stored files: all N file(s) … are in the storage", or how many are MISSING): after a redeploy, that line shows the earlier deploys' files survived. Only counts are printed, never a file name or a key; neither check changes or removes anything but its own test file. `GET /api/config` says `features.fileStorage: "object"` when a bucket is in use (a word only). Files uploaded before the switch are not copied. Give a development machine its own bucket (or leave it on its disk): only a production server removes files its database does not know.
 - **Orders placed before this existed** have no photos (`photos_required` is empty on their lines): they still show the old "send your photos" note.
 
 ## Gift wrapping
@@ -357,6 +357,11 @@ artist their share by bank transfer or UPI, outside the site, and records it in 
   UPI ID is sealed in the database with `PAYOUT_ENCRYPTION_KEY` (`src/lib/sealed.js`); pages show a masked
   hint. Only admins see the full details, and every look is in the audit log. Without the key, accounts can't be
   saved (`npm run doctor` says so).
+- **Is the key working?** At every start the server seals and opens a test value with `PAYOUT_ENCRYPTION_KEY` and
+  opens every saved payout account with it; the log's `Payouts:` line says READY, or why not (no key, not 32 bytes,
+  or N saved accounts that don't open: the key was changed, put the earlier one back). Admin -> Payouts shows the
+  same yes / no (`GET /api/admin/payouts` -> `ready`, FrameX staff only). Nothing about the key is ever shown or
+  sent, and the public `GET /api/config` says nothing about payouts.
 - **What is due.** Over the seller's sales not paid out yet (delivered, paid, not refunded, not test orders):
   online sales + their part of delivery, gift wrap and tax on those orders - FrameX's commission on ALL their sales
   (Cash on Delivery included, since that cash is with them) - the payout charge (`PAYOUT_FEE_PERCENT`, default 2%)
@@ -452,7 +457,7 @@ Copy `.env.example` to `.env`. Nothing secret is in the code or in Git (`.env` a
 | `NODE_ENV` | production | `production` turns on strict checks and secure cookies |
 | `PORT` | no | default `4000` |
 | `DATABASE_URL` | production | PostgreSQL connection string. Empty = embedded database (development) |
-| `DATABASE_SSL` | hosted DBs | `require` for Neon / Render / Supabase |
+| `DATABASE_SSL` | hosted DBs | `require` for Neon / Render / Supabase: encrypted, and the server's certificate is checked. An `sslmode` in `DATABASE_URL` (Neon's string ends with `?sslmode=require`) decides instead; `no-verify` (not checked) has to be written out and the start-up log warns about it. The log's `Database link:` line says which applies |
 | `AUTH_SECRET` | production | 32+ random characters; keys the hashes of session and reset tokens |
 | `SESSION_TTL_DAYS` | no | default `90`. A login lasts until Log out; it only runs out after this many days WITHOUT a visit (each visit renews it, at most once a day). On the live site the browser keeps the session token in `localStorage`, so closing the browser does not log anyone out |
 | `COOKIE_SAMESITE` | no | `lax` (default) / `none` |
@@ -526,14 +531,59 @@ Tables are created automatically on start (migrations in `src/db/migrations/`). 
 
 This deployment path is documented, not yet exercised: the code was tested locally against the embedded PostgreSQL engine. The first deploy against a hosted PostgreSQL should be followed by the "Try every flow" table above.
 
+## Backups
+
+| What | Where it lives | How it is kept |
+| --- | --- | --- |
+| Orders, accounts, shops, artists, payments, payouts, settings | the database (Neon) | **a backup file you take** (below) |
+| Customer photos, product and review pictures | the bucket (`STORAGE_PROVIDER=s3`) or the upload disk | the bucket's own settings: keep it **private** and keep old file versions (Backblaze B2: lifecycle "keep all versions") |
+| The code | GitHub | the repository (and a `git bundle` copy if you want one offline) |
+
+A database backup does **not** hold the photo files, only their records; a bucket backup does not hold the orders. Keep both.
+
+**Take a backup of the live database** (only reads it; nothing in it is changed):
+
+1. Double-click `backup-live-db.bat` in the project folder.
+2. Paste the connection string from Neon (your project → **Connect**; it starts with `postgresql://`). It is used only in that window and never saved or shown.
+3. Choose a passphrase (at least 10 characters; it can't be left empty) and type it twice. Every backup file is locked with it (AES-256-GCM): keep the passphrase, a locked file can't be opened without it. Without a good passphrase the database is not even opened. A restore refuses a file that is not locked.
+4. The file goes to `FrameX-backups\framex-db-live-<date>-<time>.fxdb` next to the project folder. It holds customer details: keep it private, and keep a copy off this computer too.
+
+**Keep `PAYOUT_ENCRYPTION_KEY` safe as well** (copy it from the service's environment into a password manager or a paper kept with the backups). The sellers' bank account numbers and UPI IDs are sealed with it, in the database and therefore in every backup: a restored database opens them only with the same key, and without it every seller has to enter their payout account again. Never change the key on the live service once accounts are saved.
+
+Take one before every deploy that adds a migration, and regularly (weekly, or daily once orders come in every day). Neon also keeps a short history of its own for point-in-time restore (how long depends on the plan: see the project's settings in Neon); that is not a file you hold, so it does not replace this.
+
+From a terminal: `npm run db:backup` (in `backend/`) backs up the database in `DATABASE_URL`, or the local one when it is empty; `--out <folder>` chooses the folder; `BACKUP_PASSPHRASE` gives the passphrase without the question.
+
+**Check that a backup works** (do it after the first backup, then now and then): restore it into a new, empty local folder, in `backend/`:
+
+```
+set DATA_DIR=C:\FrameX-restore-test
+npm run db:restore -- "C:\path\to\framex-db-live-....fxdb"
+```
+
+It asks for the passphrase and for `RESTORE`, creates the tables with this code's migrations, copies every row, puts every link (foreign key) back and checks it, carries the order numbers / Shop IDs on, and finally reads every table back and compares it with the backup row for row. It **refuses any database that already has rows**, so the live one can't be overwritten by mistake.
+
+**After a disaster** (the database lost or damaged): create a new, empty database in Neon, run `npm run db:restore -- <file>` with `DATABASE_URL` set to it (and `DATABASE_SSL=require`), then set the service's `DATABASE_URL` to the new database and redeploy. Restore with the same code the backup came from or newer; a backup from newer code is refused.
+
+Tested: `test/backup.test.js` (tables that refer to each other in circles, microsecond times, decimals, JSON, Hindi text, locked files, wrong passphrases, damaged files, the refusals), and a backup of a copy of a local database restored into a new folder, compared independently: 40 tables, 431 rows, sequences, constraints and indexes identical. Not yet run against Neon itself: the first real backup is the owner's first double-click.
+
 ## How the website connects
 
 `assets/js/config.js` holds the backend address (`backend.url`) and the session mode (`backend.session`).
 
 - **Cookie mode (default, recommended).** The session is an `httpOnly` cookie that page scripts cannot read. It needs the website and the API on the *same site*: `localhost`, or a custom domain such as `framex.in` + `api.framex.in`.
-- **Bearer mode.** `*.github.io` and a backend host like `*.onrender.com` are *different sites*; Safari and Firefox block cookies between them. For that setup set `session: "bearer"` in `config.js` and `AUTH_ALLOW_BEARER=true` on the backend. The login response then includes the session token, the website keeps it in `sessionStorage` for the tab and sends it as an `Authorization` header. It works everywhere, but a script injected into the page could read the token, so move to a custom domain and cookie mode when you can.
+- **Bearer mode.** `*.github.io` and a backend host like `*.onrender.com` are *different sites*; Safari and Firefox block cookies between them. For that setup set `session: "bearer"` in `config.js` and `AUTH_ALLOW_BEARER=true` on the backend. The login response then includes the session token, the website keeps it in `localStorage` until the visitor logs out (so closing the tab does not log them out) and sends it as an `Authorization` header. The Content-Security-Policy of every page limits which scripts can run there. It works everywhere, but a script injected into the page could read the token, so move to a custom domain and cookie mode when you can.
 
 Either way the token is random, only its hash is stored, it expires, and logging out or resetting the password revokes it on the server.
+
+**Moving the live site to cookie mode** (the session then can't be read by any page script). The website switches by itself once the API has an address on the site's own domain; until then nothing changes.
+
+1. Render -> the service -> Settings -> Custom Domains: add `api.shopframex.in`. At the domain's DNS provider add the `CNAME` record Render shows (`api` -> the service's `onrender.com` address), wait until Render says the certificate is issued, and check `https://api.shopframex.in/api/health`.
+2. Render -> Environment: `CORS_ORIGINS` must list `https://shopframex.in` (and `https://www.shopframex.in` if that address is used). Leave `COOKIE_DOMAIN` empty (the cookie stays on the API's own host), `COOKIE_SAMESITE` empty (Lax) and `COOKIE_SECURE` empty (on in production). Keep `AUTH_ALLOW_BEARER=true` for now.
+3. In `assets/js/config.js` set `PRODUCTION_API_URL = "https://api.shopframex.in/api"` and publish the website. Every page's Content-Security-Policy already allows that address. Logged-in visitors log in once more (their old token is removed from the browser). Gateway webhooks can stay on the `onrender.com` address: both reach the same server.
+4. After a few days, set `AUTH_ALLOW_BEARER=false`: the API then stops giving out tokens.
+
+Going back: set `PRODUCTION_API_URL` to the `onrender.com` address again and publish (bearer mode returns by itself; keep `AUTH_ALLOW_BEARER=true` until then).
 
 ## API
 

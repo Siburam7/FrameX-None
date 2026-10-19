@@ -193,7 +193,7 @@
       <div class="drawer__foot" id="cart-foot" hidden>
         <div class="summary-row"><span>Subtotal</span><strong id="cart-subtotal"></strong></div>
         <div class="summary-row"><small>Delivery and taxes</small><small>Calculated at checkout</small></div>
-        <p class="drawer__note" id="cart-shop-note" hidden>Items from different shops are ordered separately.</p>
+        <p class="drawer__note" id="cart-shop-note" hidden>Items from different shops are paid together in one order. Each shop makes and sends its own items, so they may arrive separately.</p>
         <button class="btn btn--primary btn--block" type="button" id="cart-checkout">Checkout</button>
         <button class="btn btn--outline btn--block" type="button" id="cart-continue">Continue shopping</button>
       </div>

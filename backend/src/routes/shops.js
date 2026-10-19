@@ -83,6 +83,8 @@ router.patch("/:shopCode/profile", requireOwnShop, async (req, res) => {
 
 router.get("/:ref", async (req, res) => {
   const shop = await shops.getPublicShop(String(req.params.ref).slice(0, 80));
+  // ?optional=1: the website asks about a catalogue shop that may not be on FrameX; "none" is then an answer, not an error
+  if (!shop && req.query.optional === "1") return res.json({ shop: null });
   if (!shop) throw errors.notFound("That shop doesn't exist or is no longer listed.");
   res.json({ shop });
 });

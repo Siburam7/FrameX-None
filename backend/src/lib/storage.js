@@ -268,7 +268,9 @@ export const storagePlace = () => (inBucket() ? `object storage, bucket "${confi
 
 /**
  * Can files be written (and read back) here? Used at start-up, by "npm run doctor" and "npm run storage:test".
- * -> { ready, kind: "disk" | "object", dir, problem? }
+ * -> { ready, kind: "disk" | "object", dir, private, problem? }
+ *    private (a bucket only): true = it refused the test file to a request without keys; false = it sent it
+ *    (the bucket is public: make it private); null = a disk, or no clear answer.
  */
 let lastCheck = null;
 /** What the last check found: true, false, or null when none has run yet. */
@@ -278,6 +280,27 @@ export async function storageStatus() {
   const status = await checkStorage();
   lastCheck = status.ready;
   return status;
+}
+
+/**
+ * One unsigned GET of an object (no keys, as a stranger's browser would ask).
+ * -> true: refused (401 / 403), the bucket is private; false: the bytes came back, anyone with the address can
+ * read the files; null: no clear answer (another status, or no answer in time).
+ */
+async function anonymousRead(url, sent) {
+  const stop = new AbortController();
+  const timer = setTimeout(() => stop.abort(), 15000);
+  try {
+    const response = await fetch(url, { signal: stop.signal, redirect: "manual" });
+    const body = Buffer.from(await response.arrayBuffer().catch(() => new ArrayBuffer(0)));
+    if (response.status === 401 || response.status === 403) return true;
+    if (response.ok && body.equals(sent)) return false;
+    return null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function checkStorage() {
@@ -299,11 +322,14 @@ async function checkStorage() {
       const back = await bucket("GET", objectUrl(name));
       if (!back.ok) throw failed("send back a file it had just kept", back);
       const same = Buffer.from(await back.arrayBuffer()).equals(sent);
+      // Private? The same test object asked for WITHOUT a signature, as any stranger could: a private bucket refuses.
+      const isPrivate = await anonymousRead(objectUrl(name), sent);
       const gone = await bucket("DELETE", objectUrl(name));
       await gone.arrayBuffer().catch(() => {});
       if (!same) throw new Error("The file storage sent back something other than what was kept.");
+      return { ready: true, kind, dir, private: isPrivate };
     }
-    return { ready: true, kind, dir };
+    return { ready: true, kind, dir, private: null };
   } catch (error) {
     return { ready: false, kind, dir, problem: error.message };
   }

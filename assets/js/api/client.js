@@ -42,6 +42,17 @@
   const enabled = () => Boolean(cfg.url);
   const bearer = () => cfg.session === "bearer";
 
+  // Cookie mode: a token kept by an earlier visit in bearer mode is of no use any more (it is never sent);
+  // it is not left lying in this browser's storage.
+  if (!bearer()) {
+    try {
+      localStorage.removeItem(TOKEN_KEY);
+      sessionStorage.removeItem(TOKEN_KEY);
+    } catch (e) {
+      /* storage blocked */
+    }
+  }
+
   /* Bearer mode: the session token is kept in this browser (localStorage) until the customer logs out, so
      closing the tab or the browser does not log them out, and every tab of the site shares the login.
      The token is only a key to the session the backend keeps: logging out, a changed password or a disabled

@@ -6,6 +6,7 @@
    Does not open the database, so it is safe to run while the server is running.
    ========================================================================== */
 import { config } from "../src/config.js";
+import { describeConnection, pgConnection } from "../src/db/ssl.js";
 import { checkEmailProvider, emailStatus, parseFrom } from "../src/lib/mailer.js";
 import { checkSmsProvider, smsStatus } from "../src/lib/sms.js";
 import { sealingKeyInvalid, sealingReady } from "../src/lib/sealed.js";
@@ -18,6 +19,11 @@ console.log(`\nFrameX backend check (${config.env})\n`);
 
 line(config.frontendUrlSet || !config.isProd ? (config.frontendUrlSet ? true : null) : false, `Website address for links: ${config.frontendUrlSet ? config.frontendUrl : "not set"}`, config.frontendUrlSet ? "" : "FRONTEND_URL is not set. Locally, links go back to the site the request came from. In production it must be set, e.g. FRONTEND_URL=https://siburam7.github.io/FrameX-None");
 line(config.databaseUrl ? true : null, `Database: ${config.databaseUrl ? "PostgreSQL (DATABASE_URL)" : "embedded (local file, development)"}`, config.databaseUrl ? "" : "For production set DATABASE_URL to a hosted PostgreSQL.");
+if (config.databaseUrl) {
+  const link = pgConnection(config.databaseUrl, config.databaseSsl);
+  const d = describeConnection(link, { production: config.isProd });
+  line(link.problem ? false : d.ok ? true : false, `Database link: ${link.problem || d.text}`, d.ok ? "" : "Neon: use its connection string as it is (it ends with ?sslmode=require), or set DATABASE_SSL=require.");
+}
 
 const email = emailStatus();
 if (email.mode === "real") {
@@ -50,7 +56,8 @@ const files = await storageStatus();
 const mb = Math.round(config.uploads.maxBytes / 1048576);
 if (!files.ready && files.kind === "object") line(false, "Uploaded files: NOT WORKING - photos can't be uploaded or shown", `${files.dir}: ${files.problem}\n        Check S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY (the key needs read and write access to this bucket).`);
 else if (!files.ready) line(false, "Customer photos: NOT WORKING - personalised products can't be ordered", `The folder ${files.dir} can't be written to: ${files.problem}\n        Fix: set UPLOAD_DIR in backend/.env to a folder this server may write to.`);
-else if (files.kind === "object") line(true, `Uploaded files: kept in ${files.dir} (up to ${mb} MB each, links last ${config.uploads.linkSeconds} s)`, "A test file was written, read back and removed just now. The bucket stays private: the server sends every file itself.");
+else if (files.kind === "object" && files.private === false) line(false, `Uploaded files: the bucket ${files.dir} is PUBLIC`, "A test file was sent to a request without keys: anyone with a file's address could read customer photos. Make the bucket private in the storage provider's settings (Backblaze B2: Bucket Settings -> Files in Bucket are: Private).");
+else if (files.kind === "object") line(files.private === true ? true : null, `Uploaded files: kept in ${files.dir} (up to ${mb} MB each, links last ${config.uploads.linkSeconds} s)`, `A test file was written, read back and removed just now. ${files.private === true ? "The bucket is private: it refused the test file to a request without keys." : "Could not tell whether the bucket is private (no clear answer to a request without keys): check it in the provider's settings."} The server sends every file itself.`);
 else
   line(
     config.isProd && !process.env.UPLOAD_DIR ? null : true,

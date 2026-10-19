@@ -214,7 +214,8 @@
       async getShop(id) {
         if (!http.enabled()) return base.getShop(id);
         try {
-          const asked = http.get("/shops/" + encodeURIComponent(id));
+          // optional: a catalogue shop that isn't on FrameX is answered { shop: null } instead of a 404 error
+          const asked = http.get("/shops/" + encodeURIComponent(id), { optional: 1 });
           // A shop the catalogue file knows too can be shown from there when the backend is slow to answer.
           const local = await Promise.resolve(base.getShop(id)).catch(() => null);
           const r = local ? await within(asked, PATIENCE_MS) : await asked;
@@ -222,6 +223,7 @@
             asked.catch(() => {});
             return local;
           }
+          if (!r.shop) return local || base.getShop(id); // not on FrameX: the catalogue entry, if there is one
           return toShop(r.shop, await catalogue(), await counts());
         } catch (error) {
           // Not (yet) in the backend, or backend unreachable: use the catalogue entry if there is one.

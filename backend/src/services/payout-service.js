@@ -33,7 +33,7 @@ import { db } from "../db/index.js";
 import { ACTIONS, audit } from "../lib/audit.js";
 import { errors, HttpError } from "../lib/errors.js";
 import { verifyPassword } from "../lib/passwords.js";
-import { open, seal, sealingReady } from "../lib/sealed.js";
+import { open, seal, sealingKeyInvalid, sealingReady } from "../lib/sealed.js";
 import { newId } from "../lib/tokens.js";
 import { isUuid, v, validate } from "../lib/validate.js";
 import { artistUserIds, notifyUsers } from "./notification-service.js";
@@ -241,6 +241,52 @@ async function history(owner, { limit = 50 } = {}) {
   return rows.map((r) => payoutView(r, [...(refs.get(r.id) || [])]));
 }
 
+/* ---------------------------------------------------------------- Is the payout key working? */
+
+/**
+ * Can payout accounts be saved AND read with the key this server has? Worked out here, from the key itself:
+ *   1. PAYOUT_ENCRYPTION_KEY decodes to 32 bytes (lib/sealed.js);
+ *   2. a test value sealed with it opens again;
+ *   3. every payout account already saved opens with it (a key changed on the host leaves them unreadable).
+ * -> { ready, reason, saved, unreadable }. Only `ready` (true / false) ever leaves the server, in the
+ * admin-only payouts overview; the reason and the counts are for the start-up log. Never the key, its length
+ * or a hash of it, and never what an account holds.
+ */
+export async function payoutReadiness() {
+  if (!sealingReady()) return { ready: false, reason: sealingKeyInvalid() ? "invalid-key" : "no-key", saved: 0, unreadable: 0 };
+  try {
+    const probe = newId();
+    if (open(seal({ probe })).probe !== probe) return { ready: false, reason: "round-trip-failed", saved: 0, unreadable: 0 };
+  } catch {
+    return { ready: false, reason: "round-trip-failed", saved: 0, unreadable: 0 };
+  }
+  const rows = (await db.query("SELECT details FROM payout_accounts")).rows;
+  let unreadable = 0;
+  for (const r of rows) {
+    try {
+      open(r.details);
+    } catch {
+      unreadable += 1;
+    }
+  }
+  return { ready: unreadable === 0, reason: unreadable ? "saved-accounts-unreadable" : "ok", saved: rows.length, unreadable };
+}
+
+/** The "Payouts:" line of the start-up log: the rates in use and whether the key works (never the key). */
+export async function payoutsStatusLine() {
+  const r = await payoutReadiness();
+  const state = r.ready
+    ? `READY (details sealed${r.saved ? `; all ${r.saved} saved payout account(s) open with this key` : ""})`
+    : r.reason === "no-key"
+      ? "NOT READY - set PAYOUT_ENCRYPTION_KEY (see backend/README.md -> Payouts)"
+      : r.reason === "invalid-key"
+        ? "NOT READY - PAYOUT_ENCRYPTION_KEY must be 32 bytes (base64 or hex)"
+        : r.reason === "saved-accounts-unreadable"
+          ? `NOT READY - ${r.unreadable} of ${r.saved} saved payout account(s) do not open with this PAYOUT_ENCRYPTION_KEY (was the key changed? put the earlier one back)`
+          : "NOT READY - PAYOUT_ENCRYPTION_KEY could not seal and open a test value";
+  return `commission ${config.platform.commissionPercent}% (shops), ${config.platform.artistCommissionPercent}% (artists), payout charge ${config.payouts.feePercent}%; payout accounts ${state}`;
+}
+
 /* ---------------------------------------------------------------- FrameX staff */
 
 /** Every approved shop and every artist, with what is due to them now (largest first) and the last payouts. */
@@ -261,7 +307,7 @@ export async function adminOverview() {
        FROM payouts p LEFT JOIN shops s ON s.id = p.shop_id LEFT JOIN artists a ON a.id = p.artist_id
       ORDER BY p.paid_at DESC LIMIT 30`
   )).rows.map((r) => ({ ...payoutView(r), seller: { type: r.seller_type, id: r.seller_id, name: r.seller_name } }));
-  return { sellers, recent, ready: sealingReady(), commissionPercent: config.platform.commissionPercent, artistCommissionPercent: config.platform.artistCommissionPercent, feePercent: config.payouts.feePercent };
+  return { sellers, recent, ready: (await payoutReadiness()).ready, commissionPercent: config.platform.commissionPercent, artistCommissionPercent: config.platform.artistCommissionPercent, feePercent: config.payouts.feePercent };
 }
 
 /** One seller: what is due (order by order), the FULL payout account (logged), and their payouts. */

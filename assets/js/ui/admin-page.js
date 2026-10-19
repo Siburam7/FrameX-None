@@ -39,6 +39,7 @@
     ["shops", "Shops", "store"],
     ["orders", "Orders", "receipt"],
     ["payouts", "Payouts", "wallet"],
+    ["coupons", "Coupons", "gift"],
     ["products", "Shop products", "image"],
     ["artists", "Artists", "users"],
     ["artworks", "Artworks", "frame"],
@@ -66,7 +67,7 @@
     ORDER_PHOTO_ACCESSED: "Customer photo downloaded", ORDER_ITEM_FULFILMENT_CHANGED: "Shop updated an order item",
     ORDER_TEST_LABEL_CHANGED: "Order marked (or unmarked) as a test", CUSTOMER_RECORD_VIEWED: "Account record opened",
     SHOP_PRODUCT_SAVED: "Shop saved a product", SHOP_PRODUCT_DELETED: "Shop deleted a product", PRODUCT_MODERATED: "Product listing changed by FrameX",
-    SETTINGS_CHANGED: "Platform settings changed", PAYOUT_ACCOUNT_CHANGED: "Payout account changed", PAYOUT_ACCOUNT_VIEWED: "Payout account details viewed", PAYOUT_RECORDED: "Payout recorded", USER_STATUS_CHANGED: "Account switched on or off",
+    SETTINGS_CHANGED: "Platform settings changed", COUPON_CREATED: "Coupon created", COUPON_UPDATED: "Coupon changed", PAYOUT_ACCOUNT_CHANGED: "Payout account changed", PAYOUT_ACCOUNT_VIEWED: "Payout account details viewed", PAYOUT_RECORDED: "Payout recorded", USER_STATUS_CHANGED: "Account switched on or off",
     ARTIST_APPLICATION_SUBMITTED: "Artist application submitted", ARTIST_APPLICATION_REJECTED: "Artist application rejected", ARTIST_APPROVED: "Artist approved", ARTIST_CREATED: "Artist created",
     ARTIST_UPDATED: "Artist details updated", ARTIST_STATUS_CHANGED: "Artist listed or unlisted", ARTIST_ACCOUNT_CREATED: "Artist login created", ARTIST_PROFILE_UPDATED: "Artist edited their profile",
     ARTWORK_SUBMITTED: "Artwork submitted for review", ARTWORK_APPROVED: "Artwork approved", ARTWORK_REJECTED: "Artwork rejected", ARTWORK_STATUS_CHANGED: "Artwork shown, paused or withdrawn",
@@ -628,6 +629,7 @@
       if (section === "messages") await FrameX.adminMessages.list(main, params, { head });
       if (section === "users") await (parts[1] ? FrameX.adminAnalytics.customer(main, parts[1], params, { head }) : art.users(main, params, { head }));
       if (section === "settings") await art.settings(main, params, { head });
+      if (section === "coupons") await art.coupons(main, params, { head });
       loaded(true);
     } catch (error) {
       loaded(false);

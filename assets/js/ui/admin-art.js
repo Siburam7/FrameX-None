@@ -250,7 +250,7 @@
     const groups = [...new Set(items.map((s) => s.group))];
     const control = (s) =>
       s.unit === "boolean"
-        ? `<select class="select" data-setting="${esc(s.key)}" data-unit="boolean"><option value="true"${s.value ? " selected" : ""}>On</option><option value="false"${s.value ? "" : " selected"}>Off</option></select>`
+        ? `<select class="select" data-setting="${esc(s.key)}" data-unit="boolean" aria-label="${esc(s.label)}"><option value="true"${s.value ? " selected" : ""}>On</option><option value="false"${s.value ? "" : " selected"}>Off</option></select>`
         : `<input class="input" type="number" inputmode="decimal" step="${s.unit === "percent" && s.key !== "customPaintingAdvancePercent" ? "0.01" : "1"}" min="0" data-setting="${esc(s.key)}" data-unit="${esc(s.unit)}" value="${esc(s.value)}" aria-label="${esc(s.label)}">`;
     main.innerHTML = `${head("Platform settings", "Fees and rules FrameX decides. A change applies from the next quote or request; orders and requests already made keep what was agreed. Keys and passwords are not settings: they stay on the server.")}
       <form class="set-list" novalidate>
@@ -285,6 +285,80 @@
       const reset = e.target.closest("[data-reset]");
       if (reset) send({ [reset.dataset.reset]: null });
     });
+  }
+
+  /* ---------------------------------------------------------------- Coupons */
+  // Codes customers type at checkout. The server checks every rule again at checkout; a code is never deleted
+  // (orders refer to it): it is switched off.
+  async function coupons(main, params, { head }) {
+    const { items } = await http().get("/admin/coupons");
+    const editing = params.get("edit") ? items.find((c) => c.code === params.get("edit")) || null : null;
+    const creating = params.get("new") === "1";
+    const rs = (n) => "₹" + Number(n).toLocaleString("en-IN");
+    const limits = (c) =>
+      [
+        `${c.percentOff}% off`,
+        c.minOrder ? `orders of ${rs(c.minOrder)} and more` : "any order",
+        c.maxDiscount ? `up to ${rs(c.maxDiscount)}` : "no maximum",
+        c.perUserLimit ? `${c.perUserLimit === 1 ? "once" : `${c.perUserLimit} times`} per customer` : "no limit per customer",
+        c.startsOn ? `from ${c.startsOn}` : "",
+        c.endsOn ? `last day ${c.endsOn}` : "until switched off",
+      ]
+        .filter(Boolean)
+        .join(" · ");
+    const reopen = () => (window.location.hash === "#/coupons" ? coupons(main, new URLSearchParams(), { head }) : (window.location.hash = "#/coupons"));
+    const f = (name, label, o = {}) => forms().field(name, label, { prefix: "cp", ...o, value: o.value === false || o.value == null ? "" : o.value });
+    const form =
+      editing || creating
+        ? `<h2 class="adm-subtitle">${editing ? `Change ${esc(editing.code)}` : "New coupon"}</h2>
+        <form class="form-grid form-grid--2" data-coupon-form novalidate>
+          ${editing ? `<div class="form-field"><label>Code</label><p><code>${esc(editing.code)}</code> <span class="sd-item__meta">(a code can't be changed: orders refer to it)</span></p></div>` : f("code", "Code customers type", { required: true, maxlength: 20, placeholder: "NEWYEAR15", hint: "Letters and numbers only. Stored in capitals." })}
+          ${f("title", "What customers see", { required: true, maxlength: 120, value: editing && editing.title, hint: "Shown at checkout, e.g. “New year: 15% off on orders of ₹499 and more”. The limits below are applied by the server; they don't need to be written here." })}
+          ${f("percentOff", "Percent off", { required: true, type: "number", inputmode: "numeric", step: "1", value: editing && editing.percentOff, hint: "1 to 90." })}
+          ${f("minOrder", "Minimum order (₹)", { type: "number", inputmode: "numeric", step: "1", value: editing ? editing.minOrder : "", hint: "Items total needed. Empty or 0 = any order." })}
+          ${f("maxDiscount", "Most it takes off (₹)", { type: "number", inputmode: "numeric", step: "1", value: editing && editing.maxDiscount, hint: "Empty = no maximum." })}
+          ${f("perUserLimit", "Uses per customer", { type: "number", inputmode: "numeric", step: "1", value: editing && editing.perUserLimit, hint: "Empty = no limit. Cancelled orders don't count." })}
+          ${f("startsOn", "Start date", { type: "date", value: editing && editing.startsOn, hint: "Empty = straight away. India time." })}
+          ${f("endsOn", "Last day", { type: "date", value: editing && editing.endsOn, hint: "Empty = until it is switched off." })}
+          <div class="form-field"><label for="cp-active">Status</label><select class="select" id="cp-active" name="active"><option value="true"${!editing || editing.active ? " selected" : ""}>On</option><option value="false"${editing && !editing.active ? " selected" : ""}>Off</option></select></div>
+          <div class="form-status" role="status" aria-live="polite"></div>
+          <div><button class="btn btn--primary" type="submit">${editing ? "Save changes" : "Create coupon"}</button> <a class="btn btn--outline" href="#/coupons">Cancel</a></div>
+        </form>`
+        : "";
+    main.innerHTML = `${head("Coupons", "Codes customers type at checkout for a percentage off their items. The server checks every rule again when the order is placed. A coupon can't be deleted (orders refer to it): switch it off instead.", form ? "" : `<a class="btn btn--primary btn--sm" href="#/coupons?new=1">${icon("plus")} New coupon</a>`)}
+      ${form}
+      ${items.length
+        ? `<ul class="sd-list">${items
+            .map(
+              (c) => `<li class="sd-item adm-item" data-coupon="${esc(c.code)}"><div class="sd-item__main"><strong><code>${esc(c.code)}</code> · ${esc(c.title)}</strong><span class="sd-item__meta">${esc(limits(c))}</span><span class="sd-item__meta">Used on ${c.orders} order${c.orders === 1 ? "" : "s"} · ${esc(rs(c.discountGiven))} taken off in all</span></div><span class="sd-status sd-status--${c.active ? "published" : "unpublished"}">${c.active ? "On" : "Off"}</span><div class="sd-item__actions"><a class="iu-btn" href="#/coupons?edit=${encodeURIComponent(c.code)}">Change</a><button class="iu-btn ${c.active ? "iu-btn--danger" : "iu-btn--go"}" type="button" data-active="${c.active ? "false" : "true"}">${c.active ? "Switch off" : "Switch on"}</button></div></li>`
+            )
+            .join("")}</ul>`
+        : emptyBox("gift", "No coupons yet", "Make one with New coupon.")}`;
+    const el = $("[data-coupon-form]", main);
+    if (el)
+      forms().handle(el, {
+        busyLabel: "Saving…",
+        send: (vals) => {
+          const n = (x) => (String(x ?? "").trim() === "" ? null : Number(x));
+          const body = { title: vals.title, percentOff: n(vals.percentOff), minOrder: n(vals.minOrder), maxDiscount: n(vals.maxDiscount), perUserLimit: n(vals.perUserLimit), startsOn: vals.startsOn || "", endsOn: vals.endsOn || "", active: vals.active === "true" };
+          return editing ? http().patch(`/admin/coupons/${encodeURIComponent(editing.code)}`, body) : http().post("/admin/coupons", { code: vals.code, ...body });
+        },
+        onSuccess: () => {
+          FrameX.toast.show(editing ? "Coupon saved." : "Coupon created.");
+          reopen();
+        },
+      });
+    main.onclick = async (e) => {
+      const btn = e.target.closest("[data-active]");
+      if (!btn) return;
+      try {
+        await http().patch(`/admin/coupons/${encodeURIComponent(btn.closest("[data-coupon]").dataset.coupon)}`, { active: btn.dataset.active === "true" });
+        FrameX.toast.show(btn.dataset.active === "true" ? "Coupon switched on." : "Coupon switched off.");
+        coupons(main, params, { head });
+      } catch (error) {
+        FrameX.toast.show(error.message, { duration: 6000 });
+      }
+    };
   }
 
   /* ---------------------------------------------------------------- Accounts */
@@ -358,5 +432,5 @@
       </div>`;
   }
 
-  FrameX.adminArt = { artists, artworks, paintings, painting, settings, users, reviews, overviewTiles };
+  FrameX.adminArt = { artists, artworks, paintings, painting, settings, coupons, users, reviews, overviewTiles };
 })((window.FrameX = window.FrameX || {}));

@@ -402,7 +402,7 @@
     const fail = (error) => {
       if (error.status === 401) return window.location.replace(FrameX.auth.loginUrl());
       if (error.status === 404)
-        return (root.innerHTML = `<div class="co-empty">${icon("alert")}<strong>We couldn't find that order</strong><span>Check the link, or look in your orders.</span><a class="btn btn--primary btn--sm" href="orders.html">Your orders</a></div>`);
+        return (root.innerHTML = `<h1 class="visually-hidden">Order not found</h1><div class="co-empty">${icon("alert")}<strong>We couldn't find that order</strong><span>Check the link, or look in your orders.</span><a class="btn btn--primary btn--sm" href="orders.html">Your orders</a></div>`);
       FrameX.templates.showError(root, "This order couldn't be loaded.", () => detail(root));
     };
 

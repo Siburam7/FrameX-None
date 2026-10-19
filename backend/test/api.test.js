@@ -527,6 +527,11 @@ describe("nearby shops", () => {
     const r = await c.get(`/api/shops/nearby?lat=${dhenkanalBusStand.latitude}&lng=${dhenkanalBusStand.longitude}&radius=5`);
     assert.equal(r.json.items.length, 2);
     assert.equal((await c.get("/api/shops/shop-002")).json.shop.shopCode, state.otherCode, "catalogue reference resolves to the shop");
+    // A catalogue shop that isn't on FrameX: 404 normally; with ?optional=1 (how the website asks) an answer, not an error
+    assert.equal((await c.get("/api/shops/shop-001")).status, 404);
+    const optional = await c.get("/api/shops/shop-001?optional=1");
+    assert.deepEqual([optional.status, optional.json], [200, { shop: null }]);
+    assert.equal((await c.get("/api/shops/shop-002?optional=1")).json.shop.shopCode, state.otherCode, "a listed shop is answered the same way");
     assert.equal((await admin.patch(`/api/admin/shops/${state.otherUuid}`, { latitude: null })).status, 422, "an approved shop keeps its coordinates");
   });
 });

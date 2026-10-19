@@ -1,0 +1,57 @@
+# Publishes ONLY the website to GitHub Pages (shopframex.in): the .html pages, assets/, js/, CNAME, robots.txt, sitemap.xml.
+# backend/, tools/, docs/, the .bat files, render.yaml and the READMEs stay in the repository, but the
+# website address no longer serves them (today "Deploy from a branch" serves every file of the repository).
+#
+# It runs only once Pages is switched to it: repository Settings -> Pages -> Build and deployment ->
+# Source: "GitHub Actions". Then every push to main publishes the website (Actions tab -> "Website"
+# -> "Run workflow" publishes it without a push). Until that switch, its runs fail and change nothing:
+# the site keeps being served from the branch.
+# Going back: Settings -> Pages -> Source: "Deploy from a branch", branch main, folder / (root).
+name: Website
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One publish at a time; a newer push waits for the one in progress instead of cutting it off.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy only the website
+        run: |
+          mkdir _site
+          cp ./*.html CNAME .nojekyll robots.txt sitemap.xml _site/
+          cp -r assets js _site/
+          # Nothing of the server side may be in what is published
+          for f in backend tools docs render.yaml README.md .env .gitignore; do
+            if [ -e "_site/$f" ]; then echo "::error::$f must not be published"; exit 1; fi
+          done
+          if find _site -name '*.bat' -o -name '.env*' -o -name '*.fxdb' | grep -q .; then echo "::error::a server-side file is in the website"; exit 1; fi
+          test -f _site/index.html
+          echo "Publishing $(find _site -type f | wc -l) files:"
+          ls _site
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4

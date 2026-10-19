@@ -16,6 +16,7 @@ import * as payments from "../services/payment-service.js";
 import * as payouts from "../services/payout-service.js";
 import * as reviews from "../services/review-service.js";
 import * as settings from "../services/settings-service.js";
+import * as coupons from "../services/coupon-service.js";
 import * as shopProducts from "../services/shop-product-service.js";
 import * as shops from "../services/shop-service.js";
 import * as users from "../services/user-admin-service.js";
@@ -309,6 +310,14 @@ router.post("/paintings/:number/delivered", async (req, res) => res.json({ reque
 router.get("/settings", async (req, res) => res.json({ items: await settings.listSettings() }));
 // { key: value } for the settings to change; null puts a setting back to the server's default.
 router.patch("/settings", async (req, res) => res.json({ items: await settings.updateSettings(req.body, { actor: req.auth.user, ip: req.ip }) }));
+
+/* ---- Coupons ---- */
+// Every coupon with how many orders used it and how much it took off. No delete: a coupon is switched off (orders refer to it).
+router.get("/coupons", async (req, res) => res.json({ items: await coupons.adminList() }));
+// { code, title, percentOff, minOrder?, maxDiscount?, perUserLimit?, startsOn?, endsOn?, active? } (dates YYYY-MM-DD, India time)
+router.post("/coupons", async (req, res) => res.status(201).json({ coupon: await coupons.adminCreate(req.body, { actor: req.auth.user, ip: req.ip }) }));
+// Only the fields sent; null / "" = no limit or no date
+router.patch("/coupons/:code", async (req, res) => res.json({ coupon: await coupons.adminUpdate(req.params.code, req.body, { actor: req.auth.user, ip: req.ip }) }));
 
 /* ---- Reviews ---- */
 router.get("/reviews", async (req, res) => {

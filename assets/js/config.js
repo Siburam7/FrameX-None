@@ -25,6 +25,17 @@
       ? "/api"
       : `http://${host}:${LOCAL_API_PORT}/api`
     : PRODUCTION_API_URL;
+  // Is the API on this website's own site (shopframex.in + api.shopframex.in)? Then the login can be the httpOnly
+  // cookie, which no page script can read. An API on another site (framex-api.onrender.com) gets a bearer token.
+  const apiHost = (() => {
+    try {
+      return new URL(backendUrl, window.location.href).hostname;
+    } catch (e) {
+      return "";
+    }
+  })();
+  const siteHost = host.replace(/^www\./, "");
+  const apiOnThisSite = Boolean(siteHost) && (apiHost === host || apiHost === siteHost || apiHost.endsWith("." + siteHost));
 
   FrameX.config = {
     backend: {
@@ -35,9 +46,10 @@
       // "bearer": the session token is kept in sessionStorage and sent as a
       //   header. Only for a website and API on different sites (e.g.
       //   *.github.io + *.onrender.com); the backend needs AUTH_ALLOW_BEARER=true.
-      // On this computer (localhost) the cookie is used. The live site (shopframex.in) and its
-      // backend (onrender.com) are different sites, so there the token travels in a header.
-      session: isLocal ? "cookie" : "bearer",
+      // On this computer (localhost) the cookie is used, and on the live site once the API has an address
+      // on the site's own domain (PRODUCTION_API_URL = "https://api.shopframex.in/api"). While it is on
+      // onrender.com (another site), the token travels in a header.
+      session: isLocal || apiOnThisSite ? "cookie" : "bearer",
     },
     // Used only if the backend can't be asked (GET /api/config is the source of truth).
     nearby: { radiusOptionsKm: [5, 10, 25, 50], defaultRadiusKm: 25 },

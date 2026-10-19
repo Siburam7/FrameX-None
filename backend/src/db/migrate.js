@@ -6,9 +6,10 @@ import { db } from "./index.js";
 
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), "migrations");
 
-export async function migrate({ log = () => {} } = {}) {
-  await db.exec("CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())");
-  const done = new Set((await db.query("SELECT version FROM schema_migrations")).rows.map((r) => r.version));
+/** using: the database to migrate (default: the app's own; db/backup.js passes the one it restores into). */
+export async function migrate({ log = () => {}, using = db } = {}) {
+  await using.exec("CREATE TABLE IF NOT EXISTS schema_migrations (version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())");
+  const done = new Set((await using.query("SELECT version FROM schema_migrations")).rows.map((r) => r.version));
   const files = fs
     .readdirSync(dir)
     .filter((f) => f.endsWith(".sql"))
@@ -16,7 +17,7 @@ export async function migrate({ log = () => {} } = {}) {
   for (const file of files) {
     if (done.has(file)) continue;
     const sql = fs.readFileSync(path.join(dir, file), "utf8");
-    await db.tx(async (q) => {
+    await using.tx(async (q) => {
       await q.exec(sql);
       await q.query("INSERT INTO schema_migrations (version) VALUES ($1)", [file]);
     });

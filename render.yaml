@@ -1,7 +1,9 @@
 # Render blueprint for the FrameX backend (optional: any Node.js host works).
 # The website itself stays on GitHub Pages. See backend/README.md → Deploy.
-# Values marked "sync: false" are secrets you type into Render's dashboard;
-# nothing secret is stored in this file.
+# Values marked "sync: false" are typed into Render's dashboard: the secrets, and every setting that differs
+# between a test and the live service (payments, fees, SMS). Applying this blueprint never changes them, so it
+# can't switch the live service to test mode or reset its fees. Nothing secret is stored in this file.
+# Every key the backend reads is described in backend/.env.example.
 services:
   - type: web
     name: framex-api
@@ -21,6 +23,9 @@ services:
     envVars:
       # Where uploaded files are kept: a folder on the persistent disk above, e.g. /var/data/uploads.
       # Left empty, files go to the service's own (temporary) disk and are lost on a restart.
+      # Where uploaded files are kept: "s3" (the private bucket below; needed on the free plan) or "disk".
+      - key: STORAGE_PROVIDER
+        sync: false
       - key: UPLOAD_DIR
         sync: false
       # Without a persistent disk (Render's free plan): keep uploaded files in a private bucket of an
@@ -69,21 +74,29 @@ services:
         sync: false
       - key: EMAIL_FROM
         sync: false
-      # SMS codes: Fast2SMS. Set SMS_PROVIDER to "none" to launch with email only.
+      # SMS codes: "fast2sms", or "none" to launch with email only.
       - key: SMS_PROVIDER
-        value: fast2sms
+        sync: false
       - key: SMS_API_KEY
         sync: false
       - key: SMS_SENDER_ID
         sync: false
       - key: SMS_TEMPLATE_ID
         sync: false
-      # Online payments: Cashfree. Start in test mode; switch PAYMENT_MODE to "live" with production keys when ready.
-      # Webhook to add at Cashfree:  https://<this service's address>/api/payments/webhook/cashfree
+      # Online payments: PAYMENT_PROVIDER "razorpay" or "cashfree"; PAYMENT_MODE "test", then "live" with production keys.
+      # Webhook to add at the gateway:  https://<this service's address>/api/payments/webhook/<razorpay|cashfree>
       - key: PAYMENT_PROVIDER
-        value: cashfree
+        sync: false
       - key: PAYMENT_MODE
-        value: test
+        sync: false
+      # Razorpay (when PAYMENT_PROVIDER is razorpay)
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      # Cashfree (when PAYMENT_PROVIDER is cashfree)
       - key: CASHFREE_CLIENT_ID
         sync: false
       - key: CASHFREE_CLIENT_SECRET
@@ -98,24 +111,51 @@ services:
       # Custom paintings: the part paid before the artist starts (an admin can change it in the dashboard).
       - key: CUSTOM_PAINTING_ADVANCE_PERCENT
         value: "40"
-      # Your delivery charge, tax and Cash on Delivery rules (see backend/.env.example).
+      # Your delivery charge, tax and Cash on Delivery rules (see backend/.env.example). An admin can also change
+      # most of them in the dashboard (Settings), which then wins over these.
       - key: SHIPPING_FEE
-        value: "0"
+        sync: false
+      - key: SHIPPING_FREE_ABOVE
+        sync: false
+      - key: FIRST_ORDER_FREE_DELIVERY
+        sync: false
       - key: TAX_PERCENT
-        value: "0"
+        sync: false
       - key: COD_ENABLED
         value: "true"
       - key: COD_FEE
-        value: "0"
+        sync: false
       # Gift wrapping at checkout: your charge per order, in whole rupees.
       - key: GIFT_WRAP_ENABLED
         value: "true"
       - key: GIFT_WRAP_FEE
-        value: "49"
+        sync: false
       # true = a shop's first "Publish" waits until a FrameX admin approves the product.
       - key: PRODUCT_MODERATION
         value: "false"
       - key: GEOCODER_PROVIDER
         value: nominatim
       - key: GEOCODER_CONTACT_EMAIL
+        sync: false
+      # Commission and payouts (an admin can change the three rates in the dashboard: Settings).
+      - key: PLATFORM_COMMISSION_PERCENT
+        sync: false
+      - key: ARTIST_COMMISSION_PERCENT
+        sync: false
+      - key: PAYOUT_FEE_PERCENT
+        sync: false
+      # Seals the bank account numbers and UPI IDs of shops and artists. 32 random bytes as base64:
+      #   node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+      # Set it once and keep it: details sealed with one key can't be opened with another.
+      - key: PAYOUT_ENCRYPTION_KEY
+        sync: false
+      # Visitor statistics (only for visitors who allow them) and the optional Google Analytics 4 Measurement ID.
+      - key: ANALYTICS_ENABLED
+        sync: false
+      - key: GA4_MEASUREMENT_ID
+        sync: false
+      # Emails: where replies go, and the address told about new contact messages.
+      - key: EMAIL_REPLY_TO
+        sync: false
+      - key: ADMIN_NOTIFY_EMAIL
         sync: false

@@ -11,6 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { config } from "../config.js";
+import { pgConnection } from "./ssl.js";
 
 let impl = null;
 
@@ -18,9 +19,11 @@ async function connectPg() {
   const pg = (await import("pg")).default;
   // int8 (COUNT, sequences) as JavaScript numbers; our values stay far below 2^53.
   pg.types.setTypeParser(20, (v) => Number(v));
+  // Encrypted with the server's certificate checked, unless no-verify is written out (db/ssl.js)
+  const link = pgConnection(config.databaseUrl, config.databaseSsl);
   const pool = new pg.Pool({
-    connectionString: config.databaseUrl,
-    ssl: config.databaseSsl === "require" ? { rejectUnauthorized: false } : undefined,
+    connectionString: link.connectionString,
+    ssl: link.ssl,
     max: 10
   });
   await pool.query("SELECT 1");

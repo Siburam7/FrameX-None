@@ -361,7 +361,7 @@
   /* ---------------------------------------------------------------- Page */
   function render() {
     if (!buying && quote.issues.some((i) => i.code === "CART_EMPTY")) {
-      root.innerHTML = `<div class="co-empty">${icon("bag")}<strong>Your cart is empty</strong><span>Add a frame to your cart to check out.</span>
+      root.innerHTML = `<h1 class="visually-hidden">Checkout</h1><div class="co-empty">${icon("bag")}<strong>Your cart is empty</strong><span>Add a frame to your cart to check out.</span>
         <div class="co-actions"><a class="btn btn--primary" href="shop.html">Browse frames</a><a class="btn btn--outline" href="orders.html">Your orders</a></div></div>`;
       return;
     }

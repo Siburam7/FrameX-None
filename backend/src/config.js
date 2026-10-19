@@ -7,6 +7,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { pgConnection } from "./db/ssl.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const BACKEND_ROOT = path.resolve(here, "..");
@@ -299,6 +300,10 @@ export function assertConfig() {
   if (!STORAGE_PROVIDERS.includes(config.storage.provider)) problems.push(`STORAGE_PROVIDER must be one of: ${STORAGE_PROVIDERS.join(", ")}.`);
   if (config.storage.provider === "s3" && config.storage.s3.missing.length) problems.push(`File storage in a bucket (STORAGE_PROVIDER=s3) also needs: ${config.storage.s3.missing.join(", ")}.`);
   if (config.storage.provider === "s3" && config.storage.s3.endpoint && !/^https:\/\//.test(config.storage.s3.endpoint) && isProd) problems.push("S3_ENDPOINT must be an https address.");
+  if (config.databaseUrl) {
+    const problem = pgConnection(config.databaseUrl, config.databaseSsl).problem;
+    if (problem) problems.push(problem);
+  }
   if (isProd && !config.frontendUrlSet) problems.push("FRONTEND_URL must be set to the website's public address (it is used in password-reset links).");
   if (isProd && config.email.provider === "dev") problems.push('EMAIL_PROVIDER "dev" is not allowed in production.');
   if (isProd && config.sms.provider === "dev") problems.push('SMS_PROVIDER "dev" is not allowed in production.');

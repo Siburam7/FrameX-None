@@ -64,8 +64,9 @@ function plainSummary(order) {
     .join("\n");
 }
 
-// An order from before photos were uploaded to FrameX.
-const PHOTOS = "Your order includes a personalised design. Please send your photos to FrameX on WhatsApp, quoting your order number, so we can print them.";
+// An order from before photos were uploaded to FrameX (new orders can't be placed without their photos).
+// Photos are never asked for by WhatsApp or email: they stay private.
+const PHOTOS = "Your order includes a personalised design that has no photo with it yet. FrameX will contact you about it. Please don't send photos by WhatsApp or email.";
 const photosReceived = (n) => `We have your ${n === 1 ? "photo" : `${n} photos`} with this order. ${n === 1 ? "It is" : "They are"} printed in the same original quality you uploaded: FrameX does not enhance or change your image.`;
 const GIFT = "Your order will be gift wrapped.";
 

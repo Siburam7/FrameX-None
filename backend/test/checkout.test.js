@@ -1022,7 +1022,8 @@ describe("Buy Now: one item ordered directly, without the cart", () => {
 });
 
 describe("coupons", () => {
-  // The Diwali coupon from migration 011: 10% off the items, for orders of ₹399 and more.
+  // The Diwali coupon from migration 011: 10% off the items, for orders of ₹399 and more; migration 013 (owner,
+  // 2026-10-19): at most ₹499 off, once per customer, no end date.
   const cheap = all.find((p) => model.orderLimits(p).orderable && !p.pricing.discountPercent && unit(p, model.defaultSelection(p)) < 399);
   const withCoupon = async (client, addressId, method, code) => (await client.get(`/api/checkout/quote?addressId=${addressId}&paymentMethod=${method}&coupon=${encodeURIComponent(code)}`)).json.quote;
 
@@ -1033,6 +1034,10 @@ describe("coupons", () => {
     assert.ok(x, "XUSE10 is listed");
     assert.equal(x.percentOff, 10);
     assert.equal(x.minOrder, 399);
+    assert.equal(x.maxDiscount, 499);
+    assert.equal(x.endsAt, null, "no end date: it runs until it is switched off");
+    // The owner wants the limits applied, not announced (2026-10-20)
+    assert.equal(x.title, "Diwali offer: 10% off on orders of ₹399 and more");
   });
 
   test("XUSE10 takes 10% off the items; tax is on what is left; the code is read without case or spaces", async () => {
@@ -1043,7 +1048,7 @@ describe("coupons", () => {
     const q = await withCoupon(asha, S.home, "COD", " xuse 10 ");
     assert.equal(q.coupon.code, "XUSE10");
     assert.equal(q.coupon.applied, true);
-    assert.equal(q.couponDiscount, Math.round(items * 0.1));
+    assert.equal(q.couponDiscount, Math.min(499, Math.round(items * 0.1)));
     assert.equal(q.tax, Math.round(((items - q.couponDiscount) * 5) / 100));
     assert.equal(q.total, items - q.couponDiscount + q.tax + q.shippingFee + q.codFee);
     assert.ok(q.total < plain.total);
@@ -1079,15 +1084,34 @@ describe("coupons", () => {
     assert.equal(stored.coupon_discount, q.couponDiscount);
   });
 
+  test("XUSE10: at most ₹499 off, and once per customer (an order that wasn't cancelled uses it up)", async () => {
+    // asha's earlier XUSE10 order (above) used it up
+    await fillCart(asha, [{ productId: roomy.id, quantity: 3, selection: { sizeId: roomy.sizes[0].id } }]);
+    const again = await withCoupon(asha, S.home, "COD", "XUSE10");
+    assert.equal(again.coupon.applied, false);
+    assert.match(again.coupon.reason, /already used the coupon XUSE10/);
+    assert.equal(again.couponDiscount, 0);
+    // The cap: a big cart (10% would be more than ₹499) gets exactly ₹499 off
+    const coupons = await import("../src/services/coupon-service.js");
+    const row = (await db.query("SELECT * FROM coupons WHERE code = 'XUSE10'")).rows[0];
+    assert.deepEqual([row.max_discount, row.per_user_limit, row.ends_at, row.active], [499, 1, null, true]);
+    assert.equal(coupons.apply({ code: "XUSE10", row, uses: 0 }, 9000).discount, 499);
+    assert.equal(coupons.apply({ code: "XUSE10", row, uses: 0 }, 4000).discount, 400);
+    assert.equal(coupons.apply({ code: "XUSE10", row, uses: 1 }, 4000).applied, false);
+  });
+
   test("a coupon that no longer applies stops the order; the full price is never charged in its place", async () => {
+    // A test coupon like XUSE10 without the once-per-customer limit (asha has used XUSE10 already)
+    await db.query("INSERT INTO coupons (code, title, percent_off, min_order) VALUES ('TEST10', 'Test: 10% off from ₹399', 10, 399)");
     await fillCart(asha, [{ productId: cheap.id, quantity: 1 }]);
     const plain = await getQuote(asha, S.home, "COD");
-    const r = await asha.post("/api/checkout/orders", { addressId: S.home, paymentMethod: "COD", expectedTotal: plain.total, idempotencyKey: newKey(), coupon: "XUSE10" });
+    const r = await asha.post("/api/checkout/orders", { addressId: S.home, paymentMethod: "COD", expectedTotal: plain.total, idempotencyKey: newKey(), coupon: "TEST10" });
     assert.equal(r.status, 409);
     assert.equal(r.json.error.code, "COUPON_UNAVAILABLE");
     // The discount can't be taken without the coupon: the server works out the total, the browser's number is only compared.
     await fillCart(asha, [{ productId: roomy.id, quantity: 3, selection: { sizeId: roomy.sizes[0].id } }]);
-    const q = await withCoupon(asha, S.home, "COD", "XUSE10");
+    const q = await withCoupon(asha, S.home, "COD", "TEST10");
+    assert.equal(q.coupon.applied, true);
     const cheat = await asha.post("/api/checkout/orders", { addressId: S.home, paymentMethod: "COD", expectedTotal: q.total, idempotencyKey: newKey() });
     assert.equal(cheat.status, 409);
     assert.equal(cheat.json.error.code, "TOTAL_CHANGED");
@@ -1108,6 +1132,87 @@ describe("coupons", () => {
     assert.equal(first.status, 201, first.text);
     await fillCart(asha, [{ productId: roomy.id, quantity: 1, selection: { sizeId: roomy.sizes[0].id } }]);
     assert.match((await withCoupon(asha, S.home, "COD", "ONCE5")).coupon.reason, /already used/);
+  });
+});
+
+describe("coupons: the admin screen", () => {
+  const quoteWith = async (code) => (await asha.get(`/api/checkout/quote?addressId=${S.home}&paymentMethod=COD&coupon=${code}`)).json.quote;
+
+  test("only FrameX staff can see or change coupons", async () => {
+    assert.equal((await new Client().get("/api/admin/coupons")).status, 401);
+    assert.equal((await asha.get("/api/admin/coupons")).status, 403);
+    assert.equal((await asha.post("/api/admin/coupons", { code: "HACK90", title: "x", percentOff: 90 })).status, 403);
+    assert.equal((await asha.patch("/api/admin/coupons/XUSE10", { active: false })).status, 403);
+  });
+
+  test("the list shows every coupon, its limits, and how many orders used it", async () => {
+    const r = await admin.get("/api/admin/coupons");
+    assert.equal(r.status, 200, r.text);
+    const x = r.json.items.find((c) => c.code === "XUSE10");
+    assert.deepEqual([x.percentOff, x.minOrder, x.maxDiscount, x.perUserLimit, x.endsOn, x.active], [10, 399, 499, 1, null, true]);
+    // Usage = orders that weren't cancelled (an unpaid online order that was cancelled gives the coupon back)
+    const used = (await db.query("SELECT count(*)::int AS n, coalesce(sum(coupon_discount), 0)::int AS s FROM orders WHERE coupon_code = 'XUSE10' AND status <> 'CANCELLED'")).rows[0];
+    assert.deepEqual([x.orders, x.discountGiven], [used.n, used.s]);
+  });
+
+  test("a new coupon is checked: code, percent, limits, dates; a code can't be used twice", async () => {
+    const bad = async (body, field) => {
+      const r = await admin.post("/api/admin/coupons", { code: "NEWYEAR15", title: "New year: 15% off", percentOff: 15, ...body });
+      assert.equal(r.status, 422, r.text);
+      assert.ok(r.json.error.fields[field], `${field}: ${r.text}`);
+    };
+    await bad({ code: "A!" }, "code");
+    await bad({ percentOff: 95 }, "percentOff");
+    await bad({ percentOff: 7.5 }, "percentOff");
+    await bad({ maxDiscount: 0 }, "maxDiscount");
+    await bad({ perUserLimit: 0 }, "perUserLimit");
+    await bad({ startsOn: "01/11/2026" }, "startsOn");
+    await bad({ startsOn: "2026-11-10", endsOn: "2026-11-01" }, "endsOn");
+    await bad({ title: "" }, "title");
+    const dup = await admin.post("/api/admin/coupons", { code: "xuse10", title: "Again", percentOff: 5 });
+    assert.equal(dup.status, 409, dup.text);
+  });
+
+  test("an admin-made coupon works at checkout with its own limits; switching it off ends it", async () => {
+    const made = await admin.post("/api/admin/coupons", { code: " newyear 15 ", title: "New year: 15% off, up to ₹100", percentOff: 15, minOrder: 0, maxDiscount: 100, perUserLimit: 2, startsOn: "", endsOn: "" });
+    assert.equal(made.status, 201, made.text);
+    assert.deepEqual([made.json.coupon.code, made.json.coupon.maxDiscount, made.json.coupon.perUserLimit, made.json.coupon.active, made.json.coupon.orders], ["NEWYEAR15", 100, 2, true, 0]);
+    await fillCart(asha, [{ productId: roomy.id, quantity: 3, selection: { sizeId: roomy.sizes[0].id } }]);
+    let q = await quoteWith("NEWYEAR15");
+    assert.equal(q.coupon.applied, true);
+    assert.equal(q.couponDiscount, 100, "never more than its ₹100 limit");
+    assert.ok((await new Client().get("/api/coupons")).json.items.some((c) => c.code === "NEWYEAR15"), "listed for customers");
+    // An order with it: the admin list counts it and what it took off
+    const placed = await asha.post("/api/checkout/orders", { addressId: S.home, paymentMethod: "COD", expectedTotal: q.total, idempotencyKey: newKey(), coupon: "NEWYEAR15" });
+    assert.equal(placed.status, 201, placed.text);
+    const listed = (await admin.get("/api/admin/coupons")).json.items.find((c) => c.code === "NEWYEAR15");
+    assert.deepEqual([listed.orders, listed.discountGiven], [1, 100]);
+    await fillCart(asha, [{ productId: roomy.id, quantity: 3, selection: { sizeId: roomy.sizes[0].id } }]);
+    q = await quoteWith("NEWYEAR15");
+    assert.equal(q.coupon.applied, true, "2 uses per customer: the second still works");
+
+    // Starts tomorrow (India time): not yet
+    const tomorrow = new Date(Date.now() + 330 * 60000 + 86400000).toISOString().slice(0, 10);
+    const later = await admin.patch("/api/admin/coupons/NEWYEAR15", { startsOn: tomorrow });
+    assert.equal(later.status, 200, later.text);
+    assert.equal(later.json.coupon.startsOn, tomorrow);
+    assert.match((await quoteWith("NEWYEAR15")).coupon.reason, /can't be used yet/);
+    await admin.patch("/api/admin/coupons/NEWYEAR15", { startsOn: "" });
+    assert.equal((await quoteWith("NEWYEAR15")).coupon.applied, true, "no start date again: usable");
+
+    // No limit on the amount
+    assert.equal((await admin.patch("/api/admin/coupons/NEWYEAR15", { maxDiscount: null })).json.coupon.maxDiscount, null);
+    // Switched off: refused and no longer listed
+    const off = await admin.patch("/api/admin/coupons/newyear15", { active: false });
+    assert.equal(off.json.coupon.active, false);
+    assert.match((await quoteWith("NEWYEAR15")).coupon.reason, /has ended/);
+    assert.equal((await new Client().get("/api/coupons")).json.items.some((c) => c.code === "NEWYEAR15"), false);
+    assert.equal((await admin.patch("/api/admin/coupons/NOSUCHCODE", { active: false })).status, 404);
+    assert.equal((await admin.patch("/api/admin/coupons/NEWYEAR15", {})).status, 422, "nothing to change");
+
+    // Every change is in the activity log
+    const log = (await db.query("SELECT action FROM audit_logs WHERE target_type = 'coupon' AND target_id = 'NEWYEAR15' ORDER BY created_at")).rows.map((r) => r.action);
+    assert.deepEqual(log, ["COUPON_CREATED", "COUPON_UPDATED", "COUPON_UPDATED", "COUPON_UPDATED", "COUPON_UPDATED"]);
   });
 });
 
