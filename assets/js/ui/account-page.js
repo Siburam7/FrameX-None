@@ -120,6 +120,26 @@
           </form>
         </section>
       </div>
+
+      <section class="account-card" aria-labelledby="acc-data">
+        <h2 id="acc-data">${icon("download")} Your data</h2>
+        <p class="account-card__lead">Download everything FrameX keeps about your account (profile, addresses, orders, reviews and messages) as one file.</p>
+        <div class="form-status" data-data-status role="status" aria-live="polite"></div>
+        <div><button class="btn btn--outline btn--sm" type="button" data-download-data>${icon("download")} Download my data</button></div>
+        ${
+          user.role === "CUSTOMER"
+            ? `<details class="account-edit" data-delete-box><summary>Delete my account</summary>
+          <p class="account-card__lead">Deleting your account can't be undone. Your login, addresses, saved photos and cart are removed at once. Records of your past orders are kept only as FrameX needs them for tax, without your name, email, phone or address. Your reviews stay without your name. An order or custom painting that is still under way has to be delivered or cancelled first.</p>
+          <form id="delete-form" class="form-grid" novalidate>
+            ${forms().field("password", "Your password", { required: true, type: "password", autocomplete: "current-password", toggle: true, prefix: "del" })}
+            ${forms().field("confirm", "Type DELETE to confirm", { required: true, autocomplete: "off", maxlength: 10, prefix: "del", placeholder: "DELETE" })}
+            <div class="form-status" role="status" aria-live="polite"></div>
+            <div><button class="btn btn--dark btn--sm" type="submit">${icon("trash")} Delete my account for good</button></div>
+          </form>
+        </details>`
+            : `<p class="account-card__lead">To close a ${user.role === "SHOP" ? "shop" : user.role === "ARTIST" ? "artist" : "staff"} account, please <a href="contact.html">contact FrameX</a>.</p>`
+        }
+      </section>
       ${user.role === "CUSTOMER" ? `<div class="account__links"><a class="btn btn--primary" href="shop.html">Browse frames</a><a class="btn btn--outline" href="shop.html#shops">Find shops near you</a></div>` : ""}
     </div>`;
 
@@ -150,6 +170,44 @@
         FrameX.toast.show("Your details were saved.");
       },
     });
+    // Your data: the file is made in this browser from the API's answer (works with the cookie and the bearer token alike)
+    $("[data-download-data]", root).addEventListener("click", async (e) => {
+      const button = e.currentTarget;
+      const box = $("[data-data-status]", root);
+      forms().busy(button, true, "Preparing…");
+      try {
+        const data = await FrameX.http.get("/users/me/data");
+        const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" }));
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `framex-my-data-${String(data.exportedAt || "").slice(0, 10) || "export"}.json`;
+        root.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+        forms().status(box, "success", "Your data was downloaded. Keep the file private: it holds your details.");
+      } catch (error) {
+        forms().status(box, "error", esc(error.message || "Your data couldn't be downloaded. Please try again."));
+      } finally {
+        forms().busy(button, false);
+      }
+    });
+    const del = $("#delete-form", root);
+    if (del)
+      forms().handle(del, {
+        busyLabel: "Deleting…",
+        send: (v) => FrameX.http.post("/users/me/delete", { password: v.password, confirm: v.confirm }),
+        async onSuccess() {
+          // The server ended the session; this browser forgets it too
+          try {
+            await auth().logout();
+          } catch (error) {
+            /* already logged out on the server */
+          }
+          root.innerHTML = `<div class="account"><section class="account-card"><h1 class="account__title">Your account was deleted</h1><p class="account-card__lead">Your login and personal details are gone. A confirmation email is on its way to your old address. Thank you for using FrameX.</p><a class="btn btn--primary" href="index.html">Go to Home</a></section></div>`;
+          window.scrollTo(0, 0);
+        },
+      });
     const pw = $("#password-form", root);
     forms().handle(pw, {
       busyLabel: "Changing…",

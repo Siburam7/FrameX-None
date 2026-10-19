@@ -17,7 +17,7 @@ export const ROLES = ["CUSTOMER", "SHOP", "ARTIST", "ADMIN"];
 
 const shape = (u) => ({
   id: u.id, name: u.name, email: u.email, phone: u.phone, role: u.role, status: u.status, createdAt: u.created_at, lastLoginAt: u.last_login_at,
-  shopCode: u.shop_code || null, artistCode: u.artist_code || null, orders: Number(u.orders) || 0
+  shopCode: u.shop_code || null, artistCode: u.artist_code || null, orders: Number(u.orders) || 0, deletedAt: u.deleted_at || null
 });
 
 const SQL = `SELECT u.*, sh.shop_code, ar.artist_code, (SELECT count(*) FROM orders o WHERE o.user_id = u.id) AS orders
@@ -99,6 +99,8 @@ export async function setEnabled(id, enabled, { actor, ip = null }) {
   const user = (await db.query("SELECT * FROM users WHERE id = $1", [id])).rows[0];
   if (!user) throw errors.notFound("That account doesn't exist.");
   if (user.role === "ADMIN") throw errors.forbidden("Admin accounts can't be changed here.");
+  // An account its owner deleted stays off for good (its details are gone; the email may belong to someone new)
+  if (enabled && user.deleted_at) throw errors.conflict("This account was deleted by its owner. It can't be switched on again.", null, "ACCOUNT_DELETED");
   // An account that never finished its setup link stays as it is when re-enabled.
   if (enabled && user.status !== "DISABLED") return shape((await db.query(`${SQL} WHERE u.id = $1`, [id])).rows[0]);
   await db.tx(async (q) => {

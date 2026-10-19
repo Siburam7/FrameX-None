@@ -1,7 +1,7 @@
 # FrameX — Product Requirements (PRD)
 
 > Living document. Update it whenever a feature, rule or decision changes (see `rules.md` → "Project docs").
-> Last updated: 2026-10-20 (coupons).
+> Last updated: 2026-10-20 (account deletion).
 
 ## 1. What FrameX is
 
@@ -45,6 +45,7 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
 | New-order alerts | Email to each seller, WhatsApp button for admin | Built, live |
 | Analytics | Consent-based visitor stats + admin reports; GA4 optional | Built; GA4 ID not set |
 | View on My Wall | Camera / AR preview of a frame | Built; never tried on a real phone |
+| My data | Account → Your data: download everything as one JSON file; customers delete their own account (password + DELETE, not while an order is under way; bills kept for tax without the person) | Built locally 2026-10-20, not deployed |
 | Dark mode | Light (default) / Dark / Device, chosen on the account page | Built |
 | Backups | `npm run db:backup` / `db:restore`; manual `pg_dump` of production | Local tools built (not deployed); a production `pg_dump` was taken and restore-tested on 2026-10-19 |
 
@@ -72,7 +73,6 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
 - Gift-wrap fee ₹49 and frame build details in `js/edit.js` are placeholders.
 - Product moderation is off (a shop's product goes live without review).
 - Photo retention for completed orders (kept forever today; Privacy Notice doesn't say).
-- Account deletion / data download for customers (not built).
 - Whether to keep the Razorpay adapter once Cashfree is proven (both kept today).
 
 ## 6. Not in scope today

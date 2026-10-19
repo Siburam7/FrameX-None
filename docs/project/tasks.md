@@ -1,7 +1,7 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-10-20 (CI).
+> Last updated: 2026-10-20 (account deletion).
 
 ## Now
 
@@ -11,7 +11,8 @@
 - [x] 2026-10-20 Owner: the limits must NOT be shown in advance — banner and coupon title without them; the ₹499 cap
       is applied quietly ("you save ₹499"); a second use shows "You have already used the coupon XUSE10." (browser 20/20)
 - [x] 2026-10-20 F-23 automatic tests on GitHub + F-24 README test count — local
-- [ ] Next candidates (owner chooses): F-17 Studio designs saved to the account · F-16 account deletion / data download ·
+- [x] 2026-10-20 F-16 account deletion + data download — local (backend 398/398; browser 13/13)
+- [ ] Next candidates (owner chooses): F-17 Studio designs saved to the account ·
       F-11 photo retention · F-14 moderation · F-13 button contrast (design change)
 
 ## Waiting for the end of development (one combined step, owner's approval needed)
@@ -63,7 +64,7 @@ On branch `phase2a-wip` (pushed 2026-10-20; not live — `main` = `eb23ecf` is w
 | F-13 | Orange button contrast 2.84:1 | open — design change needs owner's OK |
 | F-14 | Product moderation off | open — owner decides |
 | F-15 | SMS not configured | open — Fast2SMS (DLT) or hide phone option |
-| F-16 | No account deletion / data download | open — owner decides |
+| F-16 | No account deletion / data download | **done locally 2026-10-20**: Account → Your data → Download my data (one JSON file) and Delete my account (customers; password + DELETE; refused while an order / painting is under way; login, addresses, photos, cart go; orders and paintings kept for tax without name, email, phone, address; reviews without name). Migration 014 (`users.deleted_at`). Privacy Notice §8 updated |
 | F-17 | Studio designs saved in the browser only | open |
 | F-18 | 18% tax added at checkout — check GST registration with a CA | open — owner / CA |
 | F-20 | No custom 404 / robots.txt / sitemap.xml | **done locally 2026-10-19** (`404.html` in the site's design, `robots.txt`, `sitemap.xml` with 17 public pages; the Pages workflow copies them) |

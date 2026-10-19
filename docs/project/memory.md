@@ -2,7 +2,7 @@
 
 > Decisions, current state and lessons learned, newest first within each section. Add every owner decision and every
 > change of status here (verified / not verified). No secrets or customer data: the repository is public.
-> Last updated: 2026-10-20 (coupons).
+> Last updated: 2026-10-20 (account deletion).
 
 ## Current state (2026-10-20)
 
@@ -24,6 +24,11 @@
 
 ## Owner decisions (log)
 
+- 2026-10-20 Account deletion (F-16): keep order/painting records for tax but remove name, email, phone, address; refuse
+  while an order or painting is under way; confirm with password + DELETE; data download as one JSON file.
+  My own choices inside that (not asked): reviews stay as "A FrameX customer" without their photo; messages to FrameX
+  stay without contact details; the state of delivery stays on the order (GST place of supply); shop / artist / admin
+  accounts are closed by FrameX, not by themselves.
 - 2026-10-20 Coupon limits are applied, never announced: no "up to ₹499" / "once per customer" on the banner or the
   coupon title. Over ₹4,990 of items the discount simply stops at ₹499; a second use gets "You have already used the
   coupon XUSE10." (owner's choices). The admin Coupons screen still shows the limits to staff.
