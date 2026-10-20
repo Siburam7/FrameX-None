@@ -37,7 +37,10 @@
       [x] 2026-10-20 test mail to support@ forwarded (ImprovMX log: delivered in 6 s; landed in Gmail spam → owner made a
           Gmail filter "to @shopframex.in: never spam"). Brevo sender `FrameX <support@shopframex.in>`: Verified, DKIM
           shopframex.in ✓, DMARC ✓ (the old `shop.framex@gmail.com` sender is kept, not deleted).
-          Next: deploy the email design, then EMAIL_FROM on Render = `FrameX <support@shopframex.in>`, then the Google photo
+          [x] email design live (5c2fcc2); owner set EMAIL_FROM = `FrameX <support@shopframex.in>` on Render (17:16 deploy).
+          Test reset email: from support@shopframex.in, signed-by shopframex.in, Inbox. Owner: in phone Gmail dark mode the
+          navy logo disappeared → logo now on a white rounded badge (`logo-framex-email-badge.png`) — local.
+          Next: deploy the badge logo, then the Google account photo for support@shopframex.in
       Note: GoDaddy auto-renew is OFF; shopframex.in expires 2027-10-09 — remind the owner before then
 - [ ] F-15 SMS / WhatsApp OTP: owner put it aside 2026-10-20 (WhatsApp idea explained: ~₹0.12-0.35 a message,
       needs Meta business verification, a new number and a payment method; the grey SMS button stays for now)

@@ -173,12 +173,13 @@ const plainFooter = "\n\n— FrameX\nIf you didn't ask for this, you can ignore 
  * already-escaped HTML in the cells, and `account: false` (no password advice).
  */
 // The FrameX logo on the white header under the orange line (owner chose the "orange line" email, 2026-10-20): navy letters and the
-// orange X. The picture is the website's assets/img/ui/logo-framex-email-dark.png; its alt text is styled the same way, so a mailbox that blocks
+// orange X. The picture is the website's assets/img/ui/logo-framex-email-badge.png: the logo on its own white rounded
+// badge, because a phone's dark mode darkens the white header but leaves pictures as they are (owner, 2026-10-20); its alt text is styled the same way, so a mailbox that blocks
 // pictures (or a development machine, where there is no public address) still shows the name like the logo.
 const LOGO_TEXT_STYLE = "font-family:Arial,Helvetica,sans-serif;font-size:24px;font-weight:900;letter-spacing:1px;line-height:24px;color:#0d1b3e";
 export function emailLogo() {
-  const text = `<span style="${LOGO_TEXT_STYLE}">FRAME<span style="color:#ff5a1f">X</span></span>`;
-  return config.email.logoUrl ? `<img src="${esc(config.email.logoUrl)}" width="140" height="24" alt="FRAMEX" style="display:block;border:0;outline:none;text-decoration:none;width:140px;height:24px;${LOGO_TEXT_STYLE}">` : text;
+  const text = `<span style="display:inline-block;padding:8px 10px;${LOGO_TEXT_STYLE}">FRAME<span style="color:#ff5a1f">X</span></span>`;
+  return config.email.logoUrl ? `<img src="${esc(config.email.logoUrl)}" width="160" height="40" alt="FRAMEX" style="display:block;border:0;outline:none;text-decoration:none;width:160px;height:40px;${LOGO_TEXT_STYLE}">` : text;
 }
 
 export function htmlEmail({ preview = "", heading, paragraphs = [], code = "", codeNote = "", button = null, notice = "", tables = [], account = true }) {
@@ -191,7 +192,7 @@ export function htmlEmail({ preview = "", heading, paragraphs = [], code = "", c
 <span style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(preview)}</span>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6f8"><tr><td align="center" style="padding:24px 12px">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border-radius:16px;overflow:hidden">
-    <tr><td style="background:#ffffff;padding:22px 28px;border-top:5px solid #ff6a35;border-bottom:1px solid #eeeeee">${emailLogo()}</td></tr>
+    <tr><td style="background:#ffffff;padding:14px 18px;border-top:5px solid #ff6a35;border-bottom:1px solid #eeeeee">${emailLogo()}</td></tr>
     <tr><td style="padding:28px 28px 8px;font-size:21px;font-weight:bold;line-height:1.3">${esc(heading)}</td></tr>
     ${paragraphs.map((p) => `<tr><td style="padding:6px 28px;font-size:15px;line-height:1.6;color:#2b2b2b">${p}</td></tr>`).join("")}
     ${code ? `<tr><td style="padding:14px 28px 4px"><div style="display:inline-block;padding:14px 22px;border-radius:12px;background:#fff4ee;border:1px solid #ffd7c4;font-family:'Courier New',monospace;font-size:30px;font-weight:bold;letter-spacing:8px;color:#0d1b3e">${esc(code)}</div></td></tr>

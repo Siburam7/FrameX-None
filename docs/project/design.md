@@ -74,8 +74,9 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
 ## 5c. Emails
 
 - "Orange line" (owner: first option 1 of 3, then the orange-line option as final, 2026-10-20): page `#f5f6f8`, white
-  card; white header with a 5px `#ff6a35` line on top and 1px `#eeeeee` under it; navy logo
-  `assets/img/ui/logo-framex-email-dark.png` (420×72, shown 140×24); navy text `#0d1b3e`; code box `#fff4ee` /
+  card; white header with a 5px `#ff6a35` line on top and 1px `#eeeeee` under it; navy logo on its own white rounded
+  badge `assets/img/ui/logo-framex-email-badge.png` (480×120, shown 160×40), so a phone's dark mode (which darkens
+  the header but not pictures) still shows it (owner, 2026-10-20); navy text `#0d1b3e`; code box `#fff4ee` /
   `#ffd7c4`; button `#ff6a35`. One template for
   every email: `htmlEmail()` in `backend/src/lib/mailer.js`. Was: cream `#faf6ee`, black header, button `#de832e`.
 
