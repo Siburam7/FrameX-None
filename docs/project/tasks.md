@@ -88,7 +88,10 @@
      (the site is still served from the branch: `backend/README.md` answers 200 until step 5).
      [x] owner checked on the live site: login, cart, Razorpay window — all work (no payment made)
   4. [x] After deploy: UptimeRobot on `/api/ping` (F-04, done 15:31); the Pages workflow's first run fails until step 5 (expected)
-  5. Later, separate approval: Settings → Pages → Source "GitHub Actions"
+  5. [x] 2026-10-20 19:18 owner switched Settings → Pages → Source to "GitHub Actions" and ran "Website" (#5, success).
+     Live: website files 200; backend/, docs/, render.yaml, README.md, *.bat, CLAUDE.md now 404; 16 pages × laptop +
+     phone load with no script errors or CSP blocks (unknown pages show the FrameX 404 page). Going back: Source
+     "Deploy from a branch", main, / (root)
   Rollback: Render → Deploys → Rollback to eb23ecf; website: revert the merge on `main`. Migrations can stay.
   Expected right after start: photos of orders finished 15+ days ago are deleted (F-11); new shop products need approval (F-14)
 - [ ] Final production backup after development (owner paused it)

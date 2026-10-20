@@ -82,9 +82,10 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
 
 ## 7. Deployment
 
-- Website: GitHub Pages "Deploy from a branch" (whole repo served today). Prepared locally: `.github/workflows/pages.yml`
-  publishes only `*.html`, `assets/`, `js/`, `CNAME`, `robots.txt`, `sitemap.xml` once the Pages source is switched to
-  "GitHub Actions". A new top-level website file must be added to that copy list.
+- Website: GitHub Pages, Source "GitHub Actions" (since 2026-10-20): `.github/workflows/pages.yml` publishes only
+  `*.html`, `assets/`, `js/`, `CNAME`, `.nojekyll`, `robots.txt`, `sitemap.xml` on every push to `main` (or Actions →
+  Website → Run workflow). backend/, docs/ and the .bat files are no longer served. A new top-level website file must
+  be added to that copy list. Going back: Source "Deploy from a branch", main, / (root).
 - Backend: push to `main` → Render redeploys → migrations run at start.
 - Settings live in Render → Environment (typed by the owner; never in Git).
 
