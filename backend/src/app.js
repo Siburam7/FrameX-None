@@ -27,12 +27,17 @@ import designRoutes from "./routes/designs.js";
 import { handleWebhook } from "./services/payment-service.js";
 import { sendReviewPhoto } from "./services/review-service.js";
 import { sendMedia } from "./services/shop-product-service.js";
+import { noteVisits } from "./lib/activity.js";
 
 export function createApp() {
   const app = express();
   app.disable("x-powered-by");
   app.set("trust proxy", config.trustProxy);
   app.use(securityHeaders);
+  app.use(noteVisits); // when the last visitor came: background jobs that use the database wait during quiet times
+
+  // For the pinger that keeps the free host awake: answers without the database, so the database can sleep.
+  app.get("/api/ping", (req, res) => res.set("Cache-Control", "no-store").json({ ok: true }));
 
   /* ---- Payment gateway webhooks ----
      Called by the gateway's servers, not by a browser: no session, no CORS, no

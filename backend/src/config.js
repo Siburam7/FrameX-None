@@ -122,6 +122,9 @@ export const config = {
   // Folder that holds the website's catalogue files (js/edit.js, js/templates.js, js/studio.js, assets/js/services/...).
   catalogDir: path.resolve(env.CATALOG_DIR || PROJECT_ROOT),
   trustProxy: int(env.TRUST_PROXY, 0),
+  // With no visitor for this many minutes the background jobs that use the database wait for the next visitor, so the
+  // database can sleep while a pinger keeps the server awake (GET /api/ping never uses it). Neon free plan: 100 CU-hours.
+  quietAfterMinutes: Math.max(1, int(env.QUIET_AFTER_MINUTES, 15)),
   // Only while a load test runs (scripts/load-test.js): requests that carry this key are let through the GENERAL
   // request limit, so one computer can stand in for many visitors. Login, upload and every other limit still apply.
   // Shorter than 24 characters = ignored. Remove it from the host when the test is done.

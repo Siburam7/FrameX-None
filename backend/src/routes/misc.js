@@ -7,6 +7,7 @@ import { devOutbox, emailDelivery } from "../lib/mailer.js";
 import { smsDelivery } from "../lib/sms.js";
 import { storageReady } from "../lib/storage.js";
 import { paymentStatus } from "../payments/index.js";
+import { isQuiet } from "../lib/activity.js";
 import { isLoadTest, rateLimit } from "../lib/rate-limit.js";
 import { v, validate } from "../lib/validate.js";
 import { SEARCH_KINDS, searchAll } from "../services/search-service.js";
@@ -15,8 +16,10 @@ import { activeCoupons } from "../services/coupon-service.js";
 const router = Router();
 
 router.get("/health", async (req, res) => {
+  // During a quiet time (no visitor for QUIET_AFTER_MINUTES) the host's health check doesn't wake the database.
+  if (isQuiet()) return res.json({ ok: true, database: db.kind, checked: false });
   await db.query("SELECT 1");
-  res.json({ ok: true, database: db.kind });
+  res.json({ ok: true, database: db.kind, checked: true });
 });
 
 /**

@@ -14,8 +14,14 @@
 - [x] 2026-10-20 F-16 account deletion + data download — local (backend 398/398; browser 13/13)
 - [x] 2026-10-20 F-17 Studio designs saved in the account — local (backend 406/406; browser: designs 14/14, Studio 37, decor 26, frame 55, CSP 8)
 - [x] 2026-10-20 F-11 photos 15 days after finish, F-14 product approval on, F-13 darker orange — local (backend 414/414, shop browser suite 50/50)
-- [ ] Next candidates (owner chooses):
-      F-11 photo retention · F-14 moderation · F-13 button contrast (design change)
+- [x] 2026-10-20 Button orange = the logo "X" orange #ff5a1f (owner: #b45309 didn't look good), then "a little faded": #ff6a35, hover #f0501a — local
+- [x] 2026-10-20 Home "Make it yours" tiles compact on phones: a list (274px) didn't look good to the owner; owner chose option 1 of 3 from a picture: the three side by side, picture + short name (696px → 159px tall); laptop screenshot identical — local
+- [x] 2026-10-20 Phone: swiping rows felt loose and the page got stuck when scrolling over them (owner report) — the rows
+      no longer scroll up/down (`overflow-y: hidden`, phones only); finger-swipe test reproduces the bug without the fix,
+      passes with it; sideways swipe still works; nothing looks different — local
+- [x] 2026-10-20 F-04 pinger support: `/api/ping`, quiet-time database jobs, quiet `/api/health` — local (backend 419/419;
+      real server ping 2/2; browser frame 55, shop 50)
+- [ ] Next candidates (owner chooses)
 
 ## Waiting for the end of development (one combined step, owner's approval needed)
 
@@ -47,6 +53,9 @@ On branch `phase2a-wip` (pushed 2026-10-20; not live — `main` = `eb23ecf` is w
 - [ ] **Required:** copy the encrypted `.7z` backup to a pen drive or Google Drive (C: and D: are the same SSD)
 - [ ] **Required:** keep the `.7z` passphrase in a password manager
 - [ ] **Required before deploy:** B2 bucket — check "Private" and the lifecycle option (look only)
+- [ ] **After deploy (F-04):** UptimeRobot free monitor → `https://framex-api.onrender.com/api/ping`, every 5 minutes
+      (not before the deploy; never `/api/health`). Before that, check in Render that this is the only free service
+      (750 free hours a month per workspace; one awake all month ≈ 744) and which Health Check Path is set (look only)
 - [ ] **Blocked until approved:** add `PAYOUT_ENCRYPTION_KEY` on Render (sellers can't save payout accounts until then)
 - [ ] Optional: restore test on a Neon `restore-test` branch
 - [ ] Optional: decide about the extra unencrypted `.dump` copies and the code copy with `.env` in
@@ -59,11 +68,11 @@ On branch `phase2a-wip` (pushed 2026-10-20; not live — `main` = `eb23ecf` is w
 | --- | --- | --- |
 | F-01 | Templates page says "We'll ask for your photos after you order" but the cart requires them | **done locally 2026-10-19** (text fixed on `template.html`, `templates.html`) |
 | F-03 | Razorpay live flow (payment → webhook → paid → refund) never proven | open — needs a real small payment, owner decides |
-| F-04 | Render free plan cold starts (~50 s) | open — pinger or paid plan, owner decides |
+| F-04 | Render free plan cold starts (~50 s) | **done locally 2026-10-20** (owner: pinger): `GET /api/ping` (no database, not a visitor); database jobs wait during quiet times (`QUIET_AFTER_MINUTES` 15) and `/api/health` skips its query then, so Neon still sleeps (`keep-awake.test.js`). Owner step after deploy: UptimeRobot monitor on `/api/ping` every 5 min (backend/README → "Keep a free host awake") |
 | F-06 | Cart says items from different shops are ordered separately; checkout makes one order | **done locally 2026-10-19** (cart drawer note + FAQ answer now say: one order, each shop sends its own items) |
 | F-11 | Order photos kept forever; Privacy Notice doesn't say how long | **done locally 2026-10-20** (owner: 15 days): photos of an order / custom painting are deleted 15 days after it is finished (delivered, cancelled, returned, declined), unless still used (another unfinished order, cart, saved design); the order shows "Removed". `ORDER_PHOTO_DAYS=15`. Privacy Notice updated |
 | F-12 | XUSE10 coupon has no limits, no admin coupon screen | **done locally 2026-10-20**: migration `013_xuse10_limits.sql` (XUSE10: max ₹499, once per customer, no end date — owner's values); admin → **Coupons** (list with uses + total given, create, change, switch on/off; no delete); banner and coupon title do NOT show the limits (owner); the cap is applied quietly, a 2nd use shows "You have already used the coupon XUSE10." Deploy note: migration 013 changes the LIVE XUSE10 row |
-| F-13 | Orange button contrast 2.84:1 | **done locally 2026-10-20** (owner chose option 2 from a picture of 4 shades): `--amber-strong` #b45309 (white text 5.0:1), hover `--amber-deep` #9a4a05; Razorpay window colour too |
+| F-13 | Orange button contrast 2.84:1 | **done locally 2026-10-20**: first #b45309 (option 2 of 4 shades), then the owner asked for the same orange as the logo "X" (#ff5a1f), then "a little faded": `--amber-strong` #ff6a35, hover `--amber-deep` #f0501a; Razorpay window colour too. White text on it is 2.85:1 (owner's choice; below the 4.5:1 guideline for small text) |
 | F-14 | Product moderation off | **done locally 2026-10-20** (owner: approval needed): admin setting "Shop products need FrameX approval" (Admin → Settings), switched on by migration 016; products already on sale stay on sale. Fixed with it: an approved product stayed hidden on the website (isVisible was left false) |
 | F-15 | SMS not configured | open — Fast2SMS (DLT) or hide phone option |
 | F-16 | No account deletion / data download | **done locally 2026-10-20**: Account → Your data → Download my data (one JSON file) and Delete my account (customers; password + DELETE; refused while an order / painting is under way; login, addresses, photos, cart go; orders and paintings kept for tax without name, email, phone, address; reviews without name). Migration 014 (`users.deleted_at`). Privacy Notice §8 updated |

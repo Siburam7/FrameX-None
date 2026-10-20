@@ -30,8 +30,8 @@
 | `--surface` / `--white` | `#ffffff` | cards, panels, inputs |
 | `--muted` | `#5b5f6b` | secondary text |
 | `--amber` | `#ea780e` | primary accent (orange) |
-| `--amber-strong` | `#b45309` | primary button fill (2026-10-20, was `#de832e`; white text 5.0:1) |
-| `--amber-deep` | `#9a4a05` | primary button hover (was `#c96a0a`) |
+| `--amber-strong` | `#ff6a35` | primary button fill: the logo "X" orange `#ff5a1f`, a little softer (owner, 2026-10-20; was `#de832e`) |
+| `--amber-deep` | `#f0501a` | primary button hover (was `#c96a0a`) |
 | `--champagne` | `#ecdcbd` | selected choice |
 | `--line` | `rgba(5, 8, 22, 0.12)` | borders |
 
@@ -39,7 +39,7 @@
 tokens (`--surface`, `--on-surface`, `--surface-*`, `--text-*`, `--tint-*`…). New CSS must use these tokens, never a
 literal `#fff` / `var(--white)` / `var(--ink)` for surfaces or text.
 
-White text on the orange button: 5.0:1 since 2026-10-20 (WCAG AA needs 4.5:1).
+White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo colour over the darker #b45309 (5.0:1), which didn't look good; WCAG AA asks 4.5:1 for small text, 3:1 for large/bold. Keep button text bold.
 
 ## 3. Typography
 
@@ -58,6 +58,10 @@ White text on the orange button: 5.0:1 since 2026-10-20 (WCAG AA needs 4.5:1).
 - Header logo 150px wide on desktop. "Gallery" is in the footer, not the top menu. The orange header button follows
   the section (Shop Frames / Explore Art / Shop Decor / All Templates).
 - Phone breakpoints: `mobile.css` blocks at max-width 639px, 374px and 359px. Target widths 320-430px.
+- Home "Make it yours" tiles (`.promo-tiles--make`) on a phone: the three side by side, a square picture with the
+  short name under it; title, sentence and button hidden, the whole tile is the link (owner's pick, 2026-10-20).
+- Swiping rows on a phone scroll sideways only (`overflow-y: hidden` in `mobile.css`), so a finger moving up over
+  them always scrolls the page.
 
 ## 5b. Page patterns
 

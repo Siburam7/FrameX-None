@@ -808,3 +808,68 @@
     padding-top: 10px;
   }
 }
+
+/* Home "Make it yours" tiles (Studio, templates, multi-panel): on a phone the
+   three sit side by side, a picture with the short name under it. The title,
+   the sentence and the button are hidden; the whole tile is the link
+   (owner chose option 1 from a picture of three designs, 2026-10-20). */
+@media (max-width: 639px) {
+  .promo-tiles--make {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .promo-tiles--make .promo-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    min-height: 0;
+    padding: 6px 6px 10px;
+    border-radius: 14px;
+  }
+
+  .promo-tiles--make .promo-tile img {
+    order: -1;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    border-radius: 10px;
+    box-shadow: none;
+  }
+
+  .promo-tiles--make .promo-tile__label {
+    color: var(--on-surface);
+    font-family: var(--font-display);
+    font-size: 0.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0;
+    text-align: center;
+    text-transform: none;
+  }
+
+  .promo-tiles--make .promo-tile__title,
+  .promo-tiles--make .promo-tile__text,
+  .promo-tiles--make .promo-tile .btn {
+    display: none;
+  }
+}
+
+/* Rows that swipe sideways (product and template rows, collection tiles, chips,
+   offers) only ever scroll sideways on a phone. A sideways scroller also scrolls
+   up and down when its content is even 1px taller than the row (rounding on
+   real phones), and a finger moving up over it then moved the row instead of
+   the page: the row felt loose and the page got stuck there (owner, 2026-10-20).
+   overflow-x already clips the row top and bottom, so nothing looks different. */
+@media (max-width: 639px) {
+  .product-grid--rail,
+  .collection-grid--rail,
+  .chip-scroll,
+  .offers__track,
+  .tpl-cats,
+  .category-more {
+    overflow-y: hidden;
+    overscroll-behavior-y: auto;
+  }
+}

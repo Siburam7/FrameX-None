@@ -21,6 +21,11 @@ FrameX API  framex-api.onrender.com  (Render web service, free plan, Node.js / E
 
 Free plan: the API sleeps after ~15 idle minutes and needs ~50 s to wake. The pages show the catalogue without the
 API after 1.2 s; login, cart and checkout wait for it.
+Keeping it awake (F-04, built 2026-10-20, live after deploy): a pinger (UptimeRobot, every 5 min) calls `GET /api/ping`,
+which answers without the database and is not a visitor (`app.js`). `lib/activity.js` remembers the last real
+request; after `QUIET_AFTER_MINUTES` (15) without one, the database timers in `server.js` (unpaid orders every minute,
+paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `/api/health` answers
+`checked: false` without a query, so Neon can still sleep (free plan 100 CU-hours/month; awake all month ≈ 180).
 
 ## 2. Frontend (repository root)
 
@@ -39,7 +44,7 @@ API after 1.2 s; login, cart and checkout wait for it.
 
 - Node.js, Express 5, ES modules. Entry `src/server.js` (start-up checks + log), `src/app.js` (routes).
 - `src/routes/` — auth, users, addresses, cart, checkout, orders, uploads, shops, shop-dashboard, artists,
-  paintings, admin, analytics, contact, misc (`/api/health`, `/api/config`). `GET /api/shops/:ref?optional=1`
+  paintings, admin, analytics, contact, misc (`/api/health`, `/api/config`; `/api/ping` is in `app.js`). `GET /api/shops/:ref?optional=1`
   answers `{ shop: null }` for a catalogue shop that isn't on FrameX (the website asks that way; without the flag: 404).
   Admin coupons: `GET / POST /api/admin/coupons`, `PATCH /api/admin/coupons/:code` (no delete; audited).
   Saved Studio designs: `/api/designs` (the account's own, max 30; photos are the account's uploads). Own data:

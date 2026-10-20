@@ -28,6 +28,7 @@ You can keep using VS Code Live Server instead (`http://127.0.0.1:5500`): the we
 |---|---|
 | `http://localhost:4000/` | the website |
 | `http://localhost:4000/api/health` | is the API up? |
+| `http://localhost:4000/api/ping` | for a pinger: answers without the database |
 
 `npm run dev` restarts the server when a file changes. `npm test` runs the API tests. `npm run doctor` says whether email and SMS can really be delivered and what is missing.
 
@@ -483,6 +484,7 @@ Copy `.env.example` to `.env`. Nothing secret is in the code or in Git (`.env` a
 | `ORDER_PHOTO_DAYS` | no | days after an order or custom painting is finished (delivered, cancelled, returned, declined) when its photos are deleted, unless still used elsewhere (`15`) |
 | `MEDIA_MAX_MB`, `MEDIA_MAX_PER_SHOP` | no | largest product picture (`12`) and how many pictures one shop may keep (`600`) |
 | `CATALOG_DIR` | no | folder that holds the website's `js/` and `assets/js/` folders (the catalogue and pricing code). Default: the project folder, one level above `backend/` |
+| `QUIET_AFTER_MINUTES` | no | minutes without a visitor after which the background jobs that use the database wait for the next visitor (default 15); see "Keep a free host awake" |
 | `TRUST_PROXY` | hosted | the number of proxies in front of the server, so that request limits count each visitor separately. **`3` on Render** (measured 2026-10-12: Cloudflare, Render's router, and one more in front of the service); usually `1` on Railway / Fly. Check with `GET /api/health/client`: `seenAs` must be the start of your own public address. With too small a number every visitor shares one address and one limit |
 | `EMAIL_PROVIDER` | for email | `brevo` (default when a key is set), `resend`, `gmail`, `smtp`, `none`. `dev` (test mode) is refused in production |
 | `EMAIL_PROVIDER_API_KEY` | with `brevo` / `resend` | the provider's API key |
@@ -529,6 +531,23 @@ backend API (Node.js host, always on) ──► PostgreSQL (hosted)
 ```
 
 Tables are created automatically on start (migrations in `src/db/migrations/`). A free web service that sleeps when idle makes the first request after a pause slow; an always-on plan avoids that.
+
+### Keep a free host awake (a pinger)
+
+Render's free plan puts the server to sleep after 15 minutes without a request; the next visitor then waits about a
+minute. A free monitor that calls `GET /api/ping` every 5 minutes keeps it awake:
+
+1. Only after the code with `/api/ping` is live (before that, `/api/ping` doesn't exist).
+2. UptimeRobot (free, no card): New monitor -> HTTP(s) -> URL `https://framex-api.onrender.com/api/ping` ->
+   interval 5 minutes -> your email for "down" alerts. (cron-job.org works the same way.)
+3. Ping `/api/ping` only, never `/api/health` or another address: those can use the database.
+
+The database still sleeps: `/api/ping` never queries it, and after `QUIET_AFTER_MINUTES` (15) without a visitor the
+background jobs that use it (unpaid orders, photo and session tidy-ups) wait for the next visitor, who starts them
+again; `/api/health` then answers `checked: false` without a query. That matters on Neon's free plan (100 CU-hours a
+month: a database awake all month needs about 180). Render gives 750 free hours a month per workspace and one service
+awake all month uses about 744, so a second free service in the same workspace would run them out (Render then stops
+every free service until the next month).
 
 This deployment path is documented, not yet exercised: the code was tested locally against the embedded PostgreSQL engine. The first deploy against a hosted PostgreSQL should be followed by the "Try every flow" table above.
 
@@ -593,7 +612,8 @@ State-changing requests must send the header `X-FrameX-Client: web` (CSRF protec
 
 | Method and path | Who | What |
 |---|---|---|
-| `GET /api/health`, `GET /api/config` | anyone | status; nearby-search settings and feature flags |
+| `GET /api/health`, `GET /api/config` | anyone | status (`checked: false` = the database was left asleep during a quiet time); nearby-search settings and feature flags |
+| `GET /api/ping` | anyone | `{ ok: true }` without the database and not counted as a visitor: for the pinger that keeps a free host awake |
 | `POST /api/auth/signup` | anyone | create a **customer** account (the role can't be chosen) |
 | `POST /api/auth/login` | anyone | `{ identifier, password, accountType: "customer" \| "shop" }` |
 | `POST /api/auth/logout` | logged in | ends the session on the server |

@@ -4,6 +4,7 @@ import { assertConfig, config } from "./config.js";
 import { db, initDb } from "./db/index.js";
 import { migrate } from "./db/migrate.js";
 import { describeConnection, pgConnection } from "./db/ssl.js";
+import { unlessQuiet } from "./lib/activity.js";
 import { emailStatus } from "./lib/mailer.js";
 import { smsStatus } from "./lib/sms.js";
 import { paymentStatus } from "./payments/index.js";
@@ -30,13 +31,16 @@ async function main() {
   // Orders from before test payments were labelled get their label once (test payments are never counted as sales).
   await labelOlderOrders({ log: (m) => console.log(`[db] ${m}`) });
 
+  // The timers below use the database. During a quiet time (no visitor for QUIET_AFTER_MINUTES) a job that comes due
+  // waits for the next visitor, so the database can sleep while a pinger keeps the server awake (lib/activity.js).
+
   // Housekeeping: expired sessions and used / expired one-time links.
   const sweep = () =>
     Promise.all([
       db.query("DELETE FROM sessions WHERE expires_at < now() - interval '7 days'"),
       db.query("DELETE FROM auth_tokens WHERE expires_at < now() - interval '7 days'")
     ]).catch((error) => console.error("[db] cleanup failed:", error.message));
-  setInterval(sweep, 6 * 60 * 60 * 1000).unref();
+  setInterval(unlessQuiet("sessions", sweep), 6 * 60 * 60 * 1000).unref();
 
   // Customer photos that never reached an order (and left every cart) are removed after UPLOAD_UNUSED_DAYS; the photos of
   // a finished order or custom painting ORDER_PHOTO_DAYS (15) after it was finished.
@@ -46,11 +50,11 @@ async function main() {
       .then(() => sweepUnusedMedia()) // product pictures no product uses any more
       .then(() => sweepUnusedArtistMedia()) // artists' pictures no profile or artwork uses any more
       .catch((error) => console.error("[uploads] cleanup failed:", error.message));
-  setInterval(tidyUploads, 6 * 60 * 60 * 1000).unref();
+  setInterval(unlessQuiet("uploads", tidyUploads), 6 * 60 * 60 * 1000).unref();
   tidyUploads();
   // Visitor statistics and login records older than ANALYTICS_RETENTION_DAYS are deleted.
   const tidyAnalytics = () => sweepAnalytics().catch((error) => console.error("[analytics] cleanup failed:", error.message));
-  setInterval(tidyAnalytics, 12 * 60 * 60 * 1000).unref();
+  setInterval(unlessQuiet("analytics", tidyAnalytics), 12 * 60 * 60 * 1000).unref();
   tidyAnalytics();
   const files = await storageStatus();
   // Every file the database knows still in the storage? (After a redeploy: the earlier deploys' files survived.) Counts only.
@@ -58,11 +62,11 @@ async function main() {
 
   // Online orders that were never paid: cancelled after PAYMENT_PENDING_MINUTES, and their stock is given back.
   const expire = () => expireUnpaidOrders().catch((error) => console.error("[payments] expiring unpaid orders failed:", error.message));
-  setInterval(expire, 60 * 1000).unref();
+  setInterval(unlessQuiet("unpaid orders", expire), 60 * 1000).unref();
   expire();
   // Accepted custom paintings whose advance was never paid are closed after CUSTOM_PAINTING_ADVANCE_DAYS.
   const closePaintings = () => expireUnpaidAdvances().catch((error) => console.error("[paintings] closing unpaid requests failed:", error.message));
-  setInterval(closePaintings, 60 * 60 * 1000).unref();
+  setInterval(unlessQuiet("unpaid paintings", closePaintings), 60 * 60 * 1000).unref();
   closePaintings();
 
   const admins = (await db.query("SELECT count(*)::int AS n FROM users WHERE role = 'ADMIN'")).rows[0].n;

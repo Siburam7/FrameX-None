@@ -24,10 +24,13 @@
 
 ## Owner decisions (log)
 
+- 2026-10-20 F-04: a pinger keeps the Render server awake (owner chose it after the explanation). My choices: UptimeRobot
+  every 5 min on `/api/ping` (owner sets it up after the deploy); database jobs wait after 15 quiet minutes so Neon
+  (100 CU-hours/month) still sleeps; unpaid online orders are then cancelled when the next visitor or webhook comes,
+  not to the minute.
 - 2026-10-20 F-11: order photos deleted 15 days after the order is finished (my additions: same for custom painting
   reference photos; a photo still used by another unfinished order, the cart or a saved design is kept).
-  F-14: shop products need FrameX approval (admin setting, on via migration 016). F-13: button orange #b45309
-  (option 2 of 4, chosen from a side-by-side picture of the home page).
+  F-14: shop products need FrameX approval (admin setting, on via migration 016). F-13: button orange #ff6a35 = the logo X orange #ff5a1f a little softer (owner, 2026-10-20; #b45309 was tried first and didn't look good to the owner; white text 2.85:1 accepted)
 - 2026-10-20 F-17 (owner asked to build it): my choices, not asked — visitors who aren't logged in still save in the
   browser (no login forced); logged-in saves go to the account with the photos uploaded at save time; at most 30 per
   account; when the account limit refuses the quiet save before "Add to cart", the design is kept in the browser so
@@ -80,6 +83,10 @@ header button labels per section.
 | Production backup restorable | verified 2026-10-19 (isolated in-memory PostgreSQL 18.3; not on Neon) |
 
 ## Lessons (for whoever works on this next)
+
+- A sideways row (`overflow-x: auto`) also scrolls up/down when its content is 1-2px taller (rounding on real
+  phones): the row felt loose and the page got stuck under the finger. Phones now set `overflow-y: hidden` on every
+  swiping row (`mobile.css`); new swiping rows need the same. Test with `page.touchscreen`, not CDP scroll gestures.
 
 - Browser tests: never against :4000 / :5500. A suite once placed a real COD order in the owner's local database.
 - The live API sleeps on the free plan: the first request after a pause can take about a minute.
