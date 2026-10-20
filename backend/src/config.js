@@ -143,7 +143,7 @@ export const config = {
     // The logo picture at the top of every email. A mailbox can only load it from a public https address:
     // by default the live website's own copy (FRONTEND_URL). On a development machine there is none, and
     // the emails show the logo as text instead.
-    logoUrl: env.EMAIL_LOGO_URL || (/^https:\/\//.test(env.FRONTEND_URL || "") ? `${env.FRONTEND_URL.replace(/\/+$/, "")}/assets/img/ui/logo-framex-email.png` : "")
+    logoUrl: env.EMAIL_LOGO_URL || (/^https:\/\//.test(env.FRONTEND_URL || "") ? `${env.FRONTEND_URL.replace(/\/+$/, "")}/assets/img/ui/logo-framex-email-dark.png` : "")
   },
 
   // Messages from the Contact page: at most this many alert emails an hour (the rest wait in the admin panel).

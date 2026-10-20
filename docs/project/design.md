@@ -71,6 +71,14 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
 - A screen with no visible page title (empty checkout, order not found) gets a visually-hidden `h1`
   (`.visually-hidden`), like the home page — no visual change.
 
+## 5c. Emails
+
+- "Orange line" (owner: first option 1 of 3, then the orange-line option as final, 2026-10-20): page `#f5f6f8`, white
+  card; white header with a 5px `#ff6a35` line on top and 1px `#eeeeee` under it; navy logo
+  `assets/img/ui/logo-framex-email-dark.png` (420×72, shown 140×24); navy text `#0d1b3e`; code box `#fff4ee` /
+  `#ffd7c4`; button `#ff6a35`. One template for
+  every email: `htmlEmail()` in `backend/src/lib/mailer.js`. Was: cream `#faf6ee`, black header, button `#de832e`.
+
 ## 6. Content rules
 
 - Banner and offer text must be factual (no invented discounts). Coupon limits (maximum discount, uses per customer)

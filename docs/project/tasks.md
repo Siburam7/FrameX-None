@@ -21,6 +21,26 @@
       passes with it; sideways swipe still works; nothing looks different — local
 - [x] 2026-10-20 F-04 pinger support: `/api/ping`, quiet-time database jobs, quiet `/api/health` — local (backend 419/419;
       real server ping 2/2; browser frame 55, shop 50)
+- [x] 2026-10-20 Emails in the "orange line" look (owner's final pick of 3; "light and clean" first): white header with
+      an orange line on top and a navy logo (new `logo-framex-email-dark.png`), grey page, light-orange code box, new orange button — local (backend 419/419; rendered and checked at 390/760px)
+- [ ] Email profile picture (owner: yes): send from a shopframex.in address authenticated in Brevo (DNS records),
+      then a Google account for that address with the logo as its photo (Gmail usually shows it; not guaranteed).
+      Why it is missing now: From is a @gmail.com address sent through Brevo, which Gmail can't verify
+      [x] 2026-10-20 owner added in GoDaddy DNS (checked in public DNS): TXT @ `brevo-code:…`, CNAME `brevo1._domainkey` →
+          `b1.shopframex-in.dkim.brevo.com`, CNAME `brevo2._domainkey` → `b2.shopframex-in.dkim.brevo.com`; the existing
+          `_dmarc` (p=quarantine) was kept and Brevo accepted it. Brevo: "Your domain has been authenticated" (manual setup,
+          no branded subdomain). Next: an inbox for the sender address, a Brevo sender, EMAIL_FROM on Render, the Google photo
+      [x] 2026-10-20 sender address chosen by the owner: `support@shopframex.in`. Inbox: ImprovMX free (no card),
+          catch-all `*@shopframex.in` → the owner's Gmail; GoDaddy: MX `@` 10 `mx1.improvmx.com`, 20 `mx2.improvmx.com`,
+          TXT `@` `v=spf1 include:spf.improvmx.com include:spf.brevo.com ~all` (there was no SPF before). ImprovMX: Active.
+          Next: test mail to support@, Brevo sender, EMAIL_FROM on Render (with the email design deploy), Google photo
+      [x] 2026-10-20 test mail to support@ forwarded (ImprovMX log: delivered in 6 s; landed in Gmail spam → owner made a
+          Gmail filter "to @shopframex.in: never spam"). Brevo sender `FrameX <support@shopframex.in>`: Verified, DKIM
+          shopframex.in ✓, DMARC ✓ (the old `shop.framex@gmail.com` sender is kept, not deleted).
+          Next: deploy the email design, then EMAIL_FROM on Render = `FrameX <support@shopframex.in>`, then the Google photo
+      Note: GoDaddy auto-renew is OFF; shopframex.in expires 2027-10-09 — remind the owner before then
+- [ ] F-15 SMS / WhatsApp OTP: owner put it aside 2026-10-20 (WhatsApp idea explained: ~₹0.12-0.35 a message,
+      needs Meta business verification, a new number and a payment method; the grey SMS button stays for now)
 - [ ] Next candidates (owner chooses)
 
 ## Waiting for the end of development (one combined step, owner's approval needed)
@@ -32,15 +52,26 @@
 - [x] 2026-10-20 Full tests: backend 419/419; browser frame 55, Studio 37, decor 26, shop 50, payout 38, coupon 25,
       coupon admin 20, designs 14, account 13, fixes 21, phone rows 4, CSP 8; all-pages crawl: no script errors, no CSP
       blocks (remaining flags are the known false positives: hidden home h1, buttons inside closed <details>, test 404s)
-- [ ] **Deploy (owner approves each step)**
+- [x] **Deploy 2026-10-20: LIVE** (`main` = a15c350; owner approved each step)
   0. [x] Owner: fresh production backup 2026-10-20 15:06 with `backup-live-db.bat` (its first run against Neon: worked;
      locked file `DesktopFrameX-backupsramex-db-live-20261020-1506.fxdb`, 180 KB; 12 orders, 7 users, 247 products)
-  1. Merge `phase2a-wip` into `main` (fast-forward) and push: Render redeploys the API and GitHub Pages the website
+  1. [x] 2026-10-20 15:09 owner said "deploy kar do": `main` fast-forwarded eb23ecf → a15c350 and pushed;
+     Merge `phase2a-wip` into `main` (fast-forward) and push: Render redeploys the API and GitHub Pages the website
      at the same time (for 1-2 minutes new pages may talk to the old API)
-  2. Backend: Render log shows migrations 013-016, `Database link`, `Payouts`, `bucket is private`, `Stored files`,
+  2. [x] 15:10 live API answers `/api/ping` {ok:true} and `/api/health` {database: postgres, checked: true};
+     [x] owner's Render log (15:09:56): migrations up to 016 applied, database link encrypted + certificate checked,
+     email READY, Razorpay LIVE, COD ON, bucket PRIVATE (owner check done), SMS not configured (F-15), payouts NOT READY
+     (key blocked, as agreed). FINDING: "Stored files: 5 of 25 files the database knows are MISSING from the storage" —
+     first time this check ran live (new in this deploy); not caused by the deploy (the photo tidy-up marks a row DELETED
+     before removing its file, and DELETED rows aren't counted). Likely files kept on Render's disk before the bucket
+     (2026-10-10). Open: which records (an order still under way?) — a read-only lister was offered to the owner.
+     Backend: Render log shows migrations 013-016, `Database link`, `Payouts`, `bucket is private`, `Stored files`,
      `listening`; `/api/ping` and `/api/health` answer
-  3. Website: pages load, login, cart, Razorpay window opens (no payment), no CSP errors in the console
-  4. After deploy: UptimeRobot on `/api/ping` (F-04); the Pages workflow's first run fails until step 5 (expected)
+  3. [x] Website as a visitor (read-only crawl of shopframex.in): 17 pages × laptop + phone, no script errors, no
+     CSP blocks, new code served; GitHub runs on `main`: Tests, "Website" workflow and the branch build all green
+     (the site is still served from the branch: `backend/README.md` answers 200 until step 5).
+     [x] owner checked on the live site: login, cart, Razorpay window — all work (no payment made)
+  4. [x] After deploy: UptimeRobot on `/api/ping` (F-04, done 15:31); the Pages workflow's first run fails until step 5 (expected)
   5. Later, separate approval: Settings → Pages → Source "GitHub Actions"
   Rollback: Render → Deploys → Rollback to eb23ecf; website: revert the merge on `main`. Migrations can stay.
   Expected right after start: photos of orders finished 15+ days ago are deleted (F-11); new shop products need approval (F-14)
@@ -65,7 +96,9 @@ On branch `phase2a-wip` (pushed 2026-10-20; not live — `main` = `eb23ecf` is w
 - [ ] **Required:** copy the encrypted `.7z` backup to a pen drive or Google Drive (C: and D: are the same SSD)
 - [ ] **Required:** keep the `.7z` passphrase in a password manager
 - [ ] **Required before deploy:** B2 bucket — check "Private" and the lifecycle option (look only)
-- [ ] **After deploy (F-04):** UptimeRobot free monitor → `https://framex-api.onrender.com/api/ping`, every 5 minutes
+- [x] 2026-10-20 15:31 done by the owner: UptimeRobot monitor on `https://framex-api.onrender.com/api/ping`, every 5 min,
+      email alerts, first check Up. Watch Neon's CU-hours for a few days (12.03 CU-hrs used Oct 9 → Oct 20 before it).
+- [x] **After deploy (F-04):** UptimeRobot free monitor → `https://framex-api.onrender.com/api/ping`, every 5 minutes
       (not before the deploy; never `/api/health`).
       Checked by the owner 2026-10-20: `framex-api` Health Check Path is EMPTY (keep it empty). A second free web service
       `FrameX-None` (framex-none.onrender.com, "My project", trial, auto-deploys `main` and fails every time) was found;

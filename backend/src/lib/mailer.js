@@ -172,10 +172,10 @@ const plainFooter = "\n\n— FrameX\nIf you didn't ask for this, you can ignore 
  * Order emails add `tables`: [{ title?, rows: [[left, right, bold?]] }] with
  * already-escaped HTML in the cells, and `account: false` (no password advice).
  */
-// The FrameX logo on the dark bar: white letters and the orange X. The picture is the website's
-// assets/img/ui/logo-framex-email.png; its alt text is styled the same way, so a mailbox that blocks
+// The FrameX logo on the white header under the orange line (owner chose the "orange line" email, 2026-10-20): navy letters and the
+// orange X. The picture is the website's assets/img/ui/logo-framex-email-dark.png; its alt text is styled the same way, so a mailbox that blocks
 // pictures (or a development machine, where there is no public address) still shows the name like the logo.
-const LOGO_TEXT_STYLE = "font-family:Arial,Helvetica,sans-serif;font-size:24px;font-weight:900;letter-spacing:1px;line-height:24px;color:#ffffff";
+const LOGO_TEXT_STYLE = "font-family:Arial,Helvetica,sans-serif;font-size:24px;font-weight:900;letter-spacing:1px;line-height:24px;color:#0d1b3e";
 export function emailLogo() {
   const text = `<span style="${LOGO_TEXT_STYLE}">FRAME<span style="color:#ff5a1f">X</span></span>`;
   return config.email.logoUrl ? `<img src="${esc(config.email.logoUrl)}" width="140" height="24" alt="FRAMEX" style="display:block;border:0;outline:none;text-decoration:none;width:140px;height:24px;${LOGO_TEXT_STYLE}">` : text;
@@ -187,17 +187,17 @@ export function htmlEmail({ preview = "", heading, paragraphs = [], code = "", c
         .map(([left, right, bold]) => `<tr><td style="padding:5px 0;border-top:1px solid #f1f2f3;vertical-align:top${bold ? ";font-weight:bold" : ""}">${left}</td><td align="right" style="padding:5px 0 5px 12px;border-top:1px solid #f1f2f3;vertical-align:top;white-space:nowrap${bold ? ";font-weight:bold" : ""}">${right}</td></tr>`)
         .join("")}</table></td></tr>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(heading)}</title></head>
-<body style="margin:0;padding:0;background:#faf6ee;font-family:Arial,Helvetica,sans-serif;color:#050816">
+<body style="margin:0;padding:0;background:#f5f6f8;font-family:Arial,Helvetica,sans-serif;color:#0d1b3e">
 <span style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(preview)}</span>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#faf6ee"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6f8"><tr><td align="center" style="padding:24px 12px">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border-radius:16px;overflow:hidden">
-    <tr><td style="background:#050816;padding:20px 28px">${emailLogo()}</td></tr>
+    <tr><td style="background:#ffffff;padding:22px 28px;border-top:5px solid #ff6a35;border-bottom:1px solid #eeeeee">${emailLogo()}</td></tr>
     <tr><td style="padding:28px 28px 8px;font-size:21px;font-weight:bold;line-height:1.3">${esc(heading)}</td></tr>
     ${paragraphs.map((p) => `<tr><td style="padding:6px 28px;font-size:15px;line-height:1.6;color:#2b2b2b">${p}</td></tr>`).join("")}
-    ${code ? `<tr><td style="padding:14px 28px 4px"><div style="display:inline-block;padding:14px 22px;border-radius:12px;background:#faf6ee;border:1px solid #ecdcbd;font-family:'Courier New',monospace;font-size:30px;font-weight:bold;letter-spacing:8px;color:#050816">${esc(code)}</div></td></tr>
+    ${code ? `<tr><td style="padding:14px 28px 4px"><div style="display:inline-block;padding:14px 22px;border-radius:12px;background:#fff4ee;border:1px solid #ffd7c4;font-family:'Courier New',monospace;font-size:30px;font-weight:bold;letter-spacing:8px;color:#0d1b3e">${esc(code)}</div></td></tr>
     <tr><td style="padding:4px 28px 6px;font-size:13px;line-height:1.5;color:#5b5f6b">${esc(codeNote)}</td></tr>` : ""}
     ${tables.map(table).join("")}
-    ${button ? `<tr><td style="padding:16px 28px 6px"><a href="${esc(button.url)}" style="display:inline-block;background:#de832e;color:#ffffff;text-decoration:none;font-size:15px;font-weight:bold;padding:14px 28px;border-radius:999px">${esc(button.label)}</a></td></tr>
+    ${button ? `<tr><td style="padding:16px 28px 6px"><a href="${esc(button.url)}" style="display:inline-block;background:#ff6a35;color:#ffffff;text-decoration:none;font-size:15px;font-weight:bold;padding:14px 28px;border-radius:999px">${esc(button.label)}</a></td></tr>
     <tr><td style="padding:4px 28px 6px;font-size:12px;line-height:1.5;color:#5b5f6b;word-break:break-all">${esc(button.note || "")} If the button doesn't work, copy this address into your browser:<br>${esc(button.url)}</td></tr>` : ""}
     <tr><td style="padding:18px 28px 26px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #e4e5e7;padding-top:16px;font-size:12px;line-height:1.6;color:#5b5f6b">
       ${esc(notice || "If you didn't ask for this, you can ignore this email.")}<br>${account ? "FrameX will never ask you for your password or this code by phone, WhatsApp or email." : "FrameX will never ask you for your card number, CVV, UPI PIN or password by phone, WhatsApp or email."}</td></tr></table></td></tr>

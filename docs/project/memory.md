@@ -24,6 +24,8 @@
 
 ## Owner decisions (log)
 
+- 2026-10-20 Emails: "orange line" design (owner chose option 1 first, then the orange line as final). Profile picture: yes, via a shopframex.in sender
+  address (Brevo domain authentication + a Google account photo). SMS/WhatsApp OTP: put aside for now.
 - 2026-10-20 F-04: a pinger keeps the Render server awake (owner chose it after the explanation). My choices: UptimeRobot
   every 5 min on `/api/ping` (owner sets it up after the deploy); database jobs wait after 15 quiet minutes so Neon
   (100 CU-hours/month) still sleeps; unpaid online orders are then cancelled when the next visitor or webhook comes,
