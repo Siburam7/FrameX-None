@@ -24,6 +24,11 @@
 
 ## Owner decisions (log)
 
+- 2026-10-20 Email sender is `FrameX <support@shopframex.in>` (Render EMAIL_FROM, set by the owner); shopframex.in is
+  authenticated in Brevo (DKIM) and receives mail through ImprovMX (free; catch-all `*@shopframex.in` → the business Gmail support.framex@gmail.com).
+  A @gmail.com address can't be the website's sender: Brevo sending as gmail.com fails Gmail's checks (spam, no DP). The email
+  logo sits on a white badge for dark mode. Gmail profile picture: a Google account for support@ with the owner's
+  "F" picture.
 - 2026-10-20 Emails: "orange line" design (owner chose option 1 first, then the orange line as final). Profile picture: yes, via a shopframex.in sender
   address (Brevo domain authentication + a Google account photo). SMS/WhatsApp OTP: put aside for now.
 - 2026-10-20 F-04: a pinger keeps the Render server awake (owner chose it after the explanation). My choices: UptimeRobot

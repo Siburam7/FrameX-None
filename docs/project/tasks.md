@@ -23,7 +23,7 @@
       real server ping 2/2; browser frame 55, shop 50)
 - [x] 2026-10-20 Emails in the "orange line" look (owner's final pick of 3; "light and clean" first): white header with
       an orange line on top and a navy logo (new `logo-framex-email-dark.png`), grey page, light-orange code box, new orange button — local (backend 419/419; rendered and checked at 390/760px)
-- [ ] Email profile picture (owner: yes): send from a shopframex.in address authenticated in Brevo (DNS records),
+- [x] Email profile picture (owner: yes): send from a shopframex.in address authenticated in Brevo (DNS records),
       then a Google account for that address with the logo as its photo (Gmail usually shows it; not guaranteed).
       Why it is missing now: From is a @gmail.com address sent through Brevo, which Gmail can't verify
       [x] 2026-10-20 owner added in GoDaddy DNS (checked in public DNS): TXT @ `brevo-code:…`, CNAME `brevo1._domainkey` →
@@ -40,7 +40,11 @@
           [x] email design live (5c2fcc2); owner set EMAIL_FROM = `FrameX <support@shopframex.in>` on Render (17:16 deploy).
           Test reset email: from support@shopframex.in, signed-by shopframex.in, Inbox. Owner: in phone Gmail dark mode the
           navy logo disappeared → logo now on a white rounded badge (`logo-framex-email-badge.png`) — local.
-          Next: deploy the badge logo, then the Google account photo for support@shopframex.in
+          [x] badge logo live (ad19c05, 17:25). [x] Google account for support@shopframex.in ("FrameX", made with the
+          existing-email option; the owner's own phone was refused as "used too many times", another number worked) with the
+          owner's own picture (white F + orange square on black). 18:20 owner moved the ImprovMX catch-all to the business
+          Gmail `support.framex@gmail.com` (alias `*` re-created; test mail arrived in its Primary inbox). Gmail may take hours to a day to show it; check with a
+          new reset email. Owner: add a recovery email (Security & sign-in) to that account
       Note: GoDaddy auto-renew is OFF; shopframex.in expires 2027-10-09 — remind the owner before then
 - [ ] F-15 SMS / WhatsApp OTP: owner put it aside 2026-10-20 (WhatsApp idea explained: ~₹0.12-0.35 a message,
       needs Meta business verification, a new number and a payment method; the grey SMS button stays for now)
