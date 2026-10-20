@@ -12,7 +12,7 @@
     contact: {
       phone: "",       // e.g. "+91 98765 43210"  -> enables tel: link
       whatsapp: "919337169824", // country code + number, digits only -> WhatsApp link
-      email: "support.framex@gmail.com"
+      email: "support@shopframex.in" // forwarded to the business Gmail (ImprovMX); see docs/project/architecture.md §9
     },
     social: {
       facebook: "",

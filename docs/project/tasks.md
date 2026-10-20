@@ -46,6 +46,12 @@
           Gmail `support.framex@gmail.com` (alias `*` re-created; test mail arrived in its Primary inbox). Gmail may take hours to a day to show it; check with a
           new reset email. Owner: add a recovery email (Security & sign-in) to that account
       Note: GoDaddy auto-renew is OFF; shopframex.in expires 2027-10-09 — remind the owner before then
+- [x] 2026-10-20 Website contact address: `support.framex@gmail.com` → `support@shopframex.in` (owner) in
+      `assets/data/site.seed.js` (footer on every page, Contact page, art pages) and the Privacy Notice / Terms; mail to it
+      reaches support.framex@gmail.com through ImprovMX. Checked: footer, Contact, Privacy, Terms 4/4, CSP 8/8 — local
+- [x] 2026-10-20 18:45 owner added Render `ADMIN_NOTIFY_EMAIL=support@shopframex.in` (it was not set: alerts went to the
+      admin account emails). Contact-form messages and shop/artist application alerts now reach support.framex@gmail.com.
+      Email roles (owner): support.framex@gmail.com = customer issues; shop.framex@gmail.com = main business account
 - [ ] Optional (owner asked how): reply FROM support@shopframex.in — Gmail "Send mail as" through Brevo SMTP (free,
       ~10 min, steps in architecture.md §9). Today replies leave as support.framex@gmail.com
 - [ ] Owner: recovery email on the support@shopframex.in Google account; check the Gmail DP with a new reset email

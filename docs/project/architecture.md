@@ -136,4 +136,7 @@ customer ──mail to support@shopframex.in──► ImprovMX (MX) ──forwar
 
   Also there and needed: 4 A records + CNAME `www` → `siburam7.github.io` (website), NS / SOA (GoDaddy).
   Never add a second SPF or a second `_dmarc`. GoDaddy auto-renew is OFF; the domain expires 2027-10-09.
+- **On the website:** the public contact address is `support@shopframex.in` (`assets/data/site.seed.js` → footer,
+  Contact page; Privacy Notice and Terms). Contact-form alerts go to `ADMIN_NOTIFY_EMAIL` (Render) or, when empty, to
+  every admin account's email; the visitor's address is the Reply-To.
 - **Design:** one template for every email (`htmlEmail()` in `backend/src/lib/mailer.js`), see `design.md` §5c.
