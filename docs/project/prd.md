@@ -30,7 +30,7 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
 | Area | What it does | Status |
 | --- | --- | --- |
 | Catalogue | Shops, products, categories, Home Decor (multi-panel sets), templates, search | Built, live |
-| Finding shops | Home + Shop page: without a location 3 / all "recommended" shops (featured first, then shops with products, order changes daily); with a location the nearest (Home: top 3 + "View more shops near you"); one search box (shop name, area, city, PIN; else the place's nearby shops); location kept for the tab, used at once when allowed before; Admin → Shops → Featured (optional end day) for paid promotions, labelled "Featured" | Built locally 2026-10-21, not deployed |
+| Finding shops | Home + Shop page: without a location 3 / all "recommended" shops (featured first, then shops with products, order changes daily); with a location the nearest (Home: top 3 + "View more shops near you"); one search box (shop name, area, city, PIN; else the place's nearby shops); location kept for the tab, used at once when allowed before; Admin → Shops → Featured (optional end day) for paid promotions, labelled "Featured" | Built, live since 2026-10-21 (live check: 1 shop, Mithus Frame, 19.5 km from Dhenkanal centre) |
 | Product page | Gallery, options with live price, required photo upload, specs | Built, live |
 | FrameX Studio / Wall-art studio / Templates | Customise a frame, split a photo across 2-5 panels, photo templates | Built, live. "Save design" in the account (any device) live since 2026-10-20 |
 | Accounts | Sign-up, login, password reset by email (and SMS when configured) | Built, live; SMS not configured |

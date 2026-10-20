@@ -66,9 +66,9 @@
 - [x] 2026-10-21 Finding shops (owner's design; suggestions 2-7 chosen; random once a day; featured = paid promotion;
       Home + Shop page): search box, nearest 3 + "View more shops near you", nearest-three fallback, location kept for the
       tab (stays off after "Clear location"), used at once when allowed before, cleaner toolbar, rating / featured on the
-      card, Admin → Shops → Featured (migration 017), Privacy + Terms lines — local. Backend 428/428 (8 new); browser
+      card, Admin → Shops → Featured (migration 017), Privacy + Terms lines — LIVE 2026-10-21 01:15 (1aa4aa8, owner: "final design"). Backend 428/428 (8 new); browser
       35/35 (new suite); before/after pictures on the Desktop (FrameX-shops-laptop-v2.png, FrameX-shops-phone-v2.png)
-- [x] 2026-10-21 Header menu: FAQ → "Studio" (FrameX Studio); FAQ stays in the footer (Support) — local. Fits on one line
+- [x] 2026-10-21 Header menu: FAQ → "Studio" (FrameX Studio); FAQ stays in the footer (Support) — LIVE (1aa4aa8). Fits on one line
       at 1280 / 1366 / 1920 px, phone menu checked, Studio marked current on FrameX Studio
 - [ ] Optional (owner asked how): reply FROM support@shopframex.in — Gmail "Send mail as" through Brevo SMTP (free,
       ~10 min, steps in architecture.md §9). Today replies leave as support.framex@gmail.com
