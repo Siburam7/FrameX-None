@@ -240,6 +240,12 @@
   color: var(--white);
 }
 
+/* A shop FrameX features (an admin's choice, e.g. a paid promotion): said plainly on the card */
+.badge--featured {
+  background: var(--amber-strong);
+  color: #fff;
+}
+
 .badge--sample {
   background: rgba(5, 8, 22, 0.78);
   color: var(--white);

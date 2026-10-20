@@ -24,6 +24,12 @@
 
 ## Owner decisions (log)
 
+- 2026-10-21 Shops section (Home + Shop page): no location → 3 "good" shops in an order that changes once a day;
+  location → nearest top 3 + "View more shops near you"; a shop search box; owner picks featured shops (paid
+  promotion). My choices, not asked: featured shops carry a visible "Featured" label and a Terms line says a shop
+  may pay for it (paid placement must be disclosed); with a location, distance wins over featured; "good" = has
+  something on sale (ratings are too few to rank by yet); "Clear location" keeps it off for that tab even when the
+  browser allows it; the location is kept in sessionStorage only.
 - 2026-10-20 Owner asked why support@shopframex.in is needed when support.framex@gmail.com exists, and whether replies
   can go out as support@: explained (architecture.md §9) — sender must be the own domain; replying as support@ is
   possible for free with Gmail "Send mail as" + Brevo SMTP, not set up yet.

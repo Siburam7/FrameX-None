@@ -19,6 +19,30 @@
   min-height: 1.5em;
 }
 
+/* One search box for a shop's name, an area, a city or a PIN code (owner, 2026-10-21) */
+.shops-search {
+  display: flex;
+  flex: 1 1 380px;
+  gap: 8px;
+  max-width: 560px;
+}
+
+.shops-search__field {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Under the three shops on Home: the way to the full list */
+.shops-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.shops-more[hidden] {
+  display: none;
+}
+
 .segmented {
   display: inline-flex;
   flex-wrap: wrap;

@@ -14,6 +14,15 @@ import { issueToken, revokeSessions } from "./auth-service.js";
 import { notifyUser } from "./notification-service.js";
 
 const PUBLIC = "approval_status = 'APPROVED' AND active_status = 'ACTIVE'";
+// A featured shop (an admin's choice, e.g. a paid promotion) whose "until" hasn't passed.
+const FEATURED_NOW = "(featured AND (featured_until IS NULL OR featured_until > now()))";
+// Its published reviews, and whether anything of it is on sale (its own products, or its catalogue-file products).
+const EXTRAS = `(SELECT round(avg(r.rating)::numeric, 1) FROM reviews r WHERE r.target_type = 'SHOP' AND r.target_id = shops.shop_code AND r.status = 'PUBLISHED') AS rating_average,
+  (SELECT count(*)::int FROM reviews r WHERE r.target_type = 'SHOP' AND r.target_id = shops.shop_code AND r.status = 'PUBLISHED') AS rating_count,
+  EXISTS (SELECT 1 FROM catalog_products p WHERE p.status = 'ACTIVE' AND (p.owner_shop_id = shops.id OR (shops.catalog_ref IS NOT NULL AND p.source <> 'shop' AND p.shop_ref = shops.catalog_ref))) AS has_products`;
+/** Today in India ("2026-10-21"): the "recommended" order of shops changes once a day, at midnight IST. */
+export const indiaDay = (at = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(at);
+const isFeaturedNow = (row) => Boolean(row.featured) && (!row.featured_until || new Date(row.featured_until).getTime() > Date.now());
 export const FULFILMENT = ["pickup", "shop_delivery", "delivery_partner"];
 
 /** One status for display: REJECTED | PENDING | INACTIVE | ACTIVE (ACTIVE = approved + active). */
@@ -35,7 +44,9 @@ export function publicShop(row) {
     openingHours: row.opening_hours || null,
     giftWrap: row.gift_wrap !== false, // false = this shop doesn't gift wrap what it sells
     status: shopStatus(row),
-    isDemo: row.is_demo
+    isDemo: row.is_demo,
+    featured: isFeaturedNow(row),
+    rating: row.rating_count ? { average: Number(row.rating_average), count: row.rating_count } : null
   };
 }
 
@@ -52,6 +63,8 @@ export function fullShop(row) {
     approvedAt: row.approved_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    featuredOn: Boolean(row.featured), // switched on by an admin (featured = and still running)
+    featuredUntil: row.featured_until || null,
     account: row.account_email
       ? { email: row.account_email, name: row.account_name, status: row.account_status, lastLoginAt: row.account_last_login }
       : null
@@ -60,8 +73,12 @@ export function fullShop(row) {
 
 /* ---------------------------------------------------------------- Public discovery */
 
-/** Approved + active shops, optionally filtered by text, with distance when a point is given. */
-export async function listPublicShops({ q = "", lat = null, lng = null, page = 1, limit = 20 }) {
+/**
+ * Approved + active shops, optionally filtered by text. With a point: nearest first, with the distance. Without one:
+ * "recommended" — featured shops first, then shops with something on sale, each group in an order that changes once a
+ * day (the same for every visitor that day, so the page doesn't jump on every refresh).
+ */
+export async function listPublicShops({ q = "", lat = null, lng = null, page = 1, limit = 20, day = indiaDay() }) {
   const params = [];
   let where = PUBLIC;
   if (q) {
@@ -71,10 +88,11 @@ export async function listPublicShops({ q = "", lat = null, lng = null, page = 1
   const total = (await db.query(`SELECT count(*)::int AS n FROM shops WHERE ${where}`, params)).rows[0].n;
   const hasPoint = lat !== null && lng !== null;
   const distance = hasPoint ? `, ${haversineSql(`$${params.push(lat)}::float8`, `$${params.push(lng)}::float8`)} AS distance_km` : "";
+  const order = hasPoint ? "distance_km ASC, name ASC" : `${FEATURED_NOW} DESC, has_products DESC, md5($${params.push(day)} || shop_code)`;
   params.push(limit, (page - 1) * limit);
   const { rows } = await db.query(
-    `SELECT *${distance} FROM shops WHERE ${where}
-      ORDER BY ${hasPoint ? "distance_km ASC," : ""} name ASC
+    `SELECT * FROM (SELECT *, ${EXTRAS}${distance} FROM shops WHERE ${where}) listed
+      ORDER BY ${order}
       LIMIT $${params.length - 1} OFFSET $${params.length}`,
     params
   );
@@ -97,7 +115,7 @@ export async function nearbyShops({ lat, lng, radiusKm, limit }) {
   params.push(radiusKm, limit);
   const { rows } = await db.query(
     `SELECT * FROM (
-        SELECT *, ${haversineSql("$1::float8", "$2::float8")} AS distance_km
+        SELECT *, ${EXTRAS}, ${haversineSql("$1::float8", "$2::float8")} AS distance_km
           FROM shops
          WHERE ${PUBLIC} AND ${boxSql}
      ) nearby
@@ -111,7 +129,7 @@ export async function nearbyShops({ lat, lng, radiusKm, limit }) {
 
 /** A listed shop by Shop ID (FRX-SHOP-1001) or by its catalogue reference. */
 export async function getPublicShop(ref) {
-  const { rows } = await db.query(`SELECT * FROM shops WHERE ${PUBLIC} AND (shop_code = $1 OR catalog_ref = $2)`, [String(ref).toUpperCase(), String(ref)]);
+  const { rows } = await db.query(`SELECT *, ${EXTRAS} FROM shops WHERE ${PUBLIC} AND (shop_code = $1 OR catalog_ref = $2)`, [String(ref).toUpperCase(), String(ref)]);
   return rows[0] ? publicShop(rows[0]) : null;
 }
 
@@ -401,6 +419,25 @@ export async function adminSetActive(id, active, actor, ip) {
   await db.tx(async (q) => {
     await q.query("UPDATE shops SET active_status = $2, updated_at = now() WHERE id = $1", [id, active ? "ACTIVE" : "INACTIVE"]);
     await audit(q, { actor, action: active ? ACTIONS.SHOP_ACTIVATED : ACTIONS.SHOP_DEACTIVATED, targetType: "shop", targetId: shop.shopCode, ip });
+  });
+  return adminGetShop(id);
+}
+
+/**
+ * Feature a shop (e.g. a paid promotion) or stop featuring it. until: "YYYY-MM-DD" (the last day, India time) or ""
+ * for no end. A featured shop comes first in the shop lists without a location, with a "Featured" label.
+ */
+export async function adminSetFeatured(id, { featured, until = "" }, actor, ip) {
+  const shop = await adminGetShop(id);
+  let end = null;
+  if (featured && until) {
+    end = new Date(`${until}T23:59:59.999+05:30`);
+    if (Number.isNaN(end.getTime())) throw errors.validation({ until: "Enter a valid date." });
+    if (end.getTime() <= Date.now()) throw errors.validation({ until: "Choose today or a later day." });
+  }
+  await db.tx(async (q) => {
+    await q.query("UPDATE shops SET featured = $2, featured_until = $3, updated_at = now() WHERE id = $1", [id, Boolean(featured), end]);
+    await audit(q, { actor, action: ACTIONS.SHOP_FEATURED, targetType: "shop", targetId: shop.shopCode, metadata: { featured: Boolean(featured), until: featured ? until || null : null }, ip });
   });
   return adminGetShop(id);
 }

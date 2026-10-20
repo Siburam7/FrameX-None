@@ -122,6 +122,7 @@
 
   const SHOP_SORTS = {
     nearest: (a, b) => nullsLast(a.distanceKm, b.distanceKm, (x, y) => x - y),
+    distance: (a, b) => nullsLast(a.distanceKm, b.distanceKm, (x, y) => x - y), // nearest first, any distance
     rating: (a, b) =>
       nullsLast(
         a.rating && a.rating.average,

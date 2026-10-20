@@ -624,7 +624,7 @@ State-changing requests must send the header `X-FrameX-Client: web` (CSRF protec
 | `POST /api/auth/token-info`, `POST /api/auth/reset-password` | link holder | check / use a reset or shop-setup link |
 | `POST /api/auth/change-password` | logged in | needs the current password |
 | `GET` / `PATCH /api/users/me` | logged in | own profile (name, phone) |
-| `GET /api/shops` | anyone | approved + active shops; `q`, `lat`, `lng`, `page`, `limit` |
+| `GET /api/shops` | anyone | approved + active shops; `q`, `lat`, `lng`, `page`, `limit`. With `lat`/`lng`: nearest first, with `distanceKm`. Without: "recommended" — featured shops first, then shops with something on sale, in an order that changes once a day (India time). Each shop has `rating` ({ average, count } of its published reviews, or null) and `featured` |
 | `GET /api/shops/nearby?lat=&lng=&radius=` | anyone | shops within the radius, nearest first, with `distanceKm` |
 | `GET /api/shops/:ref` | anyone | one listed shop (Shop ID or catalogue reference) |
 | `POST /api/shops/applications` | anyone | "Partner With FrameX" request. Creates no login |
@@ -668,6 +668,7 @@ State-changing requests must send the header `X-FrameX-Client: web` (CSRF protec
 | `POST /api/admin/applications/:id/review` \| `/reject` \| `/approve` | **ADMIN** | approve creates the shop, its Shop ID and its login |
 | `GET` / `POST /api/admin/shops`, `GET` / `PATCH /api/admin/shops/:id` | **ADMIN** | list, add, view, edit (information and location) |
 | `POST /api/admin/shops/:id/activate` \| `/deactivate` \| `/approval` | **ADMIN** | status |
+| `POST /api/admin/shops/:id/featured` | **ADMIN** | `{ featured, until }` (until = the last day, "YYYY-MM-DD", or empty for no end): feature a shop, e.g. a paid promotion; written to the audit log |
 | `POST /api/admin/shops/:id/credentials` \| `/account` | **ADMIN** | new one-time password link; enable / disable the login |
 | `GET /api/admin/audit` | **ADMIN** | audit log |
 | `GET /api/artists[?q=&style=&city=]`, `GET /api/artists/facets`, `GET /api/artists/:ref` | public | the artist directory; one artist (ID or username) with price list, approved artworks and reviews. Never a phone number, email or street address |

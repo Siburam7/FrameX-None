@@ -158,7 +158,7 @@
       <div class="shop-card__cover">
         ${shop.coverImage ? `<img src="${esc(shop.coverImage)}" alt="" width="900" height="506" loading="lazy" decoding="async">` : ""}
         <div class="shop-card__top">
-          <span>${shop.isSample ? `<span class="badge badge--sample">Sample shop</span>` : ""}</span>
+          <span>${shop.featured ? `<span class="badge badge--featured">Featured</span>` : ""}${shop.isSample ? `<span class="badge badge--sample">Sample shop</span>` : ""}</span>
           ${openBadge}
         </div>
       </div>

@@ -63,7 +63,8 @@
       openingHours: s.openingHours || null,
       fulfilment: s.fulfilment || [],
       giftWrap: s.giftWrap !== false,
-      rating: null, // reviews arrive in a later step
+      rating: s.rating || null, // { average, count } of its published reviews, or null
+      featured: Boolean(s.featured), // featured by FrameX (e.g. a paid promotion): first in the lists, with a label
       isActive: true,
       isSample: Boolean(s.isDemo),
       distanceKm: s.distanceKm, // measured by the backend; null when no location was given
@@ -190,7 +191,7 @@
       getCategories: afterShopProducts("getCategories"),
       getProductFacets: afterShopProducts("getProductFacets"),
 
-      /** params: q, sort ("nearest" = within radiusKm of lat/lng), lat, lng, radiusKm, page, limit */
+      /** params: q, sort ("nearest" = within radiusKm of lat/lng; any other with lat/lng = nearest first, any distance), lat, lng, radiusKm, page, limit */
       async getShops(params = {}) {
         if (!http.enabled()) return base.getShops(params);
         try {

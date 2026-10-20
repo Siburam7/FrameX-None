@@ -52,10 +52,24 @@
 - [x] 2026-10-20 18:45 owner added Render `ADMIN_NOTIFY_EMAIL=support@shopframex.in` (it was not set: alerts went to the
       admin account emails). Contact-form messages and shop/artist application alerts now reach support.framex@gmail.com.
       Email roles (owner): support.framex@gmail.com = customer issues; shop.framex@gmail.com = main business account
+      [x] Owner tested the live Contact form: the message arrived (works).
 - [ ] 5 of 25 stored files missing (live log since the 2026-10-20 deploy): the start-up check now prints what each
       missing file belonged to (order number + status, "STILL UNDER WAY" first; shop / product; review) — local, backend
-      420/420. Next: deploy, read the Render log, then decide per file (ask the customer for the photo again if an order
-      is still under way)
+      420/420. Live since df6e420 (2026-10-20 19:37). The live log lists all 5, every one uploaded 2026-10-09/10, i.e.
+      before the B2 bucket (2026-10-10): kept on Render's disk, wiped by a restart (cause confirmed; nothing later is missing).
+      STILL UNDER WAY: customer photos of FX-100002 + FX-100003 (one photo) and FX-100004, all PLACED since 2026-10-09.
+      Finished: FX-100001 DELIVERED, FX-100005 CANCELLED; one unused upload. Owner to check whose FX-100002/3/4 are:
+      own tests → cancel them; real customers → ask for the photo again. The rest clears itself (15-day / 30-day tidy-ups)
+      Owner 2026-10-20: FX-100002, FX-100003, FX-100004 are TEST orders (labelled "Test": Razorpay test-mode payments, no
+      real money) → cancelled by the owner in Admin → Orders (23:38).
+      The warning then clears by itself ~15 days after the cancel (sweep marks the photo rows DELETED)
+- [x] 2026-10-21 Finding shops (owner's design; suggestions 2-7 chosen; random once a day; featured = paid promotion;
+      Home + Shop page): search box, nearest 3 + "View more shops near you", nearest-three fallback, location kept for the
+      tab (stays off after "Clear location"), used at once when allowed before, cleaner toolbar, rating / featured on the
+      card, Admin → Shops → Featured (migration 017), Privacy + Terms lines — local. Backend 428/428 (8 new); browser
+      35/35 (new suite); before/after pictures on the Desktop (FrameX-shops-laptop-v2.png, FrameX-shops-phone-v2.png)
+- [x] 2026-10-21 Header menu: FAQ → "Studio" (FrameX Studio); FAQ stays in the footer (Support) — local. Fits on one line
+      at 1280 / 1366 / 1920 px, phone menu checked, Studio marked current on FrameX Studio
 - [ ] Optional (owner asked how): reply FROM support@shopframex.in — Gmail "Send mail as" through Brevo SMTP (free,
       ~10 min, steps in architecture.md §9). Today replies leave as support.framex@gmail.com
 - [ ] Owner: recovery email on the support@shopframex.in Google account; check the Gmail DP with a new reset email

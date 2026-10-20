@@ -51,7 +51,7 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   `GET /api/users/me/data`, `POST /api/users/me/delete`.
 - `src/services/` — business logic (cart, checkout, orders, payments, payouts, uploads, analytics, settings…).
 - `src/db/` — `index.js` (PostgreSQL via `pg` when `DATABASE_URL` is set, else embedded PGlite in `backend/.data`),
-  `migrations/001…016` (applied automatically at start, never reset; 013 XUSE10 limits, 014 `users.deleted_at`, 015 `saved_designs`, 016 product approval on), `backup.js`, `ssl.js` (local, not deployed).
+  `migrations/001…017` (applied automatically at start, never reset; 013 XUSE10 limits, 014 `users.deleted_at`, 015 `saved_designs`, 016 product approval on, 017 `shops.featured` / `featured_until`), `backup.js`, `ssl.js` (local, not deployed).
 - `src/payments/` — one payment system, gateway adapters `razorpay.js`, `cashfree.js`.
 - `src/lib/` — security (CORS, CSRF, cookies), storage (disk or bucket), sealed (AES-256-GCM for payout details),
   mailer, sms, file links (signed URLs).
@@ -98,6 +98,19 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
 - Photos live in B2 (not in the database backup). Keep `PAYOUT_ENCRYPTION_KEY` safe: backups need it to open payout details.
 - 2026-10-20 15:06: `backup-live-db.bat` run against Neon by the owner before the deploy (first real run; worked):
   `DesktopFrameX-backupsramex-db-live-20261020-1506.fxdb` (locked with the owner's passphrase).
+
+## 8b. Finding shops (Home + Shop page, 2026-10-21)
+
+- `assets/js/ui/shops.js` runs the shops section on both pages (Home: `data-limit="3"`). No location: `GET /api/shops`
+  "recommended" order (featured first, then shops with products on sale, `md5(day || shop_code)` so it changes once a
+  day, India time). With a location: Home = nearest three wherever they are; Shop page = `/api/shops/nearby` within the
+  chosen distance, or the nearest three when none is that close. One search box: `q` (name, area, city, state, PIN);
+  no match → place search (`/api/geo/search`) → shops near that place.
+- `services/location.js` keeps the location in sessionStorage (this tab only; `{ off: true }` after "Clear location"
+  so the tab doesn't use it again). When the browser already granted the permission (Permissions API), the nearest
+  shops are shown without a click; otherwise nothing is asked until "Use my location".
+- Featured: `shops.featured` + `featured_until` (timestamptz, end of the chosen day IST), set in Admin → Shops → the
+  shop → Featured (`POST /api/admin/shops/:id/featured`, audit `SHOP_FEATURED`). Public JSON says only `featured`.
 
 ## 9. Email (domain shopframex.in, set up 2026-10-20)
 

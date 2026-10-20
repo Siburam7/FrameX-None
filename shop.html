@@ -54,14 +54,15 @@
           </div>
         </div>
         <div class="shops-toolbar" id="shops-toolbar">
+          <form class="shops-search" id="shops-search" role="search" novalidate>
+            <label class="field shops-search__field"><span class="visually-hidden">Search shops by name, area, city or PIN code</span><svg class="icon" aria-hidden="true">
+                <use href="#i-search"></use>
+              </svg><input class="input" id="shops-q" name="q" type="search" placeholder="Search shop name, area, city or PIN code" autocomplete="off" maxlength="80"></label>
+            <button class="btn btn--outline btn--sm" type="submit">Search</button>
+          </form>
           <button class="btn btn--dark btn--sm" type="button" id="shops-locate"><svg class="icon" aria-hidden="true">
               <use href="#i-pin"></use>
             </svg> Use my location</button>
-          <div class="segmented" role="group" aria-label="Sort shops">
-            <button class="chip" type="button" data-shop-sort="recommended" aria-pressed="true">Recommended</button>
-            <button class="chip" type="button" data-shop-sort="nearest" aria-pressed="false" disabled>Nearest</button>
-            <button class="chip" type="button" data-shop-sort="rating" aria-pressed="false" disabled>Top rated</button>
-          </div>
           <p class="shops-toolbar__status" id="shops-status" role="status" aria-live="polite"></p>
         </div>
         <div class="shop-grid" id="shop-grid" aria-busy="true" data-skeleton="shop" data-skeleton-count="3"></div>

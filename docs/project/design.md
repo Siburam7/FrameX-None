@@ -55,6 +55,9 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
 
 ## 5. Layout
 
+- Header menu (owner, 2026-10-21): Home · Art & Artists · Shop · Home Decor · Templates · Studio. "Studio" opens
+  FrameX Studio (`studio.html?mode=photo`; the studio with a template stays under Templates); FAQ is in the footer
+  (Support), and the footer still says "FrameX Studio".
 - Header logo 150px wide on desktop. "Gallery" is in the footer, not the top menu. The orange header button follows
   the section (Shop Frames / Explore Art / Shop Decor / All Templates).
 - Phone breakpoints: `mobile.css` blocks at max-width 639px, 374px and 359px. Target widths 320-430px.
@@ -79,6 +82,17 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
   the header but not pictures) still shows it (owner, 2026-10-20); navy text `#0d1b3e`; code box `#fff4ee` /
   `#ffd7c4`; button `#ff6a35`. One template for
   every email: `htmlEmail()` in `backend/src/lib/mailer.js`. Was: cream `#faf6ee`, black header, button `#de832e`.
+
+## 5d. Shops section (Home + Shop page, owner 2026-10-21)
+
+- Toolbar: one search box ("Search shop name, area, city or PIN code", outline "Search" button) and the dark
+  "Use my location" button (hidden while the device location is in use). The old Recommended / Nearest / Top rated
+  chips and the Home heading's "Browse all shops" button are gone.
+- Under the toolbar: why location is asked (before asking), or "Near you · Within (Shop page only) · Change location ·
+  Clear location", or "Shops matching “…” · Clear search".
+- Home: three cards, then a centred outline button "View more shops near you" (with a location) / "View all shops".
+- Card: `badge--featured` ("Featured", `--amber-strong` on white text) top-left on the cover for a featured shop;
+  distance, rating, frames count as before.
 
 ## 6. Content rules
 

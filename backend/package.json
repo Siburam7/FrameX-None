@@ -21,7 +21,7 @@
     "storage:test": "node scripts/test-storage.js",
     "load:test": "node scripts/load-test.js",
     "doctor": "node scripts/doctor.js",
-    "test": "node --test test/api.test.js test/cart.test.js test/checkout.test.js test/decor.test.js test/photos.test.js test/art.test.js test/analytics.test.js test/contact.test.js test/storage.test.js test/updates.test.js test/session.test.js test/loadtest.test.js test/shopwelcome.test.js test/payouts.test.js test/account.test.js test/designs.test.js test/retention.test.js test/keep-awake.test.js test/backup.test.js test/backup-passphrase.test.js test/db-ssl.test.js test/site-csp.test.js test/site-session.test.js"
+    "test": "node --test test/api.test.js test/cart.test.js test/checkout.test.js test/decor.test.js test/photos.test.js test/art.test.js test/analytics.test.js test/contact.test.js test/storage.test.js test/updates.test.js test/session.test.js test/loadtest.test.js test/shopwelcome.test.js test/payouts.test.js test/account.test.js test/designs.test.js test/retention.test.js test/keep-awake.test.js test/shops-discovery.test.js test/backup.test.js test/backup-passphrase.test.js test/db-ssl.test.js test/site-csp.test.js test/site-session.test.js"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.8",

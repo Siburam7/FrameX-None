@@ -1,8 +1,11 @@
 /* ==========================================================================
    Location service.
    Real behaviour only. The visitor's position comes from the browser
-   (navigator.geolocation, asked only after they press a button) or from a
-   place they typed in. It is kept in memory for this page only, never stored.
+   (navigator.geolocation, asked only after they press a button, or used at
+   once when the visitor allowed it on an earlier visit) or from a place they
+   typed in. It is kept for this browser tab only (sessionStorage), so the next
+   page doesn't ask again; closing the tab forgets it. It is never saved by
+   FrameX.
 
    With the FrameX backend connected, distances are calculated by the backend
    from each shop's stored coordinates. distanceKm() below is only used by the
@@ -35,6 +38,37 @@
   // { latitude, longitude, accuracy, source: "device" | "place", label }
   let current = null;
 
+  const KEY = "framex.location.v1";
+  // off = the visitor pressed "Clear location": this tab doesn't use the location again until they ask for it
+  function keep({ off = false } = {}) {
+    try {
+      if (current) window.sessionStorage.setItem(KEY, JSON.stringify(current));
+      else if (off) window.sessionStorage.setItem(KEY, JSON.stringify({ off: true }));
+      else window.sessionStorage.removeItem(KEY);
+    } catch (error) {
+      /* storage blocked: it lasts for this page only */
+    }
+  }
+  /** The location this tab already has (from an earlier page), or null. */
+  function restore() {
+    try {
+      const saved = JSON.parse(window.sessionStorage.getItem(KEY) || "null");
+      if (saved && Number.isFinite(saved.latitude) && Number.isFinite(saved.longitude)) current = saved;
+    } catch (error) {
+      /* nothing kept */
+    }
+    return current;
+  }
+  /** "granted" | "prompt" | "denied", or null when the browser can't say. Asking this shows nothing to the visitor. */
+  async function permission() {
+    try {
+      if (!navigator.permissions || !navigator.permissions.query) return null;
+      return (await navigator.permissions.query({ name: "geolocation" })).state;
+    } catch (error) {
+      return null;
+    }
+  }
+
   /**
    * Ask the browser for the device's position. Call only from a click.
    * Resolves the location; rejects with an Error whose `code` is
@@ -56,6 +90,7 @@
             source: "device",
             label: "your location",
           };
+          keep();
           resolve(current);
         },
         (err) =>
@@ -77,6 +112,7 @@
       source: "place",
       label: place.label,
     };
+    keep();
     return current;
   }
 
@@ -85,7 +121,21 @@
     formatDistance,
     requestPosition,
     setPlace,
-    clear: () => (current = null),
+    /** "Clear location": forgotten, and not used again in this tab until the visitor asks for it. */
+    clear: () => {
+      current = null;
+      keep({ off: true });
+    },
+    /** Did the visitor clear the location in this tab? */
+    cleared: () => {
+      try {
+        return Boolean((JSON.parse(window.sessionStorage.getItem(KEY) || "null") || {}).off);
+      } catch (error) {
+        return false;
+      }
+    },
     getCurrent: () => current,
+    restore,
+    permission,
   };
 })((window.FrameX = window.FrameX || {}));

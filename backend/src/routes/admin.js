@@ -205,6 +205,15 @@ router.post("/shops/:id/approval", async (req, res) => {
 router.post("/shops/:id/activate", async (req, res) => res.json({ shop: await shops.adminSetActive(idParam(req), true, req.auth.user, req.ip) }));
 router.post("/shops/:id/deactivate", async (req, res) => res.json({ shop: await shops.adminSetActive(idParam(req), false, req.auth.user, req.ip) }));
 
+// Feature a shop (e.g. a paid promotion): first in the shop lists without a location, with a "Featured" label.
+router.post("/shops/:id/featured", async (req, res) => {
+  const { featured, until } = validate(req.body, {
+    featured: v.boolean(),
+    until: v.string({ max: 10, label: "Until", pattern: /^(\d{4}-\d{2}-\d{2})?$/, patternMessage: "Enter a date like 2026-12-31." })
+  });
+  res.json({ shop: await shops.adminSetFeatured(idParam(req), { featured, until }, req.auth.user, req.ip) });
+});
+
 // Create the shop's login, or send a fresh one-time link. The password is chosen by the shop, never by the admin.
 router.post("/shops/:id/credentials", async (req, res) => {
   const data = validate(req.body, { accountEmail: v.email({ required: false }), accountName: v.string({ max: 80 }) });

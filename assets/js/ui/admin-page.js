@@ -61,7 +61,7 @@
   const ACTIONS = {
     APPLICATION_SUBMITTED: "Application submitted", APPLICATION_UNDER_REVIEW: "Application put under review", APPLICATION_REJECTED: "Application rejected",
     SHOP_APPROVED: "Shop approved", SHOP_CREATED: "Shop created", SHOP_REJECTED: "Shop rejected", SHOP_UPDATED: "Shop details updated", SHOP_ACTIVATED: "Shop activated",
-    SHOP_DEACTIVATED: "Shop deactivated", SHOP_ACCOUNT_CREATED: "Shop login created", SHOP_CREDENTIALS_ISSUED: "New password link issued", SHOP_ACCOUNT_DISABLED: "Shop login disabled",
+    SHOP_DEACTIVATED: "Shop deactivated", SHOP_FEATURED: "Shop featured / not featured", SHOP_ACCOUNT_CREATED: "Shop login created", SHOP_CREDENTIALS_ISSUED: "New password link issued", SHOP_ACCOUNT_DISABLED: "Shop login disabled",
     SHOP_ACCOUNT_ENABLED: "Shop login enabled", SHOP_PROFILE_UPDATED: "Shop edited its profile", PASSWORD_RESET: "Password reset", ACCOUNT_SETUP_COMPLETED: "Shop set its password",
     ORDER_STATUS_CHANGED: "Order status changed", ORDER_CANCELLED: "Order cancelled", ORDER_REFUNDED: "Order refunded",
     ORDER_PHOTO_ACCESSED: "Customer photo downloaded", ORDER_ITEM_FULFILMENT_CHANGED: "Shop updated an order item",
@@ -78,6 +78,9 @@
 
   let root, admin;
   const badge = (status, labels) => `<span class="sd-status sd-status--${TONE[status] || "draft"}">${esc(labels[status] || status)}</span>`;
+  // A promotion's last day, India time ("2026-12-31" for the date field, "31 Dec 2026" to read)
+  const featuredDate = (iso) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+  const featuredDay = (iso) => new Intl.DateTimeFormat(undefined, { timeZone: "Asia/Kolkata", day: "numeric", month: "short", year: "numeric" }).format(new Date(iso));
   const when = (iso) => (iso ? new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "");
   const address = (s) => [s.address.line1, s.address.area, s.address.city, s.address.state, s.address.postalCode].filter(Boolean).join(", ");
   const mapUrl = (lat, lng) => `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=17/${lat}/${lng}`;
@@ -399,7 +402,7 @@
       <div class="sd-item__main"><a class="sd-item__name" href="#/shops/${esc(s.uuid)}">${esc(s.name)}</a>
         <span class="sd-item__meta"><code>${esc(s.shopCode)}</code> · ${esc([s.address.city, s.address.state].filter(Boolean).join(", "))}${s.account ? ` · login: ${esc(ACCOUNT_STATUS[s.account.status] || s.account.status)}` : " · no login yet"}</span>
         ${s.isDemo ? `<span class="sd-item__source">Development sample data</span>` : ""}</div>
-      ${badge(s.status, SHOP_STATUS)}
+      ${badge(s.status, SHOP_STATUS)}${s.featured ? ` <span class="badge badge--featured">Featured</span>` : ""}
       <div class="sd-item__actions"><a class="iu-btn" href="#/shops/${esc(s.uuid)}">${icon("eye")} View</a>
         ${s.status === "ACTIVE" ? `<button class="iu-btn" type="button" data-shop-act="deactivate">Deactivate</button>` : ""}
         ${s.status === "INACTIVE" ? `<button class="iu-btn iu-btn--go" type="button" data-shop-act="activate">Activate</button>` : ""}</div></li>`;
@@ -464,6 +467,15 @@
             ${s.approvalStatus !== "REJECTED" ? `<button class="btn btn--outline btn--sm sd-danger" type="button" data-act="reject">${s.approvalStatus === "APPROVED" ? "Withdraw approval" : "Reject"}</button>` : ""}
           </div>
         </section>
+        <section class="account-card"><h2>${icon("star")} Featured</h2>
+          <p>${s.featured ? (s.featuredUntil ? `Featured until ${esc(featuredDay(s.featuredUntil))}: shown first in the shop lists, with a “Featured” label.` : "Featured: shown first in the shop lists, with a “Featured” label, until you switch it off.") : s.featuredOn ? "The promotion has ended. Not featured." : "Not featured. Featured shops come first in the shop lists (for visitors without a location) and carry a “Featured” label, for example as a paid promotion."}</p>
+          <form id="featured-form" class="form-grid" novalidate>
+            <label class="wz-check"><input type="checkbox" name="featured"${s.featured ? " checked" : ""}> Feature this shop</label>
+            ${forms().field("until", "Until (last day)", { type: "date", prefix: "ft", value: s.featured && s.featuredUntil ? featuredDate(s.featuredUntil) : "", hint: "Leave empty to keep it featured until you switch it off." })}
+            <div class="form-status" role="status" aria-live="polite"></div>
+            <div><button class="btn btn--dark btn--sm" type="submit">Save</button></div>
+          </form>
+        </section>
         <section class="account-card"><h2>${icon("lock")} Shop login</h2>
           ${s.account
             ? `<dl class="account-list"><div><dt>Email</dt><dd>${esc(s.account.email)}</dd></div><div><dt>Status</dt><dd>${badge(s.account.status, ACCOUNT_STATUS)}</dd></div><div><dt>Last login</dt><dd>${esc(when(s.account.lastLoginAt)) || "Never"}</dd></div></dl>
@@ -484,6 +496,15 @@
       send: () => http().patch(`/admin/shops/${id}`, readShop(form).shop),
       onSuccess() {
         FrameX.toast.show("Shop details saved.");
+        shop(main, id);
+      },
+    });
+    const featuredForm = $("#featured-form", main);
+    forms().handle(featuredForm, {
+      busyLabel: "Saving…",
+      send: (v) => http().post(`/admin/shops/${id}/featured`, { featured: Boolean(featuredForm.elements.featured.checked), until: featuredForm.elements.featured.checked ? v.until || "" : "" }),
+      onSuccess(r) {
+        FrameX.toast.show(r.shop.featured ? "The shop is featured." : "The shop is no longer featured.");
         shop(main, id);
       },
     });

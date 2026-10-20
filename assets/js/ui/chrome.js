@@ -13,9 +13,10 @@
     ["shop", "Shop"],
     ["decor", "Home Decor"],
     ["templates", "Templates"],
-    ["faq", "FAQ"],
+    // FrameX Studio, called just "Studio" here (owner, 2026-10-21). FAQ moved to the footer (Support).
+    ["studio", "Studio", pages.studio + "?mode=photo"],
   ];
-  // Services and Contact are in the footer (Support), not in the header.
+  // Services, Contact and FAQ are in the footer (Support), not in the header.
 
   /* The header's main button follows the section the visitor is in: [label, link]. */
   const CTA = {
@@ -67,7 +68,8 @@
         "wall-art-studio": "decor",
         "customer-gallery": "gallery",
         template: "templates",
-        studio: "templates",
+        // The studio page with a template belongs to Templates; on its own (a frame around a photo) it is Studio.
+        studio: new URLSearchParams(window.location.search).get("template") ? "templates" : "studio",
         artist: "art",
         artwork: "art",
         "join-artist": "art",
@@ -75,8 +77,8 @@
         paintings: "art",
       }[current] || current;
     const links = NAV.map(
-      ([key, label]) =>
-        `<li><a href="${pages[key]}"${key === section ? ' aria-current="page"' : ""}>${label}</a></li>`,
+      ([key, label, href]) =>
+        `<li><a href="${href || pages[key]}"${key === section ? ' aria-current="page"' : ""}>${label}</a></li>`,
     ).join("");
     const solid = current === "home" ? "" : " site-header--solid";
     const [ctaLabel, ctaHref] = CTA[section] || CTA_DEFAULT;
