@@ -1,7 +1,7 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-10-20 (F-11, F-13, F-14).
+> Last updated: 2026-10-20 (deploy, pinger, email domain).
 
 ## Now
 
@@ -46,6 +46,9 @@
           Gmail `support.framex@gmail.com` (alias `*` re-created; test mail arrived in its Primary inbox). Gmail may take hours to a day to show it; check with a
           new reset email. Owner: add a recovery email (Security & sign-in) to that account
       Note: GoDaddy auto-renew is OFF; shopframex.in expires 2027-10-09 — remind the owner before then
+- [ ] Optional (owner asked how): reply FROM support@shopframex.in — Gmail "Send mail as" through Brevo SMTP (free,
+      ~10 min, steps in architecture.md §9). Today replies leave as support.framex@gmail.com
+- [ ] Owner: recovery email on the support@shopframex.in Google account; check the Gmail DP with a new reset email
 - [ ] F-15 SMS / WhatsApp OTP: owner put it aside 2026-10-20 (WhatsApp idea explained: ~₹0.12-0.35 a message,
       needs Meta business verification, a new number and a payment method; the grey SMS button stays for now)
 - [ ] Next candidates (owner chooses)

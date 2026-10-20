@@ -1,7 +1,7 @@
 # FrameX — Architecture
 
 > Living document. Update it whenever the structure, hosting or a service changes (see `rules.md` → "Project docs").
-> Last updated: 2026-10-20 (F-11, F-13, F-14). Deeper references: `docs/ARCHITECTURE.md` (frontend data contract, Live Demo),
+> Last updated: 2026-10-20 (F-04 live, email domain). Deeper references: `docs/ARCHITECTURE.md` (frontend data contract, Live Demo),
 > `backend/README.md` (every backend feature, settings and API).
 
 ## 1. Overview
@@ -15,13 +15,13 @@ FrameX API  framex-api.onrender.com  (Render web service, free plan, Node.js / E
    ├── PostgreSQL   Neon (free plan), branch "production", database neondb
    ├── File storage Backblaze B2 bucket (private, S3-compatible) — customer photos, product / review pictures
    ├── Payments     Razorpay (live keys) · Cashfree adapter (not configured live)
-   ├── Email        Brevo
+   ├── Email        Brevo, sender FrameX <support@shopframex.in> (see §9)
    └── SMS          Fast2SMS (not configured)
 ```
 
 Free plan: the API sleeps after ~15 idle minutes and needs ~50 s to wake. The pages show the catalogue without the
 API after 1.2 s; login, cart and checkout wait for it.
-Keeping it awake (F-04, built 2026-10-20, live after deploy): a pinger (UptimeRobot, every 5 min) calls `GET /api/ping`,
+Keeping it awake (F-04, live 2026-10-20; UptimeRobot monitor set up by the owner 15:31): a pinger (UptimeRobot, every 5 min) calls `GET /api/ping`,
 which answers without the database and is not a visitor (`app.js`). `lib/activity.js` remembers the last real
 request; after `QUIET_AFTER_MINUTES` (15) without one, the database timers in `server.js` (unpaid orders every minute,
 paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `/api/health` answers
@@ -95,3 +95,45 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
 - Tool (local, not deployed): `backup-live-db.bat` / `npm run db:backup` (encrypted `.fxdb`) and `npm run db:restore`
   (only into an empty database).
 - Photos live in B2 (not in the database backup). Keep `PAYOUT_ENCRYPTION_KEY` safe: backups need it to open payout details.
+- 2026-10-20 15:06: `backup-live-db.bat` run against Neon by the owner before the deploy (first real run; worked):
+  `DesktopFrameX-backupsramex-db-live-20261020-1506.fxdb` (locked with the owner's passphrase).
+
+## 9. Email (domain shopframex.in, set up 2026-10-20)
+
+```
+Website / backend ──Brevo API──► customer         From: FrameX <support@shopframex.in>  (Render EMAIL_FROM)
+customer ──mail to support@shopframex.in──► ImprovMX (MX) ──forward──► support.framex@gmail.com (business Gmail)
+```
+
+- **Sending (website emails):** Brevo. The domain is authenticated in Brevo (manual setup, no branded subdomain), so
+  emails are DKIM-signed by shopframex.in ("signed-by shopframex.in" in Gmail) and land in the inbox. Sender
+  `FrameX <support@shopframex.in>` is verified in Brevo. The old sender `shop.framex@gmail.com` is still listed
+  (not used; kept).
+- **Why not a @gmail.com sender:** Brevo sending "as gmail.com" fails Gmail's own checks (Gmail address, not sent by
+  Google) → spam, no profile picture; Brevo itself warns "freemail domain is not recommended"; Google/Yahoo/Microsoft
+  require bulk senders to use their own authenticated domain. A domain address is also the one customers can trust,
+  and it stays the same if the inbox behind it changes (only the ImprovMX forwarding changes).
+- **Receiving:** ImprovMX free plan (no card). Catch-all alias `*@shopframex.in` → `support.framex@gmail.com`
+  (moved from the owner's personal Gmail 2026-10-20). There is no separate inbox for support@: mail to it is read in
+  that Gmail. Gmail filter there (and in the personal Gmail): to `@shopframex.in` → never spam.
+- **Replying as support@:** not set up yet. Today a reply from Gmail goes out as `support.framex@gmail.com`.
+  Possible for free: Gmail → Settings → Accounts → "Send mail as" `support@shopframex.in` through Brevo's SMTP relay
+  (`smtp-relay.brevo.com`, port 587, the Brevo SMTP login and an SMTP key made in Brevo → SMTP & API; the key is a
+  secret, typed only into Gmail). It shares Brevo's free daily limit (300) with the website emails.
+- **Profile picture (DP):** a Google account for `support@shopframex.in` (made with "use your existing email"; it has no
+  Gmail inbox of its own) with the owner's picture (white F + orange square on black). Gmail can take hours to a day to
+  show it. Add a recovery email to that account.
+- **DNS at GoDaddy (shopframex.in):**
+
+  | Type | Name | Value | For |
+  | --- | --- | --- | --- |
+  | TXT | @ | `brevo-code:…` | Brevo domain check |
+  | CNAME | brevo1._domainkey | `b1.shopframex-in.dkim.brevo.com` | DKIM (Brevo) |
+  | CNAME | brevo2._domainkey | `b2.shopframex-in.dkim.brevo.com` | DKIM (Brevo) |
+  | MX | @ | `mx1.improvmx.com` (10), `mx2.improvmx.com` (20) | receiving (ImprovMX) |
+  | TXT | @ | `v=spf1 include:spf.improvmx.com include:spf.brevo.com ~all` | SPF (one record for both) |
+  | TXT | _dmarc | `v=DMARC1; p=quarantine; …` (was already there) | DMARC — keep only one |
+
+  Also there and needed: 4 A records + CNAME `www` → `siburam7.github.io` (website), NS / SOA (GoDaddy).
+  Never add a second SPF or a second `_dmarc`. GoDaddy auto-renew is OFF; the domain expires 2027-10-09.
+- **Design:** one template for every email (`htmlEmail()` in `backend/src/lib/mailer.js`), see `design.md` §5c.

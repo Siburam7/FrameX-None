@@ -24,6 +24,9 @@
 
 ## Owner decisions (log)
 
+- 2026-10-20 Owner asked why support@shopframex.in is needed when support.framex@gmail.com exists, and whether replies
+  can go out as support@: explained (architecture.md §9) — sender must be the own domain; replying as support@ is
+  possible for free with Gmail "Send mail as" + Brevo SMTP, not set up yet.
 - 2026-10-20 Email sender is `FrameX <support@shopframex.in>` (Render EMAIL_FROM, set by the owner); shopframex.in is
   authenticated in Brevo (DKIM) and receives mail through ImprovMX (free; catch-all `*@shopframex.in` → the business Gmail support.framex@gmail.com).
   A @gmail.com address can't be the website's sender: Brevo sending as gmail.com fails Gmail's checks (spam, no DP). The email

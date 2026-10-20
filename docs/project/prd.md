@@ -31,23 +31,25 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
 | --- | --- | --- |
 | Catalogue | Shops, products, categories, Home Decor (multi-panel sets), templates, search | Built, live |
 | Product page | Gallery, options with live price, required photo upload, specs | Built, live |
-| FrameX Studio / Wall-art studio / Templates | Customise a frame, split a photo across 2-5 panels, photo templates | Built, live. "Save design" in the account (any device) built locally 2026-10-20; live still browser-only |
+| FrameX Studio / Wall-art studio / Templates | Customise a frame, split a photo across 2-5 panels, photo templates | Built, live. "Save design" in the account (any device) live since 2026-10-20 |
 | Accounts | Sign-up, login, password reset by email (and SMS when configured) | Built, live; SMS not configured |
 | Cart | Account-only, stored in the database, prices set by the server | Built, live |
 | Checkout | Address → summary → payment; Buy Now; coupons (XUSE10) | Built, live |
-| Coupons (admin) | Admin → Coupons: create / change / switch off codes with %, minimum order, maximum discount, uses per customer, start / last day; XUSE10 = 10% from ₹399, max ₹499, once per customer | Built locally 2026-10-20, not deployed |
+| Coupons (admin) | Admin → Coupons: create / change / switch off codes with %, minimum order, maximum discount, uses per customer, start / last day; XUSE10 = 10% from ₹399, max ₹499, once per customer | Built, live since 2026-10-20 |
 | Payments | Razorpay (live keys on Render), Cashfree adapter | Razorpay live payment **not proven**; Cashfree tested only against a stand-in |
 | Cash on Delivery, gift wrap | Configurable fees | Built, live |
 | Orders | Order pages, emails, shop fulfilment steps, admin orders, refunds recorded by admin | Built, live |
 | Customer photos | Stored unchanged, private, short-lived signed links only | Built, live (Backblaze B2 bucket) |
 | Art & Artists | Artists, artworks, custom paintings paid 40% / 60% | Built; not used live yet |
 | Payouts | Bank / UPI payout accounts (sealed), payouts recorded by admin with UTR, 2% payout charge | Built, live code; **payout key not set on Render**, so accounts can't be saved yet |
+| Emails | Password reset, orders, applications… from `FrameX <support@shopframex.in>` (Brevo, domain authenticated: DKIM shopframex.in), "orange line" design, logo on a white badge for dark mode | Built, live since 2026-10-20 |
+| Support inbox | Mail to `support@shopframex.in` (any `@shopframex.in`) is forwarded by ImprovMX (free) to `support.framex@gmail.com`; replies go out from that Gmail until "Send mail as" is set up (architecture §9) | Live since 2026-10-20 |
 | New-order alerts | Email to each seller, WhatsApp button for admin | Built, live |
 | Analytics | Consent-based visitor stats + admin reports; GA4 optional | Built; GA4 ID not set |
 | View on My Wall | Camera / AR preview of a frame | Built; never tried on a real phone |
-| My data | Account → Your data: download everything as one JSON file; customers delete their own account (password + DELETE, not while an order is under way; bills kept for tax without the person) | Built locally 2026-10-20, not deployed |
+| My data | Account → Your data: download everything as one JSON file; customers delete their own account (password + DELETE, not while an order is under way; bills kept for tax without the person) | Built, live since 2026-10-20 |
 | Dark mode | Light (default) / Dark / Device, chosen on the account page | Built |
-| Backups | `npm run db:backup` / `db:restore`; manual `pg_dump` of production | Local tools built (not deployed); a production `pg_dump` was taken and restore-tested on 2026-10-19 |
+| Backups | `npm run db:backup` / `db:restore`; manual `pg_dump` of production | A production `pg_dump` was taken and restore-tested on 2026-10-19; `backup-live-db.bat` ran against Neon on 2026-10-20 (before the deploy) |
 
 ## 4. Business rules (decided by the owner)
 
