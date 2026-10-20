@@ -10,6 +10,7 @@
      - a photo another unfinished order still uses, or a saved design: kept;
      - cancelled 16 days ago: removed.
    And the approval switch: on after migration 016, an admin setting.
+   And the start-up check of stored files: what a missing file belonged to.
    ========================================================================== */
 import crypto from "node:crypto";
 
@@ -38,6 +39,7 @@ const { syncCatalog } = await import("../src/services/catalog-service.js");
 const { emailsSettled } = await import("../src/services/order-service.js");
 const { loadSettings } = await import("../src/services/settings-service.js");
 const { sweepFinishedOrderPhotos } = await import("../src/services/upload-service.js");
+const { checkKnownFiles, describeLost } = await import("../src/services/storage-check.js");
 const { uploadPhoto } = await import("./support/photos.js");
 
 let server;
@@ -180,5 +182,21 @@ describe("shop products need FrameX approval (admin setting)", () => {
     assert.equal((await admin.patch("/api/admin/settings", { productModeration: true })).status, 200);
     assert.equal(config.catalog.productModeration, true);
     assert.equal((await new Client().get("/api/config")).json.features.productModeration, true, "the website is told");
+  });
+});
+
+describe("a missing stored file: what it belonged to (start-up log)", () => {
+  test("a lost photo of an order still under way is listed first, with the order number and status, never the key", async () => {
+    const o = await order();
+    const key = await keyOf(o.uploadId);
+    assert.equal((await checkKnownFiles()).missing, 0);
+    await storage.remove(key); // as a wiped server disk would
+    const r = await checkKnownFiles();
+    assert.equal(r.missing, 1);
+    assert.deepEqual([r.lost[0].what, r.lost[0].underWay], ["customer photo", true]);
+    assert.equal(r.lost[0].where, `order ${o.number} (PLACED)`);
+    const line = describeLost(r.lost[0]);
+    assert.match(line, /^STILL UNDER WAY - customer photo: order FX-\d+ \(PLACED\); uploaded \d{4}-\d{2}-\d{2}$/);
+    assert.ok(!JSON.stringify(r).includes(key) && !JSON.stringify(r).includes("family.jpg") && !JSON.stringify(r).includes("Asha"), "no key, file name or person");
   });
 });

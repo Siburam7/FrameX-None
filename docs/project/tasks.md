@@ -52,6 +52,10 @@
 - [x] 2026-10-20 18:45 owner added Render `ADMIN_NOTIFY_EMAIL=support@shopframex.in` (it was not set: alerts went to the
       admin account emails). Contact-form messages and shop/artist application alerts now reach support.framex@gmail.com.
       Email roles (owner): support.framex@gmail.com = customer issues; shop.framex@gmail.com = main business account
+- [ ] 5 of 25 stored files missing (live log since the 2026-10-20 deploy): the start-up check now prints what each
+      missing file belonged to (order number + status, "STILL UNDER WAY" first; shop / product; review) — local, backend
+      420/420. Next: deploy, read the Render log, then decide per file (ask the customer for the photo again if an order
+      is still under way)
 - [ ] Optional (owner asked how): reply FROM support@shopframex.in — Gmail "Send mail as" through Brevo SMTP (free,
       ~10 min, steps in architecture.md §9). Today replies leave as support.framex@gmail.com
 - [ ] Owner: recovery email on the support@shopframex.in Google account; check the Gmail DP with a new reset email

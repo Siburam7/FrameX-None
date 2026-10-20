@@ -15,7 +15,7 @@ import { sweepUnusedArtistMedia } from "./services/artist-service.js";
 import { expireUnpaidAdvances } from "./services/painting-payment-service.js";
 import { expireUnpaidOrders } from "./services/payment-service.js";
 import { payoutsStatusLine } from "./services/payout-service.js";
-import { checkKnownFiles } from "./services/storage-check.js";
+import { checkKnownFiles, describeLost } from "./services/storage-check.js";
 import { loadSettings } from "./services/settings-service.js";
 import { sweepUnusedMedia } from "./services/shop-product-service.js";
 import { sweepFinishedOrderPhotos, sweepUnusedUploads } from "./services/upload-service.js";
@@ -94,6 +94,11 @@ async function main() {
     if (known && known.error) console.log(`Stored files:   NOT CHECKED - ${known.error}`);
     else if (known && !known.missing) console.log(`Stored files:   all ${known.known} file(s) the database knows are in the storage`);
     else if (known) console.log(`Stored files:   WARNING: ${known.missing} of ${known.known} file(s) the database knows are MISSING from the storage (lost on a restart or a redeploy?)`);
+    // What each missing file belonged to (order number and status, shop, product, date): never a key, a file name or a person.
+    if (known && known.missing) {
+      for (const info of known.lost.slice(0, 20)) console.log(`                - ${describeLost(info)}`);
+      if (known.missing > 20) console.log(`                ... and ${known.missing - 20} more`);
+    }
     if (files.ready && files.kind === "disk" && config.isProd && !process.env.UPLOAD_DIR) console.log("                 WARNING: this is the server's own disk. If the host wipes it on a restart or a redeploy, every uploaded photo is lost. Use a persistent disk (UPLOAD_DIR) or a bucket (STORAGE_PROVIDER=s3).");
     console.log(`Gift wrapping:  ${config.checkout.giftWrap.enabled ? `ON (₹${config.checkout.giftWrap.fee} per order)` : "OFF"}`);
     console.log(`Analytics:      visitor statistics ${config.analytics.enabled ? "ON (only for visitors who allow them)" : "OFF"}; Google Analytics 4 ${config.analytics.ga4MeasurementId || (config.analytics.ga4Invalid ? "NOT USED - GA4_MEASUREMENT_ID is not a Measurement ID (G-XXXXXXXXXX)" : "not used")}`);
