@@ -65,7 +65,9 @@ export const publicUpload = (row) => ({
   orientation: row.orientation,
   megapixels: Math.round((row.width * row.height) / 100000) / 10,
   uploadedAt: row.created_at,
-  inOrder: row.status === "ATTACHED"
+  inOrder: row.status === "ATTACHED",
+  // The file is gone (removed after the order was finished, or by its owner): the record stays, the photo can't be opened
+  removed: row.status === "DELETED"
 });
 
 /**
@@ -140,6 +142,39 @@ export async function deleteOwnUpload(userId, id) {
   if (inDesign) throw new HttpError(409, "UPLOAD_IN_DESIGN", "This photo is used by one of your saved designs, so it is kept with that design.");
   await db.query("UPDATE uploads SET status = 'DELETED', deleted_at = now() WHERE id = $1", [id]);
   await storage.remove(row.storage_key);
+}
+
+/**
+ * The photos of FINISHED orders and custom paintings, `config.uploads.finishedOrderDays` days (15) after they were
+ * finished (owner, 2026-10-20): delivered, cancelled or returned orders; delivered, cancelled or declined paintings.
+ * A photo is kept while anything still needs it: another order or painting that isn't finished (or not long enough),
+ * a cart line, or a saved design. The record stays (the order shows "removed"); only the file goes.
+ * -> how many photos were removed
+ */
+export async function sweepFinishedOrderPhotos() {
+  const days = String(config.uploads.finishedOrderDays);
+  const ORDER_DONE = `(o.status = 'DELIVERED' AND o.delivered_at < now() - ($1 || ' days')::interval)
+     OR (o.status = 'CANCELLED' AND o.cancelled_at < now() - ($1 || ' days')::interval)
+     OR (o.status = 'RETURNED' AND (SELECT max(e.created_at) FROM order_events e WHERE e.order_id = o.id AND e.status = 'RETURNED') < now() - ($1 || ' days')::interval)`;
+  const PAINTING_DONE = `(r.status = 'DELIVERED' AND r.delivered_at < now() - ($1 || ' days')::interval)
+     OR (r.status = 'CANCELLED' AND r.cancelled_at < now() - ($1 || ' days')::interval)
+     OR (r.status = 'DECLINED' AND r.updated_at < now() - ($1 || ' days')::interval)`;
+  const { rows } = await db.query(
+    `SELECT u.id, u.storage_key FROM uploads u
+      WHERE u.status = 'ATTACHED'
+        AND (EXISTS (SELECT 1 FROM order_item_photos p WHERE p.upload_id = u.id) OR EXISTS (SELECT 1 FROM painting_request_photos rp WHERE rp.upload_id = u.id))
+        AND NOT EXISTS (SELECT 1 FROM order_item_photos p JOIN orders o ON o.id = p.order_id WHERE p.upload_id = u.id AND NOT (${ORDER_DONE}))
+        AND NOT EXISTS (SELECT 1 FROM painting_request_photos rp JOIN painting_requests r ON r.id = rp.request_id WHERE rp.upload_id = u.id AND NOT (${PAINTING_DONE}))
+        AND NOT EXISTS (SELECT 1 FROM cart_items i WHERE i.photos @> jsonb_build_array(jsonb_build_object('uploadId', u.id::text)))
+        AND NOT EXISTS (SELECT 1 FROM saved_designs d, jsonb_each_text(d.photos) dp WHERE dp.value = u.id::text)
+      LIMIT 500`,
+    [days]
+  );
+  for (const row of rows) {
+    await db.query("UPDATE uploads SET status = 'DELETED', deleted_at = now() WHERE id = $1 AND status = 'ATTACHED'", [row.id]);
+    await storage.remove(row.storage_key);
+  }
+  return rows.length;
 }
 
 /** Photos become part of an order: they are kept from now on. `q` is the order's transaction. */

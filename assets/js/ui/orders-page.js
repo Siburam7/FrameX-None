@@ -67,7 +67,7 @@
         <span class="od-photo__n">${list.length > 1 ? `Photo ${n + 1}` : "Your photo"}</span>
         <span class="od-photo__name">${esc(p.name)}</span>
         <span class="od-photo__facts">${esc(photoFacts(p))}</span>
-        ${actions ? `<span class="od-photo__actions">${actions(p, item)}</span>` : ""}
+        ${p.removed ? `<span class="od-photo__facts">${icon("alert")} Removed: photos are kept only until shortly after the order is finished.</span>` : actions ? `<span class="od-photo__actions">${actions(p, item)}</span>` : ""}
       </li>`,
       )
       .join("")}</ul>`;

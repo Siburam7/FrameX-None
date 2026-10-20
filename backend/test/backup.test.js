@@ -191,7 +191,8 @@ describe("Restore", () => {
   test("a database a FrameX server already started on (the migrations' own rows) is refused", async () => {
     const started = await freshDb();
     await migrate({ using: started });
-    await assert.rejects(restoreBackup(started, unlocked.file), /not empty \(coupons has 1 rows\)/);
+    // Migrations add the welcome coupon (011) and a setting (016): either is named
+    await assert.rejects(restoreBackup(started, unlocked.file), /not empty \((coupons|platform_settings) has 1 rows\)/);
   });
 
   test("a backup from newer code is refused", async () => {

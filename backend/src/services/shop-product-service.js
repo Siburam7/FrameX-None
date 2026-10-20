@@ -335,7 +335,8 @@ export async function adminSetListing(id, listing, { actor, ip = null, note = ""
     const check = siteEngine().model.validateForPublish(siteEngine().model.normalize(row.data));
     if (!check.ready) throw new HttpError(422, "PRODUCT_INCOMPLETE", "This product is missing information, so it can't be published.", { details: { issues: check.issues } });
   }
-  const data = { ...row.data, status: listing, publishedAt: listing === "published" ? row.data.publishedAt || new Date().toISOString() : row.data.publishedAt || null };
+  // isVisible is what the website reads to show a product: it follows the status (a product waiting for review was saved hidden).
+  const data = { ...row.data, status: listing, isVisible: listing === "published", publishedAt: listing === "published" ? row.data.publishedAt || new Date().toISOString() : row.data.publishedAt || null };
   await db.tx(async (q) => {
     await q.query("UPDATE catalog_products SET status = $2, listing_status = $3, data = $4, source_hash = $5, updated_at = now() WHERE id = $1", [id, listing === "published" && row.owner_listed ? "ACTIVE" : "INACTIVE", listing, JSON.stringify(data), hash(data)]);
     await audit(q, { actor, action: ACTIONS.PRODUCT_MODERATED, targetType: "product", targetId: id, metadata: { shop: row.shop_code, to: listing, note }, ip });

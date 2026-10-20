@@ -78,6 +78,15 @@ const SPEC = {
     check: percent(0, 20),
     get: () => config.payouts.feePercent,
     set: (v) => (config.payouts.feePercent = v)
+  },
+  productModeration: {
+    label: "Shop products need FrameX approval",
+    hint: "On: a shop's new product waits in Admin → Shop products until FrameX approves it. Products already on sale stay on sale.",
+    group: "Shop products",
+    unit: "boolean",
+    check: flag,
+    get: () => config.catalog.productModeration,
+    set: (v) => (config.catalog.productModeration = v)
   }
 };
 

@@ -89,7 +89,7 @@
             // The way to pay chosen on the FrameX page opens first.
             prefill: Object.assign({}, session.prefill, session.method ? { method: session.method } : {}),
             notes: { reference: session.orderNumber || session.requestNumber },
-            theme: { color: "#de832e" },
+            theme: { color: "#b45309" }, // the site's button colour
             // One try per opening: a failure comes back to FrameX, which records it and offers "Retry payment".
             retry: { enabled: false },
             handler: (r) =>

@@ -1,7 +1,7 @@
 # FrameX — Product Requirements (PRD)
 
 > Living document. Update it whenever a feature, rule or decision changes (see `rules.md` → "Project docs").
-> Last updated: 2026-10-20 (saved designs).
+> Last updated: 2026-10-20 (F-11, F-13, F-14).
 
 ## 1. What FrameX is
 
@@ -65,14 +65,14 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
   tax 18% (check with a CA: only GST-registered sellers may charge GST).
 - **No fake data in production**: no invented reviews, offers, statistics or delivery claims.
 - **Banners and offers must be factual.**
+- **Order photos** are deleted 15 days after the order is finished (2026-10-20).
+- **Shop products need FrameX approval** before they go on sale (admin setting, 2026-10-20).
 
 ## 5. Open decisions (owner has not decided)
 
 - Artworks: COD and gift wrap off (my placeholder); custom paintings without delivery charge / tax (placeholder).
 - Refunds of cancelled custom paintings are manual (placeholder).
 - Gift-wrap fee ₹49 and frame build details in `js/edit.js` are placeholders.
-- Product moderation is off (a shop's product goes live without review).
-- Photo retention for completed orders (kept forever today; Privacy Notice doesn't say).
 - Whether to keep the Razorpay adapter once Cashfree is proven (both kept today).
 
 ## 6. Not in scope today

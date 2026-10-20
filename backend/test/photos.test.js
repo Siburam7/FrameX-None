@@ -201,7 +201,8 @@ describe("uploading a photo", () => {
     S.fourK = u.id;
     S.fourKBytes = original;
     assert.deepEqual([u.format, u.mime, u.width, u.height, u.bytes, u.megapixels, u.name, u.inOrder], ["jpeg", "image/jpeg", 3840, 2160, original.length, 8.3, "IMG_2041 (final).JPG", false]);
-    assert.deepEqual(Object.keys(u).sort(), ["bytes", "format", "height", "id", "inOrder", "megapixels", "mime", "name", "orientation", "uploadedAt", "width"], "nothing about where the file is stored");
+    assert.deepEqual(Object.keys(u).sort(), ["bytes", "format", "height", "id", "inOrder", "megapixels", "mime", "name", "orientation", "removed", "uploadedAt", "width"], "nothing about where the file is stored");
+    assert.equal(u.removed, false);
     const stored = await row("SELECT * FROM uploads WHERE id = $1", [u.id]);
     assert.equal(stored.sha256, sha(original));
     const onDisk = fs.readFileSync(path.join(config.uploads.dir, ...stored.storage_key.split("/")));
@@ -1077,7 +1078,12 @@ describe("9 + 10. a shop decides what it sells; the platform keeps its rules", (
       assert.deepEqual([saved.json.product.status, saved.json.product.onSale], ["pending_review", false]);
       assert.equal((await asha.post("/api/cart/items", { productId: id, photos: { photo1: S.fourK } })).status, 409);
       assert.equal((await admin.get("/api/admin/products?status=pending_review")).json.items.length, 1);
+      const hidden = (await asha.get("/api/catalog/shop-products")).json.items.find((p) => p.id === id);
+      assert.equal(hidden, undefined, "not listed while it waits");
       assert.equal((await admin.post(`/api/admin/products/${id}/listing`, { status: "published" })).json.product.onSale, true);
+      // The website shows a product only when isVisible isn't false: approval must switch it on.
+      const listed = (await asha.get("/api/catalog/shop-products")).json.items.find((p) => p.id === id);
+      assert.deepEqual([listed && listed.status, listed && listed.isVisible], ["published", true]);
       assert.equal((await asha.post("/api/cart/items", { productId: id, photos: { photo1: S.fourK } })).status, 201);
       // Once approved, the shop's later edits stay published.
       assert.equal((await shopN.put(`/api/shops/${code()}/products/${id}`, record(S.media, { name: "Waiting for review (edited)" }))).json.product.status, "published");

@@ -28,8 +28,8 @@
   --text-gradient: linear-gradient(90deg, #2563eb, #1e3a8a); /* highlighted words in a hero headline */
 
   --amber: #ea780e;          /* primary accent */
-  --amber-strong: #de832e;   /* primary button fill */
-  --amber-deep: #c96a0a;     /* primary button hover */
+  --amber-strong: #b45309;   /* primary button fill (owner, 2026-10-20: was #de832e; white text now 5.0:1) */
+  --amber-deep: #9a4a05;     /* primary button hover (was #c96a0a) */
   --gold: #d8a15d;           /* secondary accent */
 
   --rose: #ef295c;           /* reviews + FAQ accent */

@@ -17,7 +17,7 @@ import { payoutsStatusLine } from "./services/payout-service.js";
 import { checkKnownFiles } from "./services/storage-check.js";
 import { loadSettings } from "./services/settings-service.js";
 import { sweepUnusedMedia } from "./services/shop-product-service.js";
-import { sweepUnusedUploads } from "./services/upload-service.js";
+import { sweepFinishedOrderPhotos, sweepUnusedUploads } from "./services/upload-service.js";
 
 async function main() {
   assertConfig();
@@ -38,9 +38,11 @@ async function main() {
     ]).catch((error) => console.error("[db] cleanup failed:", error.message));
   setInterval(sweep, 6 * 60 * 60 * 1000).unref();
 
-  // Customer photos that never reached an order (and left every cart) are removed after UPLOAD_UNUSED_DAYS.
+  // Customer photos that never reached an order (and left every cart) are removed after UPLOAD_UNUSED_DAYS; the photos of
+  // a finished order or custom painting ORDER_PHOTO_DAYS (15) after it was finished.
   const tidyUploads = () =>
     sweepUnusedUploads()
+      .then(() => sweepFinishedOrderPhotos())
       .then(() => sweepUnusedMedia()) // product pictures no product uses any more
       .then(() => sweepUnusedArtistMedia()) // artists' pictures no profile or artwork uses any more
       .catch((error) => console.error("[uploads] cleanup failed:", error.message));

@@ -255,7 +255,10 @@ export const config = {
     maxSide: 30000, // pixels on the longest side
     linkSeconds: Math.min(3600, Math.max(30, int(env.UPLOAD_LINK_SECONDS, 300))), // how long a download link works
     maxWaitingPerUser: Math.max(10, int(env.UPLOAD_MAX_WAITING, 80)), // photos not yet part of an order
-    unusedDays: Math.max(1, int(env.UPLOAD_UNUSED_DAYS, 30)) // a photo that never reached an order is removed after this
+    unusedDays: Math.max(1, int(env.UPLOAD_UNUSED_DAYS, 30)), // a photo that never reached an order is removed after this
+    // The photos of an order (and a custom painting's reference photos) are removed this many days after it is finished:
+    // delivered, cancelled, returned or declined (owner, 2026-10-20: 15 days)
+    finishedOrderDays: Math.max(1, int(env.ORDER_PHOTO_DAYS, 15))
   },
 
   // Product pictures uploaded by shops (public: they are shown on product pages).

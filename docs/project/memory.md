@@ -2,7 +2,7 @@
 
 > Decisions, current state and lessons learned, newest first within each section. Add every owner decision and every
 > change of status here (verified / not verified). No secrets or customer data: the repository is public.
-> Last updated: 2026-10-20 (saved designs).
+> Last updated: 2026-10-20 (F-11, F-13, F-14).
 
 ## Current state (2026-10-20)
 
@@ -24,6 +24,10 @@
 
 ## Owner decisions (log)
 
+- 2026-10-20 F-11: order photos deleted 15 days after the order is finished (my additions: same for custom painting
+  reference photos; a photo still used by another unfinished order, the cart or a saved design is kept).
+  F-14: shop products need FrameX approval (admin setting, on via migration 016). F-13: button orange #b45309
+  (option 2 of 4, chosen from a side-by-side picture of the home page).
 - 2026-10-20 F-17 (owner asked to build it): my choices, not asked — visitors who aren't logged in still save in the
   browser (no login forced); logged-in saves go to the account with the photos uploaded at save time; at most 30 per
   account; when the account limit refuses the quiet save before "Add to cart", the design is kept in the browser so

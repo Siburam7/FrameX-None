@@ -1,7 +1,7 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-10-20 (saved designs).
+> Last updated: 2026-10-20 (F-11, F-13, F-14).
 
 ## Now
 
@@ -13,6 +13,7 @@
 - [x] 2026-10-20 F-23 automatic tests on GitHub + F-24 README test count — local
 - [x] 2026-10-20 F-16 account deletion + data download — local (backend 398/398; browser 13/13)
 - [x] 2026-10-20 F-17 Studio designs saved in the account — local (backend 406/406; browser: designs 14/14, Studio 37, decor 26, frame 55, CSP 8)
+- [x] 2026-10-20 F-11 photos 15 days after finish, F-14 product approval on, F-13 darker orange — local (backend 414/414, shop browser suite 50/50)
 - [ ] Next candidates (owner chooses):
       F-11 photo retention · F-14 moderation · F-13 button contrast (design change)
 
@@ -60,10 +61,10 @@ On branch `phase2a-wip` (pushed 2026-10-20; not live — `main` = `eb23ecf` is w
 | F-03 | Razorpay live flow (payment → webhook → paid → refund) never proven | open — needs a real small payment, owner decides |
 | F-04 | Render free plan cold starts (~50 s) | open — pinger or paid plan, owner decides |
 | F-06 | Cart says items from different shops are ordered separately; checkout makes one order | **done locally 2026-10-19** (cart drawer note + FAQ answer now say: one order, each shop sends its own items) |
-| F-11 | Order photos kept forever; Privacy Notice doesn't say how long | open — owner decides |
+| F-11 | Order photos kept forever; Privacy Notice doesn't say how long | **done locally 2026-10-20** (owner: 15 days): photos of an order / custom painting are deleted 15 days after it is finished (delivered, cancelled, returned, declined), unless still used (another unfinished order, cart, saved design); the order shows "Removed". `ORDER_PHOTO_DAYS=15`. Privacy Notice updated |
 | F-12 | XUSE10 coupon has no limits, no admin coupon screen | **done locally 2026-10-20**: migration `013_xuse10_limits.sql` (XUSE10: max ₹499, once per customer, no end date — owner's values); admin → **Coupons** (list with uses + total given, create, change, switch on/off; no delete); banner and coupon title do NOT show the limits (owner); the cap is applied quietly, a 2nd use shows "You have already used the coupon XUSE10." Deploy note: migration 013 changes the LIVE XUSE10 row |
-| F-13 | Orange button contrast 2.84:1 | open — design change needs owner's OK |
-| F-14 | Product moderation off | open — owner decides |
+| F-13 | Orange button contrast 2.84:1 | **done locally 2026-10-20** (owner chose option 2 from a picture of 4 shades): `--amber-strong` #b45309 (white text 5.0:1), hover `--amber-deep` #9a4a05; Razorpay window colour too |
+| F-14 | Product moderation off | **done locally 2026-10-20** (owner: approval needed): admin setting "Shop products need FrameX approval" (Admin → Settings), switched on by migration 016; products already on sale stay on sale. Fixed with it: an approved product stayed hidden on the website (isVisible was left false) |
 | F-15 | SMS not configured | open — Fast2SMS (DLT) or hide phone option |
 | F-16 | No account deletion / data download | **done locally 2026-10-20**: Account → Your data → Download my data (one JSON file) and Delete my account (customers; password + DELETE; refused while an order / painting is under way; login, addresses, photos, cart go; orders and paintings kept for tax without name, email, phone, address; reviews without name). Migration 014 (`users.deleted_at`). Privacy Notice §8 updated |
 | F-17 | Studio designs saved in the browser only | **done locally 2026-10-20**: logged in → "Save design" keeps it in the account with its photos (`/api/designs`, migration 015, max 30), so it opens on any device; not logged in → this browser, as before (marked "this device only"); saving it again after logging in moves it into the account. Photos a saved design uses are kept (not tidied away, not deletable). Account deletion removes designs; the data download lists them |

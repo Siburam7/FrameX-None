@@ -2,7 +2,7 @@
 
 > The current design is the reference: preserve it unless the owner asks for a change. Update this file whenever a
 > visual rule, token or layout decision changes. All values come from `assets/css/tokens.css`.
-> Last updated: 2026-10-19 (website fixes 1-7).
+> Last updated: 2026-10-20 (F-11, F-13, F-14).
 
 ## 1. Direction (owner's choices)
 
@@ -30,8 +30,8 @@
 | `--surface` / `--white` | `#ffffff` | cards, panels, inputs |
 | `--muted` | `#5b5f6b` | secondary text |
 | `--amber` | `#ea780e` | primary accent (orange) |
-| `--amber-strong` | `#de832e` | primary button fill |
-| `--amber-deep` | `#c96a0a` | primary button hover |
+| `--amber-strong` | `#b45309` | primary button fill (2026-10-20, was `#de832e`; white text 5.0:1) |
+| `--amber-deep` | `#9a4a05` | primary button hover (was `#c96a0a`) |
 | `--champagne` | `#ecdcbd` | selected choice |
 | `--line` | `rgba(5, 8, 22, 0.12)` | borders |
 
@@ -39,7 +39,7 @@
 tokens (`--surface`, `--on-surface`, `--surface-*`, `--text-*`, `--tint-*`…). New CSS must use these tokens, never a
 literal `#fff` / `var(--white)` / `var(--ink)` for surfaces or text.
 
-Known issue: white text on the orange button has contrast 2.84:1 (WCAG AA needs 4.5:1) — open, not changed.
+White text on the orange button: 5.0:1 since 2026-10-20 (WCAG AA needs 4.5:1).
 
 ## 3. Typography
 
