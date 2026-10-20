@@ -25,13 +25,25 @@
 
 ## Waiting for the end of development (one combined step, owner's approval needed)
 
-- [ ] Final diff review of all local changes (Phase 2A + new work)
-- [ ] Full tests: `npm test` + browser suites on the :4100 throw-away backend
-- [ ] Merge `phase2a-wip` into `main` and push (owner approves) — this is the step that goes live
-- [ ] Staged deployment (owner approves each stage):
-  1. Backend — check the Render log: `Database link`, `Payouts`, `bucket is private`, `Stored files`
-  2. Website — pages load, login works, Razorpay window opens without paying, no CSP errors in the console
-  3. Pages workflow — commit `.github/workflows/pages.yml`, switch Settings → Pages → Source to "GitHub Actions"
+- [x] 2026-10-20 Final review of everything `main` (eb23ecf) doesn't have yet (123 files, 7 commits, fast-forward):
+      migrations 013-016 only add (one transaction; the old code ignores the new rows/columns, so a rollback is safe);
+      CSP allows the live API, Razorpay, Google Fonts, GA4 (photos come through the API, no bucket address needed);
+      the only new start-up check is DATABASE_SSL (owner: Render has `require` = accepted)
+- [x] 2026-10-20 Full tests: backend 419/419; browser frame 55, Studio 37, decor 26, shop 50, payout 38, coupon 25,
+      coupon admin 20, designs 14, account 13, fixes 21, phone rows 4, CSP 8; all-pages crawl: no script errors, no CSP
+      blocks (remaining flags are the known false positives: hidden home h1, buttons inside closed <details>, test 404s)
+- [ ] **Deploy (owner approves each step)**
+  0. [x] Owner: fresh production backup 2026-10-20 15:06 with `backup-live-db.bat` (its first run against Neon: worked;
+     locked file `DesktopFrameX-backupsramex-db-live-20261020-1506.fxdb`, 180 KB; 12 orders, 7 users, 247 products)
+  1. Merge `phase2a-wip` into `main` (fast-forward) and push: Render redeploys the API and GitHub Pages the website
+     at the same time (for 1-2 minutes new pages may talk to the old API)
+  2. Backend: Render log shows migrations 013-016, `Database link`, `Payouts`, `bucket is private`, `Stored files`,
+     `listening`; `/api/ping` and `/api/health` answer
+  3. Website: pages load, login, cart, Razorpay window opens (no payment), no CSP errors in the console
+  4. After deploy: UptimeRobot on `/api/ping` (F-04); the Pages workflow's first run fails until step 5 (expected)
+  5. Later, separate approval: Settings → Pages → Source "GitHub Actions"
+  Rollback: Render → Deploys → Rollback to eb23ecf; website: revert the merge on `main`. Migrations can stay.
+  Expected right after start: photos of orders finished 15+ days ago are deleted (F-11); new shop products need approval (F-14)
 - [ ] Final production backup after development (owner paused it)
 
 ## Phase 2A — done locally, NOT committed / pushed / deployed
