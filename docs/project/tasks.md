@@ -54,8 +54,11 @@ On branch `phase2a-wip` (pushed 2026-10-20; not live — `main` = `eb23ecf` is w
 - [ ] **Required:** keep the `.7z` passphrase in a password manager
 - [ ] **Required before deploy:** B2 bucket — check "Private" and the lifecycle option (look only)
 - [ ] **After deploy (F-04):** UptimeRobot free monitor → `https://framex-api.onrender.com/api/ping`, every 5 minutes
-      (not before the deploy; never `/api/health`). Before that, check in Render that this is the only free service
-      (750 free hours a month per workspace; one awake all month ≈ 744) and which Health Check Path is set (look only)
+      (not before the deploy; never `/api/health`).
+      Checked by the owner 2026-10-20: `framex-api` Health Check Path is EMPTY (keep it empty). A second free web service
+      `FrameX-None` (framex-none.onrender.com, "My project", trial, auto-deploys `main` and fails every time) was found;
+      the owner deleted it the same day ("My project": no active services; `framex-api` still Live on `eb23ecf`)
+      (750 free hours a month per workspace; one service awake all month ≈ 744)
 - [ ] **Blocked until approved:** add `PAYOUT_ENCRYPTION_KEY` on Render (sellers can't save payout accounts until then)
 - [ ] Optional: restore test on a Neon `restore-test` branch
 - [ ] Optional: decide about the extra unencrypted `.dump` copies and the code copy with `.env` in
