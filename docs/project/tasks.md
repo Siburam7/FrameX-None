@@ -76,6 +76,11 @@
       Razorpay ticket #21472429 (2026-10-21): remove the additional shopframex.in, then edit the primary website to
       https://shopframex.in (review 24-48 h), then Checkout Styling → Brand Name and Logo → "FrameX" + the F logo
       (1-2 h to show in UPI apps). The VPA itself only changes with a registered business name (e.g. Udyam)
+      2026-10-21 owner on Razorpay live chat: the internal team will review the brand name "FrameX"; new reference
+      #21478745 (not shown on the Dashboard; updates by email to the registered address within 24-48 h)
+      2026-10-21 15:16 Razorpay replaced the PRIMARY website: now only https://shopframex.in (verified); github.io gone.
+      Brand name "FrameX": Razorpay internal team, 24-48 h (or the owner saves it in Checkout Styling if it now passes).
+      A review login for Razorpay: customer account review@shopframex.in (password in the owner's Bitwarden)
 - [ ] Tax shown at checkout is 2% (Admin → Settings), not the 18% in older notes — confirm with a CA (F-18)
 - [ ] Optional (owner asked how): reply FROM support@shopframex.in — Gmail "Send mail as" through Brevo SMTP (free,
       ~10 min, steps in architecture.md §9). Today replies leave as support.framex@gmail.com
