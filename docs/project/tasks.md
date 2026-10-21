@@ -153,7 +153,10 @@ On branch `phase2a-wip` (pushed 2026-10-20; not live — `main` = `eb23ecf` is w
       `FrameX-None` (framex-none.onrender.com, "My project", trial, auto-deploys `main` and fails every time) was found;
       the owner deleted it the same day ("My project": no active services; `framex-api` still Live on `eb23ecf`)
       (750 free hours a month per workspace; one service awake all month ≈ 744)
-- [ ] **Blocked until approved:** add `PAYOUT_ENCRYPTION_KEY` on Render (sellers can't save payout accounts until then)
+- [x] 2026-10-21 owner generated `PAYOUT_ENCRYPTION_KEY` on his PC (32 random bytes, base64), kept it in his password manager
+      (Bitwarden), added it on Render; live log 12:59: "payout accounts READY (details sealed)". Never change it
+- [x] 2026-10-21 owner set up a password manager (Bitwarden, EU server, 2-step login with an authenticator app,
+      recovery code on paper) for every account, the backup passphrase and the payout key
 - [ ] Optional: restore test on a Neon `restore-test` branch
 - [ ] Optional: decide about the extra unencrypted `.dump` copies and the code copy with `.env` in
       `Desktop\FrameX-Complete-Backup` (never upload them)

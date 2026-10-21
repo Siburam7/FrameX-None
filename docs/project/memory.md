@@ -12,8 +12,8 @@
   Render and GitHub Pages use `main` only. Work continues on this branch; it goes live only when it is merged into
   `main` (owner's approval, staged plan in `tasks.md`).
 - **Live:** shopframex.in loads, Shop page shows products; API health OK with PostgreSQL connected (checked 2026-10-19).
-- **Render:** not Blueprint-managed (owner checked) — `render.yaml` is not applied. `PAYOUT_ENCRYPTION_KEY` is not set
-  (owner checked); the production backup had 0 payout accounts and 0 payouts, so adding a key breaks nothing.
+- **Render:** not Blueprint-managed (owner checked) — `render.yaml` is not applied. `PAYOUT_ENCRYPTION_KEY` is SET
+  since 2026-10-21 (owner, approved; live log: payout accounts READY). The key is in the owner's Bitwarden; never change it.
 - **Payments:** Razorpay live keys + webhook secret on Render since 2026-10-12; no real payment, webhook or refund seen.
   UPI was not enabled on the Razorpay dashboard at that time.
 - **Email:** Brevo configured (provider accepted a test). **SMS:** not configured. **GA4:** no ID.
