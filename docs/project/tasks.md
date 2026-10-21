@@ -81,6 +81,9 @@
       2026-10-21 15:16 Razorpay replaced the PRIMARY website: now only https://shopframex.in (verified); github.io gone.
       Brand name "FrameX": Razorpay internal team, 24-48 h (or the owner saves it in Checkout Styling if it now passes).
       A review login for Razorpay: customer account review@shopframex.in (password in the owner's Bitwarden)
+      [x] 15:21 owner saved Brand name "FrameX" + the F logo in Checkout Styling (accepted now that the primary site is
+      shopframex.in): instant on checkout, 1-2 h for UPI apps. [ ] owner: check PhonePe shows FrameX (open a payment, don't pay)
+      [x] owner also set the Razorpay checkout background to the FrameX orange (header shows the F logo + FrameX)
 - [ ] Tax shown at checkout is 2% (Admin → Settings), not the 18% in older notes — confirm with a CA (F-18)
 - [ ] Optional (owner asked how): reply FROM support@shopframex.in — Gmail "Send mail as" through Brevo SMTP (free,
       ~10 min, steps in architecture.md §9). Today replies leave as support.framex@gmail.com
