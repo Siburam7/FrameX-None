@@ -37,7 +37,7 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
 | Cart | Account-only, stored in the database, prices set by the server | Built, live |
 | Checkout | Address → summary → payment; Buy Now; coupons (XUSE10) | Built, live |
 | Coupons (admin) | Admin → Coupons: create / change / switch off codes with %, minimum order, maximum discount, uses per customer, start / last day; XUSE10 = 10% from ₹399, max ₹499, once per customer | Built, live since 2026-10-20 |
-| Payments | Razorpay (live keys on Render), Cashfree adapter | Razorpay live payment **not proven**; Cashfree tested only against a stand-in |
+| Payments | Razorpay (live keys on Render), Cashfree adapter | Razorpay live payment + refund **proven 2026-10-21** (FX-100014, ₹354, UPI, refunded); Cashfree tested only against a stand-in |
 | Cash on Delivery, gift wrap | Configurable fees | Built, live |
 | Orders | Order pages, emails, shop fulfilment steps, admin orders, refunds recorded by admin | Built, live |
 | Customer photos | Stored unchanged, private, short-lived signed links only | Built, live (Backblaze B2 bucket) |

@@ -136,7 +136,9 @@ customer ──mail to support@shopframex.in──► ImprovMX (MX) ──forwar
   secret, typed only into Gmail). It shares Brevo's free daily limit (300) with the website emails.
 - **Profile picture (DP):** a Google account for `support@shopframex.in` (made with "use your existing email"; it has no
   Gmail inbox of its own) with the owner's picture (white F + orange square on black). Gmail can take hours to a day to
-  show it. Add a recovery email to that account.
+  show it, and mostly shows it to people who have the address in their contacts or have written to it (a logo for
+  everyone = BIMI: needs a paid VMC/CMC certificate and a registered trademark). Recovery: Google uses the account's
+  own address (it can't have another recovery email), so it depends on the domain + ImprovMX forwarding.
 - **DNS at GoDaddy (shopframex.in):**
 
   | Type | Name | Value | For |

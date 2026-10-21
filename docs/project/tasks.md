@@ -70,9 +70,21 @@
       35/35 (new suite); before/after pictures on the Desktop (FrameX-shops-laptop-v2.png, FrameX-shops-phone-v2.png)
 - [x] 2026-10-21 Header menu: FAQ → "Studio" (FrameX Studio); FAQ stays in the footer (Support) — LIVE (1aa4aa8). Fits on one line
       at 1280 / 1366 / 1920 px, phone menu checked, Studio marked current on FrameX Studio
+- [ ] UPI apps show "Siburam7" and a VPA like siburam754620.rzp@rxairtel when paying (owner: hurts trust). Cause: Razorpay
+      Brand name = account / primary website name. "FrameX" refused: must match the business name (SIBURAM NAYAK) or the
+      PRIMARY website (still https://siburam7.github.io/FrameX-None/; shopframex.in is an additional, verified site).
+      Razorpay ticket #21472429 (2026-10-21): remove the additional shopframex.in, then edit the primary website to
+      https://shopframex.in (review 24-48 h), then Checkout Styling → Brand Name and Logo → "FrameX" + the F logo
+      (1-2 h to show in UPI apps). The VPA itself only changes with a registered business name (e.g. Udyam)
+- [ ] Tax shown at checkout is 2% (Admin → Settings), not the 18% in older notes — confirm with a CA (F-18)
 - [ ] Optional (owner asked how): reply FROM support@shopframex.in — Gmail "Send mail as" through Brevo SMTP (free,
       ~10 min, steps in architecture.md §9). Today replies leave as support.framex@gmail.com
-- [ ] Owner: recovery email on the support@shopframex.in Google account; check the Gmail DP with a new reset email
+- [x] 2026-10-21 Recovery for the support@shopframex.in Google account: Google uses the account's own address as the
+      recovery email (an account made with an existing email can't have another) — codes reach support.framex@gmail.com
+      through ImprovMX, so the domain + ImprovMX must keep working. Optional: a recovery phone that Google accepts
+- [ ] Gmail DP not showing yet (checked 2026-10-21). Gmail shows a sender's Google photo mostly to people who have the
+      address in their contacts or have written to it; showing a logo to everyone needs BIMI (DMARC is ready; needs a
+      paid VMC/CMC certificate + trademark — not now). Owner test: add support@shopframex.in to a Gmail's contacts
 - [ ] F-15 SMS / WhatsApp OTP: owner put it aside 2026-10-20 (WhatsApp idea explained: ~₹0.12-0.35 a message,
       needs Meta business verification, a new number and a payment method; the grey SMS button stays for now)
 - [ ] Next candidates (owner chooses)
@@ -132,7 +144,7 @@ On branch `phase2a-wip` (pushed 2026-10-20; not live — `main` = `eb23ecf` is w
 
 - [ ] **Required:** copy the encrypted `.7z` backup to a pen drive or Google Drive (C: and D: are the same SSD)
 - [ ] **Required:** keep the `.7z` passphrase in a password manager
-- [ ] **Required before deploy:** B2 bucket — check "Private" and the lifecycle option (look only)
+- [x] B2 bucket private — confirmed by the live start-up log since 2026-10-20 ("the bucket is private"). Lifecycle option not looked at
 - [x] 2026-10-20 15:31 done by the owner: UptimeRobot monitor on `https://framex-api.onrender.com/api/ping`, every 5 min,
       email alerts, first check Up. Watch Neon's CU-hours for a few days (12.03 CU-hrs used Oct 9 → Oct 20 before it).
 - [x] **After deploy (F-04):** UptimeRobot free monitor → `https://framex-api.onrender.com/api/ping`, every 5 minutes
@@ -152,7 +164,7 @@ On branch `phase2a-wip` (pushed 2026-10-20; not live — `main` = `eb23ecf` is w
 | ID | Item | State |
 | --- | --- | --- |
 | F-01 | Templates page says "We'll ask for your photos after you order" but the cart requires them | **done locally 2026-10-19** (text fixed on `template.html`, `templates.html`) |
-| F-03 | Razorpay live flow (payment → webhook → paid → refund) never proven | open — needs a real small payment, owner decides |
+| F-03 | Razorpay live flow (payment → webhook → paid → refund) never proven | **done LIVE 2026-10-21** by the owner: order FX-100014 (Magnetic Hanging ₹299 + ₹49 delivery + ₹6 tax = ₹354, Buy now, UPI) → Razorpay Live payment `pay_TqHx…` captured; webhooks payment.authorized / payment.captured / order.paid all 200; admin cancelled → automatic full refund started → Razorpay "1 processed" → refund webhook → order shows Refunded ₹354. Razorpay "75 free days": no fee seen. Settlement of the ₹354 balance was due 2026-10-23 (refund deducted). Owner marked FX-100014 as a test order. The refund (normal speed) was not in the owner's bank yet on 2026-10-21: normal for UPI (5-7 working days); if not there by ~2026-10-30, give the refund's ARN/RRN (Razorpay → Refunds → the refund) to the UPI app / bank. Small UI note: after the cancel the admin page showed "This order has no payment that can be refunded" while the refund was pending — confusing, not harmful |
 | F-04 | Render free plan cold starts (~50 s) | **done locally 2026-10-20** (owner: pinger): `GET /api/ping` (no database, not a visitor); database jobs wait during quiet times (`QUIET_AFTER_MINUTES` 15) and `/api/health` skips its query then, so Neon still sleeps (`keep-awake.test.js`). Owner step after deploy: UptimeRobot monitor on `/api/ping` every 5 min (backend/README → "Keep a free host awake") |
 | F-06 | Cart says items from different shops are ordered separately; checkout makes one order | **done locally 2026-10-19** (cart drawer note + FAQ answer now say: one order, each shop sends its own items) |
 | F-11 | Order photos kept forever; Privacy Notice doesn't say how long | **done locally 2026-10-20** (owner: 15 days): photos of an order / custom painting are deleted 15 days after it is finished (delivered, cancelled, returned, declined), unless still used (another unfinished order, cart, saved design); the order shows "Removed". `ORDER_PHOTO_DAYS=15`. Privacy Notice updated |
