@@ -84,7 +84,13 @@
       [x] 15:21 owner saved Brand name "FrameX" + the F logo in Checkout Styling (accepted now that the primary site is
       shopframex.in): instant on checkout, 1-2 h for UPI apps. [ ] owner: check PhonePe shows FrameX (open a payment, don't pay)
       [x] owner also set the Razorpay checkout background to the FrameX orange (header shows the F logo + FrameX)
+      [ ] LATER (owner: "yaad rakho"): paying from the website on a phone shows "FrameX" in PhonePe, but scanning the
+          checkout UPI QR still shows "Siburam7", no picture, and the old VPA siburam754620.rzp@rxairtel (the QR carries the
+          VPA, named at account creation). Ask Razorpay (ticket #21478745) to rename the VPA / QR payee to FrameX — they may
+          ask for a business document (Udyam / GST)
 - [ ] Tax shown at checkout is 2% (Admin → Settings), not the 18% in older notes — confirm with a CA (F-18)
+- [x] 2026-10-21 Cart drawer: a line's picture and name now open its page (owner: they weren't clickable) — product →
+      product page, template → template page, Studio design kept here → Studio — local. Browser 10/10 (laptop + phone), frame 55
 - [ ] Optional (owner asked how): reply FROM support@shopframex.in — Gmail "Send mail as" through Brevo SMTP (free,
       ~10 min, steps in architecture.md §9). Today replies leave as support.framex@gmail.com
 - [x] 2026-10-21 Recovery for the support@shopframex.in Google account: Google uses the account's own address as the

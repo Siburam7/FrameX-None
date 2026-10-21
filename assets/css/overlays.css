@@ -152,6 +152,23 @@
   background: var(--surface-stone);
 }
 
+/* The picture and the name open the product (template, Studio design) page */
+.cart-line__thumb {
+  display: block;
+  border-radius: var(--radius-sm);
+}
+
+.cart-line__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.cart-line__link:hover,
+.cart-line__link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 .cart-line__info {
   display: grid;
   gap: 4px;

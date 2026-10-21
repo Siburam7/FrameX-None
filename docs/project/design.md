@@ -94,6 +94,11 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
 - Card: `badge--featured` ("Featured", `--amber-strong` on white text) top-left on the cover for a featured shop;
   distance, rating, frames count as before.
 
+## 5e. Cart drawer
+
+- Each line's picture and name link to its page (product / template / Studio design); the name underlines on hover.
+  No other visual change (owner, 2026-10-21).
+
 ## 6. Content rules
 
 - Banner and offer text must be factual (no invented discounts). Coupon limits (maximum discount, uses per customer)

@@ -74,15 +74,26 @@
     return href ? ` <a class="cart-line__edit" href="${href}">Add your photo</a>, then remove this line.` : "";
   }
 
+  /** Where a line's picture and name lead (owner, 2026-10-21): the product's page, the template's page, or the
+      Studio design it was made in. "" when there is no page to show (a Studio design kept in another browser). */
+  function lineUrl(line) {
+    if (line.kind === "product" && line.productId) return FrameX.qs.productUrl(line.productId);
+    if (line.templateId) return `template.html?t=${encodeURIComponent(line.templateId)}`;
+    if (line.design && designIsHere(line.design.id)) return `studio.html?design=${encodeURIComponent(line.design.id)}`;
+    return "";
+  }
+
   function lineHtml(line) {
     const choice = [line.size, line.color].filter(Boolean).map(esc).join(" · ");
     const each = line.available ? `${formatPrice(line.unitPrice)} each` : "";
     const meta = [choice, each].filter(Boolean).join(" · ");
     const full = line.quantity >= Math.min(line.maxQuantity, cart.MAX_QTY);
+    const url = lineUrl(line);
+    const image = `<img class="cart-line__image" src="${esc(FrameX.http.asset(line.image))}" alt="" width="72" height="72">`;
     return `<li class="cart-line${line.available ? "" : " cart-line--unavailable"}" data-id="${esc(line.id)}">
-      <img class="cart-line__image" src="${esc(FrameX.http.asset(line.image))}" alt="" width="72" height="72">
+      ${url ? `<a class="cart-line__thumb" href="${esc(url)}" tabindex="-1" aria-hidden="true">${image}</a>` : image}
       <div class="cart-line__info">
-        <p class="cart-line__name">${esc(line.name)}</p>
+        <p class="cart-line__name">${url ? `<a class="cart-line__link" href="${esc(url)}">${esc(line.name)}</a>` : esc(line.name)}</p>
         ${meta ? `<p class="cart-line__meta">${meta}</p>` : ""}
         ${(line.options || []).map((o) => `<p class="cart-line__meta">${esc(o)}</p>`).join("")}
         ${line.note ? `<p class="cart-line__meta">Note: ${esc(line.note)}</p>` : ""}
