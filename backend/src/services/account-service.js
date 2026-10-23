@@ -54,6 +54,10 @@ export async function exportData(userId) {
   const messages = await q("SELECT subject, message, created_at FROM contact_messages WHERE user_id = $1 OR lower(email) = lower($2) ORDER BY created_at", [userId, user.email]);
   const photos = await q("SELECT original_name, format, bytes, width, height, status, created_at FROM uploads WHERE user_id = $1 AND status <> 'DELETED' ORDER BY created_at");
   const designs = await q("SELECT title, mode, template_id, product_id, created_at, updated_at FROM saved_designs WHERE user_id = $1 ORDER BY updated_at DESC");
+  const chat = await q(
+    `SELECT m.author, m.body, m.order_number, m.created_at FROM support_messages m JOIN support_threads t ON t.id = m.thread_id
+      WHERE t.user_id = $1 ORDER BY m.created_at`
+  );
   return {
     about: "Everything FrameX keeps about your account, as of the date below. Photo files are not included: open them from your order pages.",
     exportedAt: new Date().toISOString(),
@@ -64,7 +68,8 @@ export async function exportData(userId) {
     reviews,
     messagesToFrameX: messages,
     photos,
-    savedDesigns: designs
+    savedDesigns: designs,
+    helpChat: chat.map((m) => ({ from: m.author === "STAFF" ? "FrameX" : "you", message: m.body, orderNumber: m.order_number, at: m.created_at }))
   };
 }
 
@@ -125,7 +130,7 @@ export async function deleteAccount(actor, { password, confirm } = {}, { ip = nu
     await q.query("UPDATE contact_messages SET name = $3, email = '', phone = '', user_id = NULL WHERE user_id = $1 OR lower(email) = lower($2)", [user.id, user.email, DELETED_NAME]);
 
     // What only made sense for the login
-    for (const table of ["addresses", "sessions", "auth_tokens", "otp_codes", "notifications", "saved_designs"]) await q.query(`DELETE FROM ${table} WHERE user_id = $1`, [user.id]);
+    for (const table of ["addresses", "sessions", "auth_tokens", "otp_codes", "notifications", "saved_designs", "support_threads"]) await q.query(`DELETE FROM ${table} WHERE user_id = $1`, [user.id]);
     await q.query("DELETE FROM carts WHERE user_id = $1", [user.id]);
     await q.query("UPDATE auth_events SET user_id = NULL WHERE user_id = $1", [user.id]);
 

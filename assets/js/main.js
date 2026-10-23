@@ -74,6 +74,8 @@
     if (FrameX.auth) FrameX.auth.init();
     // The cart belongs to the account: it is loaded once we know who is logged in.
     FrameX.cart.init();
+    // The help chat button (customer pages)
+    if (FrameX.helpChat) FrameX.helpChat.init();
     try {
       await (PAGES[document.body.dataset.page] || PAGES.about)();
     } catch (error) {

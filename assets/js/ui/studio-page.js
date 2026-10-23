@@ -24,6 +24,7 @@
   let activeSlot = "photo1";
   const photoUrls = {};
   const openSections = new Set(["photos", "frame"]);
+  let step = ""; // the section the step row and Back / Next are on
   const byId = (list, id) => (list || []).find((x) => x.id === id) || null;
   const clone = (v) => JSON.parse(JSON.stringify(v));
 
@@ -390,6 +391,40 @@
     },
   };
 
+  /** The sections shown now, in order: [key, title]. */
+  const stepList = () => Object.entries(SECTIONS).filter(([, s]) => s.show()).map(([key, s]) => [key, s.title()]);
+
+  /** The step row under the heading and the step part of the bottom bar. */
+  function renderSteps() {
+    const list = stepList();
+    if (!list.length) return;
+    if (!list.some(([key]) => key === step)) step = list[0][0];
+    const at = list.findIndex(([key]) => key === step);
+    const row = $("#fs-steps");
+    if (row)
+      row.innerHTML = list
+        .map(([key, title], i) => `<button type="button" class="fs-step${i < at ? " is-done" : i === at ? " is-now" : ""}" data-step="${esc(key)}"${i === at ? ' aria-current="step"' : ""}>${i < at ? icon("check") : `<b>${i + 1}</b>`}${esc(title)}</button>`)
+        .join("");
+    const label = $("#fs-step-label");
+    if (label) label.textContent = `Step ${at + 1} of ${list.length} · ${list[at][1]}`;
+    const back = $("[data-step-back]");
+    if (back) back.disabled = at === 0;
+    const next = $("[data-step-next]");
+    if (next) next.textContent = at === list.length - 1 ? "Add to cart" : window.innerWidth < 640 ? "Next" : `Next: ${list[at + 1][1].toLowerCase()}`;
+  }
+
+  /** Back / Next / a step: open that section (and close the one you were on), then scroll to it. */
+  function goStep(key) {
+    const was = $(`[data-section="${CSS.escape(step)}"]`);
+    if (was && step !== key) {
+      was.open = false;
+      openSections.delete(step);
+    }
+    step = key;
+    goTo(key);
+    renderSteps();
+  }
+
   function renderPanel() {
     let n = 0;
     $("#fs-sections").innerHTML = Object.entries(SECTIONS)
@@ -410,6 +445,7 @@
       .join("");
     mountUploader();
     if (ctx.caps.text) mountText();
+    renderSteps();
   }
 
   /** Re-render only the parts that depend on the config, keeping focus where it was. */
@@ -1036,6 +1072,7 @@
         </div>
         <p class="fs-mode">${icon(ctx.template ? "image" : ctx.product ? "frame" : "upload")} ${modeLabel}</p>
       </header>
+      <nav class="fs-steps" id="fs-steps" aria-label="Steps"></nav>
       <div class="fs-layout">
         <div class="fs-stagecol">
           <div class="fs-stage">
@@ -1069,8 +1106,9 @@
       </div>
       <div class="fs-buybar">
         <button class="fs-buybar__thumb" type="button" data-top aria-label="Back to the preview">${icon("chev-up")}</button>
-        <div class="fs-buybar__price"><strong data-total></strong><span>${esc(title())}</span></div>
-        <button class="btn btn--primary" type="button" data-add>Add to cart</button>
+        <div class="fs-buybar__price"><strong data-total></strong><span id="fs-step-label">${esc(title())}</span></div>
+        <button class="btn btn--outline btn--sm" type="button" data-step-back>Back</button>
+        <button class="btn btn--primary" type="button" data-step-next>Next</button>
       </div>
     </div>`;
   }
@@ -1129,6 +1167,26 @@
     $("[data-reset]", root).addEventListener("click", (e) =>
       reset(e.currentTarget),
     );
+    // The steps: the row, Back and Next (Next on the last step adds to the cart)
+    root.addEventListener("click", (e) => {
+      const chip = e.target.closest("[data-step]");
+      if (chip) return goStep(chip.dataset.step);
+      // A section opened by hand (its heading tapped) becomes the current step
+      const head = e.target.closest("[data-section] > summary");
+      if (head) {
+        const det = head.parentElement;
+        return void setTimeout(() => {
+          if (det.open) {
+            step = det.dataset.section;
+            renderSteps();
+          }
+        });
+      }
+      const list = stepList();
+      const at = list.findIndex(([key]) => key === step);
+      if (e.target.closest("[data-step-back]") && at > 0) return goStep(list[at - 1][0]);
+      if (e.target.closest("[data-step-next]")) return at >= list.length - 1 ? addToCart() : goStep(list[at + 1][0]);
+    });
     $("[data-top]", root).addEventListener("click", () =>
       $(".fs-stage").scrollIntoView({ behavior: "smooth", block: "center" }),
     );

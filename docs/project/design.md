@@ -2,7 +2,7 @@
 
 > The current design is the reference: preserve it unless the owner asks for a change. Update this file whenever a
 > visual rule, token or layout decision changes. All values come from `assets/css/tokens.css`.
-> Last updated: 2026-10-20 (F-11, F-13, F-14).
+> Last updated: 2026-10-23 (easy-to-use redesign, help chat).
 
 ## 1. Direction (owner's choices)
 
@@ -14,7 +14,7 @@
 - **Hero: the carousel hero** (`assets/js/ui/hero.js`). The home hero's soft colour changes per slide (`tint` in
   `assets/data/site.seed.js`). A scroll / 3D / film hero was cancelled by the owner (2026-10-15): don't bring it back
   unless asked. Hero frames follow phone tilt / shake (with an iPhone permission button).
-- **Desktop / laptop is final.** Phones get shopping-app density (two compact cards per row, smaller text and
+- **Desktop / laptop is final** — except the owner's 2026-10-23 easy-to-use redesign (§5f), approved for both. Phones get shopping-app density (two compact cards per row, smaller text and
   buttons) only through `assets/css/mobile.css`.
 
 ## 2. Colours (light theme)
@@ -98,6 +98,31 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
 
 - Each line's picture and name link to its page (product / template / Studio design); the name underlines on hover.
   No other visual change (owner, 2026-10-21).
+
+## 5f. Easy-to-use redesign (owner, 2026-10-23)
+
+- **Label above headings** (`.eyebrow`): normal case, 600 weight, `--on-surface`, an 8×8 square dot `#ff5a1f`
+  (radius 1px) before it — the "F." of the logo. No pill, no capitals, no letter-spacing. In the home hero, when the
+  slide changes, the dot rolls right over the old words wiping them away (0.42s), then rolls back left uncovering the
+  new ones (0.56s) — `labelWipe` in `ui/hero.js`, `.eyebrow.is-wiping` in `layout-hero.css` (owner, 2026-10-23; it
+  replaced a spin-in). One dot at a time: the old slide's label first (its slide is held up by `.is-leaving`),
+  then the new one's (hidden until then, `.is-waiting`) — the labels of two slides can sit at different heights, and
+  moving both at once showed two dots (owner saw it, fixed 2026-10-23). From 640px up every slide's word block gets the
+  height of the tallest (`evenCopy` in `ui/hero.js`), so the label never jumps to another line when the slide changes
+  (owner saw it jump, fixed 2026-10-23); phones were already lined up. Nothing moves on page load or with reduced motion.
+- **Home:** `.hero-steps` (1 Choose a frame · 2 Add your photo · 3 We deliver it) under the first slide's buttons, phone
+  only; `.how` section under the highlights strip and the four reasons (owner: those come straight after the hero): laptop "Your photo, framed by a local shop", phone "Start here"; 3 steps + 3 ways.
+- **Phone tab bar** (`.tabbar`, ≤639px): Home / Shop / Studio / Cart / Account, active tab orange; not on pages
+  with their own bottom bar (product, checkout, Studio) or on login / dashboard pages.
+- **Steps everywhere a task has steps:** product `.pp-guide` (done green with a tick, current orange outline),
+  checkout `.co-steps` (4 columns with a top line), Studio `.fs-steps` chips + "Step i of n" and Back / Next.
+- **Bottom bars:** product `.pp-buybar` and Studio `.fs-buybar` on every screen (laptop aligned to the 1200px
+  content); checkout `.co-paybar` on the phone. Pages leave room for them (`scroll-padding-bottom` too).
+- **Order page:** `.od-next` "What happens next" box under the order hero; on the phone the text line is hidden.
+- **Help chat** (`.hc-*` in `overlays.css`): navy "Help & chat" pill bottom-right with an orange icon and a count;
+  phone: a round button above the bottom bar, the chat over the whole screen. Header: "F." mark on white, "FrameX
+  Support", green dot "We usually answer within a few hours". Customer messages orange on the right, FrameX white on
+  the left. Admin → Chats uses the same bubbles (FrameX on the right there).
 
 ## 6. Content rules
 

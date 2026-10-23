@@ -1650,8 +1650,7 @@ html.pg-locked body {
   border-top: 1px solid var(--line);
   background: rgb(var(--glass) / 0.96);
   backdrop-filter: blur(10px);
-  transform: translateY(110%);
-  transition: transform var(--dur-base) var(--ease-out);
+  box-shadow: 0 -8px 24px rgba(13, 27, 62, 0.08);
 }
 
 .pp-buybar div {
@@ -1672,13 +1671,105 @@ html.pg-locked body {
   text-overflow: ellipsis;
 }
 
-@media (max-width: 859px) {
+/* Always there (owner, 2026-10-23): on wide screens its content lines up with the page */
+.pp-buybar {
+  display: flex;
+}
+
+@media (min-width: 860px) {
   .pp-buybar {
-    display: flex;
+    padding-inline: max(24px, calc((100vw - 1200px) / 2));
   }
-  .pp-buybar.is-visible {
-    transform: none;
+  .pp-buybar .btn {
+    min-width: 150px;
   }
+}
+
+body.pp-has-buybar {
+  padding-bottom: 76px;
+}
+
+/* Something reached with the keyboard (or a link) is never left under the bar */
+html:has(body.pp-has-buybar) {
+  scroll-padding-bottom: 96px;
+}
+
+body.pp-has-buybar .toast-region {
+  bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+}
+
+.pp-buybar span.is-next {
+  color: var(--text-brown);
+  font-weight: 700;
+}
+
+/* The step guide under the price: what is done, what comes next */
+.pp-guide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.pp-guide li {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 7px 10px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.pp-guide li span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pp-guide b {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--line);
+  color: var(--on-surface);
+  font-size: 0.7rem;
+}
+
+.pp-guide b .icon {
+  width: 12px;
+  height: 12px;
+}
+
+.pp-guide li.is-done {
+  background: var(--tint-ok, #e3f6ea);
+  color: var(--on-tint-ok, #12633a);
+}
+
+.pp-guide li.is-done b {
+  background: var(--success, #12633a);
+  color: #fff;
+}
+
+.pp-guide li.is-now {
+  outline: 2px solid var(--amber-strong);
+  outline-offset: -2px;
+  background: var(--soft-peach);
+  color: var(--on-surface);
+}
+
+.pp-guide li.is-now b {
+  background: var(--amber-strong);
+  color: #fff;
 }
 
 .pp-preview-banner {

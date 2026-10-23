@@ -59,6 +59,11 @@
                   </svg></a>
                 <a class="btn btn--light" href="studio.html?mode=photo">Create Your Frame</a>
               </div>
+              <ol class="hero-steps" aria-label="How it works">
+                <li><b>1</b>Choose a frame</li>
+                <li><b>2</b>Add your photo</li>
+                <li><b>3</b>We deliver it</li>
+              </ol>
             </div>
             <div class="page-hero__wall">
               <a class="page-hero__piece page-hero__piece--framed" href="product.html?id=p-004"
@@ -135,6 +140,24 @@
                 <use href="#i-truck"></use>
               </svg></span><span><strong>Pickup or delivery</strong>Choose from what each shop offers.</span></li>
         </ul>
+      </div>
+    </section>
+
+    <!-- How FrameX works, and the three ways in (owner, 2026-10-23), under the strip of reasons. Phone: the steps sit in the hero; here "Start here". -->
+    <section class="how" aria-labelledby="start-title">
+      <div class="container">
+        <h2 class="how__title" id="start-title"><span class="how__title-wide">Your photo, framed by a local shop</span><span class="how__title-phone">Start here</span></h2>
+        <p class="how__lead">Three easy steps. You see the price before you pay.</p>
+        <ol class="how__steps">
+          <li><b>1</b><div><strong>Choose a frame</strong><span>Size, colour and style, from shops near you</span></div></li>
+          <li><b>2</b><div><strong>Add your photo</strong><span>Printed in the original quality you upload</span></div></li>
+          <li><b>3</b><div><strong>We make &amp; deliver it</strong><span>Pay online or Cash on Delivery, and track your order</span></div></li>
+        </ol>
+        <div class="how__ways">
+          <a class="how__way how__way--main" href="studio.html?mode=photo"><img src="assets/img/products/luxury-hd.webp" alt="" width="900" height="600" loading="lazy" decoding="async"><span><strong>Frame my photo</strong><small>Design it in FrameX Studio</small></span><svg class="icon" aria-hidden="true"><use href="#i-chev-right"></use></svg></a>
+          <a class="how__way" href="home-decor.html"><img src="assets/img/decor/hd-mp-cherry-tree-3.webp" alt="" width="800" height="1000" loading="lazy" decoding="async"><span><strong>Ready-made decor</strong><small>Framed art, no photo needed</small></span><svg class="icon" aria-hidden="true"><use href="#i-chev-right"></use></svg></a>
+          <a class="how__way" href="templates.html"><img src="assets/img/products/wedding-anniversary.webp" alt="" width="720" height="964" loading="lazy" decoding="async"><span><strong>Gift templates</strong><small>Birthday, anniversary, family</small></span><svg class="icon" aria-hidden="true"><use href="#i-chev-right"></use></svg></a>
+        </div>
       </div>
     </section>
 
@@ -504,9 +527,11 @@
           </div>
           <div class="shops-toolbar" id="shops-toolbar">
             <form class="shops-search" id="shops-search" role="search" novalidate>
-              <label class="field shops-search__field"><span class="visually-hidden">Search shops by name, area, city or PIN code</span><svg class="icon" aria-hidden="true">
+              <label class="field shops-search__field"><span class="visually-hidden">Search shops by name, area, city or
+                  PIN code</span><svg class="icon" aria-hidden="true">
                   <use href="#i-search"></use>
-                </svg><input class="input" id="shops-q" name="q" type="search" placeholder="Search shop name, area, city or PIN code" autocomplete="off" maxlength="80"></label>
+                </svg><input class="input" id="shops-q" name="q" type="search"
+                  placeholder="Search shop name, area, city or PIN code" autocomplete="off" maxlength="80"></label>
               <button class="btn btn--outline btn--sm" type="submit">Search</button>
             </form>
             <button class="btn btn--dark btn--sm" type="button" id="shops-locate"><svg class="icon" aria-hidden="true">
@@ -516,7 +541,8 @@
           </div>
           <div class="shop-grid" id="shop-grid" data-limit="3" aria-busy="true" data-skeleton="shop"
             data-skeleton-count="3"></div>
-          <div class="shops-more" id="shops-more" hidden><a class="btn btn--outline" href="shop.html#shops" data-shops-more>View all shops</a></div>
+          <div class="shops-more" id="shops-more" hidden><a class="btn btn--outline" href="shop.html#shops"
+              data-shops-more>View all shops</a></div>
         </div>
       </div>
     </section>
@@ -846,6 +872,7 @@
   <script src="assets/js/ui/guide.js" defer></script>
   <script src="assets/js/ui/art-pages.js" defer></script>
   <script src="assets/js/services/analytics.js" defer></script>
+  <script src="assets/js/ui/help-chat.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </body>
 

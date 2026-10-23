@@ -20,6 +20,7 @@ import * as coupons from "../services/coupon-service.js";
 import * as shopProducts from "../services/shop-product-service.js";
 import * as shops from "../services/shop-service.js";
 import * as users from "../services/user-admin-service.js";
+import * as support from "../services/support-service.js";
 
 const router = Router();
 router.use(requireRole("ADMIN"));
@@ -60,16 +61,17 @@ function checkLocation(shop) {
 }
 
 router.get("/overview", async (req, res) => {
-  const [base, orderCounts, artworkCounts, paintingCounts, artistApps, artistCount, unreadMessages] = await Promise.all([
+  const [base, orderCounts, artworkCounts, paintingCounts, artistApps, artistCount, unreadMessages, unreadChats] = await Promise.all([
     shops.adminOverview(),
     orders.adminOrderCounts(),
     artworks.adminCounts(),
     paintings.adminCounts(),
     artists.adminListApplications({ status: "PENDING" }),
     artists.adminListArtists({}),
-    contact.unreadCount()
+    contact.unreadCount(),
+    support.adminUnread()
   ]);
-  res.json({ ...base, orders: orderCounts, artists: { total: artistCount.length, active: artistCount.filter((a) => a.status === "ACTIVE").length, applicationsPending: artistApps.length }, artworks: artworkCounts, paintings: paintingCounts, messages: { unread: unreadMessages } });
+  res.json({ ...base, orders: orderCounts, artists: { total: artistCount.length, active: artistCount.filter((a) => a.status === "ACTIVE").length, applicationsPending: artistApps.length }, artworks: artworkCounts, paintings: paintingCounts, messages: { unread: unreadMessages }, chats: { unread: unreadChats } });
 });
 
 /* ---- Orders ----
@@ -348,6 +350,21 @@ router.post("/messages/:id/status", async (req, res) => {
   res.json({ message: await contact.adminSetStatus(idParam(req), status) });
 });
 router.delete("/messages/:id", async (req, res) => res.json(await contact.adminDelete(idParam(req), { actor: req.auth.user, ip: req.ip })));
+
+/* ---- The help chat (customers write from any page; FrameX answers here) ---- */
+router.get("/support", async (req, res) => {
+  const { status } = validate(req.query, { status: v.enumOf(["OPEN", "CLOSED"], { required: false }) });
+  res.json(await support.adminList({ status: status || "" }));
+});
+router.get("/support/:id", async (req, res) => res.json({ thread: await support.adminGet(idParam(req)) }));
+router.post("/support/:id/reply", async (req, res) => {
+  const { body } = validate(req.body, { body: v.string({ min: 1, max: 2000, label: "Answer" }) });
+  res.json({ thread: await support.adminReply(idParam(req), body.trim(), { actor: req.auth.user, ip: req.ip }) });
+});
+router.post("/support/:id/status", async (req, res) => {
+  const { status } = validate(req.body, { status: v.enumOf(["OPEN", "CLOSED"], { label: "Status" }) });
+  res.json({ thread: await support.adminSetStatus(idParam(req), status, { actor: req.auth.user, ip: req.ip }) });
+});
 
 /* ---- Accounts ---- */
 router.get("/users", async (req, res) => {

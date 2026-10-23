@@ -153,6 +153,41 @@
   transition-delay: 290ms;
 }
 
+/* The label changes in place: its square dot (the "F." of the logo) wipes the old words away going right and
+   uncovers the new ones coming back left (ui/hero.js labelWipe, owner 2026-10-23). It doesn't rise in like the
+   rest of the words; only what is right of the dot is shown. */
+.home-hero__copy > .eyebrow {
+  translate: none;
+  transition: none;
+}
+
+.home-hero__copy > .eyebrow.is-wiping {
+  opacity: 1;
+}
+
+/* While its label is wiped away the old slide stays up (its other words and pictures still fade out by
+   themselves); the new slide's label waits, hidden, for its turn */
+.home-hero__slide.is-leaving {
+  visibility: visible;
+  opacity: 1;
+  transition: none;
+}
+
+.home-hero__copy > .eyebrow.is-waiting {
+  visibility: hidden;
+}
+
+.eyebrow.is-wiping::before {
+  position: relative;
+  z-index: 1;
+  translate: var(--dot-x, 0) 0;
+  rotate: var(--dot-turn, 0deg);
+}
+
+.eyebrow.is-wiping .eyebrow__text {
+  clip-path: inset(-4px -4px -4px max(0px, calc(var(--dot-x, 0px) - 9px)));
+}
+
 .home-hero__slide.is-active .page-hero__piece:nth-child(1) {
   transition-delay: 160ms;
 }
@@ -1017,6 +1052,131 @@ body[data-page="home"] main {
   margin-top: 14px;
   padding-top: 14px;
   border-top: 1px solid var(--line);
+}
+
+/* How FrameX works + the three ways in (under the hero). The phone layout is in mobile.css. */
+.hero-steps {
+  display: none;
+}
+
+.how {
+  padding: 32px 0 30px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.how__title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  line-height: 1.25;
+}
+
+.how__title-phone {
+  display: none;
+}
+
+.how__lead {
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.how__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.how__steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  background: var(--surface-soft);
+}
+
+.how__steps b,
+.hero-steps b {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--amber-strong);
+  color: #fff;
+  font-family: var(--font-display);
+}
+
+.how__steps strong {
+  display: block;
+}
+
+.how__steps span {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.how__ways {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.how__way {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px 12px 12px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--on-surface);
+  transition: border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+
+.how__way img {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+}
+
+.how__way span {
+  flex: 1;
+  min-width: 0;
+}
+
+.how__way strong {
+  display: block;
+}
+
+.how__way small {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.how__way .icon {
+  flex: none;
+  color: var(--amber-strong);
+}
+
+.how__way--main {
+  border-color: var(--amber-strong);
+  background: var(--soft-peach);
+}
+
+@media (hover: hover) {
+  .how__way:hover {
+    border-color: var(--amber-strong);
+    box-shadow: var(--shadow-card);
+  }
 }
 
 /* Banner tiles */

@@ -16,6 +16,7 @@ import authRoutes from "./routes/auth.js";
 import cartRoutes from "./routes/cart.js";
 import checkoutRoutes from "./routes/checkout.js";
 import contactRoutes from "./routes/contact.js";
+import supportRoutes from "./routes/support.js";
 import miscRoutes, { devRoutes } from "./routes/misc.js";
 import orderRoutes from "./routes/orders.js";
 import paintingRoutes, { notificationRoutes, reviewRoutes } from "./routes/paintings.js";
@@ -79,6 +80,7 @@ export function createApp() {
   app.use("/api/reviews", reviewRoutes);
   app.use("/api/analytics", analyticsRoutes); // visitor statistics from the website (only with the visitor's consent)
   app.use("/api/contact", contactRoutes); // a message from the Contact page
+  app.use("/api/support", supportRoutes); // the logged-in customer's help chat
   app.use("/api/admin", adminRoutes);
   app.use("/api", miscRoutes);
   devRoutes(app); // development mailbox; registers nothing in production

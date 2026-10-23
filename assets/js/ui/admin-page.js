@@ -20,6 +20,7 @@
                                 orders in the amount, record a payout (ui/admin-payouts.js)
      #/products[?status=]       products shops created: approve one that waits
                                 for review, or take one off sale
+     #/chats[/<id>]             the help chat: conversations with customers (ui/admin-support.js)
      #/messages[?status=]       messages from the Contact page (ui/admin-messages.js)
      #/activity                 audit log of admin actions
 
@@ -45,6 +46,7 @@
     ["artworks", "Artworks", "frame"],
     ["paintings", "Custom paintings", "edit"],
     ["reviews", "Reviews", "star"],
+    ["chats", "Chats", "mail"],
     ["messages", "Messages", "mail"],
     ["users", "Accounts", "user"],
     ["settings", "Settings", "settings"],
@@ -150,6 +152,7 @@
         ${tile(o.shops.pending, "Pending shops", "#/shops?status=PENDING")}
         ${tile(o.shops.active, "Active shops (listed)", "#/shops?status=ACTIVE")}
         ${tile(o.shops.inactive, "Inactive shops (hidden)", "#/shops?status=INACTIVE")}
+        ${o.chats ? tile(o.chats.unread, "New chat messages from customers", "#/chats?status=OPEN", o.chats.unread ? "adm-tile--alert" : "") : ""}
         ${o.messages ? tile(o.messages.unread, "New messages from the Contact page", "#/messages?status=NEW", o.messages.unread ? "adm-tile--alert" : "") : ""}
       </div>
       <h2 class="adm-subtitle">Orders</h2>
@@ -632,6 +635,7 @@
       if (stamp) stamp.textContent = ok ? `Updated ${new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Couldn't be updated";
     };
     if (FrameX.adminMessages) FrameX.adminMessages.badge();
+    if (FrameX.adminSupport && section !== "chats") FrameX.adminSupport.badge();
     document.title = `${NAV.find(([id]) => id === section)[1]} — FrameX admin`;
     try {
       if (section === "overview") await overview(main);
@@ -647,6 +651,7 @@
       if (section === "artworks") await art.artworks(main, params, { head });
       if (section === "paintings") await (parts[1] ? art.painting(main, parts[1], { head }) : art.paintings(main, params, { head }));
       if (section === "reviews") await art.reviews(main, params, { head });
+      if (section === "chats") await (parts[1] ? FrameX.adminSupport.thread(main, parts[1], { head }) : FrameX.adminSupport.list(main, params, { head }));
       if (section === "messages") await FrameX.adminMessages.list(main, params, { head });
       if (section === "users") await (parts[1] ? FrameX.adminAnalytics.customer(main, parts[1], params, { head }) : art.users(main, params, { head }));
       if (section === "settings") await art.settings(main, params, { head });

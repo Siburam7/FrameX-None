@@ -2,7 +2,7 @@
 
 > Decisions, current state and lessons learned, newest first within each section. Add every owner decision and every
 > change of status here (verified / not verified). No secrets or customer data: the repository is public.
-> Last updated: 2026-10-20 (F-11, F-13, F-14).
+> Last updated: 2026-10-23 (easy-to-use redesign, help chat).
 
 ## Current state (2026-10-20)
 
@@ -24,6 +24,14 @@
 
 ## Owner decisions (log)
 
+- 2026-10-23 Make the whole site easy and self-explanatory on phone **and laptop**, keeping every feature (this
+  changes the 2026-10-08 "desktop is final" rule for this redesign only). Owner approved design pictures 1–7 and the
+  label idea "A, but a square dot like the F. of FrameX" (not a line); "should not look AI-generated". Feedback that
+  shaped it: Home steps placed higher on the phone, checkout address in 3 lines, smaller order box on the phone,
+  FrameX's own help chat instead of WhatsApp. My choices, not asked: only logged-in customers can chat (so we can
+  answer by email and see their orders; visitors get "log in" or the Contact page); FrameX is emailed at most once
+  per 15 minutes per conversation; the header says "We usually answer within a few hours"; a closed chat starts a
+  new one when the customer writes again; chats are deleted with the account.
 - 2026-10-21 Shops section (Home + Shop page): no location → 3 "good" shops in an order that changes once a day;
   location → nearest top 3 + "View more shops near you"; a shop search box; owner picks featured shops (paid
   promotion). My choices, not asked: featured shops carry a visible "Featured" label and a Terms line says a shop

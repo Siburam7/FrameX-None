@@ -1,10 +1,33 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-10-20 (deploy, pinger, email domain).
+> Last updated: 2026-10-23 (easy-to-use redesign + help chat, local).
 
 ## Now
 
+- [x] 2026-10-23 **Easy-to-use redesign, laptop + phone** (owner approved design pictures 1–8 in
+      `Desktop\FrameX-Design-Ideas`; "website AI generated ke tarha nehi dikhana chahiye") — **local, not committed / deployed**:
+  - [x] 1. Label above headings: a small square orange dot + normal text (like the "F." of the logo), no pill / capitals;
+        in the home hero the dot wipes the old words going right and uncovers the new ones coming back left (owner)
+  - [x] 2. Home: three numbered steps under the hero buttons (phone) and a "Your photo, framed by a local shop" / phone
+        "Start here" block with 3 steps and 3 ways to start (own photo, Home Decor, templates); owner 2026-10-23: the
+        highlights strip + four reasons stay right under the hero, "Start here" comes after them
+  - [x] 3. Phone bottom tab bar: Home / Shop / Studio / Cart (with count) / Account — not on product, checkout, Studio,
+        login and dashboard pages
+  - [x] 4. Product page: step guide under the price (Size ✓ → Add your photo → Add to cart); the buy bar stays at the
+        bottom on every screen with "Next: add your photo" until the photo is there
+  - [x] 5. Checkout: 4-step progress (Cart · Address · Summary · Pay); phone: address in 3 short lines, a bottom bar with
+        the total and the pay button
+  - [x] 6. Order page: a "What happens next" box per status (smaller on the phone); never promises delivery dates
+  - [x] 7. Studio: step chips at the top, "Step i of n" + Back / Next at the bottom (Add to cart on the last step)
+  - [x] 8. **Own help chat instead of WhatsApp**: button on customer pages, topics + "about this order", answers by
+        email; Admin → Chats (list, answer, close / reopen, count in the menu and on the overview). Migration 018
+        (two new tables only). Data download includes the chat; deleting the account deletes it. Privacy Notice updated.
+  - Tests: backend 436/436 (new `support.test.js` 8); browser: design 40/40, chat 36/36, frame 55, Studio 37,
+    decor 26, designs 14, cart links 10, shops 35, account 13, fix17 21, coupon 25, payout 38.
+  - [ ] Owner looks at the screenshots and says yes → then commit + deploy (backup first: migration 018)
+  - Open: nobody has answered a chat on the live site yet; the "few hours" answer time in the chat header is a promise
+    the owner must keep (or change the text)
 - [ ] **Finish the pending website design and development** (owner will give the tasks). Existing design stays.
 - [x] 2026-10-19 Small fixes 1-7 (F-01, F-06, F-21, F-20, F-25, F-27, F-26) — local
 - [x] 2026-10-20 F-12 coupons: XUSE10 limits + admin Coupons screen — local (backend 391/391; browser: new 16/16, coupon 25, CSP 8, payout 38, frame 55)

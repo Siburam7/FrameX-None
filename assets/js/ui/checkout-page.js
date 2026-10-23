@@ -118,6 +118,7 @@
   }
 
   /* ---------------------------------------------------------------- Address */
+  const addressLine = (a) => [a.line1, a.line2, a.landmark, `${a.city}, ${a.state} ${a.postalCode}`].filter(Boolean).map(esc).join(", ");
   const addressText = (a) => [a.line1, a.line2, a.landmark, `${a.city}, ${a.state} ${a.postalCode}`].filter(Boolean).map(esc).join("<br>");
 
   function addressForm(a = {}) {
@@ -181,7 +182,7 @@
           .map(
             (a) => `<label class="co-choice${a.id === addressId ? " is-selected" : ""}">
             <input type="radio" name="address" value="${esc(a.id)}"${a.id === addressId ? " checked" : ""}>
-            <span class="co-choice__body"><strong>${esc(a.fullName)}</strong><span>${addressText(a)}</span><span>${icon("phone")} ${esc(a.phone)}</span></span>
+            <span class="co-choice__body"><strong>${esc(a.fullName)}<small class="co-choice__phone"> · ${esc(a.phone)}</small></strong><span class="co-choice__lines">${addressText(a)}</span><span class="co-choice__line">${addressLine(a)}</span><span class="co-choice__tel">${icon("phone")} ${esc(a.phone)}</span></span>
             <button class="co-link" type="button" data-address-edit="${esc(a.id)}">Edit</button>
           </label>`,
           )
@@ -356,6 +357,16 @@
             : `You pay in ${esc(gatewayName)}'s secure window. FrameX never sees or stores your card number, CVV or UPI PIN.`
       }</span></p>
       ${!addressId || editing ? `<p class="co-fine co-fine--warn">${icon("alert")}<span>Add a delivery address to continue.</span></p>` : ""}`;
+    renderSteps();
+    // Phones: the total and the same button, always at the bottom
+    let bar = $("#co-paybar", root);
+    if (!bar) {
+      root.insertAdjacentHTML("beforeend", '<div class="co-paybar" id="co-paybar"></div>');
+      bar = $("#co-paybar", root);
+      document.body.classList.add("co-has-paybar");
+    }
+    bar.innerHTML = `<div><strong>${formatPrice(q.total)}</strong><span>${!addressId || editing ? "Add a delivery address to continue" : !method ? "Choose a way to pay" : cod ? "Pay in cash on delivery" : "Total · incl. delivery & tax"}</span></div>
+      <button class="btn btn--primary" type="button" data-place ${ready ? "" : "disabled"}>${cod ? "Place Order" : waiting ? "Retry payment" : `Pay ${formatPrice(q.total)}`}</button>`;
   }
 
   /* ---------------------------------------------------------------- Page */
@@ -369,7 +380,7 @@
       root.innerHTML = `<div class="co">
         <header class="co-head">
           <h1 class="co-title">Checkout</h1>
-          <ol class="co-steps" aria-label="Checkout steps"><li class="is-done">${buying ? "Buy Now" : "Cart"}</li><li>Address</li><li>Summary</li><li>Payment</li></ol>
+          <ol class="co-steps" id="co-steps" aria-label="Checkout steps"></ol>
         </header>
         ${buying ? `<p class="co-buynow">${icon("bag")}<span><strong>Buy Now:</strong> you are ordering this item only. Your cart is not changed.${FrameX.cart.count() ? ` <a href="checkout.html">Check out your cart instead</a>` : ""}</span></p>` : ""}
         <div class="co-grid">
@@ -389,6 +400,22 @@
     renderPayment();
     renderCoupon();
     renderTotal();
+  }
+
+  /** Cart → Address → Summary → Pay: done in green, the current step in orange. */
+  function renderSteps() {
+    const box = $("#co-steps", root);
+    if (!box) return;
+    const placed = Boolean(addressId) && !editing;
+    const steps = [
+      [buying ? "Buy Now" : "Cart", "done"],
+      ["Address", placed ? "done" : "now"],
+      ["Summary", placed ? (method ? "done" : "now") : ""],
+      ["Pay", placed && method ? "now" : ""],
+    ];
+    box.innerHTML = steps
+      .map(([label, state], i) => `<li class="${state === "done" ? "is-done" : state === "now" ? "is-now" : ""}"${state === "now" ? ' aria-current="step"' : ""}>${state === "done" ? icon("check") : `<b>${i + 1}</b>`}${label}</li>`)
+      .join("");
   }
 
   async function refresh() {

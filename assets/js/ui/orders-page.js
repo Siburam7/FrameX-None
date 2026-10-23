@@ -220,6 +220,33 @@
   /** The buttons next to each of the customer's own photos. */
   const ownPhotoActions = (p) => `<button class="co-link" type="button" data-photo="${esc(p.id)}" data-photo-action="view">View original</button>`;
 
+  /** What happens next, in plain words, for the order's status. */
+  function nextHtml(o) {
+    const shops = [...new Set((o.items || []).map((i) => i.shopName).filter(Boolean))];
+    const shop = shops.length === 1 ? shops[0] : "The shop";
+    const cod = o.paymentMethod === "COD";
+    const pay = cod ? (o.paymentStatus === "PAID" ? `Paid ${formatPrice(o.total)} in cash` : `Pay ${formatPrice(o.total)} in cash when it arrives`) : o.paymentStatus === "PAID" ? `Paid ${formatPrice(o.total)} online` : "";
+    const email = "You'll get an email at every step";
+    const S = {
+      PLACED: ["check", "Order placed — the shop will confirm it soon", `${shop} will confirm your order and the delivery time, then start making it.`, ["Nothing else to do now", email, pay]],
+      CONFIRMED: ["check", "Confirmed — your order will be made next", `${shop} has confirmed your order and will start making it.`, ["Nothing else to do now", email, pay]],
+      PROCESSING: ["frame", "Your order is being made", `${shop} is making your order now.`, ["Nothing else to do now", email, pay]],
+      SHIPPED: ["truck", "On its way to you", "Your order has left the shop.", [email, pay]],
+      OUT_FOR_DELIVERY: ["truck", "Out for delivery", "Your order will reach you soon.", [cod && o.paymentStatus !== "PAID" ? `Keep ${formatPrice(o.total)} ready in cash` : "Please be available to receive it", pay && !cod ? pay : ""]],
+      DELIVERED: ["check", "Delivered", "We hope you love it.", ["Tell others what you think: review it below", "Something wrong? Contact us within the return window"]],
+      RETURNED: ["package", "Returned", "This order was returned.", [o.amountRefunded ? `${formatPrice(o.amountRefunded)} refunded to the way you paid` : "Any refund goes back to the way you paid"]],
+      CANCELLED: ["alert", "Order cancelled", o.cancelReason ? `Reason: ${o.cancelReason}` : "This order was cancelled.", [o.paymentStatus === "REFUNDED" || o.paymentStatus === "PARTIALLY_REFUNDED" ? `${formatPrice(o.amountRefunded || o.total)} refunded to the way you paid` : cod || o.paymentStatus !== "PAID" ? "Nothing to pay" : "Your refund will go back to the way you paid"]],
+    };
+    const s = S[o.status];
+    if (!s) return "";
+    const [ic, title, text, points] = s;
+    return `<section class="od-next od-next--${o.status.toLowerCase()}" aria-label="What happens next">
+      <span class="od-next__icon">${icon(ic)}</span>
+      <div><h2>${esc(title)}</h2><p>${esc(text)}</p>
+        <ul>${points.filter(Boolean).map((x) => `<li>${icon("check")}${esc(x)}</li>`).join("")}</ul></div>
+    </section>`;
+  }
+
   function render(root, o, { placed, message = "" }) {
     document.title = `Order ${o.orderNumber} — FrameX`;
     const pending = o.status === "PENDING_PAYMENT";
@@ -234,6 +261,7 @@
 
     root.innerHTML = `<div class="od">
       ${hero}
+      ${o.status === "PENDING_PAYMENT" ? "" : nextHtml(o)}
       ${message ? `<div class="form-status form-status--error is-visible" role="alert">${icon("alert")}<span>${esc(message)}</span></div>` : ""}
       <div class="od-summary">
         <div><span>Order ID</span><strong>${esc(o.orderNumber)}</strong></div>

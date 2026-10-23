@@ -67,9 +67,14 @@
   }
 
   .eyebrow {
-    margin-bottom: 4px;
-    font-size: 0.6875rem;
-    letter-spacing: 0.12em;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 0.8125rem;
+  }
+
+  .eyebrow::before {
+    width: 7px;
+    height: 7px;
   }
 
   /* ---------------------------------------------------------------------
@@ -871,5 +876,342 @@
   .category-more {
     overflow-y: hidden;
     overscroll-behavior-y: auto;
+  }
+}
+
+/* Home (owner, 2026-10-23): how it works in three small boxes under the hero's buttons, so it is seen at once;
+   under the hero, "Start here" with the three ways in as picture tiles */
+@media (max-width: 639px) {
+  .hero-steps {
+    display: flex;
+    gap: 6px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hero-steps li {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    padding: 7px 4px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+  }
+
+  .hero-steps b {
+    width: 22px;
+    height: 22px;
+    font-size: 0.72rem;
+  }
+
+  .how {
+    padding: 14px 0 16px;
+  }
+
+  .how__title {
+    font-size: 1rem;
+  }
+
+  .how__title-wide,
+  .how__lead,
+  .how__steps {
+    display: none;
+  }
+
+  .how__title-phone {
+    display: inline;
+  }
+
+  .how__ways {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .how__way {
+    flex-direction: column;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    text-align: center;
+  }
+
+  .how__way img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    border: 2px solid var(--line);
+  }
+
+  .how__way--main {
+    background: none;
+  }
+
+  .how__way--main img {
+    border-color: var(--amber-strong);
+  }
+
+  .how__way strong {
+    font-size: 0.78rem;
+    line-height: 1.25;
+  }
+
+  .how__way small,
+  .how__way .icon {
+    display: none;
+  }
+}
+
+/* Phone tab bar: Home · Shop · Studio · Cart · Account, always at the bottom (owner, 2026-10-23) */
+@media (max-width: 639px) {
+  .tabbar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: calc(var(--z-header) + 1);
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: 0 -6px 20px rgba(13, 27, 62, 0.08);
+  }
+
+  .tabbar__item {
+    position: relative;
+    display: grid;
+    justify-items: center;
+    gap: 2px;
+    min-height: 44px;
+    padding: 2px 0;
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    font-weight: 600;
+  }
+
+  .tabbar__item .icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .tabbar__item.is-on {
+    color: var(--amber-strong);
+    font-weight: 700;
+  }
+
+  .tabbar__count {
+    position: absolute;
+    top: -2px;
+    left: 54%;
+    min-width: 17px;
+    padding: 0 5px;
+    border-radius: var(--radius-pill);
+    background: var(--amber-strong);
+    color: #fff;
+    font-size: 0.62rem;
+    font-style: normal;
+    line-height: 17px;
+    text-align: center;
+  }
+
+  .tabbar__count[hidden] {
+    display: none;
+  }
+
+  body.has-tabbar {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.has-tabbar .toast-region {
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Product page step guide on a phone: words may take two lines instead of being cut */
+@media (max-width: 639px) {
+  .pp-guide li {
+    gap: 6px;
+    padding: 6px 8px;
+    font-size: 0.72rem;
+    line-height: 1.2;
+  }
+
+  .pp-guide li span {
+    white-space: normal;
+  }
+}
+
+/* Checkout on a phone (owner, 2026-10-23): the Pay button always at the bottom, and a 3-line address card */
+@media (max-width: 639px) {
+  .co-head {
+    display: grid;
+    gap: 10px;
+  }
+
+  .co-steps {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .co-paybar {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    box-shadow: 0 -8px 24px rgba(13, 27, 62, 0.1);
+  }
+
+  .co-paybar > div {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .co-paybar strong {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+  }
+
+  .co-paybar span {
+    overflow: hidden;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  body.co-has-paybar {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.co-has-paybar .toast-region {
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .co-choice {
+    position: relative;
+  }
+
+  .co-choice__body strong {
+    padding-right: 44px;
+  }
+
+  .co-choice__phone {
+    display: inline;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .co-choice__body span.co-choice__lines,
+  .co-choice__body span.co-choice__tel {
+    display: none;
+  }
+
+  .co-choice__line {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    font-size: 0.82rem;
+    line-height: 1.4;
+  }
+
+  .co-choice [data-address-edit] {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    margin: 0;
+  }
+}
+
+/* Order page on a phone: a smaller "what happens next" box (owner, 2026-10-23) */
+@media (max-width: 639px) {
+  .od-next {
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+  }
+
+  .od-next__icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .od-next__icon .icon {
+    width: 15px;
+    height: 15px;
+  }
+
+  .od-next h2 {
+    font-size: 0.9rem;
+  }
+
+  .od-next p {
+    display: none;
+  }
+
+  .od-next ul {
+    gap: 2px 12px;
+    margin-top: 4px;
+    font-size: 0.74rem;
+  }
+}
+
+/* Help chat on a phone: a round button above the bottom bar, the chat over the whole screen */
+@media (max-width: 639px) {
+  .hc-btn {
+    right: 14px;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    padding: 8px;
+  }
+
+  .hc-btn__text {
+    display: none;
+  }
+
+  body.has-tabbar .hc-btn {
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.pp-has-buybar .hc-btn,
+  body.co-has-paybar .hc-btn,
+  body[data-page="studio"] .hc-btn {
+    bottom: calc(86px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .hc-panel,
+  body.pp-has-buybar .hc-panel,
+  body[data-page="studio"] .hc-panel {
+    inset: 0;
+    z-index: calc(var(--z-overlay) + 5);
+    width: auto;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .hc.is-open .hc-btn {
+    display: none;
   }
 }

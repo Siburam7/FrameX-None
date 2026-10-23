@@ -93,6 +93,7 @@
       ${badges.length ? `<div class="pp-badges">${badges.join("")}</div>` : ""}
       <div class="pp-price" aria-live="polite"><strong data-price></strong><s data-was hidden></s></div>
       <dl class="pp-breakdown" data-breakdown hidden></dl>
+      <ol class="pp-guide" data-guide aria-label="Steps to order" hidden></ol>
       <p class="pp-stock pp-stock--${stockKey}">${icon(out ? "close" : "check")} ${esc(stockText)}</p>
       ${short ? `<p class="pp-lead">${esc(short)}${short !== desc ? ` <a href="#pp-overview">Read more</a>` : ""}</p>` : ""}
       ${facts.length ? `<dl class="pp-facts">${facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
@@ -206,7 +207,7 @@
   function mountPhotos(root, p, sel, { preview }) {
     const box = $("[data-photos]", root);
     if (!box)
-      return { required: () => false, check: () => true, forOrder: async () => ({ ok: true, photos: null, thumbnail: "" }), sync() {}, firstPhotoId: () => "", list: () => [], destroy() {} };
+      return { required: () => false, missing: () => 0, check: () => true, forOrder: async () => ({ ok: true, photos: null, thumbnail: "" }), sync() {}, firstPhotoId: () => "", list: () => [], destroy() {} };
     const svc = FrameX.uploadService;
     const chosen = {}; // slot -> { id, url, width, height, x, y, zoom }
     let need = null;
@@ -429,6 +430,8 @@
     return {
       restored,
       required: () => need.required,
+      /** How many photos are still to be added (0 when none are needed). */
+      missing: () => (need.required ? need.slots.filter((slot) => !chosen[slot]).length : 0),
       set onChange(fn) {
         onChange = fn;
       },
@@ -517,7 +520,7 @@
       </div>
       ${navItems.length > 1 ? `<nav class="pp-nav" aria-label="Product sections"><ul>${navItems.map((s) => `<li><a href="#pp-${s.id}" data-nav="${s.id}">${esc(s.title)}</a></li>`).join("")}</ul></nav>` : ""}
       <div class="pp-sections">${sections.map((s) => s.html).join("")}</div>
-      ${preview || (p.decor && p.decor.customPhoto && FrameX.decorUI) ? "" : `<div class="pp-buybar" data-buybar aria-hidden="true"><div><strong data-price></strong><span>${esc(p.name)}</span></div><button class="btn btn--primary btn--sm" type="button" data-add tabindex="-1" ${stock(p)[0] === "out" ? "disabled" : ""}>Add to cart</button>${stock(p)[0] === "out" ? "" : `<button class="btn btn--dark btn--sm" type="button" data-buy tabindex="-1">Buy Now</button>`}</div>`}
+      ${preview || (p.decor && p.decor.customPhoto && FrameX.decorUI) ? "" : `<div class="pp-buybar" data-buybar><div><strong data-price></strong><span data-buybar-hint>${esc(p.name)}</span></div><button class="btn btn--primary btn--sm" type="button" data-add ${stock(p)[0] === "out" ? "disabled" : ""}>Add to cart</button>${stock(p)[0] === "out" ? "" : `<button class="btn btn--dark btn--sm" type="button" data-buy>Buy Now</button>`}</div>`}
     </div>`;
 
     // Reviews come from the backend, written by customers whose order of this product was delivered.
@@ -545,7 +548,37 @@
       $$("[data-customize]", root).forEach(
         (a) => !preview && (a.href = S().studioUrl(p, sel, photos.firstPhotoId())),
       );
-    photos.onChange = studioLinks; // a photo chosen here opens in FrameX Studio too
+    photos.onChange = () => {
+      studioLinks(); // a photo chosen here opens in FrameX Studio too
+      guide();
+    };
+
+    /* ---- the step guide under the price and the hint in the buy bar: what is done, what comes next ---- */
+    function guide() {
+      const list = $("[data-guide]", root);
+      const hint = $("[data-buybar-hint]", root);
+      const many = (p.sizes || []).length > 1;
+      const needs = photos.required();
+      const left = photos.missing();
+      const size = (p.sizes || []).find((x) => x.id === sel.sizeId);
+      const sizeName = size ? size.label || M().sizeDims(size) : "";
+      const steps = [];
+      if (many) steps.push({ done: true, text: sizeName ? `Size: ${sizeName}` : "Size chosen" });
+      if (needs) steps.push({ done: !left, text: left ? (left > 1 ? `Add ${left} photos` : "Add your photo") : "Photo added" });
+      if (steps.length) steps.push({ done: false, text: "Add to cart" });
+      const now = steps.findIndex((x) => !x.done);
+      if (list) {
+        list.hidden = steps.length < 2 || preview;
+        list.innerHTML = steps
+          .map((x, i) => `<li class="${x.done ? "is-done" : i === now ? "is-now" : ""}"><b>${x.done ? icon("check") : i + 1}</b><span>${esc(x.text)}</span></li>`)
+          .join("");
+      }
+      if (hint) {
+        const summary = [sizeName, sel.colorId ? M().colorName(sel.colorId) : ""].filter(Boolean).join(" · ");
+        hint.textContent = left ? (left > 1 ? `Next: add ${left} photos` : "Next: add your photo") : summary || p.name;
+        hint.classList.toggle("is-next", Boolean(left));
+      }
+    }
 
     /* ---- "View on My Wall": this product, as chosen here, on the customer's own wall through their camera.
        Only for products that can be shown (productModel.liveDemoSupport) and only where a camera can open;
@@ -623,6 +656,7 @@
         (a) => !preview && (a.href = FrameX.decorUI.studioUrl(p, sel)),
       );
       S().updateCompare(root, p, sel.sizeId);
+      guide();
     }
 
     const KEYS = {
@@ -821,18 +855,8 @@
         $$(".pp-section", root).forEach((s) => spy.observe(s));
         io.push(spy);
       }
-      const bar = $("[data-buybar]", root);
-      const main = $(".pp-buy [data-add]", root);
-      if (bar && main) {
-        const watch = new IntersectionObserver(([en]) => {
-          const show = !en.isIntersecting && en.boundingClientRect.top < 0;
-          bar.classList.toggle("is-visible", show);
-          bar.setAttribute("aria-hidden", String(!show));
-          $$("button", bar).forEach((b) => (b.tabIndex = show ? 0 : -1));
-        });
-        watch.observe(main);
-        io.push(watch);
-      }
+      // The buy bar stays at the bottom on every screen (owner, 2026-10-23); the page leaves room for it.
+      if ($("[data-buybar]", root)) document.body.classList.add("pp-has-buybar");
     }
 
     return {
@@ -840,6 +864,7 @@
       gallery,
       destroy() {
         io.forEach((o) => o.disconnect());
+        document.body.classList.remove("pp-has-buybar");
         gallery.destroy();
         photos.destroy();
         root.innerHTML = "";

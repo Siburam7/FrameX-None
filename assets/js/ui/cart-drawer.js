@@ -190,6 +190,11 @@
   }
 
   function updateBadge(count) {
+    // The phone tab bar's cart count
+    document.querySelectorAll("[data-tabbar-count]").forEach((el) => {
+      el.textContent = count > 99 ? "99+" : String(count);
+      el.hidden = count === 0;
+    });
     const badge = $(".cart-btn__count");
     const button = $(".cart-btn");
     if (!badge || !button) return;

@@ -44,14 +44,20 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
 
 - Node.js, Express 5, ES modules. Entry `src/server.js` (start-up checks + log), `src/app.js` (routes).
 - `src/routes/` — auth, users, addresses, cart, checkout, orders, uploads, shops, shop-dashboard, artists,
-  paintings, admin, analytics, contact, misc (`/api/health`, `/api/config`; `/api/ping` is in `app.js`). `GET /api/shops/:ref?optional=1`
+  paintings, admin, analytics, contact, support (help chat), misc (`/api/health`, `/api/config`; `/api/ping` is in `app.js`). `GET /api/shops/:ref?optional=1`
   answers `{ shop: null }` for a catalogue shop that isn't on FrameX (the website asks that way; without the flag: 404).
   Admin coupons: `GET / POST /api/admin/coupons`, `PATCH /api/admin/coupons/:code` (no delete; audited).
   Saved Studio designs: `/api/designs` (the account's own, max 30; photos are the account's uploads). Own data:
   `GET /api/users/me/data`, `POST /api/users/me/delete`.
+  Help chat: `/api/support` (logged-in CUSTOMER only: `GET /`, `GET /unread`, `POST /messages` max 2000
+  characters, 30 per 10 minutes, optional own order number + topic; `POST /read`); admin `GET /api/admin/support`,
+  `GET /api/admin/support/:id`, `POST …/:id/reply`, `POST …/:id/status` (audited). FrameX is emailed
+  (ADMIN_NOTIFY_EMAIL, else the admins) at most once per 15 minutes per conversation; an answer is emailed to the
+  customer's account address with a `/?chat=1` link. The website asks for new answers every 15 s only while the
+  chat is open and the tab is in view (`assets/js/ui/help-chat.js`; admin screen `ui/admin-support.js`).
 - `src/services/` — business logic (cart, checkout, orders, payments, payouts, uploads, analytics, settings…).
 - `src/db/` — `index.js` (PostgreSQL via `pg` when `DATABASE_URL` is set, else embedded PGlite in `backend/.data`),
-  `migrations/001…017` (applied automatically at start, never reset; 013 XUSE10 limits, 014 `users.deleted_at`, 015 `saved_designs`, 016 product approval on, 017 `shops.featured` / `featured_until`), `backup.js`, `ssl.js` (local, not deployed).
+  `migrations/001…018` (applied automatically at start, never reset; 013 XUSE10 limits, 014 `users.deleted_at`, 015 `saved_designs`, 016 product approval on, 017 `shops.featured` / `featured_until`, 018 help chat `support_threads` + `support_messages`, one open conversation per customer), `backup.js`, `ssl.js` (local, not deployed).
 - `src/payments/` — one payment system, gateway adapters `razorpay.js`, `cashfree.js`.
 - `src/lib/` — security (CORS, CSRF, cookies), storage (disk or bucket), sealed (AES-256-GCM for payout details),
   mailer, sms, file links (signed URLs).
@@ -60,7 +66,7 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
 
 ## 4. Data
 
-- 40 tables + `schema_migrations`; sequences for Shop IDs, order numbers, artist codes, painting requests, payouts.
+- 42 tables + `schema_migrations` (018 added 2); sequences for Shop IDs, order numbers, artist codes, painting requests, payouts.
 - Tables refer to each other in circles (users ↔ shops ↔ shop applications, users ↔ artists).
 - Prices, totals and payment state are computed and stored by the server only.
 

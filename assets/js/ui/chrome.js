@@ -18,6 +18,23 @@
   ];
   // Services, Contact and FAQ are in the footer (Support), not in the header.
 
+  /* Phones: an app-style tab bar at the bottom (owner, 2026-10-23). Not on pages that keep their own bar at the
+     bottom (product, checkout, the studios) or on sign-in and dashboard pages. */
+  const NO_TABBAR = ["product", "checkout", "studio", "wall-art-studio", "login", "signup", "forgot-password", "reset-password", "admin", "shop-dashboard", "artist-dashboard"];
+  const TAB_OF = { home: "home", shop: "shop", "shop-detail": "shop", "home-decor": "shop", art: "shop", artist: "shop", artwork: "shop", search: "shop", templates: "studio", template: "studio", account: "account", orders: "account", order: "account", paintings: "account", painting: "account" };
+  function tabbar(page) {
+    if (NO_TABBAR.includes(page)) return "";
+    const on = TAB_OF[page] || "";
+    const tab = (key, href, ic, label) => `<a class="tabbar__item${on === key ? " is-on" : ""}" href="${href}"${on === key ? ' aria-current="page"' : ""}>${icon(ic)}<span>${label}</span></a>`;
+    return `<nav class="tabbar" aria-label="Quick links">
+      ${tab("home", pages.home, "home", "Home")}
+      ${tab("shop", pages.shop, "store", "Shop")}
+      ${tab("studio", pages.studio + "?mode=photo", "image", "Studio")}
+      <button class="tabbar__item" type="button" data-action="open-cart">${icon("bag")}<span>Cart</span><em class="tabbar__count" data-tabbar-count hidden>0</em></button>
+      <a class="tabbar__item${on === "account" ? " is-on" : ""}" href="${pages.login}" data-account-tab>${icon("user")}<span>Account</span></a>
+    </nav>`;
+  }
+
   /* The header's main button follows the section the visitor is in: [label, link]. */
   const CTA = {
     art: ["Explore Art", `${pages.art}?view=artworks`],
@@ -48,6 +65,7 @@
     const href = user ? (user.role === "CUSTOMER" ? pages.account : FrameX.auth.homeFor(user.role)) : pages.login;
     const first = user ? String(user.role === "SHOP" && user.shop ? user.shop.name : user.name).split(/\s+/)[0] : "";
     const text = user ? (user.role === "SHOP" || user.role === "ARTIST" ? "Dashboard" : user.role === "ADMIN" ? "Admin" : first) : "Log in";
+    document.querySelectorAll("[data-account-tab]").forEach((a) => (a.href = href));
     document.querySelectorAll("[data-account], [data-account-mobile]").forEach((a) => {
       a.href = href;
       a.classList.toggle("is-authed", Boolean(user));
@@ -208,6 +226,11 @@
     $("#site-header-root").outerHTML = header(page);
     $("#site-footer-root").outerHTML = footer();
     $("#overlay-root").outerHTML = overlays;
+    const bar = tabbar(page);
+    if (bar) {
+      document.body.insertAdjacentHTML("beforeend", bar);
+      document.body.classList.add("has-tabbar");
+    }
     syncAccount();
   }
 

@@ -45,6 +45,7 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
 | Payouts | Bank / UPI payout accounts (sealed), payouts recorded by admin with UTR, 2% payout charge | Built, live code; payout key set on Render 2026-10-21: accounts can be saved (live log READY) |
 | Emails | Password reset, orders, applications… from `FrameX <support@shopframex.in>` (Brevo, domain authenticated: DKIM shopframex.in), "orange line" design, logo on a white badge for dark mode | Built, live since 2026-10-20 |
 | Support inbox | Mail to `support@shopframex.in` (any `@shopframex.in`) is forwarded by ImprovMX (free) to `support.framex@gmail.com`; replies go out from that Gmail until "Send mail as" is set up (architecture §9) | Live since 2026-10-20 |
+| Help chat | Logged-in customers write to FrameX from a button on every customer page (topics, "about this order"); Admin → Chats answers, closes, reopens; both sides emailed; visitors are sent to log in or to the Contact page | Built 2026-10-23, local (not deployed) |
 | New-order alerts | Email to each seller, WhatsApp button for admin | Built, live |
 | Analytics | Consent-based visitor stats + admin reports; GA4 optional | Built; GA4 ID not set |
 | View on My Wall | Camera / AR preview of a frame | Built; never tried on a real phone |

@@ -285,6 +285,84 @@
     });
   }
 
+  /* The label's square dot (the "F." of the logo) runs right over the old words, wiping them away, then comes
+     back left over the new ones, uncovering them (owner, 2026-10-23). Only the words to the right of the dot are
+     shown (CSS: .eyebrow.is-wiping). One dot at a time: first the old slide's label (its slide stays up, its
+     other words fade out on their own: .is-leaving), then the new slide's label (hidden until then:
+     .is-waiting). The two labels can sit at different heights, so they never show together. */
+  const GAP = 9; // dot 8px + 9px gap = where the words start
+  function labelWipe() {
+    let raf = 0;
+    let busy = [];
+    let leaving = null;
+    const ease = (t) => (t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2);
+    const words = (eb) => {
+      if (!eb.dataset.words) {
+        eb.dataset.words = eb.textContent.trim();
+        eb.innerHTML = `<span class="eyebrow__text">${esc(eb.dataset.words)}</span>`;
+      }
+      return $(".eyebrow__text", eb);
+    };
+    const at = (eb, x) => {
+      eb.style.setProperty("--dot-x", `${x}px`);
+      eb.style.setProperty("--dot-turn", `${Math.round(x * 2.5)}deg`); // it rolls as it goes
+    };
+    const done = (eb) => {
+      eb.classList.remove("is-wiping", "is-waiting");
+      eb.style.removeProperty("--dot-x");
+      eb.style.removeProperty("--dot-turn");
+    };
+    const letGo = () => {
+      if (leaving) leaving.classList.remove("is-leaving");
+      leaving = null;
+    };
+    const stop = () => {
+      cancelAnimationFrame(raf);
+      busy.forEach(done);
+      busy = [];
+      letGo();
+    };
+    return (from, to) => {
+      stop();
+      if (!from || !to || prefersReducedMotion()) return;
+      const outWidth = words(from).getBoundingClientRect().width;
+      words(to);
+      busy = [from, to];
+      leaving = from.closest(".home-hero__slide");
+      leaving.classList.add("is-leaving");
+      from.classList.add("is-wiping");
+      at(from, 0);
+      to.classList.add("is-wiping", "is-waiting");
+      const OUT = 420;
+      const IN = 560;
+      let inWidth = 0;
+      const start = performance.now();
+      const step = (now) => {
+        const t = now - start;
+        if (t < OUT) {
+          at(from, ease(t / OUT) * (outWidth + GAP));
+        } else {
+          if (!inWidth) {
+            // the old label is gone: its slide may leave now; the new label's dot starts at the end of its words
+            done(from);
+            letGo();
+            inWidth = words(to).getBoundingClientRect().width;
+            at(to, inWidth + GAP);
+            to.classList.remove("is-waiting");
+          }
+          const k = Math.min(1, (t - OUT) / IN);
+          at(to, (1 - ease(k)) * (inWidth + GAP));
+          if (k >= 1) return stop();
+        }
+        raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    };
+  }
+
+  // Phones: how it works, in three small boxes under the frames slide's buttons (hidden on wider screens)
+  const STEPS = `<ol class="hero-steps" aria-label="How it works"><li><b>1</b>Choose a frame</li><li><b>2</b>Add your photo</li><li><b>3</b>We deliver it</li></ol>`;
+
   const slideHtml = (s, i, total) => `<div class="home-hero__slide page-hero__grid" role="group" aria-roledescription="slide" aria-label="${esc(s.label)}, ${i + 1} of ${total}" data-slide="${esc(s.id)}">
       <div class="home-hero__copy">
         <p class="eyebrow">${esc(s.eyebrow)}</p>
@@ -293,6 +371,7 @@
         <div class="page-hero__actions">${s.actions
           .map((a, n) => `<a class="btn ${n === 0 ? "btn--primary" : "btn--light"}" href="${esc(a.href)}">${esc(a.label)}${n === 0 ? " " + icon("arrow-right", "icon--nudge") : ""}</a>`)
           .join("")}</div>
+        ${s.id === "frames" ? STEPS : ""}
       </div>
       <div class="page-hero__wall">${s.pieces.map(piece).join("")}</div>
     </div>`;
@@ -356,6 +435,22 @@
     first.insertAdjacentHTML("afterend", slides.slice(1).map((s, i) => slideHtml(s, i + 1, slides.length)).join(""));
     const els = $$(".home-hero__slide", stage);
 
+    // Laptop / tablet: the words are centred (beside or above the pictures) and each slide has more or fewer
+    // lines. All the word blocks get the height of the tallest, so every slide's label (and heading) starts on
+    // the same line and the label changes in place (owner, 2026-10-23). Phones: already lined up at the top.
+    const copies = els.map((el) => $(".home-hero__copy", el));
+    const sideBySide = window.matchMedia("(min-width: 640px)");
+    const evenCopy = () => {
+      copies.forEach((c) => (c.style.minHeight = ""));
+      if (!sideBySide.matches) return;
+      const tallest = Math.max(...copies.map((c) => c.offsetHeight));
+      copies.forEach((c) => (c.style.minHeight = `${tallest}px`));
+    };
+    evenCopy();
+    let evenLater = 0;
+    window.addEventListener("resize", () => (cancelAnimationFrame(evenLater), (evenLater = requestAnimationFrame(evenCopy))));
+    if (document.fonts) document.fonts.ready.then(evenCopy);
+
     const tabs = $("[data-hero-tabs]", hero);
     tabs.innerHTML = slides.map((s, i) => `<button class="home-hero__tab" type="button" data-hero-tab="${i}" aria-current="${i === 0}">${esc(s.label)}</button>`).join("");
     const tabEls = $$("[data-hero-tab]", tabs);
@@ -365,6 +460,7 @@
 
     let index = 0;
     let timer = null;
+    const wipe = labelWipe();
     let userPaused = prefersReducedMotion();
     const held = new Set(); // reasons the rotation is on hold right now: "hover", "focus", "hidden"
 
@@ -375,6 +471,7 @@
       next = (next + els.length) % els.length;
       if (next === index) return;
       loadImages(next);
+      wipe($(".eyebrow", els[index]), $(".eyebrow", els[next]));
       els.forEach((el, i) => {
         el.classList.toggle("is-active", i === next);
         el.inert = i !== next;

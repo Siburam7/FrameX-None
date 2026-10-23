@@ -246,6 +246,11 @@
   color: #fff;
 }
 
+/* The phone tab bar (mobile.css shows it) */
+.tabbar {
+  display: none;
+}
+
 .badge--sample {
   background: rgba(5, 8, 22, 0.78);
   color: var(--white);
@@ -517,25 +522,7 @@ textarea.input {
 }
 
 .page-hero .eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding: 7px 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--surface);
-  color: var(--accent);
-  letter-spacing: 0.14em;
-}
-
-.page-hero .eyebrow::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--amber);
-  box-shadow: 0 0 0 4px rgba(234, 120, 14, 0.18);
+  margin-bottom: 14px;
 }
 
 .page-hero__title {
