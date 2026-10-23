@@ -24,6 +24,9 @@
 
 ## Owner decisions (log)
 
+- 2026-10-23 Deploy the redesign + help chat now, backup tomorrow ("abhi live kardo ham backup kal karenge") — so
+  migration 018 (two new tables, nothing changed in existing ones) ran without a fresh production backup; the
+  newest one is from 2026-10-20 15:06.
 - 2026-10-23 Make the whole site easy and self-explanatory on phone **and laptop**, keeping every feature (this
   changes the 2026-10-08 "desktop is final" rule for this redesign only). Owner approved design pictures 1–7 and the
   label idea "A, but a square dot like the F. of FrameX" (not a line); "should not look AI-generated". Feedback that

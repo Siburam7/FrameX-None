@@ -25,7 +25,9 @@
         (two new tables only). Data download includes the chat; deleting the account deletes it. Privacy Notice updated.
   - Tests: backend 436/436 (new `support.test.js` 8); browser: design 40/40, chat 36/36, frame 55, Studio 37,
     decor 26, designs 14, cart links 10, shops 35, account 13, fix17 21, coupon 25, payout 38.
-  - [ ] Owner looks at the screenshots and says yes → then commit + deploy (backup first: migration 018)
+  - [x] Owner: "all push & live" → commit 2b9ba27, deployed 2026-10-23 (push to `main`)
+  - [ ] **Production backup** — owner chose to deploy WITHOUT a fresh backup ("backup kal karenge", pen drive arrives
+        2026-10-24); last production backup is 2026-10-20 15:06. Run `backup-live-db.bat` and copy it to the pen drive
   - Open: nobody has answered a chat on the live site yet; the "few hours" answer time in the chat header is a promise
     the owner must keep (or change the text)
 - [ ] **Finish the pending website design and development** (owner will give the tasks). Existing design stays.
