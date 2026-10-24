@@ -24,6 +24,8 @@
 
 ## Owner decisions (log)
 
+- 2026-10-24 Deploy FrameX Care + order changes WITHOUT a fresh backup ("bina backup live karo") — migration 019 (CARE role
+  in users_role_check, live columns) ran on production with the newest backup still from 2026-10-20 15:06.
 - 2026-10-24 Care logins open the **admin panel** (not a separate page) with only **Live chats and Orders**, and can
   act on a customer's order: cancel (with the automatic refund), refund, change the status, another size (before the
   shop makes it), another delivery address (before it ships). Owner's choices: "Chats + Orders" (not everything —

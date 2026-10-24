@@ -22,7 +22,8 @@
         order) — not built; touches the live payment flow, refunds across two payments of one order. Until then the
         care person is told "the customer would have to pay the difference".
   - [x] Owner's logos saved in `assets/img/brand/` (F., Care, Shop, Support); the F. CARE logo is in the chat header and on the care desk
-  - [ ] Owner looks at it, then deploy — **production backup first** (019 changes the users role rule)
+  - [x] Deployed 2026-10-24 (commit 9425cc6) WITHOUT a fresh backup, owner's choice ("bina backup live karo")
+  - [ ] Production backup still owed (newest: 2026-10-20)
   - [ ] After deploy: create the first care login (Admin → Care team), test one live chat on shopframex.in with a
         phone, check the live connection works through Render
 - [x] 2026-10-23 **FrameX Care live chat** (owner's plan, AI cancelled) — design (`Desktop\FrameX-Care-Chat-Design`):
