@@ -1,10 +1,38 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-10-23 (easy-to-use redesign + help chat, local).
+> Last updated: 2026-10-24 (FrameX Care live chat, local).
 
 ## Now
 
+- [x] 2026-10-24 **FrameX Care live chat BUILT — local, not committed / deployed** (owner: "Design + jawab final, banana
+      shuru karo", team hours 10am–8pm). Migration 019 (CARE role, live columns, SYSTEM messages); `/api/support/live*`,
+      `/api/support/stream`, `/api/care/*`, `/api/admin/care-team`; care.html + ui/care-desk.js + css/care.css; Admin → Care team;
+      ui/help-chat.js rewritten (8 quick answers, connect, live, leave a message, rating). Search answers carry `inStock`;
+      /api/config has `cod` and `care`. Tests: backend 447/447 (new care.test.js 11); browser care-e2e 47/47 (cookie) and
+      48/48 (token sessions, as live); messages arrive in ~20–35 ms each way.
+  - [x] Owner: the care login belongs in the admin panel, and care staff must be able to act on the customer's order
+        ("order cancel … size change etc."). Owner chose: care logins see **only Live chats + Orders** (not payouts,
+        settings, coupons, shops); another size = cheaper / same at once (online: the difference refunded), dearer only on
+        COD for now. Built: `/api/admin/orders/*` open to CARE (test mark + WhatsApp list stay admin-only),
+        `…/items/:id/sizes`, `…/items/:id/size`, `…/address`, `services/order-edit-service.js`; the admin order page
+        has "Change the order"; the care desk is Admin → Live chats (#/live); care.html removed. Tests: backend
+        order-edit.test.js 7/7; browser care-e2e 54/54 (token sessions).
+  - [ ] **Dearer size on an order paid online**: the customer pays the difference (a "Pay ₹X more" payment on the
+        order) — not built; touches the live payment flow, refunds across two payments of one order. Until then the
+        care person is told "the customer would have to pay the difference".
+  - [x] Owner's logos saved in `assets/img/brand/` (F., Care, Shop, Support); the F. CARE logo is in the chat header and on the care desk
+  - [ ] Owner looks at it, then deploy — **production backup first** (019 changes the users role rule)
+  - [ ] After deploy: create the first care login (Admin → Care team), test one live chat on shopframex.in with a
+        phone, check the live connection works through Render
+- [x] 2026-10-23 **FrameX Care live chat** (owner's plan, AI cancelled) — design (`Desktop\FrameX-Care-Chat-Design`):
+      8 quick answers without AI (draft for the owner to confirm; amounts / order status / stock read live), then
+      "Connect with FrameX Care" → connecting (2 minutes, owner) → staff accepts → customer sees "Live · chatting with
+      <first name>" (owner: first name only) → nobody in 2 minutes = leave a message (today's chat). Care staff get
+      their OWN login (owner chose it over a shared admin login), created only in Admin → Care team, and see only Chats;
+      Available / Away; popup + sound. Messages over a live connection (server push), not a 1-second refresh (Neon
+      free compute). UptimeRobot already keeps Render awake (since 2026-10-20). Waiting for: owner's look at the
+      design, confirmed answers, team hours (the "10am–8pm" in the pictures is my placeholder)
 - [x] 2026-10-23 **Easy-to-use redesign, laptop + phone** (owner approved design pictures 1–8 in
       `Desktop\FrameX-Design-Ideas`; "website AI generated ke tarha nehi dikhana chahiye") — **local, not committed / deployed**:
   - [x] 1. Label above headings: a small square orange dot + normal text (like the "F." of the logo), no pill / capitals;
@@ -139,7 +167,7 @@
       blocks (remaining flags are the known false positives: hidden home h1, buttons inside closed <details>, test 404s)
 - [x] **Deploy 2026-10-20: LIVE** (`main` = a15c350; owner approved each step)
   0. [x] Owner: fresh production backup 2026-10-20 15:06 with `backup-live-db.bat` (its first run against Neon: worked;
-     locked file `DesktopFrameX-backupsramex-db-live-20261020-1506.fxdb`, 180 KB; 12 orders, 7 users, 247 products)
+     locked file `Desktop\FrameX-backups\framex-db-live-20261020-1506.fxdb`, 180 KB; 12 orders, 7 users, 247 products)
   1. [x] 2026-10-20 15:09 owner said "deploy kar do": `main` fast-forwarded eb23ecf → a15c350 and pushed;
      Merge `phase2a-wip` into `main` (fast-forward) and push: Render redeploys the API and GitHub Pages the website
      at the same time (for 1-2 minutes new pages may talk to the old API)

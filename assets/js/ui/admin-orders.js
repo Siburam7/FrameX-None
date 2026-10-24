@@ -309,7 +309,8 @@
               </form></section>`
               : ""
           }
-          <section class="co-card" data-test-card><h2 class="co-card__title">Sales reports</h2>
+          ${changeCard(o)}
+          ${isCare() ? "" : `<section class="co-card" data-test-card><h2 class="co-card__title">Sales reports</h2>
             ${
               o.isTest
                 ? `<p class="co-lead">This order is kept out of sales reports as a test order.</p><div><button class="btn btn--outline btn--sm" type="button" data-test-off>Count it as a real order</button></div>`
@@ -318,7 +319,7 @@
                 <div><button class="btn btn--outline btn--sm" type="submit">Mark as a test order</button></div></form>`
             }
             <p class="co-fine">${icon("alert")}<span>Marking changes nothing for the customer or the shop: the order, its payment and its delivery stay as they are.</span></p>
-          </section>
+          </section>`}
           <section class="co-card"><h2 class="co-card__title">Price details</h2>${v.totalsHtml(o)}</section>
           <section class="co-card"><h2 class="co-card__title">${icon("user")} Customer</h2>
             <dl class="ao-facts">${fact("Name", esc(o.customer.name))}${fact("Email", esc(o.customer.email))}${fact("Phone", esc(o.customer.phone || "—"))}</dl>
@@ -386,6 +387,7 @@
         testOff.disabled = true;
         apply(http().post(`/admin/orders/${encodeURIComponent(o.orderNumber)}/test`, { test: false }));
       });
+    wireChanges(main, o, { head, apply });
     const refundForm = $("[data-refund-form]", main);
     if (refundForm)
       refundForm.addEventListener("submit", (e) => {
@@ -396,6 +398,100 @@
         e.submitter.disabled = true;
         apply(http().post(`/admin/orders/${encodeURIComponent(o.orderNumber)}/refund`, Object.assign({ reason: refundForm.elements.reason.value.trim() }, amount === undefined ? {} : { amount })));
       });
+  }
+
+  /* ---------------------------------------------------------------- Changing the order (owner, 2026-10-24)
+     When the customer asks (in the FrameX Care chat): another size before the shop starts making it, another
+     delivery address before it ships. The backend prices and checks everything (services/order-edit-service.js). */
+  const SIZE_OK = ["PLACED", "CONFIRMED"];
+  const ADDRESS_OK = ["PLACED", "CONFIRMED", "PROCESSING"];
+  const isCare = () => FrameX.auth && FrameX.auth.state && FrameX.auth.state.role === "CARE";
+  const diffText = (d) => (d > 0 ? `${formatPrice(d)} more` : d < 0 ? `${formatPrice(-d)} less` : "same price");
+
+  function changeCard(o) {
+    const sizes = SIZE_OK.includes(o.status) && !(o.paymentMethod === "ONLINE" && !["PAID", "PARTIALLY_REFUNDED"].includes(o.paymentStatus));
+    const address = ADDRESS_OK.includes(o.status);
+    if (!sizes && !address) return "";
+    const lines = sizes ? o.items.filter((i) => i.kind === "product" && i.productId) : [];
+    return `<section class="co-card" data-change-card><h2 class="co-card__title">${icon("edit")} Change the order</h2>
+      <p class="co-lead">When the customer asks for it. The customer is emailed about every change, and it is written in the history.</p>
+      ${lines.map((i) => `<div class="ao-change"><div><strong>${esc(i.name)}</strong><span class="sd-item__meta">Size: ${esc(i.size || "—")} · qty ${i.quantity}</span></div>
+          <button class="btn btn--outline btn--sm" type="button" data-size-open="${esc(i.id)}">Change size</button></div><div data-size-box="${esc(i.id)}"></div>`).join("")}
+      ${sizes ? "" : `<p class="co-fine">${icon("alert")}<span>The size can be changed only before the shop starts making the order.</span></p>`}
+      ${address ? `<div class="ao-change"><div><strong>Delivery address</strong><span class="sd-item__meta">Before the order is shipped</span></div><button class="btn btn--outline btn--sm" type="button" data-address-open>Change address</button></div><div data-address-box></div>` : ""}
+    </section>`;
+  }
+
+  function wireChanges(main, o, { head, apply }) {
+    const card = $("[data-change-card]", main);
+    if (!card) return;
+    card.addEventListener("click", async (e) => {
+      const open = e.target.closest("[data-size-open]");
+      if (open) {
+        const box = $(`[data-size-box="${open.dataset.sizeOpen}"]`, card);
+        box.innerHTML = `<p class="co-lead">Loading the sizes…</p>`;
+        try {
+          const r = await http().get(`/admin/orders/${encodeURIComponent(o.orderNumber)}/items/${encodeURIComponent(open.dataset.sizeOpen)}/sizes`);
+          box.innerHTML = `<form class="ao-form ao-sizes" data-size-form="${esc(r.itemId)}"><fieldset><legend class="visually-hidden">New size</legend>
+            ${r.sizes
+              .map(
+                (s) => `<label class="ao-size${s.allowed && !s.current ? "" : " is-off"}"><input type="radio" name="sizeId" value="${esc(s.sizeId)}"${s.current ? " checked" : ""}${s.allowed && !s.current ? "" : " disabled"}>
+                  <span><strong>${esc(s.label)}</strong>${s.current ? " · now" : ""}<small>${s.current ? "" : `Order total ${formatPrice(s.newTotal)} (${diffText(s.difference)})`}${s.why ? ` · ${esc(s.why)}` : ""}</small></span></label>`,
+              )
+              .join("")}</fieldset>
+            <p class="co-fine">${icon("alert")}<span>${r.paymentMethod === "ONLINE" ? "Paid online: a cheaper size refunds the difference at once to the customer's payment method." : "Cash on Delivery: the customer pays the new total on delivery."}</span></p>
+            <div><button class="btn btn--primary btn--sm" type="submit">Change size</button></div></form>`;
+        } catch (error) {
+          box.innerHTML = `<p class="form-status form-status--error is-visible">${esc(error.message)}</p>`;
+        }
+        return;
+      }
+      if (e.target.closest("[data-address-open]")) {
+        const box = $("[data-address-box]", card);
+        const a = o.shippingAddress || {};
+        const states = (await http().get("/admin/orders/_/states").catch(() => ({ states: [] }))).states;
+        const f = (name, label, value, extra = "") => `<div class="form-field"><label for="ao-a-${name}">${label}</label><input class="input" id="ao-a-${name}" name="${name}" value="${esc(value || "")}" ${extra}></div>`;
+        box.innerHTML = `<form class="ao-form" data-address-form>
+          ${f("fullName", "Full name", a.fullName, 'maxlength="80" required')}${f("phone", "Phone", a.phone, 'maxlength="15" required inputmode="tel"')}
+          ${f("line1", "House, street", a.line1, 'maxlength="160" required')}${f("line2", "Area", a.line2, 'maxlength="120"')}${f("landmark", "Landmark", a.landmark, 'maxlength="120"')}
+          ${f("city", "City / town", a.city, 'maxlength="80" required')}
+          <div class="form-field"><label for="ao-a-state">State</label><select class="select" id="ao-a-state" name="state" required>${states.map((s) => `<option${s === a.state ? " selected" : ""}>${esc(s)}</option>`).join("")}</select></div>
+          ${f("postalCode", "PIN code", a.postalCode, 'maxlength="6" required inputmode="numeric"')}
+          <div class="form-status" role="status" aria-live="polite"></div>
+          <div><button class="btn btn--primary btn--sm" type="submit">Save the new address</button></div></form>`;
+      }
+    });
+    card.addEventListener("submit", (e) => {
+      const sizeForm = e.target.closest("[data-size-form]");
+      if (sizeForm) {
+        e.preventDefault();
+        const picked = sizeForm.elements.sizeId.value;
+        const chosen = [...sizeForm.elements.sizeId].find((r) => r.checked);
+        if (!picked || (chosen && chosen.disabled)) return;
+        e.submitter.disabled = true;
+        return apply(
+          http()
+            .post(`/admin/orders/${encodeURIComponent(o.orderNumber)}/items/${encodeURIComponent(sizeForm.dataset.sizeForm)}/size`, { sizeId: picked })
+            .then((r) => (FrameX.toast.show(`Size changed to ${r.change.to}. New total ${formatPrice(r.change.newTotal)}${r.change.refunded ? `; ${formatPrice(r.change.refunded)} is being refunded` : ""}. The customer is emailed.`, { duration: 7000 }), r)),
+        );
+      }
+      const addrForm = e.target.closest("[data-address-form]");
+      if (addrForm) {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(addrForm).entries());
+        e.submitter.disabled = true;
+        http()
+          .post(`/admin/orders/${encodeURIComponent(o.orderNumber)}/address`, data)
+          .then((r) => {
+            FrameX.toast.show("Delivery address changed. The customer is emailed.");
+            render(main, r.order, { head });
+          })
+          .catch((error) => {
+            FrameX.forms.status($(".form-status", addrForm), "error", esc(error.fields ? Object.values(error.fields)[0] : error.message));
+            e.submitter.disabled = false;
+          });
+      }
+    });
   }
 
   async function detail(main, orderNumber, { head }) {

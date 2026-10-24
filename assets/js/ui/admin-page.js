@@ -21,6 +21,7 @@
      #/products[?status=]       products shops created: approve one that waits
                                 for review, or take one off sale
      #/chats[/<id>]             the help chat: conversations with customers (ui/admin-support.js)
+     #/care                     Care team: the FrameX Care logins (ui/admin-support.js); live chats: #/live (ui/care-desk.js)
      #/messages[?status=]       messages from the Contact page (ui/admin-messages.js)
      #/activity                 audit log of admin actions
 
@@ -33,7 +34,12 @@
   const forms = () => FrameX.forms;
   const http = () => FrameX.http;
 
-  const NAV = [
+  // FrameX Care logins (owner, 2026-10-24) see only these two; the API refuses them everything else anyway.
+  const CARE_NAV = [
+    ["live", "Live chats", "mail"],
+    ["orders", "Orders", "receipt"],
+  ];
+  const NAV_ADMIN = [
     ["overview", "Overview", "frame"],
     ["analytics", "Analytics", "chart"],
     ["applications", "Applications", "mail"],
@@ -46,7 +52,9 @@
     ["artworks", "Artworks", "frame"],
     ["paintings", "Custom paintings", "edit"],
     ["reviews", "Reviews", "star"],
+    ["live", "Live chats", "mail"],
     ["chats", "Chats", "mail"],
+    ["care", "Care team", "users"],
     ["messages", "Messages", "mail"],
     ["users", "Accounts", "user"],
     ["settings", "Settings", "settings"],
@@ -79,6 +87,8 @@
   };
 
   let root, admin;
+  let NAV = NAV_ADMIN;
+  let leave = null; // stops the screen that is open (the care desk's live connection)
   const badge = (status, labels) => `<span class="sd-status sd-status--${TONE[status] || "draft"}">${esc(labels[status] || status)}</span>`;
   // A promotion's last day, India time ("2026-12-31" for the date field, "31 Dec 2026" to read)
   const featuredDate = (iso) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
@@ -119,7 +129,7 @@
   function layout(section) {
     root.innerHTML = `<div class="sd">
       <aside class="sd-side">
-        <div class="sd-shop"><span class="sd-logo">${icon("shield")}</span><div><strong>FrameX Admin</strong><span class="sd-side__who">${esc(admin.name)}</span></div></div>
+        ${admin.role === "CARE" ? `<div class="sd-shop"><img class="sd-care-dp" src="assets/img/brand/framex-care.png" alt="FrameX Care" width="56" height="56"><div><strong>${esc(admin.name)}</strong><span class="sd-side__who">FrameX Care</span></div></div>` : `<div class="sd-shop"><span class="sd-logo">${icon("shield")}</span><div><strong>FrameX Admin</strong><span class="sd-side__who">${esc(admin.name)}</span></div></div>`}
         <div style="display:grid;gap:4px;justify-items:start">
           <button class="btn btn--outline btn--sm" type="button" data-refresh title="Load the newest data for this screen"${refreshing ? " disabled" : ""}>${icon("refresh")} ${refreshing ? "Refreshing…" : "Refresh"}</button>
           <span class="sd-side__who" data-refreshed role="status"></span>
@@ -624,9 +634,14 @@
   /* ---------------------------------------------------------------- Router */
   async function route() {
     const { parts, params } = parse();
-    const section = NAV.some(([id]) => id === parts[0]) ? parts[0] : "overview";
+    const section = NAV.some(([id]) => id === parts[0]) ? parts[0] : NAV[0][0];
+    if (leave) {
+      leave();
+      leave = null;
+    }
     const main = layout(section);
     main.onclick = null;
+    main.onsubmit = null;
     typed = false;
     main.oninput = () => (typed = true);
     main.innerHTML = FrameX.templates.skeletonPage("dash");
@@ -634,10 +649,11 @@
       const stamp = $("[data-refreshed]", root);
       if (stamp) stamp.textContent = ok ? `Updated ${new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Couldn't be updated";
     };
-    if (FrameX.adminMessages) FrameX.adminMessages.badge();
-    if (FrameX.adminSupport && section !== "chats") FrameX.adminSupport.badge();
+    if (admin.role === "ADMIN" && FrameX.adminMessages) FrameX.adminMessages.badge();
+    if (admin.role === "ADMIN" && FrameX.adminSupport && section !== "chats") FrameX.adminSupport.badge();
     document.title = `${NAV.find(([id]) => id === section)[1]} — FrameX admin`;
     try {
+      if (section === "live") leave = await FrameX.careDesk.mount(main, admin);
       if (section === "overview") await overview(main);
       if (section === "analytics") await FrameX.adminAnalytics.show(main, parts, params, { head });
       if (section === "applications") await (parts[1] ? application(main, parts[1]) : applications(main, params));
@@ -651,6 +667,7 @@
       if (section === "artworks") await art.artworks(main, params, { head });
       if (section === "paintings") await (parts[1] ? art.painting(main, parts[1], { head }) : art.paintings(main, params, { head }));
       if (section === "reviews") await art.reviews(main, params, { head });
+      if (section === "care") await FrameX.adminSupport.team(main, { head });
       if (section === "chats") await (parts[1] ? FrameX.adminSupport.thread(main, parts[1], { head }) : FrameX.adminSupport.list(main, params, { head }));
       if (section === "messages") await FrameX.adminMessages.list(main, params, { head });
       if (section === "users") await (parts[1] ? FrameX.adminAnalytics.customer(main, parts[1], params, { head }) : art.users(main, params, { head }));
@@ -671,12 +688,17 @@
   async function init() {
     root = $("#admin-root");
     if (!root) return;
-    admin = await FrameX.auth.guard(["ADMIN"], {
+    admin = await FrameX.auth.guard(["ADMIN", "CARE"], {
       onForbidden() {
         root.innerHTML = `<div class="not-found">${icon("lock")}<h1 class="section-title">Admins only</h1><p class="section-lead">This page is for FrameX administrators.</p><a class="btn btn--dark" href="index.html">Back to FrameX</a></div>`;
       },
     });
     if (!admin) return;
+    if (admin.role === "CARE") {
+      NAV = CARE_NAV;
+      const crumb = $(".page-banner__crumbs [aria-current]");
+      if (crumb) crumb.textContent = "FrameX Care";
+    }
 // "Copy link" buttons anywhere in the dashboard.
     root.addEventListener("click", (e) => {
       const copy = e.target.closest("[data-copy]");

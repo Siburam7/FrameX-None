@@ -368,7 +368,7 @@ export async function refundPayment(orderId, { amount = null, reason = "", actor
     const id = newId();
     await q.query("INSERT INTO refunds (id, order_id, payment_id, provider, amount, status, reason, created_by) VALUES ($1, $2, $3, $4, $5, 'PENDING', $6, $7)", [id, order.id, pay.id, pay.provider, value, reason || null, actor.id || null]);
     await orders.addEvent(q, order.id, { kind: "REFUND", status: "PENDING", detail: `Refund of ${rupees(value)} started${reason ? `: ${reason}` : "."}`, actor });
-    if (actor.role === "ADMIN") await audit(q, { actor, action: ACTIONS.ORDER_REFUNDED, targetType: "order", targetId: order.order_number, metadata: { amount: value }, ip });
+    if (actor.role === "ADMIN" || actor.role === "CARE") await audit(q, { actor, action: ACTIONS.ORDER_REFUNDED, targetType: "order", targetId: order.order_number, metadata: { amount: value }, ip });
     return { id, amount: value, order, pay };
   });
 
@@ -411,7 +411,7 @@ export async function cancelOrder(order, { from, reason, actor = orders.SYSTEM, 
   }
   const cancelled = await db.tx(async (q) => {
     const row = await orders.markCancelled(q, order.id, { from, reason, actor });
-    if (row && actor.role === "ADMIN") await audit(q, { actor, action: ACTIONS.ORDER_CANCELLED, targetType: "order", targetId: row.order_number, metadata: { reason }, ip });
+    if (row && (actor.role === "ADMIN" || actor.role === "CARE")) await audit(q, { actor, action: ACTIONS.ORDER_CANCELLED, targetType: "order", targetId: row.order_number, metadata: { reason }, ip });
     return row;
   });
   if (!cancelled) throw conflict("ORDER_NOT_CANCELLABLE", "This order can't be cancelled any more.");

@@ -159,7 +159,7 @@ describe("the help chat", () => {
     assert.equal(mine.messages.at(-1).from, "framex");
     assert.equal(mine.unread, 1);
     assert.equal((await asha.get("/api/support/unread")).json.unread, 1);
-    const sent = mails("asha.chat@example.com", /FrameX Support replied/);
+    const sent = mails("asha.chat@example.com", /FrameX Care replied/);
     assert.equal(sent.length, 1);
     assert.match(sent[0].text, /Large costs ₹225 more/);
     await asha.post("/api/support/read");

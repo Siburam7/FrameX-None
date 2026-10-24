@@ -21,8 +21,64 @@ import * as shopProducts from "../services/shop-product-service.js";
 import * as shops from "../services/shop-service.js";
 import * as users from "../services/user-admin-service.js";
 import * as support from "../services/support-service.js";
+import * as care from "../services/care-service.js";
+import * as edits from "../services/order-edit-service.js";
+import { INDIAN_STATES, readAddress } from "../services/address-service.js";
 
 const router = Router();
+/* ---- Orders: admins and FrameX Care (owner, 2026-10-24: a care person changes an order when the customer asks in
+   the chat). Everything else below stays admin-only; so does marking a test order and the WhatsApp list. ---- */
+const staffOrders = Router();
+staffOrders.use(requireRole("ADMIN", "CARE"));
+staffOrders.get("/", async (req, res) => {
+  const f = validate(req.query, {
+    status: v.enumOf(orders.ORDER_STATUSES, { required: false }),
+    paymentStatus: v.enumOf(orders.PAYMENT_STATUSES, { required: false }),
+    q: v.string({ max: 80 }),
+    page: v.number({ min: 1, max: 100000, required: false })
+  });
+  res.json(await orders.adminListOrders({ status: f.status, paymentStatus: f.paymentStatus, q: f.q, page: f.page || 1 }));
+});
+
+// The states an address may name (the address form on the order page)
+staffOrders.get("/_/states", (req, res) => res.json({ states: INDIAN_STATES }));
+staffOrders.get("/:orderNumber", async (req, res) => res.json({ order: await orders.adminGetOrder(req.params.orderNumber) }));
+
+// Fulfilment by FrameX: a short-lived link to the customer's ORIGINAL photo of an order line (logged).
+staffOrders.post("/:orderNumber/photos/:uploadId/link", async (req, res) => {
+  res.json({ link: await orders.adminPhotoLink(req.params.orderNumber, req.params.uploadId, { actor: req.auth.user, ip: req.ip }) });
+});
+
+staffOrders.post("/:orderNumber/status", async (req, res) => {
+  const { status, note } = validate(req.body, { status: v.enumOf(orders.ORDER_STATUSES.filter((s) => s !== "PENDING_PAYMENT" && s !== "PLACED"), { label: "Status" }), note: v.string({ max: 300, label: "Note" }) });
+  const actor = req.auth.user;
+  if (status === "CANCELLED") {
+    const order = await orders.adminOrderRow(req.params.orderNumber);
+    await payments.cancelOrder(order, { from: orders.ADMIN_CAN_CANCEL, reason: note || "Cancelled by FrameX.", actor, ip: req.ip });
+    return res.json({ order: await orders.adminGetOrder(req.params.orderNumber) });
+  }
+  res.json({ order: await orders.adminAdvance(req.params.orderNumber, status, { note, actor, ip: req.ip }) });
+});
+
+// amount in whole rupees; leave it out to refund everything that is left.
+staffOrders.post("/:orderNumber/refund", async (req, res) => {
+  const { amount, reason } = validate(req.body, { amount: v.number({ min: 1, max: 10_000_000, required: false, label: "Amount" }), reason: v.string({ max: 200, label: "Reason" }) });
+  if (amount !== null && amount !== undefined && !Number.isInteger(amount)) throw errors.validation({ amount: "Enter a whole number of rupees." });
+  const order = await orders.adminOrderRow(req.params.orderNumber);
+  await payments.refundPayment(order.id, { amount: amount ?? null, reason, actor: req.auth.user, ip: req.ip });
+  res.json({ order: await orders.adminGetOrder(req.params.orderNumber) });
+});
+
+
+// Change a line's size (before the shop starts making it) / the delivery address (before it ships): services/order-edit-service.js
+staffOrders.get("/:orderNumber/items/:itemId/sizes", async (req, res) => res.json(await edits.sizeOptions(req.params.orderNumber, req.params.itemId)));
+staffOrders.post("/:orderNumber/items/:itemId/size", async (req, res) => {
+  const { sizeId } = validate(req.body, { sizeId: v.string({ min: 1, max: 80, label: "Size" }) });
+  res.json(await edits.changeSize(req.params.orderNumber, req.params.itemId, sizeId, { actor: req.auth.user, ip: req.ip }));
+});
+staffOrders.post("/:orderNumber/address", async (req, res) => res.json(await edits.changeAddress(req.params.orderNumber, readAddress(req.body), { actor: req.auth.user, ip: req.ip })));
+router.use("/orders", staffOrders);
+
 router.use(requireRole("ADMIN"));
 
 const idParam = (req) => {
@@ -77,45 +133,8 @@ router.get("/overview", async (req, res) => {
 /* ---- Orders ----
    Moving an order forward, cancelling it (a paid online order is refunded) and refunds.
    Cash on Delivery becomes PAID when the order is marked DELIVERED. */
-router.get("/orders", async (req, res) => {
-  const f = validate(req.query, {
-    status: v.enumOf(orders.ORDER_STATUSES, { required: false }),
-    paymentStatus: v.enumOf(orders.PAYMENT_STATUSES, { required: false }),
-    q: v.string({ max: 80 }),
-    page: v.number({ min: 1, max: 100000, required: false })
-  });
-  res.json(await orders.adminListOrders({ status: f.status, paymentStatus: f.paymentStatus, q: f.q, page: f.page || 1 }));
-});
-
 // Orders still under way, with the customer's phone: the admin sends each one its status on WhatsApp (the admin's own app).
 router.get("/order-updates", async (req, res) => res.json(await orders.adminActiveOrders()));
-
-router.get("/orders/:orderNumber", async (req, res) => res.json({ order: await orders.adminGetOrder(req.params.orderNumber) }));
-
-// Fulfilment by FrameX: a short-lived link to the customer's ORIGINAL photo of an order line (logged).
-router.post("/orders/:orderNumber/photos/:uploadId/link", async (req, res) => {
-  res.json({ link: await orders.adminPhotoLink(req.params.orderNumber, req.params.uploadId, { actor: req.auth.user, ip: req.ip }) });
-});
-
-router.post("/orders/:orderNumber/status", async (req, res) => {
-  const { status, note } = validate(req.body, { status: v.enumOf(orders.ORDER_STATUSES.filter((s) => s !== "PENDING_PAYMENT" && s !== "PLACED"), { label: "Status" }), note: v.string({ max: 300, label: "Note" }) });
-  const actor = req.auth.user;
-  if (status === "CANCELLED") {
-    const order = await orders.adminOrderRow(req.params.orderNumber);
-    await payments.cancelOrder(order, { from: orders.ADMIN_CAN_CANCEL, reason: note || "Cancelled by FrameX.", actor, ip: req.ip });
-    return res.json({ order: await orders.adminGetOrder(req.params.orderNumber) });
-  }
-  res.json({ order: await orders.adminAdvance(req.params.orderNumber, status, { note, actor, ip: req.ip }) });
-});
-
-// amount in whole rupees; leave it out to refund everything that is left.
-router.post("/orders/:orderNumber/refund", async (req, res) => {
-  const { amount, reason } = validate(req.body, { amount: v.number({ min: 1, max: 10_000_000, required: false, label: "Amount" }), reason: v.string({ max: 200, label: "Reason" }) });
-  if (amount !== null && amount !== undefined && !Number.isInteger(amount)) throw errors.validation({ amount: "Enter a whole number of rupees." });
-  const order = await orders.adminOrderRow(req.params.orderNumber);
-  await payments.refundPayment(order.id, { amount: amount ?? null, reason, actor: req.auth.user, ip: req.ip });
-  res.json({ order: await orders.adminGetOrder(req.params.orderNumber) });
-});
 
 // Mark an order as a test (it is then kept out of sales), or take the mark away. Written to the audit log.
 router.post("/orders/:orderNumber/test", async (req, res) => {
@@ -352,6 +371,26 @@ router.post("/messages/:id/status", async (req, res) => {
 router.delete("/messages/:id", async (req, res) => res.json(await contact.adminDelete(idParam(req), { actor: req.auth.user, ip: req.ip })));
 
 /* ---- The help chat (customers write from any page; FrameX answers here) ---- */
+// Admin -> Care team: FrameX Care logins (CARE role). They open the admin panel with only Live chats (/api/care) and Orders (staffOrders above).
+router.get("/care-team", async (req, res) => res.json(await care.team()));
+router.post("/care-team", async (req, res) => {
+  const data = validate(req.body, {
+    name: v.string({ min: 2, max: 30, label: "First name", pattern: /^[\p{L}][\p{L} .'-]*$/u, patternMessage: "Use letters only." }),
+    email: v.email(),
+    password: v.password()
+  });
+  res.status(201).json(await care.createMember({ name: data.name.trim(), email: data.email, password: data.password }, { actor: req.auth.user, ip: req.ip }));
+});
+router.patch("/care-team/:id", async (req, res) => {
+  const body = req.body || {};
+  const data = validate(body, {
+    name: v.optional(v.string({ min: 2, max: 30, label: "First name", pattern: /^[\p{L}][\p{L} .'-]*$/u, patternMessage: "Use letters only." })),
+    password: v.optional(v.password())
+  });
+  const active = typeof body.active === "boolean" ? body.active : undefined;
+  res.json(await care.updateMember(req.params.id, { name: data.name ? data.name.trim() : "", active, password: data.password || "" }, { actor: req.auth.user, ip: req.ip }));
+});
+
 router.get("/support", async (req, res) => {
   const { status } = validate(req.query, { status: v.enumOf(["OPEN", "CLOSED"], { required: false }) });
   res.json(await support.adminList({ status: status || "" }));

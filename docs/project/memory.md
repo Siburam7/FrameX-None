@@ -2,7 +2,7 @@
 
 > Decisions, current state and lessons learned, newest first within each section. Add every owner decision and every
 > change of status here (verified / not verified). No secrets or customer data: the repository is public.
-> Last updated: 2026-10-23 (easy-to-use redesign, help chat).
+> Last updated: 2026-10-24 (FrameX Care live chat).
 
 ## Current state (2026-10-20)
 
@@ -24,6 +24,23 @@
 
 ## Owner decisions (log)
 
+- 2026-10-24 Care logins open the **admin panel** (not a separate page) with only **Live chats and Orders**, and can
+  act on a customer's order: cancel (with the automatic refund), refund, change the status, another size (before the
+  shop makes it), another delivery address (before it ships). Owner's choices: "Chats + Orders" (not everything —
+  payouts / settings / coupons / shops / Care team stay admin-only) and for another size: cheaper or same at once
+  (online: difference refunded; COD: new total on delivery), dearer = the customer pays the difference (the online
+  part is not built yet). My choices: the coupon is worked out again on the new items total (its own percent and cap),
+  tax again at the order's rate, delivery / gift-wrap / COD fees stay; a size needing another number of photos is
+  refused; every change is written in the order history + audit log and emailed to the customer.
+- 2026-10-24 FrameX Care live chat: AI cancelled by the owner; quick answers without AI first, then "Connect with
+  FrameX Care" → 2 minutes waiting → a care person accepts → the customer sees "Live · chatting with <first name>"
+  (owner: first name only; team hours 10am–8pm; each care person has their OWN login made by the admin — owner chose
+  this over a shared admin login with a name picked from a list). My choices, not asked: nobody Available or outside
+  the hours → the customer is told at once (no 2-minute wait for nobody); "Available / Away" switch; the desk pops up
+  with a sound; a live chat closes the conversation when it ends; 👍/👎 rating; staff messages carry the writer's first
+  name, also in emails ("Priya from FrameX Care replied"); no email while the customer has the live chat open; live
+  updates over server-sent events (not a 1-second refresh: it would keep the Neon database awake); quick answers are
+  shown to visitors too, a person needs an account.
 - 2026-10-23 Deploy the redesign + help chat now, backup tomorrow ("abhi live kardo ham backup kal karenge") — so
   migration 018 (two new tables, nothing changed in existing ones) ran without a fresh production backup; the
   newest one is from 2026-10-20 15:06.
@@ -110,6 +127,10 @@ header button labels per section.
 | Production backup restorable | verified 2026-10-19 (isolated in-memory PostgreSQL 18.3; not on Neon) |
 
 ## Lessons (for whoever works on this next)
+
+- 2026-10-24 Writing code through `node -e '…'` in bash loses backslashes (`/^\s*(\d…)/` became `/^s*(d…)/`) and
+  `$$` / `$&` in String.replace replacements are special: write edit scripts with the Write tool and use a replacement
+  function. A broken CARE_HOURS parser was caught only because the browser test showed "10am–8pm".
 
 - A sideways row (`overflow-x: auto`) also scrolls up/down when its content is 1-2px taller (rounding on real
   phones): the row felt loose and the page got stuck under the finger. Phones now set `overflow-y: hidden` on every

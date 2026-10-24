@@ -7,6 +7,9 @@
      await FrameX.http.get("/shops/nearby", { lat, lng, radius })
      await FrameX.http.post("/auth/login", { identifier, password })
      await FrameX.http.upload("/uploads", file, { name, onProgress })   a file's own bytes
+     const live = FrameX.http.stream("/support/stream", { onEvent(type, data), onOpen(), onDown() })
+       a live connection (FrameX Care chat): the server pushes events; it connects again by itself
+       after a drop (onDown, then onOpen); live.close() ends it
    Failures throw FrameX.http.ApiError { status, code, message, fields, network }.
 
    Files the backend serves:
@@ -188,6 +191,76 @@
     });
   }
 
+  /**
+   * A live connection: the server pushes "event: type / data: json" blocks down one long request (server-sent
+   * events). Read with fetch rather than EventSource, so bearer mode can send its token. After a drop it waits
+   * 2, 4, 8 … (at most 20) seconds and connects again; onOpen runs each time it is (re)connected, so the page
+   * can reload what it may have missed.
+   */
+  function stream(path, { onEvent = () => {}, onOpen = () => {}, onDown = () => {} } = {}) {
+    let stopped = false;
+    let ctrl = null;
+    let wait = 2000;
+    let timer = 0;
+    async function connect() {
+      if (stopped || !enabled()) return;
+      ctrl = new AbortController();
+      const token = getToken();
+      try {
+        const response = await fetch(cfg.url + path, {
+          credentials: bearer() ? "omit" : "include",
+          headers: Object.assign({ Accept: "text/event-stream" }, token ? { Authorization: "Bearer " + token } : {}),
+          signal: ctrl.signal,
+          cache: "no-store",
+        });
+        if (!response.ok || !response.body) throw new Error("stream " + response.status);
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let opened = false;
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          let cut;
+          while ((cut = buffer.indexOf("\n\n")) >= 0) {
+            const block = buffer.slice(0, cut);
+            buffer = buffer.slice(cut + 2);
+            const type = /^event: (.*)$/m.exec(block);
+            const data = /^data: (.*)$/m.exec(block);
+            if (!type || !data) continue;
+            let parsed = null;
+            try {
+              parsed = JSON.parse(data[1]);
+            } catch (e) {
+              continue;
+            }
+            if (type[1] === "ready") {
+              opened = true;
+              wait = 2000;
+              onOpen();
+            } else onEvent(type[1], parsed);
+          }
+        }
+        if (!opened) throw new Error("stream closed");
+      } catch (e) {
+        /* dropped: try again below */
+      }
+      if (stopped) return;
+      onDown();
+      timer = setTimeout(connect, wait);
+      wait = Math.min(wait * 2, 20000);
+    }
+    connect();
+    return {
+      close() {
+        stopped = true;
+        clearTimeout(timer);
+        if (ctrl) ctrl.abort();
+      },
+    };
+  }
+
   /* ---- Addresses of files the backend serves ----
      The website may live on another address than the backend (Live Server,
      GitHub Pages), so a path the backend hands out is completed here. */
@@ -219,6 +292,7 @@
     put: (path, body) => request("PUT", path, body || {}),
     patch: (path, body) => request("PATCH", path, body || {}),
     upload,
+    stream,
     origin,
     asset,
     fileUrl,

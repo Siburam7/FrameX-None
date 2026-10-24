@@ -430,6 +430,87 @@ code {
   margin: 0;
 }
 
+/* Admin order page: "Change the order" (size / address) */
+.ao-change {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.ao-change strong,
+.ao-change .sd-item__meta {
+  display: block;
+}
+
+.ao-sizes fieldset {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ao-size {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.ao-size:has(input:checked) {
+  border-color: var(--amber-strong);
+  background: var(--soft-peach);
+}
+
+.ao-size.is-off {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.ao-size small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+/* Admin -> Care team (#/care) */
+.adm-care {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.adm-care__form {
+  display: grid;
+  gap: 12px;
+}
+
+.adm-care__form small {
+  font-weight: 400;
+}
+
+.adm-care__note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--soft-peach);
+  color: var(--text-brown);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 859px) {
+  .adm-care {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* The help chat in the admin panel (#/chats) */
 .adm-chat__last {
   margin: 4px 0 0;

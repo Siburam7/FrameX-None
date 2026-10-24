@@ -44,7 +44,7 @@
   const destination = (user) => {
     const next = auth().safeNext(FrameX.qs.param("next"));
     // "next" is honoured only if that page fits the role (a customer isn't sent to the shop dashboard).
-    const allowed = !next || (/^shop-dashboard/.test(next) ? user.role === "SHOP" : /^admin/.test(next) ? user.role === "ADMIN" : true);
+    const allowed = !next || (/^shop-dashboard/.test(next) ? user.role === "SHOP" : /^admin/.test(next) ? user.role === "ADMIN" || user.role === "CARE" : true);
     return next && allowed ? next : auth().homeFor(user.role);
   };
   const after = (user) => {

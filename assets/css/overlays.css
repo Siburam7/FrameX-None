@@ -233,7 +233,7 @@
 }
 
 /* Toast ------------------------------------------------------------------------ */
-/* ---------------------------------------------------------------- Help chat (owner, 2026-10-23) */
+/* ---------------------------------------------------------------- FrameX Care chat (owner, 2026-10-23 / 10-24) */
 .hc-btn {
   position: fixed;
   right: 22px;
@@ -364,19 +364,75 @@ body[data-page="studio"] .hc-panel {
   font-size: 0.98rem;
 }
 
-.hc-head div span {
-  font-size: 0.74rem;
-  opacity: 0.85;
+/* The F. CARE picture as a round profile picture (owner, 2026-10-24: assets/img/brand/framex-care.png) */
+.hc-dp {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
 }
 
-.hc-head div span::before {
-  content: "";
-  display: inline-block;
+.hc-sub {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  opacity: 0.9;
+}
+
+.hc-dot {
+  flex: none;
   width: 7px;
   height: 7px;
-  margin-right: 5px;
   border-radius: 50%;
   background: #22c55e;
+}
+
+.hc-dot--wait {
+  background: #f5a524;
+}
+
+.hc-dot--off {
+  background: #94a3b8;
+}
+
+/* "Live · You're chatting with Siburam" */
+.hc-live {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 8px 14px;
+  border-bottom: 1px solid #c8ebd5;
+  background: #e3f6ea;
+  color: #12633a;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.hc-live[hidden] {
+  display: none;
+}
+
+.hc-live > b {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #16a34a;
+  box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.18);
+}
+
+.hc-live span {
+  flex: 1;
+  min-width: 0;
+}
+
+[data-theme="dark"] .hc-live {
+  border-color: #1f4d33;
+  background: #133524;
+  color: #a7f3c4;
 }
 
 .hc-close {
@@ -456,30 +512,479 @@ body[data-page="studio"] .hc-panel {
   text-align: center;
 }
 
-.hc-quick {
+/* Quick answers */
+.hc-label {
+  margin: 4px 0 -2px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.hc-qs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.hc-q {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--on-surface);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.hc-q .icon {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  color: var(--amber-strong);
+}
+
+.hc-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 1.5px solid var(--amber-strong);
+  border-radius: 14px;
+  background: var(--soft-peach, #fff6f1);
+  color: var(--on-surface);
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.hc-person .icon {
+  flex: none;
+  color: var(--amber-strong);
+}
+
+.hc-person span {
+  flex: 1;
+}
+
+.hc-person small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.hc-person em {
+  padding: 0 6px;
+  border-radius: var(--radius-pill);
+  background: var(--amber-strong);
+  color: #fff;
+  font-size: 0.68rem;
+  font-style: normal;
+}
+
+.hc-person i {
+  color: var(--amber-strong);
+  font-size: 1.2rem;
+  font-style: normal;
+}
+
+.hc-person--soft {
+  border-width: 1px;
+  border-color: var(--line);
+  background: var(--surface);
+}
+
+@media (hover: hover) {
+  .hc-q:hover,
+  .hc-person:hover {
+    border-color: var(--amber-strong);
+  }
+}
+
+.hc-card {
+  align-self: flex-start;
+  max-width: 90%;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  border-bottom-left-radius: 4px;
+  background: var(--surface);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.hc-card--wide {
+  align-self: stretch;
+  max-width: none;
+  text-align: center;
+}
+
+.hc-card h4 {
+  margin: 0 0 6px;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+}
+
+.hc-card p {
+  margin: 6px 0 0;
+}
+
+.hc-card ul {
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+
+.hc-card li {
+  margin: 2px 0;
+}
+
+.hc-muted {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.hc-btns {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+  margin-top: 8px;
 }
 
-.hc-chip {
-  padding: 6px 11px;
+.hc-btns--back {
+  margin-top: 2px;
+}
+
+.hc-btns--center {
+  justify-content: center;
+}
+
+.hc-b {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 12px;
   border: 1px solid var(--amber-strong);
   border-radius: var(--radius-pill);
   background: var(--surface);
   color: var(--text-brown);
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   font-weight: 700;
+  text-decoration: none;
 }
 
-.hc-chip.is-on {
+.hc-b--on {
   background: var(--amber-strong);
   color: #fff;
 }
 
-.hc-orders {
+.hc-b--dark {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+[data-theme="dark"] .hc-b--dark {
+  border-color: #e7ecf6;
+  background: #e7ecf6;
+  color: #0d1b3e;
+}
+
+.hc-b--end {
+  flex: none;
+  padding: 5px 10px;
+  border-color: #12633a;
+  background: transparent;
+  color: inherit;
+  font-size: 0.72rem;
+}
+
+.hc-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: #e3f6ea;
+  color: #12633a;
+  font-size: 0.7rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.hc-pill--out {
+  background: #fde8e8;
+  color: #a12020;
+}
+
+.hc-stock {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.hc-stock input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 0.84rem;
+}
+
+.hc-stock__list {
   display: grid;
   gap: 6px;
+  margin: 10px 0 0;
+  padding: 0 !important;
+  list-style: none;
+}
+
+.hc-stock__list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.hc-stock__list a {
+  color: var(--on-surface);
+  font-weight: 600;
+}
+
+.hc-order-link {
+  display: block;
+  margin-top: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Connecting…: the FrameX film's logo part (as when a page opens) plays again and again in a white tile;
+   the thin line under it is the time left of the 2 minutes */
+.hc-film {
+  position: relative;
+  overflow: hidden;
+  width: 96px;
+  height: 96px;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(13, 27, 62, 0.12);
+}
+
+.hc-film video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 250px; /* the film's logo tile is 24% of its width: about 60 px here */
+  max-width: none;
+  height: auto;
+  opacity: 0;
+  translate: -50% -50%;
+}
+
+.hc-film.is-playing video {
+  opacity: 1;
+}
+
+.hc-film__still {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 3px;
+  padding-top: 30px;
+  color: #111;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.hc-film__still i {
+  width: 11px;
+  height: 11px;
+  background: #ff5a1f;
+}
+
+.hc-film.is-playing .hc-film__still {
+  display: none;
+}
+
+.hc-left {
+  --left: 1;
+  overflow: hidden;
+  width: 96px;
+  height: 4px;
+  border-radius: 99px;
+  background: var(--line);
+}
+
+.hc-left i {
+  display: block;
+  width: calc(var(--left) * 100%);
+  height: 100%;
+  background: var(--amber-strong);
+  transition: width 1s linear;
+}
+
+/* Connecting…: a ring for the 2 minutes, the F. dot rolling inside */
+.hc-wait {
+  display: grid;
+  flex: 1;
+  align-content: center;
+  justify-items: center;
+  gap: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.hc-wait h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.08rem;
+}
+
+.hc-wait p {
+  max-width: 280px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.hc-ring {
+  --left: 1;
+  display: grid;
+  place-items: center;
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  background: conic-gradient(var(--amber-strong) calc(var(--left) * 360deg), var(--line) 0);
+}
+
+.hc-ring > div {
+  display: grid;
+  place-items: center;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--surface-soft);
+}
+
+.hc-ring__f {
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  color: var(--on-surface);
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
+.hc-ring__f i {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: #ff5a1f;
+  animation: hc-roll 1.4s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+}
+
+@keyframes hc-roll {
+  to {
+    rotate: 360deg;
+  }
+}
+
+.hc-typing {
+  display: flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+
+.hc-typing span {
+  display: flex;
+  gap: 3px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.hc-typing b {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: hc-blink 1.2s infinite;
+}
+
+.hc-typing b:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.hc-typing b:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes hc-blink {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hc-ring__f i,
+  .hc-typing b {
+    animation: none;
+  }
+}
+
+.hc-box {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  font-size: 0.86rem;
+}
+
+.hc-box textarea {
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 0.86rem;
+  resize: vertical;
+}
+
+.hc-rate {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.hc-rate .hc-b {
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  border-color: var(--line);
+  border-radius: 50%;
+  font-size: 1.3rem;
 }
 
 .hc-order {
@@ -507,9 +1012,16 @@ body[data-page="studio"] .hc-panel {
   font-size: 0.8rem;
 }
 
-.hc-order.is-on {
-  border-color: var(--amber-strong);
-  box-shadow: inset 0 0 0 1px var(--amber-strong);
+.hc-order {
+  margin: 6px 0 0;
+  background: var(--surface-soft);
+}
+
+.hc-order > .icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--amber-strong);
 }
 
 .hc-guest {

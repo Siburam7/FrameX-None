@@ -10,12 +10,20 @@
 
    A customer has at most one OPEN conversation. Writing after FrameX closed
    it starts a new one. Account deletion removes the conversations.
+
+   FrameX Care live chat (owner, 2026-10-24; services/care-service.js): a
+   conversation can also be live — the customer asked for a person, a care
+   person accepted, and both see each other's messages at once through their
+   live connections (lib/live-bus.js). Staff messages carry the first name of
+   whoever wrote them; the chat's own notes ("Siburam joined the chat") are
+   SYSTEM messages.
    ========================================================================== */
 import { config } from "../config.js";
 import { db } from "../db/index.js";
 import { ACTIONS, audit } from "../lib/audit.js";
 import { linkBase } from "../lib/context.js";
 import { errors } from "../lib/errors.js";
+import { customerOnline, toCustomer, toStaff } from "../lib/live-bus.js";
 import { esc, htmlEmail, sendMail } from "../lib/mailer.js";
 import { newId } from "../lib/tokens.js";
 import { isUuid } from "../lib/validate.js";
@@ -34,7 +42,31 @@ function later(job) {
   p.finally(() => sending.delete(p));
 }
 
-const message = (r) => ({ id: r.id, from: r.author === "STAFF" ? "framex" : "you", body: r.body, orderNumber: r.order_number || null, at: r.created_at });
+const FROM = { STAFF: "framex", SYSTEM: "system", CUSTOMER: "you" };
+const message = (r) => ({ id: r.id, from: FROM[r.author] || "you", name: r.author === "STAFF" ? r.author_name || "FrameX" : null, body: r.body, orderNumber: r.order_number || null, at: r.created_at });
+/** "Siburam Nayak" -> "Siburam": customers only ever see a care person's first name (owner). */
+export const firstName = (name) => String(name || "").trim().split(/\s+/)[0] || "FrameX";
+
+/** The live part of a conversation, as both sides see it (null = an ordinary conversation). */
+export function liveOf(t) {
+  if (!t.live_state) return null;
+  const waitUntil = t.live_state === "WAITING" && t.live_requested_at ? new Date(new Date(t.live_requested_at).getTime() + config.care.waitSeconds * 1000) : null;
+  return { state: t.live_state, agentName: t.agent_name || null, question: t.live_question || "", requestedAt: t.live_requested_at, acceptedAt: t.live_accepted_at, endedAt: t.live_ended_at, waitUntil };
+}
+
+/** Requests nobody accepted within the wait (CARE_WAIT_SECONDS, 2 minutes) become MISSED; both sides are told. */
+export async function expireWaiting() {
+  const { rows } = await db.query(
+    `UPDATE support_threads SET live_state = 'MISSED', live_ended_at = now(), updated_at = now()
+      WHERE live_state = 'WAITING' AND live_requested_at < now() - make_interval(secs => $1) RETURNING id, user_id`,
+    [config.care.waitSeconds]
+  );
+  for (const r of rows) {
+    toCustomer(r.user_id, "live", { threadId: r.id, state: "MISSED" });
+    toStaff("queue", { threadId: r.id, state: "MISSED" });
+  }
+  return rows.length;
+}
 
 async function messagesOf(threadId) {
   const { rows } = await db.query(
@@ -54,10 +86,11 @@ const unreadFor = (thread, rows, side) => {
 
 /** The customer's open conversation, else the latest one (or null), with its messages. */
 export async function ownThread(userId) {
+  await expireWaiting();
   const thread = (await db.query("SELECT * FROM support_threads WHERE user_id = $1 ORDER BY (status = 'OPEN') DESC, last_message_at DESC LIMIT 1", [userId])).rows[0];
   if (!thread) return null;
   const rows = await messagesOf(thread.id);
-  return { id: thread.id, status: thread.status, topic: thread.topic, orderNumber: thread.order_number, unread: unreadFor(thread, rows, "customer"), messages: rows.map(message) };
+  return { id: thread.id, status: thread.status, topic: thread.topic, orderNumber: thread.order_number, unread: unreadFor(thread, rows, "customer"), live: liveOf(thread), rating: thread.rating, messages: rows.map(message) };
 }
 
 /** Just the number of FrameX answers the customer hasn't seen (for the chat button). */
@@ -88,10 +121,16 @@ export async function customerSend(user, { body, orderNumber = "", topic = "" })
       "UPDATE support_threads SET last_message_at = $2, customer_read_at = $2, topic = CASE WHEN topic = '' THEN $3 ELSE topic END, order_number = coalesce($4, order_number), updated_at = $2 WHERE id = $1",
       [t.id, now, topic || "", order ? order.order_number : null]
     );
-    const alert = !t.staff_alerted_at || now - new Date(t.staff_alerted_at) > ALERT_EVERY_MINUTES * 60_000;
+    // While the customer waits for or talks to a care person, the care desk shows it at once: no email then.
+    const live = t.live_state === "WAITING" || t.live_state === "LIVE";
+    const alert = !live && (!t.staff_alerted_at || now - new Date(t.staff_alerted_at) > ALERT_EVERY_MINUTES * 60_000);
     if (alert) await q.query("UPDATE support_threads SET staff_alerted_at = $2 WHERE id = $1", [t.id, now]);
-    return { ...t, alert };
+    const sent = (await q.query("SELECT * FROM support_messages WHERE thread_id = $1 AND author = 'CUSTOMER' ORDER BY created_at DESC, id DESC LIMIT 1", [t.id])).rows[0];
+    return { ...t, alert, sent };
   });
+  const out = { threadId: thread.id, message: { ...message(thread.sent), from: "customer" } };
+  if (thread.live_state === "LIVE" && thread.agent_user_id) toStaff("message", out, { only: thread.agent_user_id });
+  toStaff("queue", { threadId: thread.id });
   if (thread.alert) {
     const panelUrl = `${linkBase()}/admin.html#/chats/${thread.id}`;
     later(() => alertStaff({ user, body, orderNumber: order ? order.order_number : "", topic: topic || thread.topic, panelUrl }));
@@ -144,7 +183,7 @@ export async function adminList({ status = "" } = {}) {
     status ? [status] : []
   );
   return {
-    items: rows.map((r) => ({ id: r.id, status: r.status, customer: { name: r.customer_name, email: r.customer_email }, topic: r.topic, topicName: TOPIC_NAME[r.topic] || "", orderNumber: r.order_number, lastMessage: r.last_body || "", lastFrom: r.last_author === "STAFF" ? "framex" : "customer", unread: r.unread, lastMessageAt: r.last_message_at })),
+    items: rows.map((r) => ({ id: r.id, status: r.status, customer: { name: r.customer_name, email: r.customer_email }, topic: r.topic, topicName: TOPIC_NAME[r.topic] || "", orderNumber: r.order_number, lastMessage: r.last_body || "", lastFrom: r.last_author === "STAFF" ? "framex" : r.last_author === "SYSTEM" ? "system" : "customer", unread: r.unread, lastMessageAt: r.last_message_at, live: liveOf(r), agentId: r.agent_user_id || null })),
     unread: await adminUnread()
   };
 }
@@ -171,8 +210,11 @@ export async function adminGet(id) {
     topicName: TOPIC_NAME[t.topic] || "",
     orderNumber: t.order_number,
     customer: { name: t.customer_name, email: t.customer_email, phone: t.customer_phone },
+    live: liveOf(t),
+    agentId: t.agent_user_id || null,
+    rating: t.rating,
     recentOrders: orders.map((o) => ({ orderNumber: o.order_number, status: o.status, total: o.total, createdAt: o.created_at })),
-    messages: rows.map((r) => ({ ...message(r), from: r.author === "STAFF" ? "framex" : "customer" }))
+    messages: rows.map((r) => ({ ...message(r), from: r.author === "STAFF" ? "framex" : r.author === "SYSTEM" ? "system" : "customer" }))
   };
 }
 
@@ -181,21 +223,26 @@ export async function adminReply(id, body, { actor, ip = null }) {
   if (!isUuid(id)) throw errors.notFound("We couldn't find that conversation.");
   const t = await db.tx(async (q) => {
     const row = found((await q.query("SELECT t.*, u.name AS customer_name, u.email AS customer_email, u.status AS customer_status FROM support_threads t JOIN users u ON u.id = t.user_id WHERE t.id = $1 FOR UPDATE", [id])).rows[0]);
-    await q.query("INSERT INTO support_messages (id, thread_id, author, author_user_id, body) VALUES ($1, $2, 'STAFF', $3, $4)", [newId(), id, actor.id, body]);
+    await q.query("INSERT INTO support_messages (id, thread_id, author, author_user_id, author_name, body) VALUES ($1, $2, 'STAFF', $3, $4, $5)", [newId(), id, actor.id, firstName(actor.name), body]);
     // An answer on a closed conversation opens it again, unless the customer has already started a new one
     const reopen = row.status === "CLOSED" && !(await q.query("SELECT 1 FROM support_threads WHERE user_id = $1 AND status = 'OPEN'", [row.user_id])).rows.length;
     await q.query(`UPDATE support_threads SET last_message_at = now(), staff_read_at = now(), updated_at = now()${reopen ? ", status = 'OPEN'" : ""} WHERE id = $1`, [id]);
     await audit(q, { actor, action: ACTIONS.SUPPORT_REPLIED, targetType: "support_thread", targetId: id, ip });
+    row.sent = (await q.query("SELECT * FROM support_messages WHERE thread_id = $1 AND author = 'STAFF' ORDER BY created_at DESC, id DESC LIMIT 1", [id])).rows[0];
     return row;
   });
-  if (t.customer_email && t.customer_status === "ACTIVE") {
+  toCustomer(t.user_id, "message", { threadId: id, message: message(t.sent) });
+  toStaff("queue", { threadId: id });
+  // In a live chat the customer reads it on the spot; an email is sent only if their chat isn't open.
+  const watching = t.live_state === "LIVE" && customerOnline(t.user_id);
+  if (!watching && t.customer_email && t.customer_status === "ACTIVE") {
     const url = `${linkBase()}/?chat=1`;
     later(() =>
       sendMail({
         to: t.customer_email,
-        subject: "FrameX Support replied to your message",
-        text: `Hi ${t.customer_name},\n\nFrameX Support replied:\n\n${body}\n\nOpen the chat on the website to answer: ${url}`,
-        html: htmlEmail({ preview: body.slice(0, 120), heading: "FrameX Support replied", paragraphs: [`Hi ${esc(t.customer_name)},`, esc(body).replace(/\r?\n/g, "<br>")], button: { label: "Open the chat", url }, notice: "You received this because you wrote to FrameX in the help chat.", account: false }),
+        subject: "FrameX Care replied to your message",
+        text: `Hi ${t.customer_name},\n\n${firstName(actor.name)} from FrameX Care replied:\n\n${body}\n\nOpen the chat on the website to answer: ${url}`,
+        html: htmlEmail({ preview: body.slice(0, 120), heading: "FrameX Care replied", paragraphs: [`Hi ${esc(t.customer_name)},`, `${esc(firstName(actor.name))} from FrameX Care replied:`, esc(body).replace(/\r?\n/g, "<br>")], button: { label: "Open the chat", url }, notice: "You received this because you wrote to FrameX in the help chat.", account: false }),
         links: [{ label: "Open the chat", url }]
       })
     );

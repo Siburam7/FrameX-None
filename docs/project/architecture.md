@@ -44,7 +44,7 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
 
 - Node.js, Express 5, ES modules. Entry `src/server.js` (start-up checks + log), `src/app.js` (routes).
 - `src/routes/` — auth, users, addresses, cart, checkout, orders, uploads, shops, shop-dashboard, artists,
-  paintings, admin, analytics, contact, support (help chat), misc (`/api/health`, `/api/config`; `/api/ping` is in `app.js`). `GET /api/shops/:ref?optional=1`
+  paintings, admin, analytics, contact, support (help chat), care (FrameX Care desk), misc (`/api/health`, `/api/config`; `/api/ping` is in `app.js`). `GET /api/shops/:ref?optional=1`
   answers `{ shop: null }` for a catalogue shop that isn't on FrameX (the website asks that way; without the flag: 404).
   Admin coupons: `GET / POST /api/admin/coupons`, `PATCH /api/admin/coupons/:code` (no delete; audited).
   Saved Studio designs: `/api/designs` (the account's own, max 30; photos are the account's uploads). Own data:
@@ -55,9 +55,22 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   (ADMIN_NOTIFY_EMAIL, else the admins) at most once per 15 minutes per conversation; an answer is emailed to the
   customer's account address with a `/?chat=1` link. The website asks for new answers every 15 s only while the
   chat is open and the tab is in view (`assets/js/ui/help-chat.js`; admin screen `ui/admin-support.js`).
+  FrameX Care live chat (2026-10-24, `services/care-service.js`, `lib/live-bus.js`): customer `POST /api/support/live`
+  (WAITING, or NOBODY with reason HOURS / BUSY), `/live/cancel`, `/live/end`, `/live/rate`, `/typing`, `GET /stream`; care desk
+  `/api/care` (CARE or ADMIN: `/stream`, `/queue`, `/presence`, `/threads[/:id[/accept|reply|typing|end|status]]`); Admin → Care team
+  `GET/POST /api/admin/care-team`, `PATCH /api/admin/care-team/:id` (audited CARE_STAFF_*). Live updates are server-sent
+  events kept in the server's memory (one Render instance); the website reads them with fetch (`FrameX.http.stream`) so
+  bearer sessions work, and reconnects by itself. CARE_HOURS (default "10-20", India time) and CARE_WAIT_SECONDS (120).
+  A waiting request runs out by a timer and on any read (`expireWaiting`). Care people log in on the customer tab with
+  their email and land on `admin.html#/live` (the admin panel shows a CARE login only Live chats + Orders).
+  Orders for admins and FrameX Care: `/api/admin/orders` is its own router (`staffOrders`, ADMIN or CARE) mounted
+  before the admin-only guard; `/orders/:n/test` and `/order-updates` stay admin-only. Changing an order
+  (`services/order-edit-service.js`): `GET …/items/:itemId/sizes`, `POST …/items/:itemId/size` { sizeId },
+  `POST …/address` (address fields), `GET /api/admin/orders/_/states`. Audited as ORDER_EDITED; refunds / cancels by CARE
+  are audited like an admin's.
 - `src/services/` — business logic (cart, checkout, orders, payments, payouts, uploads, analytics, settings…).
 - `src/db/` — `index.js` (PostgreSQL via `pg` when `DATABASE_URL` is set, else embedded PGlite in `backend/.data`),
-  `migrations/001…018` (applied automatically at start, never reset; 013 XUSE10 limits, 014 `users.deleted_at`, 015 `saved_designs`, 016 product approval on, 017 `shops.featured` / `featured_until`, 018 help chat `support_threads` + `support_messages`, one open conversation per customer), `backup.js`, `ssl.js` (local, not deployed).
+  `migrations/001…019` (applied automatically at start, never reset; 013 XUSE10 limits, 014 `users.deleted_at`, 015 `saved_designs`, 016 product approval on, 017 `shops.featured` / `featured_until`, 018 help chat `support_threads` + `support_messages`, one open conversation per customer, 019 CARE role + `users.care_available`, live columns on `support_threads`, SYSTEM messages and `author_name`), `backup.js`, `ssl.js` (local, not deployed).
 - `src/payments/` — one payment system, gateway adapters `razorpay.js`, `cashfree.js`.
 - `src/lib/` — security (CORS, CSRF, cookies), storage (disk or bucket), sealed (AES-256-GCM for payout details),
   mailer, sms, file links (signed URLs).
@@ -103,7 +116,7 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   (only into an empty database).
 - Photos live in B2 (not in the database backup). Keep `PAYOUT_ENCRYPTION_KEY` safe: backups need it to open payout details.
 - 2026-10-20 15:06: `backup-live-db.bat` run against Neon by the owner before the deploy (first real run; worked):
-  `DesktopFrameX-backupsramex-db-live-20261020-1506.fxdb` (locked with the owner's passphrase).
+  `Desktop\FrameX-backups\framex-db-live-20261020-1506.fxdb` (locked with the owner's passphrase).
 
 ## 8b. Finding shops (Home + Shop page, 2026-10-21)
 

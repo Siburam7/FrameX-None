@@ -17,6 +17,7 @@ records and pays the sellers.
 | **Customer** | Browses without an account; signs up / logs in at the first "Add to cart". Uploads photos, customises frames, orders, pays (online or Cash on Delivery), follows orders, reviews delivered items. |
 | **Shop** (local frame shop) | Applies through "Register Your Shop" (no login needed to apply). After FrameX approves, gets a shop login. Manages its products, stock and orders, downloads customers' original photos for its own orders, adds a payout account. |
 | **Artist** | Applies through "Join as an artist" (`join-artist.html`, no login needed). After approval: profile, artworks, custom-painting requests, payout account. |
+| **Care** (FrameX Care staff) | Made by an admin (Admin → Care team). Log in with their email; the admin panel shows them only Live chats and Orders: they answer chats and change customers' orders (cancel, refund, status, size, delivery address). Customers see their first name. |
 | **Admin** (FrameX staff) | Approves shops / artists / products, manages orders, refunds, payouts, platform settings, analytics. |
 
 One account = one role. An email can belong to only one account, so a shop or artist login needs an email different
@@ -45,7 +46,8 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
 | Payouts | Bank / UPI payout accounts (sealed), payouts recorded by admin with UTR, 2% payout charge | Built, live code; payout key set on Render 2026-10-21: accounts can be saved (live log READY) |
 | Emails | Password reset, orders, applications… from `FrameX <support@shopframex.in>` (Brevo, domain authenticated: DKIM shopframex.in), "orange line" design, logo on a white badge for dark mode | Built, live since 2026-10-20 |
 | Support inbox | Mail to `support@shopframex.in` (any `@shopframex.in`) is forwarded by ImprovMX (free) to `support.framex@gmail.com`; replies go out from that Gmail until "Send mail as" is set up (architecture §9) | Live since 2026-10-20 |
-| Help chat | Logged-in customers write to FrameX from a button on every customer page (topics, "about this order"); Admin → Chats answers, closes, reopens; both sides emailed; visitors are sent to log in or to the Contact page | Built 2026-10-23, local (not deployed) |
+| Help chat | Logged-in customers write to FrameX from a button on every customer page (topics, "about this order"); Admin → Chats answers, closes, reopens; both sides emailed; visitors are sent to log in or to the Contact page | Built 2026-10-23, live since 2026-10-23 |
+| FrameX Care live chat | 8 quick answers without AI (real orders, live fees, real stock); "Connect with FrameX Care" 10am–8pm → a care person accepts within 2 minutes → live chat with their first name; otherwise leave a message; rating. Care desk = Admin → Live chats; CARE logins (made in Admin → Care team) see only Live chats + Orders and can change orders (size, address, cancel, refund) | Built 2026-10-24, local (not deployed); dearer size on a paid-online order not built |
 | New-order alerts | Email to each seller, WhatsApp button for admin | Built, live |
 | Analytics | Consent-based visitor stats + admin reports; GA4 optional | Built; GA4 ID not set |
 | View on My Wall | Camera / AR preview of a frame | Built; never tried on a real phone |

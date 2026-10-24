@@ -9,6 +9,7 @@
    thousands. A larger catalogue would move this to a text index.
    ========================================================================== */
 import { db } from "../db/index.js";
+import { stockOf } from "./catalog-service.js";
 import { listArtists } from "./artist-service.js";
 import { listPublic as listArtworks } from "./artwork-service.js";
 import { listPublicShops } from "./shop-service.js";
@@ -16,16 +17,24 @@ import { listPublicShops } from "./shop-service.js";
 const like = (text) => `%${String(text).toLowerCase().replace(/[%_\\]/g, "\\$&")}%`;
 export const SEARCH_KINDS = ["products", "templates", "shops", "artists", "artworks"];
 
+/** Can it be ordered now? (the FrameX Care chat's "Is it in stock?"). A product without a stock number is never limited. */
+function inStock(r) {
+  const a = r.data.availability || {};
+  if (a.status === "out_of_stock" || a.status === "unavailable") return false;
+  const stock = stockOf(r.data);
+  return stock === null || stock - (r.stock_reserved || 0) > 0;
+}
+
 async function products(q, limit) {
   const where = `p.status = 'ACTIVE' AND p.source <> 'artist'
     AND (p.source <> 'shop' OR EXISTS (SELECT 1 FROM shops s WHERE s.id = p.owner_shop_id AND s.approval_status = 'APPROVED' AND s.active_status = 'ACTIVE'))
     AND (lower(p.name) LIKE $1 OR lower(p.shop_name) LIKE $1 OR lower(coalesce(p.data->>'description', '')) LIKE $1 OR lower(coalesce((p.data->'tags')::text, '')) LIKE $1
          OR lower(coalesce((p.data->'categoryIds')::text, '')) LIKE $1 OR lower(coalesce(p.data->>'category', '')) LIKE $1)`;
   const total = (await db.query(`SELECT count(*)::int AS n FROM catalog_products p WHERE ${where}`, [like(q)])).rows[0].n;
-  const { rows } = await db.query(`SELECT p.id, p.slug, p.name, p.shop_name, p.data FROM catalog_products p WHERE ${where} ORDER BY (lower(p.name) LIKE $1) DESC, p.name LIMIT $2`, [like(q), limit]);
+  const { rows } = await db.query(`SELECT p.id, p.slug, p.name, p.shop_name, p.data, p.stock_reserved FROM catalog_products p WHERE ${where} ORDER BY (lower(p.name) LIKE $1) DESC, p.name LIMIT $2`, [like(q), limit]);
   return {
     total,
-    items: rows.map((r) => ({ id: r.id, name: r.name, shopName: r.shop_name, image: r.data.listingImage || r.data.image || "", url: `product.html?id=${encodeURIComponent(r.id)}` }))
+    items: rows.map((r) => ({ id: r.id, name: r.name, shopName: r.shop_name, image: r.data.listingImage || r.data.image || "", url: `product.html?id=${encodeURIComponent(r.id)}`, inStock: inStock(r) }))
   };
 }
 

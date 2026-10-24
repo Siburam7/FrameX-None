@@ -12,6 +12,7 @@ import { isLoadTest, rateLimit } from "../lib/rate-limit.js";
 import { v, validate } from "../lib/validate.js";
 import { SEARCH_KINDS, searchAll } from "../services/search-service.js";
 import { activeCoupons } from "../services/coupon-service.js";
+import { publicStatus as publicCare } from "../services/care-service.js";
 
 const router = Router();
 
@@ -70,6 +71,10 @@ router.get("/config", (req, res) => {
     // What a customer photo may be (the website checks the same before sending; the server checks again).
     uploads: { maxBytes: config.uploads.maxBytes, formats: ["jpeg", "png", "webp"], maxSide: config.uploads.maxSide },
     giftWrap: { enabled: config.checkout.giftWrap.enabled, fee: config.checkout.giftWrap.fee },
+    // Cash on Delivery's fee (the chat's quick answers show it; checkout adds it).
+    cod: { enabled: config.checkout.cod.enabled, fee: config.checkout.cod.fee },
+    // FrameX Care live chat: the team's hours, whether they are open, and whether someone can join right now.
+    care: publicCare(),
     // Delivery: its fee, and whether a customer's first order has free delivery (the home page's offer banner).
     delivery: { fee: config.checkout.shippingFee, freeAbove: config.checkout.freeShippingAbove, firstOrderFree: config.checkout.firstOrderFreeDelivery },
     // Visitor statistics: whether the website may send them (only ever for visitors who said yes there),

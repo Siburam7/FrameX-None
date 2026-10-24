@@ -92,7 +92,7 @@ export async function login({ identifier, password, accountType, ip = null }) {
   } else {
     const phone = id.includes("@") ? null : normalizePhone(id);
     row = id.includes("@")
-      ? (await db.query("SELECT * FROM users WHERE role IN ('CUSTOMER', 'ADMIN', 'ARTIST') AND lower(email) = $1", [normalizeEmail(id)])).rows[0]
+      ? (await db.query("SELECT * FROM users WHERE role IN ('CUSTOMER', 'ADMIN', 'ARTIST', 'CARE') AND lower(email) = $1", [normalizeEmail(id)])).rows[0]
       : phone
         ? (await db.query("SELECT * FROM users WHERE role IN ('CUSTOMER', 'ADMIN') AND phone = $1", [phone])).rows[0]
         : null;

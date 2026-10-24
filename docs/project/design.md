@@ -2,7 +2,7 @@
 
 > The current design is the reference: preserve it unless the owner asks for a change. Update this file whenever a
 > visual rule, token or layout decision changes. All values come from `assets/css/tokens.css`.
-> Last updated: 2026-10-23 (easy-to-use redesign, help chat).
+> Last updated: 2026-10-24 (FrameX Care live chat).
 
 ## 1. Direction (owner's choices)
 
@@ -123,6 +123,24 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
   phone: a round button above the bottom bar, the chat over the whole screen. Header: "F." mark on white, "FrameX
   Support", green dot "We usually answer within a few hours". Customer messages orange on the right, FrameX white on
   the left. Admin → Chats uses the same bubbles (FrameX on the right there).
+
+## 5g. FrameX Care live chat (owner, 2026-10-24)
+
+- Customer chat (`.hc-*`): navy "FrameX Care" pill (round on phones); header: the round F. CARE picture (`framex-care.png`, 40 px) + "FrameX Care", status line with a dot
+  (green online / amber finding / grey offline). Home: greeting, "Common questions" 2×4 grid (`.hc-q`, orange icons),
+  "Need a person?" peach card (`.hc-person`). Answers are white cards (`.hc-card`) with pill buttons (`.hc-b`, `--on`
+  orange, `--dark` navy). Connecting: `.hc-film` — the FrameX film's logo part (the same as on page load, 0–1.72 s at 1.7×) plays again and again in a small white tile (96 px, logo about 60 px; owner, 2026-10-24), with a thin orange line for the time left. Live: green bar
+  "Live · You're chatting with <b>Priya</b>" + End chat. Ended: centred rating card.
+- Care desk (Admin → Live chats, `css/care.css`): a status bar (Available green / Away, connection) over the lists with
+  tabs, the chat (same bubbles, staff on the right) and the customer (under the lists next to the admin menu). Phone:
+  one panel at a time. A CARE login's admin menu shows the round F. CARE picture, their name, Live chats and Orders.
+- Admin order page: "Change the order" card — each product line with "Change size" (radio list: size, new order
+  total, more / less / same, greyed with the reason when not possible) and "Change address" (the address form). New request: orange-bordered
+  popup top-right (bottom on phones) with Accept (green) / Later, a two-tone sound, "(n)" in the tab title.
+
+- Brand files (owner, 2026-10-24) in `assets/img/brand/`: `framex-f.png` (F. mark), `framex-care.png`, `framex-shop.png`,
+  `framex-support.png` (1080 px, white + orange on #111). Cut-outs made from the Care one: `framex-care-wordmark.png`
+  (no background: the chat header) and `framex-care-wordmark-ink.png` (navy letters, no background; kept for later). A care login's admin menu shows `framex-care.png` as a round profile picture (56 px) next to their name (owner).
 
 ## 6. Content rules
 

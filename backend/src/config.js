@@ -90,6 +90,14 @@ export const CASHFREE_API = { test: "https://sandbox.cashfree.com/pg", live: "ht
 const money = (v, fallback) => Math.max(0, Math.round(int(v, fallback)));
 export const SMS_PROVIDERS = ["fast2sms", "2factor", "twilio", "dev", "none"];
 
+/** "10-20" -> { from: 10, to: 20 } (whole hours, India time); anything else -> 10am to 8pm. "0-24" = always. */
+function careHours(value) {
+  const m = /^\s*(\d{1,2})\s*-\s*(\d{1,2})\s*$/.exec(String(value || ""));
+  const from = m ? Number(m[1]) : 10;
+  const to = m ? Number(m[2]) : 20;
+  return from >= 0 && to <= 24 && from < to ? { from, to } : { from: 10, to: 20 };
+}
+
 export const config = {
   env: nodeEnv,
   isProd,
@@ -145,6 +153,10 @@ export const config = {
     // the emails show the logo as text instead.
     logoUrl: env.EMAIL_LOGO_URL || (/^https:\/\//.test(env.FRONTEND_URL || "") ? `${env.FRONTEND_URL.replace(/\/+$/, "")}/assets/img/ui/logo-framex-email-badge.png` : "")
   },
+
+  // FrameX Care live chat: the hours a person can join (India time, CARE_HOURS "10-20" = 10am to 8pm; owner
+  // 2026-10-24) and how long a customer waits for someone to accept before leaving a message instead (2 minutes).
+  care: { hours: careHours(env.CARE_HOURS), waitSeconds: Math.min(600, Math.max(30, int(env.CARE_WAIT_SECONDS, 120))) },
 
   // Messages from the Contact page: at most this many alert emails an hour (the rest wait in the admin panel).
   contact: { alertsPerHour: int(env.CONTACT_ALERTS_PER_HOUR, 30) },

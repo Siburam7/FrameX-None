@@ -64,7 +64,7 @@
     const user = s.user;
     const href = user ? (user.role === "CUSTOMER" ? pages.account : FrameX.auth.homeFor(user.role)) : pages.login;
     const first = user ? String(user.role === "SHOP" && user.shop ? user.shop.name : user.name).split(/\s+/)[0] : "";
-    const text = user ? (user.role === "SHOP" || user.role === "ARTIST" ? "Dashboard" : user.role === "ADMIN" ? "Admin" : first) : "Log in";
+    const text = user ? (user.role === "SHOP" || user.role === "ARTIST" ? "Dashboard" : user.role === "ADMIN" ? "Admin" : user.role === "CARE" ? "Care desk" : first) : "Log in";
     document.querySelectorAll("[data-account-tab]").forEach((a) => (a.href = href));
     document.querySelectorAll("[data-account], [data-account-mobile]").forEach((a) => {
       a.href = href;

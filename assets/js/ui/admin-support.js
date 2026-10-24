@@ -6,6 +6,9 @@
    sees it in the chat and gets an email at their account address), close it
    when it is done. Only an ADMIN can read these: the backend checks every
    request.
+
+   Live chats (FrameX Care, 2026-10-24) are answered on the care desk
+   (Live chats, #/live, ui/care-desk.js); "Care team" (#/care) makes the care logins for it.
    ========================================================================== */
 (function (FrameX) {
   const { $, escapeHtml: esc, icon } = FrameX.dom;
@@ -17,7 +20,7 @@
 
   const row = (t) => `<li class="sd-item adm-item${t.unread ? " is-unread" : ""}">
       <div class="sd-item__main">
-        <a class="sd-item__name" href="#/chats/${esc(t.id)}">${esc(t.customer.name)}${t.unread ? ` <span class="sd-status sd-status--pending_review">${t.unread} new</span>` : ""}${t.status === "CLOSED" ? ` <span class="sd-status sd-status--draft">Closed</span>` : ""}</a>
+        <a class="sd-item__name" href="#/chats/${esc(t.id)}">${esc(t.customer.name)}${t.unread ? ` <span class="sd-status sd-status--pending_review">${t.unread} new</span>` : ""}${t.status === "CLOSED" ? ` <span class="sd-status sd-status--unpublished">Closed</span>` : ""}</a>
         <span class="sd-item__meta">${esc(t.customer.email || "")}${t.topicName ? ` · ${esc(t.topicName)}` : ""}${t.orderNumber ? ` · order ${esc(t.orderNumber)}` : ""} · ${esc(when(t.lastMessageAt))}</span>
         <p class="adm-chat__last">${t.lastFrom === "framex" ? "<strong>You:</strong> " : ""}${esc(t.lastMessage.slice(0, 160))}</p>
       </div>
@@ -26,7 +29,7 @@
   async function list(main, params, { head }) {
     const status = ["OPEN", "CLOSED"].includes(params.get("status")) ? params.get("status") : "";
     const r = await http().get("/admin/support", { status });
-    main.innerHTML = `${head("Chats", "Customers write from the chat button on every page. Your answer appears in their chat and is emailed to their account address.")}
+    main.innerHTML = `${head("Chats", "Customers write from the chat button on every page. Your answer appears in their chat and is emailed to their account address. Live chats are answered under Live chats.", `<a class="btn btn--primary btn--sm" href="#/live">${icon("mail")} Open Live chats</a>`)}
       <div class="sd-toolbar"><div class="chip-scroll" role="group" aria-label="Filter">${FILTERS.map(([id, label]) => `<a class="chip" href="#/chats${id ? `?status=${id}` : ""}" aria-pressed="${status === id}">${esc(label)}${id === "OPEN" && r.unread ? ` (${r.unread} new)` : ""}</a>`).join("")}</div></div>
       ${r.items.length ? `<ul class="sd-list">${r.items.map(row).join("")}</ul>` : `<div class="sd-empty">${icon("mail")}<strong>No chats yet</strong><span>When a customer writes from the chat button, it appears here.</span></div>`}`;
     badge();
@@ -85,6 +88,77 @@
     };
   }
 
+  /* ---------------------------------------------------------------- Care team (#/care) */
+  const memberRow = (m) => `<li class="sd-item adm-item" data-member="${esc(m.id)}">
+      <div class="sd-item__main">
+        <strong class="sd-item__name">${esc(m.name)} ${m.active ? (m.available ? `<span class="sd-status sd-status--published">Available</span>` : `<span class="sd-status sd-status--unpublished">Away</span>`) : `<span class="sd-status sd-status--unpublished">Switched off</span>`}</strong>
+        <span class="sd-item__meta">${esc(m.email)} · ${m.chatsThisWeek} live ${m.chatsThisWeek === 1 ? "chat" : "chats"} this week</span>
+      </div>
+      <div class="sd-item__actions">
+        <button class="iu-btn" type="button" data-rename>Change name</button>
+        <button class="iu-btn" type="button" data-newpass>New password</button>
+        <button class="iu-btn${m.active ? "" : " iu-btn--go"}" type="button" data-active="${m.active ? "0" : "1"}">${m.active ? "Switch off" : "Switch on"}</button>
+      </div></li>`;
+
+  async function team(main, { head }) {
+    const draw = (items) => {
+      main.innerHTML = `${head("Care team", "People who answer live chats. They log in with their own email (the normal Log in page) and open this admin panel with <strong>only Live chats and Orders</strong>: they can change a customer's order (size, address, cancel, refund) but not payouts, settings, coupons or shops. Customers see only their first name.", `<a class="btn btn--outline btn--sm" href="#/live">${icon("mail")} Open Live chats</a>`)}
+        <div class="adm-care">
+          <div class="account-card"><h2>${icon("users")} Care staff (${items.length})</h2>
+            ${items.length ? `<ul class="sd-list">${items.map(memberRow).join("")}</ul>` : `<p class="pp-muted">No care logins yet. Add the first one here.</p>`}
+          </div>
+          <form class="account-card adm-care__form" data-new-member novalidate><h2>${icon("plus")} Add care staff</h2>
+            <div class="form-field"><label for="cm-name">First name <small>(customers see this)</small></label><input class="input" id="cm-name" name="name" maxlength="30" autocomplete="off" required></div>
+            <div class="form-field"><label for="cm-email">Email (to log in)</label><input class="input" id="cm-email" name="email" type="email" autocomplete="off" required></div>
+            <div class="form-field"><label for="cm-pass">Password</label><input class="input" id="cm-pass" name="password" type="password" autocomplete="new-password" required><small class="pp-muted">At least 8 characters with a letter and a number. Give it to them yourself; they log in on the normal Log in page.</small></div>
+            <div class="form-status" role="status" aria-live="polite"></div>
+            <button class="btn btn--primary" type="submit">${icon("plus")} Create care login</button>
+            <p class="adm-care__note">The email must not already have a FrameX account (customer, shop or artist): one role per account.</p>
+          </form>
+        </div>`;
+    };
+    draw((await http().get("/admin/care-team")).items);
+    main.onsubmit = async (e) => {
+      if (!e.target.matches("[data-new-member]")) return;
+      e.preventDefault();
+      const f = e.target;
+      const say = $(".form-status", f);
+      const btn = $("[type=submit]", f);
+      btn.disabled = true;
+      try {
+        const r = await http().post("/admin/care-team", { name: f.name.value.trim(), email: f.email.value.trim(), password: f.password.value });
+        draw(r.items);
+        FrameX.toast.show("Care login created. Share the email and password with them.");
+      } catch (error) {
+        FrameX.forms.status(say, "error", esc(error.fields ? Object.values(error.fields)[0] : error.message));
+        btn.disabled = false;
+      }
+    };
+    main.onclick = async (e) => {
+      const row = e.target.closest("[data-member]");
+      if (!row) return;
+      const id = row.dataset.member;
+      let change = null;
+      if (e.target.closest("[data-rename]")) {
+        const name = window.prompt("New first name (customers see this):");
+        if (name && name.trim()) change = { name: name.trim() };
+      } else if (e.target.closest("[data-newpass]")) {
+        const password = window.prompt("New password (at least 8 characters with a letter and a number). They will be logged out:");
+        if (password) change = { password };
+      } else if (e.target.closest("[data-active]")) {
+        const on = e.target.closest("[data-active]").dataset.active === "1";
+        if (on || window.confirm("Switch this care login off? They are logged out at once and can't log in until you switch it on again.")) change = { active: on };
+      }
+      if (!change) return;
+      try {
+        draw((await http().patch(`/admin/care-team/${encodeURIComponent(id)}`, change)).items);
+        FrameX.toast.show("Saved.");
+      } catch (error) {
+        FrameX.toast.show(error.fields ? Object.values(error.fields)[0] : error.message);
+      }
+    };
+  }
+
   /** The number of unread customer messages, next to "Chats" in the admin menu. */
   async function badge() {
     try {
@@ -96,5 +170,5 @@
     }
   }
 
-  FrameX.adminSupport = { list, thread, badge };
+  FrameX.adminSupport = { list, thread, badge, team };
 })((window.FrameX = window.FrameX || {}));
