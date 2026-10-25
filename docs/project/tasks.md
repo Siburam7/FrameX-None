@@ -5,12 +5,16 @@
 
 ## Now
 
+- [x] 2026-10-25 **DEPLOYED** (owner: "jitna sab change kiya sabhi push karke live kar do", "Bina backup live karo"): main 5434cc3 +
+      fe0060c. Migrations 020 + 021 ran on production; newest backup is still 2026-10-24 19:12. Before the push: backend
+      459/0, Studio 37/37, shop 50/50, home/UX 40/40. Live check (phone, read-only): Home, product, Studio, Customer gallery
+      open with no script / CSP errors, the photo pickers take HEIC, API lists heic + avif. Not done live: a real HEIC upload.
 - [x] 2026-10-25 **Review photos shown in medium quality** (owner: a customer may upload 10-15 high-quality photos, the
       page must not get slow). The original is kept as uploaded; the server makes one medium copy (WebP, longest side
       1600 px, quality 80, never made bigger) and `/media/review/:id` serves that copy. A 4000×3000 photo comes out at
       1600×1200 and is far smaller. Reviews from before this have no copy and keep showing their original. Review photos now
       also accept HEIC / AVIF. Migration 021 (`reviews.photo_view_key`) — **backup before deploying it**.
-      Backend 459 pass, 0 fail (the HEIC sample test skips without its file). Local, not pushed.
+      Backend 459 pass, 0 fail (the HEIC sample test skips without its file). LIVE 2026-10-25.
 - [x] 2026-10-25 **iPhone (HEIC) and AVIF photos accepted** (owner: "jo bhi photo do wo upload ho jaye", chose "Asli HEIC bhi
       rakho + JPG copy"). Before: "Please upload a supported image format (JPG, PNG or WebP)". Now the original HEIC / HEIF / AVIF
       is stored unchanged AND the server makes one full-quality JPEG copy (same pixels, quality 92) that links show and shops
@@ -18,17 +22,17 @@
       libheif (WebAssembly, `assets/vendor/libheif`, LGPL-3.0; CSP now has 'wasm-unsafe-eval' on every page).
       Migration 020 (`uploads.print_key`, `print_bytes`, formats heic / avif) — **backup before deploying it**.
       Checks: backend 460/460 (incl. a real HEIC sample), browser on a phone screen (product page + Studio: preview, upload,
-      original + JPG copy stored, no CSP error). Local, not pushed.
+      original + JPG copy stored, no CSP error). LIVE 2026-10-25.
       Shop product pictures, artist pictures and review photos stay JPG / PNG / WebP (shown publicly; a clear "save it as a JPG"
       message). Painting reference photos accept HEIC (they use /api/uploads) but their small tile may not show a
       preview in Chrome — open, small.
 - [x] 2026-10-25 Home hero on phones: the 1-2-3 steps (Choose a frame / Add your photo / We deliver it) removed (owner) —
-      markup, hero.js and styles; "Start here" under the hero stays. Local, not pushed.
+      markup, hero.js and styles; "Start here" under the hero stays. LIVE 2026-10-25.
 - [x] 2026-10-25 Studio on phones: the frame stays on screen while editing (owner approved the design in
-      Desktop\FrameX-Studio-Phone-Design); pinch to zoom; "View on My Wall" with the controls — local, not pushed.
+      Desktop\FrameX-Studio-Phone-Design); pinch to zoom; "View on My Wall" with the controls. LIVE 2026-10-25.
       Checks 11/11 (phone, tablet, pinch, laptop unchanged); Studio 37, design 40, designs 14, frame 55.
 - [x] 2026-10-25 Cart drawer footer on phones (owner: build it): one line — Subtotal, "Details ⌃", Checkout (65 px
-      instead of ~200); "Details" opens the delivery line, shops note, Continue shopping. Laptop unchanged. Local, not pushed.
+      instead of ~200); "Details" opens the delivery line, shops note, Continue shopping. Laptop unchanged. LIVE 2026-10-25.
 - [ ] **Launch clean-up (on the owner's word only):** every product, frame, Home Decor design, template and sample shop today is
       for experimenting (owner, 2026-10-24). On launch day remove all sample content and its images, add only real
       listings; keep UI / brand / email images; backup first; then check every page for empty sections.
@@ -36,7 +40,7 @@
       only 14 were not used (checked against the code AND the catalogue the server builds, then every page opened: no 404).
       Removed 6: reviews/avatar-1…4 (only in commented-out sample reviews), ui/chalk-arrow.png, ui/poster.webp. Kept on purpose:
       occasions/2-4, 3-1, 3-3 (the gallery builds their names), ui/logo-framex-email*.png (emails already sent load them),
-      shops/cover-a…c (the live database may name them). Every video is used. Local, not pushed.
+      shops/cover-a…c (the live database may name them). Every video is used. LIVE 2026-10-25.
 - [x] 2026-10-24 Production backup by the owner (19:12, `framex-db-live-20261024-1912.fxdb`, locked; checked: no readable data inside) and
       copied to the new pen drive BETA-BACKUP (E:) `FrameX Backup\Date - 24-10-2026` with the code bundle
       `framex-code-2026-10-24-1223587.bundle` and the 19 Oct `.7z` — every file compared with its original (SHA-256): same.

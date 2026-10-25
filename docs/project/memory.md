@@ -24,6 +24,8 @@
 
 ## Owner decisions (log)
 
+- 2026-10-25 Deploy HEIC photos, medium review photos, Studio / cart on phones, hero steps removal WITHOUT a fresh backup
+  ("Bina backup live karo") — main 5434cc3 + fe0060c; migrations 020 + 021 ran; newest backup 2026-10-24 19:12.
 - 2026-10-25 Review photos: keep the customer's high-quality original, SHOW a medium copy (WebP 1600 px) so pages with many
   photos stay fast.
 - 2026-10-25 iPhone HEIC photos: keep the original HEIC AND make a full-quality JPG copy that is printed ("Asli HEIC bhi
