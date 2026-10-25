@@ -879,40 +879,9 @@
   }
 }
 
-/* Home (owner, 2026-10-23): how it works in three small boxes under the hero's buttons, so it is seen at once;
-   under the hero, "Start here" with the three ways in as picture tiles */
+/* Home (owner, 2026-10-23): under the hero, "Start here" with the three ways in as picture tiles
+   (the 1-2-3 steps that were in the hero on phones were removed by the owner, 2026-10-25) */
 @media (max-width: 639px) {
-  .hero-steps {
-    display: flex;
-    gap: 6px;
-    margin: 12px 0 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .hero-steps li {
-    display: flex;
-    flex: 1 1 0;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-width: 0;
-    padding: 7px 4px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: var(--surface);
-    font-size: 0.72rem;
-    font-weight: 700;
-    line-height: 1.2;
-    text-align: center;
-  }
-
-  .hero-steps b {
-    width: 22px;
-    height: 22px;
-    font-size: 0.72rem;
-  }
-
   .how {
     padding: 14px 0 16px;
   }
@@ -1212,6 +1181,76 @@
   }
 
   .hc.is-open .hc-btn {
+    display: none;
+  }
+}
+
+/* Cart drawer footer on a phone (owner, 2026-10-25): one line — Subtotal, "Details", Checkout — so the items get the
+   screen; "Details" opens the delivery line, the shops note and Continue shopping (the footer as it was) */
+@media (max-width: 639px) {
+  .drawer__foot {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 8px 10px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -10px 24px -16px rgba(13, 27, 62, 0.35);
+  }
+
+  .drawer__sub {
+    display: grid;
+    grid-row: 1;
+    grid-column: 1;
+    gap: 0;
+    line-height: 1.15;
+  }
+
+  .drawer__sub span {
+    color: var(--text-muted);
+    font-size: 0.74rem;
+  }
+
+  .drawer__sub strong {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+  }
+
+  .drawer__more {
+    display: inline-flex;
+    grid-row: 1;
+    grid-column: 2;
+    align-items: center;
+    gap: 4px;
+    height: 36px;
+    padding: 0 10px 0 14px;
+    border-radius: var(--radius-pill);
+    background: var(--surface-soft);
+    color: var(--on-surface);
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+
+  .drawer__more .icon {
+    width: 16px;
+    height: 16px;
+    transition: rotate var(--dur-base) var(--ease-out);
+  }
+
+  .drawer__more[aria-expanded="true"] .icon {
+    rotate: 180deg;
+  }
+
+  #cart-checkout {
+    grid-row: 1;
+    grid-column: 3;
+    width: auto;
+    padding-inline: 20px;
+  }
+
+  .drawer__extra {
+    grid-column: 1 / -1;
+  }
+
+  .drawer__foot:not(.is-open) .drawer__extra {
     display: none;
   }
 }

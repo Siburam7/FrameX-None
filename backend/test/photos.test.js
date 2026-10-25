@@ -201,7 +201,7 @@ describe("uploading a photo", () => {
     S.fourK = u.id;
     S.fourKBytes = original;
     assert.deepEqual([u.format, u.mime, u.width, u.height, u.bytes, u.megapixels, u.name, u.inOrder], ["jpeg", "image/jpeg", 3840, 2160, original.length, 8.3, "IMG_2041 (final).JPG", false]);
-    assert.deepEqual(Object.keys(u).sort(), ["bytes", "format", "height", "id", "inOrder", "megapixels", "mime", "name", "orientation", "removed", "uploadedAt", "width"], "nothing about where the file is stored");
+    assert.deepEqual(Object.keys(u).sort(), ["bytes", "format", "height", "id", "inOrder", "megapixels", "mime", "name", "orientation", "printCopy", "removed", "uploadedAt", "width"], "nothing about where the file is stored");
     assert.equal(u.removed, false);
     const stored = await row("SELECT * FROM uploads WHERE id = $1", [u.id]);
     assert.equal(stored.sha256, sha(original));

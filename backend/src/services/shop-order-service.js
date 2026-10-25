@@ -124,13 +124,13 @@ export async function getOrder(shop, orderNumber) {
 }
 
 /** A short-lived link to the customer's ORIGINAL photo of one of this shop's own order lines. */
-export async function photoLink(shop, orderNumber, uploadId, { actor, ip = null }) {
+export async function photoLink(shop, orderNumber, uploadId, { actor, ip = null, original = false }) {
   const row = await shopOrderRow(shop, orderNumber);
   if (!orders.ACTIVE_FOR_FULFILMENT.includes(row.status)) throw errors.conflict("This order is no longer active, so its photos can't be downloaded.", null, "ORDER_NOT_ACTIVE");
   // Only a photo of one of THIS shop's lines in THIS order: any other id answers 404.
   const upload = await orders.orderPhotoRow(row.id, uploadId, { shopRefs: shop.refs });
   await audit(db, { actor, action: ACTIONS.ORDER_PHOTO_ACCESSED, targetType: "order", targetId: row.order_number, metadata: { uploadId: upload.id, slot: upload.slot, item: upload.item_name, shop: shop.code }, ip });
-  return linkTo(upload, { download: true, name: orders.photoFileName(row.order_number, upload) });
+  return linkTo(upload, { download: true, name: orders.photoFileName(row.order_number, upload), original });
 }
 
 /** The shop says where it is with one of its lines: accepted, in production, ready, handed over. */

@@ -314,6 +314,15 @@
     $(".drawer__close", drawer).addEventListener("click", close);
     body.addEventListener("click", onBodyClick);
     $("#cart-continue").addEventListener("click", close);
+    // Phones: the footer is one line (Subtotal + Checkout); "Details" opens the rest (owner, 2026-10-25)
+    const more = $("[data-foot-more]", foot);
+    if (more)
+      more.addEventListener("click", () => {
+        const open = !foot.classList.contains("is-open");
+        foot.classList.toggle("is-open", open);
+        more.setAttribute("aria-expanded", String(open));
+        $("span", more).textContent = open ? "Less" : "Details";
+      });
     const button = $("#cart-checkout");
     button.innerHTML = `${icon("lock")} Checkout`;
     button.addEventListener("click", checkout);

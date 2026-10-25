@@ -41,7 +41,7 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
 | Payments | Razorpay (live keys on Render), Cashfree adapter | Razorpay live payment + refund **proven 2026-10-21** (FX-100014, ₹354, UPI, refunded); Cashfree tested only against a stand-in |
 | Cash on Delivery, gift wrap | Configurable fees | Built, live |
 | Orders | Order pages, emails, shop fulfilment steps, admin orders, refunds recorded by admin | Built, live |
-| Customer photos | Stored unchanged, private, short-lived signed links only | Built, live (Backblaze B2 bucket) |
+| Customer photos | Stored unchanged, private, short-lived signed links only. JPG, PNG, WebP, HEIC (iPhone), AVIF | Built, live (Backblaze B2 bucket). HEIC / AVIF built 2026-10-25, local |
 | Art & Artists | Artists, artworks, custom paintings paid 40% / 60% | Built; not used live yet |
 | Payouts | Bank / UPI payout accounts (sealed), payouts recorded by admin with UTR, 2% payout charge | Built, live code; payout key set on Render 2026-10-21: accounts can be saved (live log READY) |
 | Emails | Password reset, orders, applications… from `FrameX <support@shopframex.in>` (Brevo, domain authenticated: DKIM shopframex.in), "orange line" design, logo on a white badge for dark mode | Built, live since 2026-10-20 |
@@ -61,6 +61,10 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
   their photos. Ready-made Home Decor never asks for a photo.
 - **Originals are never enhanced**, resized or re-encoded. Required notice where a photo is added: "Your uploaded image
   will be printed in the same original quality you provide…". No "may not print sharply" warnings.
+  A HEIC / AVIF photo (shops can't print those) also gets ONE full-quality JPEG copy — same pixels, nothing enhanced —
+  which is shown and printed; the original stays as uploaded and can be downloaded (owner, 2026-10-25).
+- **Review photos** are kept as uploaded but SHOWN as a medium copy (WebP, 1600 px) so pages stay fast (owner, 2026-10-25).
+  This is not a print, so the "never resized" rule for order photos is not affected.
 - **Photos are private**: only signed links for the customer, admin and the shop making that order line.
 - **No guest cart**, nothing about the cart in browser storage; the server sets every price.
 - **Payment is only "paid" after the server verifies it** with the gateway. A frontend redirect is not proof.

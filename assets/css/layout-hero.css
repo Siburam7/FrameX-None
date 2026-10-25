@@ -1055,9 +1055,6 @@ body[data-page="home"] main {
 }
 
 /* How FrameX works + the three ways in (under the hero). The phone layout is in mobile.css. */
-.hero-steps {
-  display: none;
-}
 
 .how {
   padding: 32px 0 30px;
@@ -1099,8 +1096,7 @@ body[data-page="home"] main {
   background: var(--surface-soft);
 }
 
-.how__steps b,
-.hero-steps b {
+.how__steps b {
   display: grid;
   flex: none;
   place-items: center;

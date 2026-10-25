@@ -19,6 +19,7 @@ import { config } from "../config.js";
 import { db } from "../db/index.js";
 import { ACTIONS, audit } from "../lib/audit.js";
 import { HttpError, errors } from "../lib/errors.js";
+import { toView } from "../lib/heif.js";
 import { inspectImage } from "../lib/image-info.js";
 import * as storage from "../lib/storage.js";
 import { newId } from "../lib/tokens.js";
@@ -154,7 +155,8 @@ const ownReview = async (userId, id) => {
 
 /**
  * The writer of a review adds (or replaces) its photo. The request body is the picture's own bytes.
- * Only a real JPG, PNG or WebP is kept; its type and size are read from the file, not from what the browser says.
+ * Only a real photo is kept (JPG, PNG, WebP, HEIC or AVIF); its type and size are read from the file, not from what the browser says.
+ * The original is kept as it is; a medium copy (WebP, 1600 px) is what the website shows, so many photos stay fast.
  */
 export async function savePhoto(user, id, req) {
   const review = await ownReview(user.id, id);
@@ -171,16 +173,26 @@ export async function savePhoto(user, id, req) {
   }
   try {
     const info = await inspectImage(received.tempPath);
-    if (!info || !received.bytes) throw new HttpError(415, "MEDIA_UNSUPPORTED", "Please upload a JPG, PNG or WebP picture.");
+    if (!info || !received.bytes) throw new HttpError(415, "MEDIA_UNSUPPORTED", "Please upload a JPG, PNG, WebP or HEIC picture.");
+    let view;
+    try {
+      view = await toView(received.tempPath, info.format);
+    } catch {
+      throw new HttpError(415, "MEDIA_UNSUPPORTED", "We couldn't read that picture. Please try another one, or save it as a JPG first.");
+    }
     const key = storage.newKey("public");
+    const viewKey = `${key}-thumb`;
     await storage.keep(received.tempPath, key);
     try {
-      await db.query("UPDATE reviews SET photo_key = $2, photo_mime = $3, updated_at = now() WHERE id = $1", [review.id, key, info.mime]);
+      await storage.put(viewKey, view.webp);
+      await db.query("UPDATE reviews SET photo_key = $2, photo_mime = $3, photo_view_key = $4, updated_at = now() WHERE id = $1", [review.id, key, info.mime, viewKey]);
     } catch (error) {
-      await storage.remove(key);
+      await storage.remove(key).catch(() => {});
+      await storage.remove(viewKey).catch(() => {});
       throw error;
     }
     if (review.photo_key) await storage.remove(review.photo_key).catch(() => {});
+    if (review.photo_view_key) await storage.remove(review.photo_view_key).catch(() => {});
   } finally {
     await storage.discard(received.tempPath).catch(() => {});
   }
@@ -190,8 +202,9 @@ export async function savePhoto(user, id, req) {
 export async function removePhoto(user, id) {
   const review = await ownReview(user.id, id);
   if (review.photo_key) {
-    await db.query("UPDATE reviews SET photo_key = NULL, photo_mime = NULL, updated_at = now() WHERE id = $1", [review.id]);
+    await db.query("UPDATE reviews SET photo_key = NULL, photo_mime = NULL, photo_view_key = NULL, updated_at = now() WHERE id = $1", [review.id]);
     await storage.remove(review.photo_key).catch(() => {});
+    if (review.photo_view_key) await storage.remove(review.photo_view_key).catch(() => {});
   }
   return shape((await db.query("SELECT * FROM reviews WHERE id = $1", [review.id])).rows[0]);
 }
@@ -200,11 +213,15 @@ export async function removePhoto(user, id) {
 export async function sendReviewPhoto(req, res, next) {
   const id = String(req.params.id || "");
   if (!isUuid(id)) return next();
-  const row = (await db.query("SELECT photo_key, photo_mime FROM reviews WHERE id = $1 AND status = 'PUBLISHED'", [id])).rows[0];
-  if (!row || !row.photo_key || !(await storage.exists(row.photo_key))) return next();
+  const row = (await db.query("SELECT photo_key, photo_mime, photo_view_key FROM reviews WHERE id = $1 AND status = 'PUBLISHED'", [id])).rows[0];
+  if (!row || !row.photo_key) return next();
+  // The medium copy when there is one (reviews from before 2026-10-25 have none: their original is shown)
+  const view = row.photo_view_key && (await storage.exists(row.photo_view_key));
+  const key = view ? row.photo_view_key : row.photo_key;
+  if (!view && !(await storage.exists(key))) return next();
   // Short cache: the customer can replace the photo, and FrameX can hide the review.
-  res.set({ "Content-Type": row.photo_mime || "image/jpeg", "Cache-Control": "public, max-age=300", "Cross-Origin-Resource-Policy": "cross-origin", "X-Content-Type-Options": "nosniff" });
-  storage.open(row.photo_key).on("error", next).pipe(res);
+  res.set({ "Content-Type": view ? "image/webp" : row.photo_mime || "image/jpeg", "Cache-Control": "public, max-age=300", "Cross-Origin-Resource-Policy": "cross-origin", "X-Content-Type-Options": "nosniff" });
+  storage.open(key).on("error", next).pipe(res);
 }
 
 /* ---------------------------------------------------------------- FrameX staff */

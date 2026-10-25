@@ -568,6 +568,8 @@ A database backup does **not** hold the photo files, only their records; a bucke
 3. Choose a passphrase (at least 10 characters; it can't be left empty) and type it twice. Every backup file is locked with it (AES-256-GCM): keep the passphrase, a locked file can't be opened without it. Without a good passphrase the database is not even opened. A restore refuses a file that is not locked.
 4. The file goes to `FrameX-backups\framex-db-live-<date>-<time>.fxdb` next to the project folder. It holds customer details: keep it private, and keep a copy off this computer too.
 
+**Straight onto the backup pen drive:** double-click `backup-to-pendrive.bat` instead (same two questions). It finds the pen drive named **BETA-BACKUP** whatever its drive letter, and writes the locked file straight into its `FrameX Backup` folder (made when needed), named with the date and time (`framex-db-live-YYYYMMDD-HHMM.fxdb`). Without the pen drive plugged in it says so and does nothing.
+
 **Keep `PAYOUT_ENCRYPTION_KEY` safe as well** (copy it from the service's environment into a password manager or a paper kept with the backups). The sellers' bank account numbers and UPI IDs are sealed with it, in the database and therefore in every backup: a restored database opens them only with the same key, and without it every seller has to enter their payout account again. Never change the key on the live service once accounts are saved.
 
 Take one before every deploy that adds a migration, and regularly (weekly, or daily once orders come in every day). Neon also keeps a short history of its own for point-in-time restore (how long depends on the plan: see the project's settings in Neon); that is not a file you hold, so it does not replace this.

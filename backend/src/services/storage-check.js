@@ -57,8 +57,12 @@ async function knownFiles() {
     if (r.storage_key) known.set(r.storage_key, { what, where: owner, since: day(r.created_at), underWay: false });
     if (r.thumb_key) known.set(r.thumb_key, { what: `${what} (small copy)`, where: owner, since: day(r.created_at), underWay: false });
   }
-  const reviews = await db.query("SELECT photo_key, source_type, source_id, created_at FROM reviews WHERE photo_key IS NOT NULL");
-  for (const r of reviews.rows) known.set(r.photo_key, { what: "review photo", where: `review of ${r.source_type === "ORDER" ? "order" : "custom painting"} ${r.source_id}`, since: day(r.created_at), underWay: false });
+  const reviews = await db.query("SELECT photo_key, photo_view_key, source_type, source_id, created_at FROM reviews WHERE photo_key IS NOT NULL");
+  for (const r of reviews.rows) {
+    const where = `review of ${r.source_type === "ORDER" ? "order" : "custom painting"} ${r.source_id}`;
+    known.set(r.photo_key, { what: "review photo", where, since: day(r.created_at), underWay: false });
+    if (r.photo_view_key) known.set(r.photo_view_key, { what: "review photo (medium copy)", where, since: day(r.created_at), underWay: false });
+  }
   return known;
 }
 

@@ -17,15 +17,16 @@ const sign = (payload) => crypto.createHmac("sha256", config.authSecret).update(
 /**
  * A link token for one upload.
  *   download: true = the browser saves the file, false = it may show it
+ *   original: true = the file exactly as uploaded even when there is a JPEG copy of it (a HEIC photo); otherwise the copy
  * -> { token, expiresAt }
  */
-export function makeFileToken(uploadId, { download = true, seconds = config.uploads.linkSeconds } = {}) {
+export function makeFileToken(uploadId, { download = true, original = false, seconds = config.uploads.linkSeconds } = {}) {
   const expires = Math.floor(Date.now() / 1000) + seconds;
-  const payload = Buffer.from(JSON.stringify({ u: uploadId, e: expires, d: download ? 1 : 0 })).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({ u: uploadId, e: expires, d: download ? 1 : 0, ...(original ? { o: 1 } : {}) })).toString("base64url");
   return { token: `${payload}.${sign(payload)}`, expiresAt: new Date(expires * 1000).toISOString() };
 }
 
-/** -> { uploadId, download } for a genuine, unexpired token; otherwise null. */
+/** -> { uploadId, download, original } for a genuine, unexpired token; otherwise null. */
 export function readFileToken(token) {
   const [payload, signature, ...rest] = String(token || "").split(".");
   if (!payload || !signature || rest.length) return null;
@@ -35,7 +36,7 @@ export function readFileToken(token) {
   try {
     const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
     if (typeof data.u !== "string" || !Number.isFinite(data.e) || data.e * 1000 < Date.now()) return null;
-    return { uploadId: data.u, download: data.d !== 0 };
+    return { uploadId: data.u, download: data.d !== 0, original: data.o === 1 };
   } catch {
     return null;
   }

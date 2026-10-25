@@ -299,7 +299,7 @@
               <div class="ref-list" id="cp-photos">${state.photos
                 .map((p, i) => `<div class="ref-tile">${p.url ? `<img src="${esc(p.url)}" alt="Reference photo ${i + 1}">` : ""}${p.id ? `<span class="ref-tile__facts">${p.width} × ${p.height} px</span>` : `<span class="ref-tile__bar" style="transform:scaleX(${p.progress || 0.03})"></span>`}<button class="ref-tile__remove" type="button" data-remove="${i}" aria-label="Remove photo ${i + 1}">${icon("close")}</button></div>`)
                 .join("")}${state.photos.length < maxPhotos ? `<label class="ref-tile ref-tile--add"><input class="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" id="cp-file"><span>${icon("upload")}${state.photos.length ? "Add another" : "Add photo"}</span></label>` : ""}</div>
-              <p class="form-field__hint">JPG, PNG or WebP, up to ${Math.round(maxBytes / 1048576)} MB each. Up to ${maxPhotos} photos. Only you, the artist and FrameX can see them.</p>
+              <p class="form-field__hint">JPG, PNG, WebP or HEIC (iPhone), up to ${Math.round(maxBytes / 1048576)} MB each. Up to ${maxPhotos} photos. Only you, the artist and FrameX can see them.</p>
               <p class="form-field__error" id="cp-photo-error" hidden>${icon("alert")}<span></span></p>
             </div>
             <div class="cp-step"><h3><span>3</span>Instructions <span class="hint">(optional)</span></h3>
@@ -367,7 +367,7 @@
 
     async function addPhoto(file) {
       photoError("");
-      if (!FrameX.dom.looksLikePhoto(file)) return photoError(`“${file.name}” is a ${file.type || "file"} file. Please upload a JPG, PNG or WebP photo.`);
+      if (!FrameX.dom.looksLikePhoto(file)) return photoError(`“${file.name}” is a ${file.type || "file"} file. Please upload a JPG, PNG, WebP or HEIC photo.`);
       if (file.size > maxBytes) return photoError(`That photo is larger than ${Math.round(maxBytes / 1048576)} MB. Please choose a smaller file.`);
       const entry = { url: URL.createObjectURL(file), progress: 0.03 };
       state.photos.push(entry);

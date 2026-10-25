@@ -457,7 +457,7 @@
       ${
         i.photosRequired || (i.photos || []).length
           ? `<div class="so-item__photos"><h3 class="adm-subtitle">${icon("image")} Customer ${i.photos.length === 1 ? "photo" : "photos"} to print</h3>
-          ${v.photosHtml(i, { actions: o.canDownloadPhotos ? (p) => `<button class="btn btn--dark btn--sm" type="button" data-photo="${esc(p.id)}" data-photo-action="download">${icon("upload")} Download original</button>` : null })}
+          ${v.photosHtml(i, { actions: o.canDownloadPhotos ? (p) => (p.printCopy ? `<button class="btn btn--dark btn--sm" type="button" data-photo="${esc(p.id)}" data-photo-action="download">${icon("upload")} Download JPG (print)</button> <button class="btn btn--outline btn--sm" type="button" data-photo="${esc(p.id)}" data-photo-action="original">Original ${esc(String(p.format).toUpperCase())}</button>` : `<button class="btn btn--dark btn--sm" type="button" data-photo="${esc(p.id)}" data-photo-action="download">${icon("upload")} Download original</button>`) : null })}
           ${(i.photos || []).some((p) => p.placement) ? `<p class="co-fine">${icon("frame")}<span>How the customer placed ${i.photos.length > 1 ? "each picture" : "the picture"} in the frame: ${(i.photos || []).map((p, n) => (p.placement ? `${i.photos.length > 1 ? `Photo ${n + 1}: ` : ""}centred on the point ${Math.round(p.placement.x * 100)}% from the left and ${Math.round(p.placement.y * 100)}% from the top of the photo, zoom ${p.placement.zoom}×` : "")).filter(Boolean).join("; ")}.</span></p>` : ""}
           ${o.canDownloadPhotos ? "" : `<p class="co-fine co-fine--warn">${icon("lock")}<span>This order is not active, so its photos can't be downloaded.</span></p>`}</div>`
           : `<p class="co-fine">${icon("check")}<span>Ready-made: no customer photo for this item.</span></p>`
@@ -517,7 +517,7 @@
     }
     renderOrder(main, order);
     // The customer's original file, through a link the backend signs for this shop and this order line only.
-    view().wirePhotos(main, async (uploadId) => (await http().post(api(`/orders/${encodeURIComponent(orderNumber)}/photos/${encodeURIComponent(uploadId)}/link`))).link);
+    view().wirePhotos(main, async (uploadId, { original } = {}) => (await http().post(api(`/orders/${encodeURIComponent(orderNumber)}/photos/${encodeURIComponent(uploadId)}/link`), { original })).link);
     // What the chosen step means, under the list.
     main.addEventListener("change", (e) => {
       const pick = e.target.closest("[data-step-select]");

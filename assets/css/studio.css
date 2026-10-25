@@ -101,6 +101,77 @@
   }
 }
 
+/* Phones and tablets (owner, 2026-10-25): the frame stays at the top of the screen while the controls scroll
+   under it, so every change is seen at once. Drag a photo to move it, pinch to zoom (ui/studio-page.js).
+   Laptops keep the frame beside the controls (the sticky column above). */
+.fs-touch-hint {
+  display: none;
+}
+
+/* Laptops: the part after the steps is just more of the right-hand column, as before */
+.fs-after {
+  display: contents;
+}
+
+@media (max-width: 959px) {
+  .fs-stagecol {
+    position: sticky;
+    top: var(--header-h);
+    z-index: 20;
+    margin-inline: -16px;
+    padding: 8px 16px 10px;
+    background: var(--bg);
+    box-shadow: 0 12px 18px -16px rgba(13, 27, 62, 0.4);
+  }
+
+  .fs-stage {
+    position: relative;
+    height: 36svh;
+    min-height: 220px;
+    padding: 10px;
+  }
+
+  .fs-stagecol .fs-stage__meta {
+    display: none;
+  }
+
+  .fs-preview .tpl-slot:has(img) {
+    touch-action: none; /* the fingers move and zoom the photo, not the page */
+  }
+
+  .fs-stage:has(.tpl-slot img) .fs-touch-hint {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    display: block;
+    padding: 5px 12px;
+    border-radius: var(--radius-pill);
+    background: rgba(13, 27, 62, 0.82);
+    color: #fff;
+    font-size: 0.74rem;
+    font-weight: 600;
+    white-space: nowrap;
+    pointer-events: none;
+    translate: -50% 0;
+  }
+
+  .fs-wall-row:not(:empty) {
+    margin-top: 12px;
+  }
+
+  /* after the steps, below the two columns (ui/studio-page.js placeAfterSteps) */
+  .fs-after {
+    display: grid;
+    gap: 14px;
+    margin-top: 14px;
+  }
+
+  /* A step that opens scrolls to just under the frame, not behind it */
+  .fs-sections [data-section] {
+    scroll-margin-top: calc(var(--header-h) + 36svh + 28px);
+  }
+}
+
 /* Bigger sizes look bigger on the wall (--size-scale); the frame never
    outgrows the stage (--frame-aspect keeps tall frames inside it). */
 .fs-preview {
@@ -112,7 +183,8 @@
 
 @media (max-width: 959px) {
   .fs-preview {
-    width: min(calc(var(--size-scale, 1) * 100%), calc(var(--size-scale, 1) * var(--frame-aspect, 0.8) * 52svh));
+    /* fits the 36svh tile that stays at the top */
+    width: min(calc(var(--size-scale, 1) * 100%), calc(var(--size-scale, 1) * var(--frame-aspect, 0.8) * (36svh - 28px)));
   }
 }
 

@@ -34,7 +34,12 @@
      detail = { id, state: "uploading" | "done" | "failed", percent, message }
    ========================================================================== */
 (function (FrameX) {
-  const TYPES = ["image/jpeg", "image/png", "image/webp"];
+  // HEIC / HEIF (iPhones, newer Android) and AVIF too (owner, 2026-10-25): the server keeps the original and makes a
+  // full-quality JPEG copy. The extensions help phones whose picker doesn't name these types.
+  const TYPES = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "image/avif"];
+  const ACCEPT = TYPES.concat([".heic", ".heif", ".avif"]).join(",");
+  const HEIF_TYPE = /^image\/(heic|heif)(-sequence)?$/i;
+  const HEIF_NAME = /\.(heic|heif|hif)$/i;
   const DEFAULT_MAX_MB = 50;
   const PREVIEW_EDGE = 1800; // px, longest side of the on-screen copy
   const DB = "framex-media";
@@ -148,18 +153,72 @@
       image.onload = () => resolve({ image, url });
       image.onerror = () => {
         URL.revokeObjectURL(url);
-        reject(new UploadError(`${TEXT().unsupported} That file couldn't be opened as a JPG, PNG or WebP photo.`, "UNSUPPORTED"));
+        reject(new UploadError(`${TEXT().unsupported} That file couldn't be opened as a JPG, PNG, WebP, HEIC or AVIF photo.`, "UNSUPPORTED"));
       };
       image.src = url;
     });
   }
 
+  /* A HEIC / HEIF photo in a browser that can't open one (most browsers except Safari): libheif (WebAssembly,
+     assets/vendor/libheif, loaded only when it is needed) reads it for the PREVIEW. The original still goes up as it is. */
+  async function looksHeif(file) {
+    if (HEIF_TYPE.test(file.type || "") || HEIF_NAME.test(file.name || "")) return true;
+    try {
+      const head = new Uint8Array(await file.slice(0, 40).arrayBuffer());
+      const text = String.fromCharCode.apply(null, head);
+      return text.slice(4, 8) === "ftyp" && /heic|heix|hevc|hevx|heim|heis|mif1|msf1/.test(text.slice(8));
+    } catch (e) {
+      return false;
+    }
+  }
+  let heifLib = null;
+  function loadHeif() {
+    heifLib =
+      heifLib ||
+      new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "assets/vendor/libheif/libheif-bundle.js";
+        s.onload = () => {
+          try {
+            resolve(typeof window.libheif === "function" ? window.libheif() : window.libheif);
+          } catch (e) {
+            reject(e);
+          }
+        };
+        s.onerror = () => reject(new Error("libheif didn't load"));
+        document.head.appendChild(s);
+      }).catch((e) => {
+        heifLib = null; // try again next time
+        throw e;
+      });
+    return heifLib;
+  }
+  async function decodeHeif(file) {
+    const lib = await loadHeif();
+    const images = new lib.HeifDecoder().decode(new Uint8Array(await file.arrayBuffer()));
+    if (!images || !images.length) throw new Error("no picture");
+    const picture = images[0];
+    const width = picture.get_width();
+    const height = picture.get_height();
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    const data = ctx.createImageData(width, height);
+    await new Promise((resolve, reject) => picture.display(data, (out) => (out ? resolve() : reject(new Error("decode")))));
+    ctx.putImageData(data, 0, 0);
+    images.forEach((i) => i && i.free && i.free());
+    return { image: canvas, url: null, width, height };
+  }
+
   /** The small on-screen copy. The original is not touched: this draws from it and nothing else. */
   function makePreview(image) {
-    const ratio = Math.min(1, PREVIEW_EDGE / Math.max(image.naturalWidth, image.naturalHeight));
+    const w = image.naturalWidth || image.width;
+    const h = image.naturalHeight || image.height;
+    const ratio = Math.min(1, PREVIEW_EDGE / Math.max(w, h));
     const canvas = document.createElement("canvas");
-    canvas.width = Math.max(1, Math.round(image.naturalWidth * ratio));
-    canvas.height = Math.max(1, Math.round(image.naturalHeight * ratio));
+    canvas.width = Math.max(1, Math.round(w * ratio));
+    canvas.height = Math.max(1, Math.round(h * ratio));
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#ffffff"; // a see-through PNG gets a clean background in the preview
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -178,22 +237,35 @@
     await limits();
     // Phones word a picture's type in several ways, or give none: only a file the browser says is something else is
     // turned away here (core/dom.js). The server reads the file itself and decides for real.
-    if (!FrameX.dom.looksLikePhoto(file)) throw new UploadError(`${TEXT().unsupported} That is a ${String(file.type).replace(/[^a-z0-9/+.-]/gi, "")} file. Use a JPG, PNG or WebP photo.`, "UNSUPPORTED");
+    if (!FrameX.dom.looksLikePhoto(file)) throw new UploadError(`${TEXT().unsupported} That is a ${String(file.type).replace(/[^a-z0-9/+.-]/gi, "")} file. Use a JPG, PNG, WebP, HEIC or AVIF photo.`, "UNSUPPORTED");
     if (!file.size) throw new UploadError("That file is empty. Please choose another photo.", "EMPTY");
     if (file.size > maxBytes) throw new UploadError(`That photo is larger than ${maxMb()} MB. Please choose a smaller file.`, "TOO_LARGE");
     onProgress(5);
-    const { image, url } = await decode(file);
+    let decoded;
+    try {
+      decoded = await decode(file);
+    } catch (error) {
+      // Not something this browser can open: a HEIC / HEIF photo is read with libheif for the preview
+      if (!(await looksHeif(file))) throw error;
+      onProgress(15);
+      try {
+        decoded = await decodeHeif(file);
+      } catch (e) {
+        throw new UploadError("That HEIC photo couldn't be opened on this device. Please try another one, or save it as a JPG first.", "UNSUPPORTED");
+      }
+    }
+    const { image, url } = decoded;
     let preview;
     try {
       onProgress(40);
       preview = await makePreview(image);
     } finally {
-      URL.revokeObjectURL(url);
+      if (url) URL.revokeObjectURL(url);
     }
     if (!preview) throw new UploadError("That photo couldn't be prepared. Please try another one.", "PREVIEW");
     onProgress(70);
     const id = newId();
-    const meta = { name: file.name || "photo", type: file.type || "", size: file.size, width: image.naturalWidth, height: image.naturalHeight, at: Date.now(), uploadId: null, userId: null, server: null };
+    const meta = { name: file.name || "photo", type: file.type || "", size: file.size, width: image.naturalWidth || image.width, height: image.naturalHeight || image.height, at: Date.now(), uploadId: null, userId: null, server: null };
     previews.set(id, preview);
     originals.set(id, file);
     await Promise.all([tx(PREVIEWS, "readwrite", (s) => s.put(preview, id)), tx(ORIGINALS, "readwrite", (s) => s.put(file, id)), saveMeta(id, meta)]);
@@ -503,7 +575,7 @@
     sizeText,
     UploadError,
     TYPES,
-    ACCEPT: TYPES.join(","),
+    ACCEPT,
     get MAX_MB() {
       return maxMb();
     },

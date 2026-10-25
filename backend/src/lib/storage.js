@@ -36,7 +36,7 @@ import { pipeline } from "node:stream/promises";
 import { AwsClient } from "aws4fetch";
 import { config } from "../config.js";
 
-const KEY = /^(private|public)\/[0-9a-f]{2}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(-thumb)?$/;
+const KEY = /^(private|public)\/[0-9a-f]{2}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(-thumb|-print)?$/;
 
 /** Thrown when a stream is longer than allowed. */
 export class TooLarge extends Error {}
@@ -222,7 +222,7 @@ export async function listFiles(area) {
         const key = xmlText((/<Key>([\s\S]*?)<\/Key>/.exec(item) || [])[1] || "");
         if (!KEY.test(key)) continue;
         const changed = Date.parse((/<LastModified>([\s\S]*?)<\/LastModified>/.exec(item) || [])[1] || "");
-        out.push({ id: key.split("/").pop().replace(/-thumb$/, ""), key, ageMs: Number.isFinite(changed) ? Date.now() - changed : 0 });
+        out.push({ id: key.split("/").pop().replace(/-(thumb|print)$/, ""), key, ageMs: Number.isFinite(changed) ? Date.now() - changed : 0 });
       }
       token = /<IsTruncated>\s*true\s*<\/IsTruncated>/i.test(xml) ? xmlText((/<NextContinuationToken>([\s\S]*?)<\/NextContinuationToken>/.exec(xml) || [])[1] || "") : "";
     } while (token);
@@ -246,7 +246,7 @@ export async function listFiles(area) {
       const key = `${area}/${folder}/${name}`;
       if (!KEY.test(key)) continue;
       try {
-        out.push({ id: name.replace(/-thumb$/, ""), key, ageMs: Date.now() - (await fs.promises.stat(path.join(base, folder, name))).mtimeMs });
+        out.push({ id: name.replace(/-(thumb|print)$/, ""), key, ageMs: Date.now() - (await fs.promises.stat(path.join(base, folder, name))).mtimeMs });
       } catch {
         /* gone already */
       }

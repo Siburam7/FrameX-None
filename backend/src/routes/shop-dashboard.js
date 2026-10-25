@@ -64,7 +64,7 @@ router.patch("/:shopCode/orders/:orderNumber/items/:itemId", requireOwnShop, asy
 });
 
 router.post("/:shopCode/orders/:orderNumber/photos/:uploadId/link", requireOwnShop, rateLimit("file-link", { windowMs: 60_000, max: 120 }), async (req, res) => {
-  res.json({ link: await shopOrders.photoLink(await shopOrders.shopContext(req.auth.user.shopId), req.params.orderNumber, req.params.uploadId, who(req)) });
+  res.json({ link: await shopOrders.photoLink(await shopOrders.shopContext(req.auth.user.shopId), req.params.orderNumber, req.params.uploadId, { ...who(req), original: Boolean(req.body && req.body.original) }) });
 });
 
 /* ---- Products ---- */

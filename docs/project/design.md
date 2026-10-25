@@ -142,6 +142,15 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
   `framex-support.png` (1080 px, white + orange on #111). Cut-outs made from the Care one: `framex-care-wordmark.png`
   (no background: the chat header) and `framex-care-wordmark-ink.png` (navy letters, no background; kept for later). A care login's admin menu shows `framex-care.png` as a round profile picture (56 px) next to their name (owner).
 
+## 5h. FrameX Studio on phones and tablets (owner, 2026-10-25)
+
+- Under 960 px the frame tile stays at the top of the screen (sticky under the header, 36svh, about 38% of a phone
+  screen) while the steps scroll under it, and only then: after the last step (View on My Wall, price, Add to cart)
+  it scrolls away with the page (owner; `#fs-after` is moved below the columns on phones); an opened step scrolls to just below it (scroll-margin). The line under the
+  frame is hidden there. On the frame: "☝ Drag to move · pinch to zoom" (navy pill). One finger moves the photo, two
+  fingers zoom it (1×–3×, like the Zoom slider). "View on My Wall" sits with the controls (#fs-wall-row). Laptop unchanged.
+- Design pictures approved by the owner: Desktop\FrameX-Studio-Phone-Design (01/02). 03 = the cart footer idea (waiting).
+
 ## 6. Content rules
 
 - Banner and offer text must be factual (no invented discounts). Coupon limits (maximum discount, uses per customer)

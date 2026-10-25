@@ -5,6 +5,43 @@
 
 ## Now
 
+- [x] 2026-10-25 **Review photos shown in medium quality** (owner: a customer may upload 10-15 high-quality photos, the
+      page must not get slow). The original is kept as uploaded; the server makes one medium copy (WebP, longest side
+      1600 px, quality 80, never made bigger) and `/media/review/:id` serves that copy. A 4000×3000 photo comes out at
+      1600×1200 and is far smaller. Reviews from before this have no copy and keep showing their original. Review photos now
+      also accept HEIC / AVIF. Migration 021 (`reviews.photo_view_key`) — **backup before deploying it**.
+      Backend 459 pass, 0 fail (the HEIC sample test skips without its file). Local, not pushed.
+- [x] 2026-10-25 **iPhone (HEIC) and AVIF photos accepted** (owner: "jo bhi photo do wo upload ho jaye", chose "Asli HEIC bhi
+      rakho + JPG copy"). Before: "Please upload a supported image format (JPG, PNG or WebP)". Now the original HEIC / HEIF / AVIF
+      is stored unchanged AND the server makes one full-quality JPEG copy (same pixels, quality 92) that links show and shops
+      print; Admin and shop order pages show "Download JPG (print)" + "Original HEIC". Chrome / Android preview through
+      libheif (WebAssembly, `assets/vendor/libheif`, LGPL-3.0; CSP now has 'wasm-unsafe-eval' on every page).
+      Migration 020 (`uploads.print_key`, `print_bytes`, formats heic / avif) — **backup before deploying it**.
+      Checks: backend 460/460 (incl. a real HEIC sample), browser on a phone screen (product page + Studio: preview, upload,
+      original + JPG copy stored, no CSP error). Local, not pushed.
+      Shop product pictures, artist pictures and review photos stay JPG / PNG / WebP (shown publicly; a clear "save it as a JPG"
+      message). Painting reference photos accept HEIC (they use /api/uploads) but their small tile may not show a
+      preview in Chrome — open, small.
+- [x] 2026-10-25 Home hero on phones: the 1-2-3 steps (Choose a frame / Add your photo / We deliver it) removed (owner) —
+      markup, hero.js and styles; "Start here" under the hero stays. Local, not pushed.
+- [x] 2026-10-25 Studio on phones: the frame stays on screen while editing (owner approved the design in
+      Desktop\FrameX-Studio-Phone-Design); pinch to zoom; "View on My Wall" with the controls — local, not pushed.
+      Checks 11/11 (phone, tablet, pinch, laptop unchanged); Studio 37, design 40, designs 14, frame 55.
+- [x] 2026-10-25 Cart drawer footer on phones (owner: build it): one line — Subtotal, "Details ⌃", Checkout (65 px
+      instead of ~200); "Details" opens the delivery line, shops note, Continue shopping. Laptop unchanged. Local, not pushed.
+- [ ] **Launch clean-up (on the owner's word only):** every product, frame, Home Decor design, template and sample shop today is
+      for experimenting (owner, 2026-10-24). On launch day remove all sample content and its images, add only real
+      listings; keep UI / brand / email images; backup first; then check every page for empty sections.
+- [x] 2026-10-24 Unused pictures removed (owner: "jitna image bekar hai … delet kar do"): of 835 files in assets/img + assets/video
+      only 14 were not used (checked against the code AND the catalogue the server builds, then every page opened: no 404).
+      Removed 6: reviews/avatar-1…4 (only in commented-out sample reviews), ui/chalk-arrow.png, ui/poster.webp. Kept on purpose:
+      occasions/2-4, 3-1, 3-3 (the gallery builds their names), ui/logo-framex-email*.png (emails already sent load them),
+      shops/cover-a…c (the live database may name them). Every video is used. Local, not pushed.
+- [x] 2026-10-24 Production backup by the owner (19:12, `framex-db-live-20261024-1912.fxdb`, locked; checked: no readable data inside) and
+      copied to the new pen drive BETA-BACKUP (E:) `FrameX Backup\Date - 24-10-2026` with the code bundle
+      `framex-code-2026-10-24-1223587.bundle` and the 19 Oct `.7z` — every file compared with its original (SHA-256): same.
+      New `backup-to-pendrive.bat`: the backup straight onto that pen drive (found by its name). Still on this PC:
+      unlocked `.dump` copies (Desktop, Documents, FrameX-Complete-Backup) — owner to decide about removing them.
 - [x] 2026-10-24 **FrameX Care live chat BUILT — local, not committed / deployed** (owner: "Design + jawab final, banana
       shuru karo", team hours 10am–8pm). Migration 019 (CARE role, live columns, SYSTEM messages); `/api/support/live*`,
       `/api/support/stream`, `/api/care/*`, `/api/admin/care-team`; care.html + ui/care-desk.js + css/care.css; Admin → Care team;

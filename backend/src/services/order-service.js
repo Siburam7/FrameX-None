@@ -95,7 +95,7 @@ export function photosByItem(rows) {
 
 export const PHOTOS_SQL = `
   SELECT p.order_item_id, p.order_id, p.upload_id, p.slot, p.position, p.placement,
-         u.original_name, u.format, u.mime_type, u.bytes, u.width, u.height, u.orientation, u.status AS upload_status, u.created_at AS uploaded_at
+         u.original_name, u.format, u.mime_type, u.bytes, u.width, u.height, u.orientation, u.print_key, u.status AS upload_status, u.created_at AS uploaded_at
     FROM order_item_photos p JOIN uploads u ON u.id = p.upload_id`;
 
 /** What an admin may do next with an order. */
@@ -226,11 +226,11 @@ export async function ownPhotoLink(userId, orderNumber, uploadId, { download = f
 }
 
 /** FrameX staff: a link to any photo of any order. Every link that is made is written to the audit log. */
-export async function adminPhotoLink(orderNumber, uploadId, { actor, ip = null }) {
+export async function adminPhotoLink(orderNumber, uploadId, { actor, ip = null, original = false }) {
   const order = await adminOrderRow(orderNumber);
   const row = await orderPhotoRow(order.id, uploadId);
   await audit(db, { actor, action: ACTIONS.ORDER_PHOTO_ACCESSED, targetType: "order", targetId: order.order_number, metadata: { uploadId: row.id, slot: row.slot, item: row.item_name }, ip });
-  return linkTo(row, { download: true, name: photoFileName(order.order_number, row) });
+  return linkTo(row, { download: true, name: photoFileName(order.order_number, row), original });
 }
 
 /* ---------------------------------------------------------------- Reading */

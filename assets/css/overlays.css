@@ -232,6 +232,11 @@
   font-size: var(--text-xs);
 }
 
+/* "Details" is only for the one-line footer on phones (mobile.css) */
+.drawer__more {
+  display: none;
+}
+
 /* Toast ------------------------------------------------------------------------ */
 /* ---------------------------------------------------------------- FrameX Care chat (owner, 2026-10-23 / 10-24) */
 .hc-btn {

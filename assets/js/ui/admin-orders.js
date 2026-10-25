@@ -270,7 +270,7 @@
       ${o.needsPhotos ? `<p class="co-note">${icon("alert")}<span>This order was placed before photos were uploaded with an order. The customer was asked to send the photos separately, quoting ${esc(o.orderNumber)}.</span></p>` : ""}
       <div class="ao-grid">
         <div>
-          <section class="co-card"><h2 class="co-card__title">${icon("package")} Items</h2>${v.itemsHtml(o, { progress: true, photoActions: (p) => `<button class="co-link" type="button" data-photo="${esc(p.id)}" data-photo-action="download">Download original</button><button class="co-link" type="button" data-photo="${esc(p.id)}" data-photo-action="view">View</button>` })}</section>
+          <section class="co-card"><h2 class="co-card__title">${icon("package")} Items</h2>${v.itemsHtml(o, { progress: true, photoActions: (p) => (p.printCopy ? `<button class="co-link" type="button" data-photo="${esc(p.id)}" data-photo-action="download">Download JPG (print)</button><button class="co-link" type="button" data-photo="${esc(p.id)}" data-photo-action="original">Original ${esc(String(p.format).toUpperCase())}</button>` : `<button class="co-link" type="button" data-photo="${esc(p.id)}" data-photo-action="download">Download original</button>`) + `<button class="co-link" type="button" data-photo="${esc(p.id)}" data-photo-action="view">View</button>` })}</section>
           <section class="co-card"><h2 class="co-card__title">${icon("card")} Payment attempts</h2>
             <div class="sd-table-wrap"><table class="sd-table"><thead><tr><th scope="col">#</th><th scope="col">Status</th><th scope="col">Method</th><th scope="col">Amount</th><th scope="col">Reference</th><th scope="col">When</th></tr></thead><tbody>
               ${o.payments
@@ -499,7 +499,7 @@
     const { order } = await http().get("/admin/orders/" + encodeURIComponent(orderNumber));
     render(main, order, { head });
     // "Download original": the backend signs a short-lived link to that photo of this order (and logs it).
-    view().wirePhotos(main, async (uploadId, { download }) => (await http().post(`/admin/orders/${encodeURIComponent(orderNumber)}/photos/${encodeURIComponent(uploadId)}/link`, { download })).link);
+    view().wirePhotos(main, async (uploadId, { download, original }) => (await http().post(`/admin/orders/${encodeURIComponent(orderNumber)}/photos/${encodeURIComponent(uploadId)}/link`, { download, original })).link);
   }
 
   FrameX.adminOrders = { list, detail };

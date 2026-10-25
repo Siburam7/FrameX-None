@@ -199,7 +199,7 @@
       <section class="was-card" aria-labelledby="was-h-photo">
         <h2 id="was-h-photo">Your photo <span data-photo-meta></span></h2>
         <div class="was-upload">
-          <input class="visually-hidden" type="file" id="was-file" accept="image/jpeg,image/png,image/webp">
+          <input class="visually-hidden" type="file" id="was-file" accept="${FrameX.uploadService.ACCEPT}">
           <div class="was-row" style="margin-top:0">
             <label class="btn btn--primary btn--sm" for="was-file" data-upload-label>${icon("upload")} Choose a photo</label>
             <button class="btn btn--outline btn--sm" type="button" data-remove hidden>${icon("trash")} Remove</button>
@@ -208,7 +208,7 @@
           <p class="was-error" role="alert" hidden></p>
           <p class="was-status" data-upload-status role="status" hidden></p>
           <p class="was-upload__quality">${icon("check")}<span>${esc(FrameX.uploadService.qualityText)}</span></p>
-          <p class="was-upload__meta">JPG, PNG or WebP, up to ${FrameX.uploadService.MAX_MB} MB. 4K and other high-resolution photos are welcome.</p>
+          <p class="was-upload__meta">JPG, PNG, WebP or HEIC (iPhone), up to ${FrameX.uploadService.MAX_MB} MB. 4K and other high-resolution photos are welcome.</p>
         </div>
       </section>
       <section class="was-card" aria-labelledby="was-h-panels">

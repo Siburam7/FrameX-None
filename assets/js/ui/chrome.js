@@ -211,11 +211,12 @@
       </div>
       <div class="drawer__body" id="cart-body"></div>
       <div class="drawer__foot" id="cart-foot" hidden>
-        <div class="summary-row"><span>Subtotal</span><strong id="cart-subtotal"></strong></div>
-        <div class="summary-row"><small>Delivery and taxes</small><small>Calculated at checkout</small></div>
-        <p class="drawer__note" id="cart-shop-note" hidden>Items from different shops are paid together in one order. Each shop makes and sends its own items, so they may arrive separately.</p>
+        <div class="summary-row drawer__sub"><span>Subtotal</span><strong id="cart-subtotal"></strong></div>
+        <button class="drawer__more" type="button" aria-expanded="false" data-foot-more><span>Details</span>${icon("chev-up")}</button>
+        <div class="summary-row drawer__extra"><small>Delivery and taxes</small><small>Calculated at checkout</small></div>
+        <p class="drawer__note drawer__extra" id="cart-shop-note" hidden>Items from different shops are paid together in one order. Each shop makes and sends its own items, so they may arrive separately.</p>
         <button class="btn btn--primary btn--block" type="button" id="cart-checkout">Checkout</button>
-        <button class="btn btn--outline btn--block" type="button" id="cart-continue">Continue shopping</button>
+        <button class="btn btn--outline btn--block drawer__extra" type="button" id="cart-continue">Continue shopping</button>
       </div>
     </aside>
     <div class="toast-region" id="toast-region" role="status" aria-live="polite"></div>`;

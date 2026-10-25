@@ -6,15 +6,18 @@
      JPEG  the SOF segment (and the EXIF orientation, when there is one)
      PNG   the IHDR chunk
      WebP  the VP8 / VP8L / VP8X chunk
+     HEIC / HEIF / AVIF  the "ftyp" brands and the largest "ispe" box (lib/heif.js);
+           these come back with needsCopy: the upload makes a JPEG copy of them
    Only the header is read (a few kilobytes even for a 50 MB photo). The image
-   is never decoded, resized or re-saved.
+   is never decoded, resized or re-saved here.
 
      await inspectImage(path) -> { format, mime, width, height, orientation } | null
    null = not one of the formats FrameX accepts.
    ========================================================================== */
 import fs from "node:fs";
+import { detectHeif } from "./heif.js";
 
-const MIME = { jpeg: "image/jpeg", png: "image/png", webp: "image/webp" };
+const MIME = { jpeg: "image/jpeg", png: "image/png", webp: "image/webp", heic: "image/heic", avif: "image/avif" };
 
 async function readAt(handle, position, length) {
   const buffer = Buffer.alloc(length);
@@ -112,6 +115,10 @@ export async function inspectImage(filePath) {
     if (start[0] === 0xff && start[1] === 0xd8 && start[2] === 0xff) found = await jpeg(handle, size);
     else if (start.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) found = await png(handle);
     else if (start.toString("latin1", 0, 4) === "RIFF" && start.toString("latin1", 8, 12) === "WEBP") found = await webp(handle);
+    else if (start.toString("latin1", 4, 8) === "ftyp") {
+      const heif = detectHeif(await readAt(handle, 0, Math.min(size, 512 * 1024)));
+      if (heif) found = { ...heif, orientation: null, needsCopy: true };
+    }
     if (!found || !(found.width > 0) || !(found.height > 0)) return null;
     return { ...found, mime: MIME[found.format] };
   } catch {

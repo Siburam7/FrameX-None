@@ -360,9 +360,6 @@
     };
   }
 
-  // Phones: how it works, in three small boxes under the frames slide's buttons (hidden on wider screens)
-  const STEPS = `<ol class="hero-steps" aria-label="How it works"><li><b>1</b>Choose a frame</li><li><b>2</b>Add your photo</li><li><b>3</b>We deliver it</li></ol>`;
-
   const slideHtml = (s, i, total) => `<div class="home-hero__slide page-hero__grid" role="group" aria-roledescription="slide" aria-label="${esc(s.label)}, ${i + 1} of ${total}" data-slide="${esc(s.id)}">
       <div class="home-hero__copy">
         <p class="eyebrow">${esc(s.eyebrow)}</p>
@@ -371,7 +368,6 @@
         <div class="page-hero__actions">${s.actions
           .map((a, n) => `<a class="btn ${n === 0 ? "btn--primary" : "btn--light"}" href="${esc(a.href)}">${esc(a.label)}${n === 0 ? " " + icon("arrow-right", "icon--nudge") : ""}</a>`)
           .join("")}</div>
-        ${s.id === "frames" ? STEPS : ""}
       </div>
       <div class="page-hero__wall">${s.pieces.map(piece).join("")}</div>
     </div>`;

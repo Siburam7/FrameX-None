@@ -371,7 +371,7 @@
     const rows = [
       [need.count === 1 && counts.length < 2 ? "Made with your own photo" : "Made with your own photos", `You add ${how} on this page before you order. The pictures shown here are samples: your order is made from the ${need.count === 1 && counts.length < 2 ? "photo" : "photos"} you upload.`],
       ["Printed as you provide it", text.quality],
-      ["High-resolution photos welcome", "JPG, PNG or WebP. 4K and camera originals are accepted, and the file is kept exactly as you upload it: it is never resized or re-compressed."],
+      ["High-resolution photos welcome", "JPG, PNG, WebP or HEIC (iPhone). 4K and camera originals are accepted, and the file is kept exactly as you upload it: it is never resized or re-compressed. A HEIC photo is also kept as a full-quality JPG copy, which is what is printed."],
       ["Kept private", "Your photo is used only to make your order. Only you, FrameX and the shop that makes your order can open it."],
     ];
     return section("personalization", "Personalization", `<ul class="pz-list pz-list--wide">${rows.map(([title, body]) => `<li>${icon("check")}<div><strong>${esc(title)}</strong><span>${esc(body)}</span></div></li>`).join("")}</ul>`, { lead: "This product is personalised with your own photo." });

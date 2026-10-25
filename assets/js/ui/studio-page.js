@@ -141,7 +141,7 @@
       body: () =>
         `<div id="fs-uploader"></div>
         <p class="fs-quality">${icon("check")}<span>${esc(FrameX.uploadService.qualityText)}</span></p>
-        <p class="fs-hint">JPG, PNG or WebP, up to ${FrameX.uploadService.MAX_MB} MB${ctx.caps.photoSlots.length > 1 ? " each" : ""}. 4K and other high-resolution photos are welcome. FrameX prints from your original file: it is uploaded exactly as it is and kept private. What you see here is a preview copy.</p>`,
+        <p class="fs-hint">JPG, PNG, WebP or HEIC (iPhone), up to ${FrameX.uploadService.MAX_MB} MB${ctx.caps.photoSlots.length > 1 ? " each" : ""}. 4K and other high-resolution photos are welcome. FrameX prints from your original file: it is uploaded exactly as it is and kept private. What you see here is a preview copy.</p>`,
     },
     adjust: {
       title: () => "Position & crop",
@@ -602,9 +602,32 @@
   function wirePreviewDrag() {
     const stage = $("#fs-preview");
     let drag = null;
+    // Two fingers on a photo zoom it (1× to 3×, like the Zoom slider); one finger moves it.
+    const fingers = new Map();
+    let pinch = null;
+    // Keeps the finger's moves coming to the photo; a pointer the browser no longer knows is simply not captured.
+    const capture = (el, id) => {
+      try {
+        el.setPointerCapture(id);
+      } catch (error) {
+        /* not an active pointer */
+      }
+    };
+    const spread = () => {
+      const [a, b] = [...fingers.values()];
+      return Math.hypot(a.x - b.x, a.y - b.y) || 1;
+    };
     stage.addEventListener("pointerdown", (e) => {
       const slotEl = e.target.closest(".tpl-slot");
       if (!slotEl || !$("img", slotEl)) return;
+      fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (fingers.size === 2 && drag) {
+        pinch = { slot: drag.slot, from: spread(), zoom: cfg.crop[drag.slot].zoom };
+        capture(slotEl, e.pointerId);
+        e.preventDefault();
+        return;
+      }
+      if (fingers.size > 1) return;
       const slot = slotEl.dataset.slotId;
       activeSlot = slot;
       const crop = cropOf(slot);
@@ -619,10 +642,17 @@
         h: rect.height,
         moved: false,
       };
-      slotEl.setPointerCapture(e.pointerId);
+      capture(slotEl, e.pointerId);
       e.preventDefault();
     });
     stage.addEventListener("pointermove", (e) => {
+      if (fingers.has(e.pointerId)) fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && fingers.size >= 2) {
+        const crop = cfg.crop[pinch.slot];
+        crop.zoom = Math.round(Math.min(3, Math.max(1, (pinch.zoom * spread()) / pinch.from)) * 20) / 20;
+        liveCrop(pinch.slot);
+        return;
+      }
       if (!drag) return;
       const crop = cfg.crop[drag.slot];
       const k = (100 / Math.max(1, crop.zoom)) * 1.4;
@@ -639,8 +669,15 @@
       drag.moved = true;
       liveCrop(drag.slot);
     });
-    const end = () => {
-      if (!drag) return;
+    const end = (e) => {
+      fingers.delete(e.pointerId);
+      if (pinch && fingers.size < 2) {
+        // the finger left on the photo carries on moving it from where it is now
+        pinch = null;
+        const left = [...fingers.values()][0];
+        if (drag && left) Object.assign(drag, { x: left.x, y: left.y });
+      }
+      if (!drag || fingers.size) return;
       drag = null;
       commit({ preview: false });
     };
@@ -1077,6 +1114,7 @@
         <div class="fs-stagecol">
           <div class="fs-stage">
             <div class="fs-preview" id="fs-preview" aria-live="off"></div>
+            <span class="fs-touch-hint" aria-hidden="true">☝ Drag to move · pinch to zoom</span>
           </div>
           <p class="fs-stage__meta"><span id="fs-preview-size"></span><span>Drag a photo to reposition it. Colours and textures are approximate.</span></p>
         </div>
@@ -1086,6 +1124,8 @@
             <ul class="fs-config__list" id="fs-config"></ul>
           </div>
           <div class="fs-sections" id="fs-sections"></div>
+          <div class="fs-after" id="fs-after">
+          <div class="fs-wall-row" id="fs-wall-row"></div>
           <div class="fs-price">
             <h2 class="fs-price__title">Price</h2>
             <dl class="fs-price__lines" id="fs-price-lines"></dl>
@@ -1101,6 +1141,7 @@
               <button class="btn btn--outline" type="button" data-save>Save design</button>
               <button class="btn btn--outline fs-reset" type="button" data-reset>Reset customization</button>
             </div>
+          </div>
           </div>
         </div>
       </div>
@@ -1191,12 +1232,27 @@
       $(".fs-stage").scrollIntoView({ behavior: "smooth", block: "center" }),
     );
     mountWallButton(root);
+    placeAfterSteps(root);
   }
 
   /* "View on My Wall": this design, exactly as it is now (frame, colour, size, border, mat, photos,
      text), on the customer's own wall through their camera. The Live Demo is given a copy: it
      can't change the design, and the customer comes back to this page as they left it.
      A listed product can have it switched off (productModel.liveDemoSupport). */
+  /* Phones (owner, 2026-10-25): the frame stays at the top only while the editing steps go by. What comes after the
+     steps (View on My Wall, the price, Add to cart …) is moved after the two columns, so the sticky frame stops at the
+     end of the steps and then scrolls away with the page. On a laptop it goes back into the right-hand column. */
+  function placeAfterSteps(root) {
+    const after = $("#fs-after", root);
+    const layout = $(".fs-layout", root);
+    const panel = $(".fs-panel", root);
+    if (!after || !layout || !panel) return;
+    const phone = window.matchMedia("(max-width: 959px)");
+    const place = () => (phone.matches ? layout.after(after) : panel.appendChild(after));
+    place();
+    phone.addEventListener("change", place);
+  }
+
   function mountWallButton(root) {
     if (!FrameX.liveDemo) return;
     if (ctx.product && !FrameX.productModel.liveDemoSupport(ctx.product).ok) return;
@@ -1206,7 +1262,8 @@
     const context = { productId: ctx.product ? ctx.product.id : null, templateId: ctx.template ? ctx.template.id : null, page: "studio" };
     // On a wide screen the button sits in a corner of the preview; on a phone it is a full-width button under it.
     FrameX.liveDemo.mount(stage, { getSpec, context, variant: "corner" }).el.classList.add("ld-cta--wide-only");
-    FrameX.liveDemo.mount($(".fs-stagecol", root), { getSpec, context, variant: "row" }).el.classList.add("ld-cta--phone-only");
+    // Phones: with the controls, so the frame that stays at the top of the screen keeps its room (owner, 2026-10-25)
+    FrameX.liveDemo.mount($("#fs-wall-row", root), { getSpec, context, variant: "row" }).el.classList.add("ld-cta--phone-only");
   }
 
   FrameX.studioPage = { init };

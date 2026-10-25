@@ -191,7 +191,7 @@
       }
       <p class="pp-photos__error" data-photos-error role="alert" hidden>${icon("alert")}<span></span></p>
       <p class="pp-photos__quality">${icon("check")}<span>${esc(M().PHOTO_TEXT.quality)}</span></p>
-      <p class="pp-photos__formats" data-photos-formats>JPG, PNG or WebP. 4K and other high-resolution photos are welcome.</p>
+      <p class="pp-photos__formats" data-photos-formats>JPG, PNG, WebP or HEIC (iPhone). 4K and other high-resolution photos are welcome.</p>
     </section>`;
   }
 
@@ -423,7 +423,7 @@
           onChange();
           svc.limits().then(() => {
             const el = $("[data-photos-formats]", box);
-            if (el) el.textContent = `JPG, PNG or WebP, up to ${svc.MAX_MB} MB each. 4K and other high-resolution photos are welcome.`;
+            if (el) el.textContent = `JPG, PNG, WebP or HEIC (iPhone), up to ${svc.MAX_MB} MB each. 4K and other high-resolution photos are welcome.`;
           });
         })().catch((error) => console.error("Saved photos couldn't be restored", error));
 

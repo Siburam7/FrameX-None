@@ -20,14 +20,16 @@ import { makeFileToken, readFileToken } from "../lib/file-links.js";
 import { inspectImage } from "../lib/image-info.js";
 import * as storage from "../lib/storage.js";
 import { newId } from "../lib/tokens.js";
+import { MAX_PIXELS, toJpeg } from "../lib/heif.js";
 import { isUuid } from "../lib/validate.js";
 
-const EXT = { jpeg: "jpg", png: "png", webp: "webp" };
+const EXT = { jpeg: "jpg", png: "png", webp: "webp" , heic: "heic", avif: "avif" };
 const megabytes = (bytes) => Math.round(bytes / (1024 * 1024));
 
 /* The messages a customer sees. Technical details stay in the server log. */
 export const MESSAGES = {
-  unsupported: "Please upload a supported image format (JPG, PNG or WebP).",
+  unsupported: "Please upload a supported image format (JPG, PNG, WebP, HEIC or AVIF).",
+  unreadable: "That photo couldn't be opened. Please try another one, or save it as a JPG first.",
   failed: "We couldn't upload your image. Please try again.",
   tooLarge: () => `That photo is larger than ${megabytes(config.uploads.maxBytes)} MB. Please choose a smaller file.`,
   tooMany: "You have a lot of photos waiting that aren't in an order yet. Remove some items from your cart, then try again."
@@ -67,7 +69,9 @@ export const publicUpload = (row) => ({
   uploadedAt: row.created_at,
   inOrder: row.status === "ATTACHED",
   // The file is gone (removed after the order was finished, or by its owner): the record stays, the photo can't be opened
-  removed: row.status === "DELETED"
+  removed: row.status === "DELETED",
+  // HEIC / AVIF: a full-quality JPEG copy is shown and printed; the original can be downloaded too
+  printCopy: Boolean(row.print_key)
 });
 
 /**
@@ -93,26 +97,46 @@ export async function receiveUpload(user, req) {
     if (!received.bytes || (Number.isFinite(declared) && declared !== received.bytes)) throw new HttpError(400, "UPLOAD_FAILED", MESSAGES.failed);
     const info = await inspectImage(received.tempPath);
     if (!info) throw new HttpError(415, "UPLOAD_UNSUPPORTED", MESSAGES.unsupported);
+    // HEIC / AVIF (owner, 2026-10-25): the original is kept as it is, plus a full-quality JPEG copy to show and print
+    let copy = null;
+    if (info.needsCopy) {
+      if (info.width * info.height > MAX_PIXELS) throw new HttpError(422, "UPLOAD_TOO_LARGE", "That photo has too many pixels to be prepared. Please choose a smaller one.");
+      try {
+        copy = await toJpeg(received.tempPath, info.format);
+      } catch (error) {
+        console.error(`[uploads] a ${info.format} photo couldn't be converted: ${error.message}`);
+        throw new HttpError(415, "UPLOAD_UNREADABLE", MESSAGES.unreadable);
+      }
+      Object.assign(info, { width: copy.width, height: copy.height });
+    }
     if (Math.max(info.width, info.height) > config.uploads.maxSide) throw new HttpError(422, "UPLOAD_TOO_LARGE", `That photo is larger than ${config.uploads.maxSide} pixels on one side. Please choose a smaller one.`);
 
     const id = newId();
     const key = storage.newKey("private", id);
+    const printKey = copy ? storage.newKey("private", id, "-print") : null;
     await storage.keep(received.tempPath, key);
     try {
+      if (copy) await storage.put(printKey, copy.jpeg);
       const { rows } = await db.query(
-        `INSERT INTO uploads (id, user_id, storage_key, original_name, mime_type, format, bytes, width, height, orientation, sha256)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
-        [id, user.id, key, cleanFileName(req.headers["x-file-name"], info.format), info.mime, info.format, received.bytes, info.width, info.height, info.orientation, received.sha256]
+        `INSERT INTO uploads (id, user_id, storage_key, original_name, mime_type, format, bytes, width, height, orientation, sha256, print_key, print_bytes)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+        [id, user.id, key, cleanFileName(req.headers["x-file-name"], info.format), info.mime, info.format, received.bytes, info.width, info.height, info.orientation, received.sha256, printKey, copy ? copy.jpeg.length : null]
       );
       return rows[0];
     } catch (error) {
-      await storage.remove(key);
+      await removeFiles({ storage_key: key, print_key: printKey });
       throw error;
     }
   } catch (error) {
     await storage.discard(received.tempPath);
     throw error;
   }
+}
+
+/** The stored file and its JPEG copy (when it has one). */
+export async function removeFiles(row) {
+  await storage.remove(row.storage_key);
+  if (row.print_key) await storage.remove(row.print_key);
 }
 
 /** The caller's own photo, or 404 (someone else's id looks exactly like one that doesn't exist). */
@@ -141,7 +165,7 @@ export async function deleteOwnUpload(userId, id) {
   const inDesign = (await db.query("SELECT 1 FROM saved_designs d, jsonb_each_text(d.photos) dp WHERE d.user_id = $1 AND dp.value = $2 LIMIT 1", [userId, id])).rows.length;
   if (inDesign) throw new HttpError(409, "UPLOAD_IN_DESIGN", "This photo is used by one of your saved designs, so it is kept with that design.");
   await db.query("UPDATE uploads SET status = 'DELETED', deleted_at = now() WHERE id = $1", [id]);
-  await storage.remove(row.storage_key);
+  await removeFiles(row);
 }
 
 /**
@@ -160,7 +184,7 @@ export async function sweepFinishedOrderPhotos() {
      OR (r.status = 'CANCELLED' AND r.cancelled_at < now() - ($1 || ' days')::interval)
      OR (r.status = 'DECLINED' AND r.updated_at < now() - ($1 || ' days')::interval)`;
   const { rows } = await db.query(
-    `SELECT u.id, u.storage_key FROM uploads u
+    `SELECT u.id, u.storage_key, u.print_key FROM uploads u
       WHERE u.status = 'ATTACHED'
         AND (EXISTS (SELECT 1 FROM order_item_photos p WHERE p.upload_id = u.id) OR EXISTS (SELECT 1 FROM painting_request_photos rp WHERE rp.upload_id = u.id))
         AND NOT EXISTS (SELECT 1 FROM order_item_photos p JOIN orders o ON o.id = p.order_id WHERE p.upload_id = u.id AND NOT (${ORDER_DONE}))
@@ -172,7 +196,7 @@ export async function sweepFinishedOrderPhotos() {
   );
   for (const row of rows) {
     await db.query("UPDATE uploads SET status = 'DELETED', deleted_at = now() WHERE id = $1 AND status = 'ATTACHED'", [row.id]);
-    await storage.remove(row.storage_key);
+    await removeFiles(row);
   }
   return rows.length;
 }
@@ -188,8 +212,8 @@ export async function attachUploads(q, ids) {
 /* ---------------------------------------------------------------- Links + sending */
 
 /** A short-lived link to an upload. The caller has already checked that the asker may see it. */
-export function linkTo(row, { download = true, name = "" } = {}) {
-  const { token, expiresAt } = makeFileToken(row.id, { download });
+export function linkTo(row, { download = true, name = "", original = false } = {}) {
+  const { token, expiresAt } = makeFileToken(row.id, { download, original: original && Boolean(row.print_key) });
   // A name chosen for the asker (e.g. "FX-100012-item1-photo1-<file name>") travels with the link.
   return { path: `/files/${token}${name ? `?name=${encodeURIComponent(name)}` : ""}`, expiresAt, name: name || row.original_name, download };
 }
@@ -199,12 +223,16 @@ export async function sendLinkedFile(req, res) {
   const link = readFileToken(req.params.token);
   if (!link) throw errors.notFound("This link has expired. Open the order again to get a new one.", "FILE_LINK_EXPIRED");
   const row = (await db.query("SELECT * FROM uploads WHERE id = $1 AND status <> 'DELETED'", [link.uploadId])).rows[0];
-  if (!row || !(await storage.exists(row.storage_key))) throw notFound();
-  const asked = typeof req.query.name === "string" ? cleanFileName(req.query.name, row.format) : row.original_name;
+  // A HEIC / AVIF photo: its JPEG copy, unless the original itself was asked for
+  const copy = Boolean(row && row.print_key) && !link.original;
+  const key = row ? (copy ? row.print_key : row.storage_key) : null;
+  if (!row || !(await storage.exists(key))) throw notFound();
+  let asked = typeof req.query.name === "string" ? cleanFileName(req.query.name, row.format) : row.original_name;
+  if (copy) asked = asked.replace(/\.[a-z0-9]{2,5}$/i, "") + ".jpg";
   const ascii = asked.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
   res.set({
-    "Content-Type": row.mime_type,
-    "Content-Length": String(row.bytes),
+    "Content-Type": copy ? "image/jpeg" : row.mime_type,
+    "Content-Length": String(copy ? row.print_bytes : row.bytes),
     "Content-Disposition": `${link.download ? "attachment" : "inline"}; filename="${ascii}"; filename*=UTF-8''${encodeURIComponent(asked)}`,
     "Cache-Control": "private, no-store",
     // The website (possibly on another address) may show the customer's own photo.
@@ -213,7 +241,7 @@ export async function sendLinkedFile(req, res) {
     "Content-Security-Policy": "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox"
   });
   await new Promise((resolve, reject) => {
-    const stream = storage.open(row.storage_key);
+    const stream = storage.open(key);
     stream.on("error", reject);
     res.on("close", resolve);
     stream.pipe(res);
@@ -225,7 +253,7 @@ export async function sendLinkedFile(req, res) {
 /** Photos that never reached an order and are no longer in any cart: removed after UPLOAD_UNUSED_DAYS. */
 export async function sweepUnusedUploads() {
   const { rows } = await db.query(
-    `SELECT u.id, u.storage_key FROM uploads u
+    `SELECT u.id, u.storage_key, u.print_key FROM uploads u
       WHERE u.status = 'UPLOADED' AND u.created_at < now() - ($1 || ' days')::interval
         AND NOT EXISTS (SELECT 1 FROM cart_items i WHERE i.photos @> jsonb_build_array(jsonb_build_object('uploadId', u.id::text)))
         AND NOT EXISTS (SELECT 1 FROM order_item_photos p WHERE p.upload_id = u.id)
@@ -235,7 +263,7 @@ export async function sweepUnusedUploads() {
   );
   for (const row of rows) {
     await db.query("UPDATE uploads SET status = 'DELETED', deleted_at = now() WHERE id = $1 AND status = 'UPLOADED'", [row.id]);
-    await storage.remove(row.storage_key);
+    await removeFiles(row);
   }
   await storage.sweepTemp();
   // Files whose record is gone (an account that was deleted): nothing points at them any more.

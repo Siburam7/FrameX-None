@@ -429,7 +429,8 @@ export async function receiveMedia(artist, user, req) {
   }
   try {
     const info = await inspectImage(received.tempPath);
-    if (!info || !received.bytes) throw new HttpError(415, "MEDIA_UNSUPPORTED", "Please upload a JPG, PNG or WebP picture.");
+    // HEIC / AVIF only for customer photos (they get a JPEG copy): a picture shown on the site must open in every browser
+    if (!info || info.needsCopy || !received.bytes) throw new HttpError(415, "MEDIA_UNSUPPORTED", "Please upload a JPG, PNG or WebP picture. (An iPhone HEIC photo: save it as a JPG first.)");
     const id = newId();
     const key = storage.newKey("public", id);
     await storage.keep(received.tempPath, key);

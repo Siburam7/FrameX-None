@@ -46,7 +46,7 @@ staffOrders.get("/:orderNumber", async (req, res) => res.json({ order: await ord
 
 // Fulfilment by FrameX: a short-lived link to the customer's ORIGINAL photo of an order line (logged).
 staffOrders.post("/:orderNumber/photos/:uploadId/link", async (req, res) => {
-  res.json({ link: await orders.adminPhotoLink(req.params.orderNumber, req.params.uploadId, { actor: req.auth.user, ip: req.ip }) });
+  res.json({ link: await orders.adminPhotoLink(req.params.orderNumber, req.params.uploadId, { actor: req.auth.user, ip: req.ip, original: Boolean(req.body && req.body.original) }) });
 });
 
 staffOrders.post("/:orderNumber/status", async (req, res) => {

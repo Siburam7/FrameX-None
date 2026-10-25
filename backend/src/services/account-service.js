@@ -103,11 +103,11 @@ export async function deleteAccount(actor, { password, confirm } = {}, { ip = nu
   const files = [];
   const kept = await db.tx(async (q) => {
     // Photos: every file goes (after the commit); the records say DELETED
-    const uploads = (await q.query("SELECT id, storage_key FROM uploads WHERE user_id = $1 AND status <> 'DELETED'", [user.id])).rows;
-    files.push(...uploads.map((u) => u.storage_key));
+    const uploads = (await q.query("SELECT id, storage_key, print_key FROM uploads WHERE user_id = $1 AND status <> 'DELETED'", [user.id])).rows;
+    files.push(...uploads.map((u) => u.storage_key), ...uploads.filter((u) => u.print_key).map((u) => u.print_key));
     await q.query("UPDATE uploads SET status = 'DELETED', deleted_at = now() WHERE user_id = $1 AND status <> 'DELETED'", [user.id]);
-    const reviewPhotos = (await q.query("SELECT photo_key FROM reviews WHERE user_id = $1 AND photo_key IS NOT NULL", [user.id])).rows;
-    files.push(...reviewPhotos.map((r) => r.photo_key));
+    const reviewPhotos = (await q.query("SELECT photo_key, photo_view_key FROM reviews WHERE user_id = $1 AND photo_key IS NOT NULL", [user.id])).rows;
+    files.push(...reviewPhotos.map((r) => r.photo_key), ...reviewPhotos.filter((r) => r.photo_view_key).map((r) => r.photo_view_key));
 
     // Orders and custom paintings: kept for tax, without the person (the state stays: place of supply)
     const orders = await q.query(
@@ -126,7 +126,7 @@ export async function deleteAccount(actor, { password, confirm } = {}, { ip = nu
     );
 
     // Reviews stay without the name and the photo; messages to FrameX without the contact details
-    await q.query("UPDATE reviews SET author_name = $2, photo_key = NULL, photo_mime = NULL, updated_at = now() WHERE user_id = $1", [user.id, REVIEW_NAME]);
+    await q.query("UPDATE reviews SET author_name = $2, photo_key = NULL, photo_mime = NULL, photo_view_key = NULL, updated_at = now() WHERE user_id = $1", [user.id, REVIEW_NAME]);
     await q.query("UPDATE contact_messages SET name = $3, email = '', phone = '', user_id = NULL WHERE user_id = $1 OR lower(email) = lower($2)", [user.id, user.email, DELETED_NAME]);
 
     // What only made sense for the login

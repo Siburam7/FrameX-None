@@ -82,12 +82,14 @@
     root.addEventListener("click", async (e) => {
       const button = e.target.closest("[data-photo]");
       if (!button || button.disabled) return;
-      const download = button.dataset.photoAction === "download";
+      // "original": the HEIC / AVIF file itself (a download); "download" of such a photo gives its full-quality JPG copy
+      const original = button.dataset.photoAction === "original";
+      const download = button.dataset.photoAction === "download" || original;
       // A window opened right at the click isn't blocked as a pop-up; it gets its address when the link arrives.
       const tab = download ? null : window.open("", "_blank");
       button.disabled = true;
       try {
-        const link = await linkFor(button.dataset.photo, { download });
+        const link = await linkFor(button.dataset.photo, { download, original });
         const url = http().fileUrl(link.path);
         if (tab) tab.location.replace(url);
         else {
@@ -348,7 +350,7 @@
           <textarea class="input" name="body" rows="2" maxlength="1500" placeholder="Tell other customers about it (optional).">${esc(t.review ? t.review.body : "")}</textarea>
           <div class="rev-photo">
             ${t.review && t.review.photo ? `<img class="rev-photo__img" src="${esc(http().asset(t.review.photo))}" alt="The photo on your review" width="72" height="72"><button class="co-link" type="button" data-photo-remove>Remove photo</button>` : ""}
-            <label class="co-link rev-photo__pick">${icon("image")} <span data-photo-label>${t.review && t.review.photo ? "Change the photo" : "Add a photo of it at home (optional)"}</span><input class="visually-hidden" type="file" name="photo" accept="image/jpeg,image/png,image/webp"></label>
+            <label class="co-link rev-photo__pick">${icon("image")} <span data-photo-label>${t.review && t.review.photo ? "Change the photo" : "Add a photo of it at home (optional)"}</span><input class="visually-hidden" type="file" name="photo" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif,.heic,.heif,.avif"></label>
             <span class="co-muted" data-photo-name></span>
           </div>
           <p class="co-muted rev-photo__note">Your review and photo are shown publicly on FrameX with your first name and the first letter of your surname.${t.review && t.review.hidden ? " <strong>FrameX has hidden this review.</strong>" : ""}</p>
@@ -363,7 +365,7 @@
       const rating = Number(new FormData(form).get("rating"));
       if (!rating) return FrameX.forms.status(status, "error", "Choose 1 to 5 stars.");
       const file = form.photo.files[0];
-      if (file && !FrameX.dom.looksLikePhoto(file)) return FrameX.forms.status(status, "error", `“${esc(file.name)}” is a ${esc(file.type || "file")} file. Please choose a JPG, PNG or WebP picture.`);
+      if (file && !FrameX.dom.looksLikePhoto(file)) return FrameX.forms.status(status, "error", `“${esc(file.name)}” is a ${esc(file.type || "file")} file. Please choose a JPG, PNG, WebP or HEIC picture.`);
       const button = $("button[type=submit]", form);
       button.disabled = true;
       try {

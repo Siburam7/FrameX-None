@@ -979,7 +979,12 @@ describe("reviews, notifications, search and accounts", () => {
     const send = (client, id, body, type = "image/jpeg") => fetch(`${base}/api/reviews/${id}/photo`, { method: "POST", headers: { "Content-Type": type, "X-FrameX-Client": "test", ...(client.cookie ? { Cookie: client.cookie } : {}) }, body }).then(async (r) => ({ status: r.status, json: await r.json().catch(() => null) }));
     const mine = (await asha.get(`/api/reviews/mine?sourceType=PAINTING&sourceId=${S.cp}`)).json.items[0].review;
     assert.deepEqual([typeof mine.id, mine.photo, mine.hidden], ["string", null, false]);
-    const picture = jpeg({ width: 1200, height: 1600, bytes: 20_000, fill: 0x33 });
+    // real pictures (the server makes a medium copy, so it must be able to open them): a large camera-size photo
+    const { default: sharp } = await import("sharp");
+    const real = (width, height, quality = 95) => sharp({ create: { width, height, channels: 3, background: { r: 40, g: 120, b: 200 } } }).composite([{ input: Buffer.from(`<svg width="${width}" height="${height}"><circle cx="${width / 2}" cy="${height / 2}" r="${height / 3}" fill="orange"/></svg>`) }]).jpeg({ quality }).toBuffer();
+    const picture = await real(4000, 3000);
+    // a file that only starts like a JPEG is refused too
+    assert.equal((await send(asha, mine.id, jpeg({ width: 1200, height: 1600, bytes: 20_000, fill: 0x33 }))).status, 415);
     // Not logged in, someone else, a review that doesn't exist, a file that is not a picture.
     assert.equal((await send(visitor, mine.id, picture)).status, 401);
     assert.equal((await send(binod, mine.id, picture)).status, 404, "another customer can't touch this review");
@@ -989,9 +994,16 @@ describe("reviews, notifications, search and accounts", () => {
     const saved = await send(asha, mine.id, picture);
     assert.equal(saved.status, 201, JSON.stringify(saved.json));
     assert.match(saved.json.review.photo, new RegExp(`^/media/review/${mine.id}\\?v=\\d+$`));
-    // Anyone can see it, with the type read from the file itself.
+    // Anyone can see it: the medium copy (WebP, longest side 1600 px), so a page of photos stays fast; the original is kept as it is.
     const shown = await fetch(base + saved.json.review.photo);
-    assert.deepEqual([shown.status, shown.headers.get("content-type"), shown.headers.get("x-content-type-options"), (await shown.arrayBuffer()).byteLength], [200, "image/jpeg", "nosniff", picture.length]);
+    const shownBytes = Buffer.from(await shown.arrayBuffer());
+    const meta = await sharp(shownBytes).metadata();
+    assert.deepEqual([shown.status, shown.headers.get("content-type"), shown.headers.get("x-content-type-options"), meta.format, meta.width, meta.height], [200, "image/webp", "nosniff", "webp", 1600, 1200]);
+    assert.ok(shownBytes.length < picture.length / 3, `the copy is much smaller (${shownBytes.length} of ${picture.length} bytes)`);
+    const keys = (await db.query("SELECT photo_key, photo_view_key FROM reviews WHERE id = $1", [mine.id])).rows[0];
+    const kept = await import("../src/lib/storage.js");
+    const original = await new Promise((resolve, reject) => { const parts = []; kept.open(keys.photo_key).on("data", (c) => parts.push(c)).on("end", () => resolve(Buffer.concat(parts))).on("error", reject); });
+    assert.ok(original.equals(picture), "the original is kept byte for byte");
     // It is in the public lists: the gallery (with what was reviewed), the artist's page, the latest reviews.
     const gallery = (await visitor.get("/api/reviews/gallery")).json;
     const entry = gallery.items.find((r) => r.id === mine.id);
@@ -999,11 +1011,13 @@ describe("reviews, notifications, search and accounts", () => {
     assert.equal((await visitor.get("/api/artists/meera.paints")).json.reviews[0].photo, saved.json.review.photo);
     assert.ok((await visitor.get("/api/reviews/latest")).json.items.some((r) => r.photo === saved.json.review.photo));
     // Replacing it removes the old file from the disk.
-    const before = (await db.query("SELECT photo_key FROM reviews WHERE id = $1", [mine.id])).rows[0].photo_key;
-    const again = await send(asha, mine.id, jpeg({ width: 800, height: 800, bytes: 9000, fill: 0x44 }));
-    const after = (await db.query("SELECT photo_key FROM reviews WHERE id = $1", [mine.id])).rows[0].photo_key;
-    const storage = await import("../src/lib/storage.js");
-    assert.deepEqual([again.status, before !== after, await storage.exists(before), await storage.exists(after)], [201, true, false, true]);
+    const before = keys.photo_key;
+    const again = await send(asha, mine.id, await real(800, 800));
+    const { photo_key: after, photo_view_key: afterView } = (await db.query("SELECT photo_key, photo_view_key FROM reviews WHERE id = $1", [mine.id])).rows[0];
+    const storage = kept;
+    assert.deepEqual([again.status, before !== after, await storage.exists(before), await storage.exists(keys.photo_view_key), await storage.exists(after)], [201, true, false, false, true]);
+    // a small photo is not made bigger
+    assert.equal((await sharp(Buffer.from(await (await fetch(base + again.json.review.photo)).arrayBuffer())).metadata()).width, 800);
     // Changing the stars or the words keeps the photo.
     await asha.post("/api/reviews", { targetType: "ARTIST", targetId: S.meera.artistCode, sourceType: "PAINTING", sourceId: S.cp, rating: 4, body: "Exactly like the photo." });
     assert.equal((await db.query("SELECT photo_key FROM reviews WHERE id = $1", [mine.id])).rows[0].photo_key, after);
@@ -1017,7 +1031,7 @@ describe("reviews, notifications, search and accounts", () => {
     // The writer can take the photo away; someone else can't.
     assert.equal((await binod.del(`/api/reviews/${mine.id}/photo`)).status, 404);
     const removed = await asha.del(`/api/reviews/${mine.id}/photo`);
-    assert.deepEqual([removed.status, removed.json.review.photo, await storage.exists(after), (await fetch(`${base}/media/review/${mine.id}`)).status], [200, null, false, 404]);
+    assert.deepEqual([removed.status, removed.json.review.photo, await storage.exists(after), await storage.exists(afterView), (await fetch(`${base}/media/review/${mine.id}`)).status], [200, null, false, false, 404]);
     assert.equal((await fetch(base + "/media/review/not-an-id")).status, 404);
   });
 

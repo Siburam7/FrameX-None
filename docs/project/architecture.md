@@ -38,6 +38,9 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   linked last).
 - `js/edit.js`, `js/decor.js`, `js/templates.js`, `js/studio.js` — catalogue and option data (the backend imports
   them into the database at start).
+- `assets/vendor/libheif/` — libheif-js 1.23.5 (WebAssembly, LGPL-3.0, its LICENSE beside it): loaded only when a HEIC
+  photo is chosen in a browser that can't open one, for the on-screen PREVIEW (`services/upload-service.js`). Needs
+  'wasm-unsafe-eval' in the CSP.
 - Each page carries a **Content-Security-Policy** `<meta>` (local, not yet deployed; test `backend/test/site-csp.test.js`).
 
 ## 3. Backend (`backend/`)
@@ -70,10 +73,13 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   are audited like an admin's.
 - `src/services/` — business logic (cart, checkout, orders, payments, payouts, uploads, analytics, settings…).
 - `src/db/` — `index.js` (PostgreSQL via `pg` when `DATABASE_URL` is set, else embedded PGlite in `backend/.data`),
-  `migrations/001…019` (applied automatically at start, never reset; 013 XUSE10 limits, 014 `users.deleted_at`, 015 `saved_designs`, 016 product approval on, 017 `shops.featured` / `featured_until`, 018 help chat `support_threads` + `support_messages`, one open conversation per customer, 019 CARE role + `users.care_available`, live columns on `support_threads`, SYSTEM messages and `author_name`), `backup.js`, `ssl.js` (local, not deployed).
+  `migrations/001…021` (applied automatically at start, never reset; 013 XUSE10 limits, 014 `users.deleted_at`, 015 `saved_designs`, 016 product approval on, 017 `shops.featured` / `featured_until`, 018 help chat `support_threads` + `support_messages`, one open conversation per customer, 019 CARE role + `users.care_available`, live columns on `support_threads`, SYSTEM messages and `author_name`, 020 HEIC / AVIF:
+  `uploads.print_key` + `print_bytes` (the JPEG copy, stored as `<key>-print`), formats heic and avif; 021 `reviews.photo_view_key` (the medium copy of a review photo, `<key>-thumb`) — both local, not deployed), `backup.js`, `ssl.js` (local, not deployed).
 - `src/payments/` — one payment system, gateway adapters `razorpay.js`, `cashfree.js`.
 - `src/lib/` — security (CORS, CSRF, cookies), storage (disk or bucket), sealed (AES-256-GCM for payout details),
-  mailer, sms, file links (signed URLs).
+  mailer, sms, file links (signed URLs; `o:1` in a token = the original of a HEIC / AVIF photo), `heif.js` (HEIC via
+  libheif-js, AVIF via sharp → one full-quality JPEG copy; `toView` → the medium WebP copy of a review photo, 1600 px;
+  one at a time, max 60 MP).
 - Tests: `node --test` (`npm test`), in-memory database, stand-in gateways and bucket (`test/support/`).
   GitHub runs them for every push and pull request (`.github/workflows/tests.yml`, Node 24, no secrets, never deploys).
 

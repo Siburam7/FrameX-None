@@ -24,6 +24,10 @@
 
 ## Owner decisions (log)
 
+- 2026-10-25 Review photos: keep the customer's high-quality original, SHOW a medium copy (WebP 1600 px) so pages with many
+  photos stay fast.
+- 2026-10-25 iPhone HEIC photos: keep the original HEIC AND make a full-quality JPG copy that is printed ("Asli HEIC bhi
+  rakho + JPG copy"). AVIF handled the same way. The JPG copy is an extra file; the original is never changed.
 - 2026-10-24 Deploy FrameX Care + order changes WITHOUT a fresh backup ("bina backup live karo") — migration 019 (CARE role
   in users_role_check, live columns) ran on production with the newest backup still from 2026-10-20 15:06.
 - 2026-10-24 Care logins open the **admin panel** (not a separate page) with only **Live chats and Orders**, and can
@@ -127,6 +131,7 @@ header button labels per section.
 | View on My Wall / tilt on a real phone | **not verified** |
 | Live load test (browse only) | 100 visitors fast, 200 usable, 300 slow (2026-10-12) |
 | Production backup restorable | verified 2026-10-19 (isolated in-memory PostgreSQL 18.3; not on Neon) |
+| HEIC upload (Chrome, phone screen, local :4100) | verified 2026-10-25 with a public libheif sample; **not yet with a real iPhone photo** |
 
 ## Lessons (for whoever works on this next)
 
