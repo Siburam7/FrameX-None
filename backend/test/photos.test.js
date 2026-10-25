@@ -337,7 +337,7 @@ describe("uploading a photo", () => {
 
   test("the website can ask what a photo may be", async () => {
     const r = await visitor.get("/api/config");
-    assert.deepEqual(r.json.uploads, { maxBytes: 2 * 1024 * 1024, formats: ["jpeg", "png", "webp"], maxSide: 30000 });
+    assert.deepEqual(r.json.uploads, { maxBytes: 2 * 1024 * 1024, formats: ["jpeg", "png", "webp", "heic", "avif"], maxSide: 30000 });
     assert.deepEqual(r.json.giftWrap, { enabled: true, fee: 75 });
   });
 });

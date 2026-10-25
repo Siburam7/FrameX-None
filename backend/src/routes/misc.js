@@ -69,7 +69,7 @@ router.get("/config", (req, res) => {
       fileStorageReady: storageReady()
     },
     // What a customer photo may be (the website checks the same before sending; the server checks again).
-    uploads: { maxBytes: config.uploads.maxBytes, formats: ["jpeg", "png", "webp"], maxSide: config.uploads.maxSide },
+    uploads: { maxBytes: config.uploads.maxBytes, formats: ["jpeg", "png", "webp", "heic", "avif"], maxSide: config.uploads.maxSide },
     giftWrap: { enabled: config.checkout.giftWrap.enabled, fee: config.checkout.giftWrap.fee },
     // Cash on Delivery's fee (the chat's quick answers show it; checkout adds it).
     cod: { enabled: config.checkout.cod.enabled, fee: config.checkout.cod.fee },
