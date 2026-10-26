@@ -24,6 +24,8 @@
 
 ## Owner decisions (log)
 
+- 2026-10-26 Deployed banners / strips / Admin Promotions / Google + Facebook login (main bfcb26f) after a fresh production
+  backup (pen drive, 21:09). GOOGLE_CLIENT_ID set on Render.
 - 2026-10-26 Admin → Promotions built (banners + strips managed without code), then everything pushed together.
 - 2026-10-26 Google + Facebook login built ("Haan banao dono"). Only customers; staff / shop / artist keep password login.
   A social login with an existing customer email joins that account. Off until the server has the ids.

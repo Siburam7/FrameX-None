@@ -5,6 +5,12 @@
 
 ## Now
 
+- [x] 2026-10-26 **DEPLOYED** main bfcb26f (owner: "Promotions karlete hai fir direct sabhi push karenge"; production backup taken
+      first by the owner: pen drive `framex-db-live-20261026-2109.fxdb`). Live: migrations 022 + 023 ran; API lists 11
+      promotions; GOOGLE_CLIENT_ID set on Render by the owner (full id, checked via /api/config); Facebook off. Live check
+      (read-only, phone + laptop): Home 5 picture banners + 3 strips, Shop / Product / Home Decor 1 strip each, login shows
+      Google's real button, no script errors. Not yet: a real Google login on the live site by the owner, Admin → Promotions
+      used live.
 - [x] 2026-10-26 **Admin → Promotions BUILT** (owner: "hmm abhi code main banao"; design Desktop\FrameX-Promotions-Admin-Design).
       Migration 023 `promotions` (placement, title = alt text, link, laptop / phone picture: website file or uploaded,
       position, on / off, first / last day, hide rule COUPON:<code> / FIRST_ORDER_FREE), seeded with today's 5 banners +
@@ -14,7 +20,7 @@
       data-promo-slot; offers.js waits for the banners; without the backend the page's own pictures stay. Admin: menu
       "Promotions" (ADMIN only), list by place with ↑↓ / Edit / on-off / delete, form with size check + live preview.
       Checks: backend 476 pass / 0 fail (promotions 7), browser 19/19 (admin flow + website), home 40, Studio 37, shop 50,
-      account 13, banners/strips 35. Local, not pushed.
+      account 13, banners/strips 35. LIVE 2026-10-26.
 - [x] 2026-10-26 **Google + Facebook login BUILT** (owner: "Haan banao dono"; design Desktop\FrameX-Social-Login-Design).
       Buttons on the customer login, sign-up and the login dialog, above the form, with "or log in with email / phone";
       not on the Local shop tab. Google draws its own button (Google Identity Services, ID token); Facebook's SDK gives an
