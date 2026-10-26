@@ -1453,7 +1453,22 @@ body[data-page="home"] main {
   height: 100%;
   object-fit: cover;
   object-position: 70% 40%;
-  transition: transform 1200ms var(--ease-out);
+}
+
+/* A banner that is one picture (owner, 2026-10-26): the banner takes the picture's shape, so nothing is cut off,
+   and nothing is laid over it */
+.offer--pic {
+  min-height: 0;
+  padding: 0;
+  aspect-ratio: 2400 / 760;
+}
+
+.offer--pic::before {
+  display: none;
+}
+
+.offer--pic img {
+  object-position: center;
 }
 
 .offer::before {
@@ -1514,20 +1529,7 @@ body[data-page="home"] main {
   transition: transform var(--dur-base) var(--ease-out);
 }
 
-@media (hover: hover) {
-  .offer:hover img {
-    transform: scale(1.04);
-  }
-
-  .offer:hover .offer__cta {
-    background: var(--amber);
-    color: #fff;
-  }
-
-  .offer:hover .offer__cta .icon {
-    transform: translateX(3px);
-  }
-}
+/* No hover effect on the banners (owner, 2026-10-26): a banner stays still under the mouse */
 
 .offer:focus-visible {
   outline: 3px solid rgba(234, 120, 14, 0.7);

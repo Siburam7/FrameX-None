@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-bY082ZUbml92XX9F3EOzh2NG30bLhAgTZfWBMj1p02U=' 'sha256-URy6msmneyqM9p/X7i+xrvPyoVlIXY1QWAMjU0QbQnw=' 'sha256-qXPs0U9Xd/l342+5ojEZkjc+ORl4yrnFimWbqsnk2o8=' https://*.razorpay.com https://*.cashfree.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000 https://*.razorpay.com https://*.cashfree.com https://*.google-analytics.com https://*.googletagmanager.com; media-src 'self' blob: https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000; connect-src 'self' https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000 https://*.razorpay.com https://*.cashfree.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://*.razorpay.com https://*.cashfree.com https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' https://*.razorpay.com https://*.cashfree.com">
+    content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com https://connect.facebook.net 'sha256-bY082ZUbml92XX9F3EOzh2NG30bLhAgTZfWBMj1p02U=' 'sha256-URy6msmneyqM9p/X7i+xrvPyoVlIXY1QWAMjU0QbQnw=' 'sha256-qXPs0U9Xd/l342+5ojEZkjc+ORl4yrnFimWbqsnk2o8=' https://*.razorpay.com https://*.cashfree.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000 https://*.razorpay.com https://*.cashfree.com https://*.google-analytics.com https://*.googletagmanager.com; media-src 'self' blob: https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000; connect-src 'self' https://accounts.google.com https://*.facebook.com https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000 https://*.razorpay.com https://*.cashfree.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://accounts.google.com https://*.facebook.com https://*.razorpay.com https://*.cashfree.com https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' https://*.razorpay.com https://*.cashfree.com">
   <title>FrameX — Premium photo frames from local shops</title>
   <meta name="description"
     content="Discover premium photo frames from photo-frame shops near you. Choose a frame, add it to your cart and pick it up or have it delivered.">
@@ -177,88 +177,46 @@
       </div>
     </section>
 
-    <!-- Offer banners under the strip of reasons ("Local framing shops" …): they slide by themselves (ui/offers.js), can be swiped, and have arrows and
+    <!-- Offer banners under the strip of reasons ("Local framing shops" …), whole pictures: they slide by themselves (ui/offers.js), can be swiped, and have arrows and
          dots. To change one, change its words, link and picture here; keep every line true (an offer written here
          must be one the checkout really gives). Pictures: assets/img/home/offer-*.webp (CREDITS.md). -->
     <section class="offers" aria-roledescription="carousel" aria-label="Offers and news" data-offers>
       <div class="container offers__wrap">
-        <div class="offers__track" data-offers-track>
-          <!-- The Diwali coupon (backend: coupons table, migration 011). ui/offers.js copies the code, and takes this
-               banner away when the backend says the coupon can no longer be used. -->
-          <div class="offer offer--diwali" role="group" aria-roledescription="slide" aria-label="1 of 5: Diwali offer"
-            data-offer-coupon="XUSE10">
-            <img src="assets/img/home/offer-diwali.webp" alt="" width="1400" height="700" decoding="async">
-            <span class="offer__body">
-              <span class="offer__tag">Diwali offer</span>
-              <span class="offer__title">10% off on orders of ₹399 and more</span>
-              <span class="offer__coupon"><span class="offer__code">XUSE10</span><button class="offer__copy"
-                  type="button" data-copy-coupon="XUSE10">Copy<span class="offer__cta-long"> code</span></button></span>
-              <span class="offer__text">Apply the code at checkout. 10% comes off your items.</span>
-              <a class="offer__cta" href="shop.html">Shop now <svg class="icon" aria-hidden="true">
-                  <use href="#i-arrow-right"></use>
-                </svg></a>
-            </span>
-          </div>
-          <!-- Art & Artists, with the first-order offer (backend: FIRST_ORDER_FREE_DELIVERY; ui/offers.js takes this
-               banner away when the backend says the offer is off). -->
-          <div class="offer offer--art" role="group" aria-roledescription="slide" aria-label="2 of 5: Art and Artists"
-            data-offer-feature="firstOrderFree">
-            <img src="assets/img/home/offer-art.webp" alt="" width="1400" height="700" loading="lazy" decoding="async">
-            <span class="offer__body">
-              <span class="offer__tag">Art &amp; Artists</span>
-              <span class="offer__title">Make your photo your wall&rsquo;s canvas</span>
-              <span class="offer__perk">Free delivery on your first order</span>
-              <span class="offer__text">Turn your own photo into wall art, or find original paintings by artists.</span>
-              <span class="offer__ctas">
-                <a class="offer__cta" href="wall-art-studio.html"><span>Create<span class="offer__cta-long"> with your
-                      photo</span></span> <svg class="icon" aria-hidden="true">
-                    <use href="#i-arrow-right"></use>
-                  </svg></a>
-                <a class="offer__cta offer__cta--ghost" href="art.html">Explore art</a>
-              </span>
-            </span>
-          </div>
-          <a class="offer offer--gift" href="shop.html?category=gifts#collection" role="group"
-            aria-roledescription="slide" aria-label="3 of 5: Gift a memory">
-            <img src="assets/img/home/offer-gift.webp" alt="" width="1400" height="700" loading="lazy" decoding="async">
-            <span class="offer__body">
-              <span class="offer__tag">Gift idea</span>
-              <span class="offer__title">Gift a memory, not just a frame</span>
-              <span class="offer__text">Birthday, anniversary or wedding: put their favourite photo in a frame from a
-                local
-                shop.</span>
-              <span class="offer__cta">Shop gift frames <svg class="icon" aria-hidden="true">
-                  <use href="#i-arrow-right"></use>
-                </svg></span>
-            </span>
+        <div class="offers__track" data-offers-track data-promo-slot="home-banners">
+          <!-- Each banner is ONE picture with its words and button drawn in (owner, 2026-10-26): a laptop picture
+               (2400 x 760) and a phone picture (1080 x 608); the whole banner is the link. They come from Admin -> Promotions
+               (ui/promotions.js); these are shown when the backend can't be reached. ui/offers.js still takes the
+               coupon banner away when the coupon can't be used, and the first-order banner when that offer is off.
+               New words = a new picture (assets/img/home/banners). -->
+          <a class="offer offer--pic" href="shop.html" role="group" aria-roledescription="slide" aria-label="1 of 5: Diwali offer" data-offer-coupon="XUSE10">
+            <picture>
+              <source media="(max-width: 639px)" srcset="assets/img/home/banners/banner-1-diwali-phone.webp" width="1080" height="608">
+              <img src="assets/img/home/banners/banner-1-diwali-laptop.webp" alt="Diwali offer: 10% off on orders of ₹399 and more. Use code XUSE10 at checkout. Shop now." width="2400" height="760" decoding="async">
+            </picture>
           </a>
-          <a class="offer offer--delivery" href="#shops" role="group" aria-roledescription="slide"
-            aria-label="4 of 5: Pick it up or get it delivered">
-            <img src="assets/img/home/offer-delivery.webp" alt="" width="1400" height="700" loading="lazy"
-              decoding="async">
-            <span class="offer__body">
-              <span class="offer__tag">Pickup or delivery</span>
-              <span class="offer__title">Collect it nearby or get it at your door</span>
-              <span class="offer__text">Every frame comes from a named local shop. Choose pickup or delivery, as the
-                shop
-                offers.</span>
-              <span class="offer__cta">Find a shop <svg class="icon" aria-hidden="true">
-                  <use href="#i-arrow-right"></use>
-                </svg></span>
-            </span>
+          <a class="offer offer--pic" href="wall-art-studio.html" role="group" aria-roledescription="slide" aria-label="2 of 5: Art and Artists" data-offer-feature="firstOrderFree">
+            <picture>
+              <source media="(max-width: 639px)" srcset="assets/img/home/banners/banner-2-art-phone.webp" width="1080" height="608">
+              <img src="assets/img/home/banners/banner-2-art-laptop.webp" alt="Art & Artists: make your photo your wall’s canvas. Free delivery on your first order. Create now." width="2400" height="760" loading="lazy" decoding="async">
+            </picture>
           </a>
-          <a class="offer offer--decor" href="home-decor.html" role="group" aria-roledescription="slide"
-            aria-label="5 of 5: Wall art for every room">
-            <img src="assets/img/home/offer-decor.webp" alt="" width="1400" height="700" loading="lazy"
-              decoding="async">
-            <span class="offer__body">
-              <span class="offer__tag">Home decor</span>
-              <span class="offer__title">Wall art that makes it home</span>
-              <span class="offer__text">Posters, prints and multi-panel sets for every room.</span>
-              <span class="offer__cta">Shop wall art <svg class="icon" aria-hidden="true">
-                  <use href="#i-arrow-right"></use>
-                </svg></span>
-            </span>
+          <a class="offer offer--pic" href="shop.html?category=gifts#collection" role="group" aria-roledescription="slide" aria-label="3 of 5: Gift a memory">
+            <picture>
+              <source media="(max-width: 639px)" srcset="assets/img/home/banners/banner-3-gift-phone.webp" width="1080" height="608">
+              <img src="assets/img/home/banners/banner-3-gift-laptop.webp" alt="Gift a memory, not just a frame: birthday, anniversary or wedding. Shop gift frames." width="2400" height="760" loading="lazy" decoding="async">
+            </picture>
+          </a>
+          <a class="offer offer--pic" href="#shops" role="group" aria-roledescription="slide" aria-label="4 of 5: Pick it up or get it delivered">
+            <picture>
+              <source media="(max-width: 639px)" srcset="assets/img/home/banners/banner-4-delivery-phone.webp" width="1080" height="608">
+              <img src="assets/img/home/banners/banner-4-delivery-laptop.webp" alt="Collect it nearby or get it at your door: every frame comes from a named local shop. Find a shop." width="2400" height="760" loading="lazy" decoding="async">
+            </picture>
+          </a>
+          <a class="offer offer--pic" href="home-decor.html" role="group" aria-roledescription="slide" aria-label="5 of 5: Wall art for every room">
+            <picture>
+              <source media="(max-width: 639px)" srcset="assets/img/home/banners/banner-5-decor-phone.webp" width="1080" height="608">
+              <img src="assets/img/home/banners/banner-5-decor-laptop.webp" alt="Wall art that makes it home: posters, prints and multi-panel sets. Shop wall art." width="2400" height="760" loading="lazy" decoding="async">
+            </picture>
           </a>
         </div>
         <button class="offers__arrow offers__arrow--prev" type="button" data-offers-prev
@@ -272,6 +230,16 @@
         <div class="offers__dots" data-offers-dots></div>
       </div>
     </section>
+
+    <!-- Promotion strip (Admin -> Promotions; ui/promotions.js). This picture shows when the backend can't be reached. -->
+    <div class="promo-strip container" data-promo-slot="home-after-banners">
+      <a class="promo-strip__link" data-offer-coupon="XUSE10" href="shop.html">
+        <picture>
+          <source media="(max-width: 639px)" srcset="assets/img/promo/strip-1-diwali-fest-phone.webp" width="1080" height="260">
+          <img src="assets/img/promo/strip-1-diwali-fest-laptop.webp" alt="Diwali Frame Fest: flat 10% off on orders of ₹399 and more with code XUSE10. Shop now." width="2400" height="300" loading="lazy" decoding="async">
+        </picture>
+      </a>
+    </div>
 
     <section class="section shelf-section" id="categories" aria-labelledby="categories-title">
       <div class="container">
@@ -383,6 +351,16 @@
         </div>
       </div>
     </section>
+
+    <!-- Promotion strip (Admin -> Promotions; ui/promotions.js). This picture shows when the backend can't be reached. -->
+    <div class="promo-strip container" data-promo-slot="home-after-recommended">
+      <a class="promo-strip__link" href="shop-detail.html?id=FRX-SHOP-1001">
+        <picture>
+          <source media="(max-width: 639px)" srcset="assets/img/promo/strip-4-featured-shop-phone.webp" width="1080" height="260">
+          <img src="assets/img/promo/strip-4-featured-shop-laptop.webp" alt="Featured shop (ad): Mithus Frame, custom photo frames, pickup or home delivery. Visit shop." width="2400" height="300" loading="lazy" decoding="async">
+        </picture>
+      </a>
+    </div>
 
     <!-- Three ways to make it yours. #custom-frame is linked from the frame guide below. -->
     <section class="section shelf-section" aria-label="Make it yours">
@@ -562,6 +540,16 @@
         </div>
       </div>
     </section>
+
+    <!-- Promotion strip (Admin -> Promotions; ui/promotions.js). This picture shows when the backend can't be reached. -->
+    <div class="promo-strip container" data-promo-slot="home-after-shops">
+      <a class="promo-strip__link" href="partner.html">
+        <picture>
+          <source media="(max-width: 639px)" srcset="assets/img/promo/strip-5-sell-on-framex-phone.webp" width="1080" height="260">
+          <img src="assets/img/promo/strip-5-sell-on-framex-laptop.webp" alt="Own a frame shop? Sell on FrameX: only 3% commission, register free. Register." width="2400" height="300" loading="lazy" decoding="async">
+        </picture>
+      </a>
+    </div>
 
     <section class="section shelf-section" id="how-it-works" aria-labelledby="how-title">
       <div class="container">
@@ -889,6 +877,7 @@
   <script src="assets/js/ui/art-pages.js" defer></script>
   <script src="assets/js/services/analytics.js" defer></script>
   <script src="assets/js/ui/help-chat.js" defer></script>
+  <script src="assets/js/ui/promotions.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </body>
 

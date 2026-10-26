@@ -151,6 +151,17 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
   fingers zoom it (1×–3×, like the Zoom slider). "View on My Wall" sits with the controls (#fs-wall-row). Laptop unchanged.
 - Design pictures approved by the owner: Desktop\FrameX-Studio-Phone-Design (01/02). 03 = the cart footer idea (waiting).
 
+## 5i. Picture banners and promotion strips (owner, 2026-10-26)
+
+- Home offer banners: each is ONE picture with its words and button drawn in (no HTML text / buttons). Laptop picture
+  2400×760, phone picture 1080×608 (bigger words, shorter titles); the banner takes the picture's shape.
+- Promotion strips (like a slim "SALE STARTS 28th OCT" strip): one picture, laptop 2400×300 / phone 1080×260 (phone: an
+  arrow button only), 20 px corners (12 px on phones), a soft shadow. NO hover effect on banners or strips (owner, 2026-10-26): no zoom, no lift. A shop's strip carries "AD".
+- Look: bold Sora headline, a badge on the left, a photo fading in on the right (laptop), a white or coloured pill button.
+  Festive strips have a row of small lights along the top.
+- New words = a new picture, uploaded in Admin → Promotions (sizes shown there). The generator scripts and source photos are in
+  Desktop\FrameX-Banner-Design\0 - Source.
+
 ## 6. Content rules
 
 - Banner and offer text must be factual (no invented discounts). Coupon limits (maximum discount, uses per customer)

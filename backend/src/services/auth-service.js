@@ -13,6 +13,7 @@ import { sendOtpSms, smsStatus } from "../lib/sms.js";
 import { hashPassword, needsRehash, verifyAgainstDummy, verifyPassword } from "../lib/passwords.js";
 import { hashToken, newId, newToken } from "../lib/tokens.js";
 import { normalizeEmail, normalizePhone } from "../lib/validate.js";
+import { verifyFacebook, verifyGoogle } from "../lib/social-login.js";
 import { recordAuthEvent } from "./analytics-service.js";
 import { shopStatus } from "./shop-service.js";
 
@@ -23,6 +24,7 @@ const GENERIC_LOGIN_ERROR = "Those details don't match an account. Check them an
 export async function publicUser(userId) {
   const { rows } = await db.query(
     `SELECT u.id, u.name, u.email, u.phone, u.role, u.status, u.created_at, u.last_login_at,
+            (u.password_hash IS NOT NULL) AS has_password, (u.google_sub IS NOT NULL) AS via_google, (u.facebook_id IS NOT NULL) AS via_facebook,
             sh.shop_code, sh.name AS shop_name, sh.city, sh.state, sh.approval_status, sh.active_status,
             ar.artist_code, ar.username AS artist_username, ar.name AS artist_name, ar.status AS artist_status
        FROM users u LEFT JOIN shops sh ON sh.id = u.shop_id LEFT JOIN artists ar ON ar.id = u.artist_id WHERE u.id = $1`,
@@ -39,6 +41,9 @@ export async function publicUser(userId) {
     status: u.status,
     createdAt: u.created_at,
     lastLoginAt: u.last_login_at,
+    // A customer who came through Google / Facebook may have no password (the account page offers to set one)
+    hasPassword: u.has_password,
+    linked: { google: u.via_google, facebook: u.via_facebook },
     shop: u.role === "SHOP" ? { shopCode: u.shop_code, name: u.shop_name, city: u.city, state: u.state, status: shopStatus(u) } : null,
     artist: u.role === "ARTIST" ? { artistCode: u.artist_code, username: u.artist_username, name: u.artist_name, status: u.artist_status } : null
   };
@@ -114,6 +119,62 @@ export async function login({ identifier, password, accountType, ip = null }) {
   await db.query("UPDATE users SET last_login_at = now() WHERE id = $1", [row.id]);
   await recordAuthEvent({ kind: "LOGIN", userId: row.id, role: row.role, accountType, ip });
   return row.id;
+}
+
+/* ---------------------------------------------------------------- Google / Facebook */
+
+const SOCIAL = {
+  google: { column: "google_sub", label: "Google", verify: verifyGoogle },
+  facebook: { column: "facebook_id", label: "Facebook", verify: verifyFacebook }
+};
+
+/** A clean display name from what Google / Facebook gave (or the email's first part). */
+function socialName(name, email) {
+  const clean = String(name || "").replace(/[<>\u0000-\u001f]/g, "").replace(/\s+/g, " ").trim().slice(0, 80);
+  if (clean.length >= 2) return clean;
+  const local = String(email).split("@")[0].replace(/[^a-z0-9]+/gi, " ").trim();
+  return (local.length >= 2 ? local : "FrameX customer").slice(0, 80);
+}
+
+/**
+ * "Continue with Google / Facebook". The proof is checked with Google / Facebook first (lib/social-login.js).
+ * The same person (their Google / Facebook id) or, the first time, the same email reaches the same customer account;
+ * a new email makes a new customer account (no password, no phone: the delivery address carries the phone).
+ * Only CUSTOMER accounts: an admin, care, shop or artist account logs in with its password.
+ * -> { userId, created }
+ */
+export async function socialLogin(provider, proof, { ip = null } = {}) {
+  const how = SOCIAL[provider];
+  if (!how) throw errors.notFound("Not found.");
+  const person = await how.verify(proof);
+  const socialId = provider === "google" ? person.sub : person.id;
+  const email = normalizeEmail(person.email);
+  const result = await db.tx(async (q) => {
+    let row = (await q.query(`SELECT * FROM users WHERE ${how.column} = $1 AND deleted_at IS NULL`, [socialId])).rows[0];
+    if (!row) row = (await q.query("SELECT * FROM users WHERE lower(email) = $1 AND deleted_at IS NULL", [email])).rows[0];
+    if (row) {
+      if (row.role !== "CUSTOMER") throw errors.forbidden("This email belongs to a FrameX shop, artist or staff account. Please log in with your password.", "USE_PASSWORD");
+      if (row.status === "DISABLED") throw errors.forbidden("This account has been disabled. Please contact FrameX.", "ACCOUNT_DISABLED");
+      if (row[how.column] && row[how.column] !== socialId) throw errors.conflict(`This email is joined to a different ${how.label} account. Please log in with your password.`, null, "SOCIAL_MISMATCH");
+      await q.query(`UPDATE users SET ${how.column} = $2, last_login_at = now(), updated_at = now() WHERE id = $1`, [row.id, socialId]);
+      return { userId: row.id, created: false };
+    }
+    const id = newId();
+    await q.query(
+      `INSERT INTO users (id, name, email, phone, password_hash, role, status, ${how.column}, last_login_at)
+       VALUES ($1, $2, $3, NULL, NULL, 'CUSTOMER', 'ACTIVE', $4, now())`,
+      [id, socialName(person.name, email), email, socialId]
+    );
+    return { userId: id, created: true };
+  });
+  await recordAuthEvent({ kind: "LOGIN", userId: result.userId, role: "CUSTOMER", accountType: "customer", ip });
+  return result;
+}
+
+/** A customer without a password (came through Google / Facebook) sets one, to log in with email too. */
+export async function setFirstPassword(userId, password) {
+  const { rowCount } = await db.query("UPDATE users SET password_hash = $1, password_changed_at = now(), updated_at = now() WHERE id = $2 AND password_hash IS NULL", [await hashPassword(password), userId]);
+  if (!rowCount) throw errors.conflict('This account already has a password. Use "Change password".', null, "HAS_PASSWORD");
 }
 
 export const logout = (sessionId) => db.query("UPDATE sessions SET revoked_at = now() WHERE id = $1 AND revoked_at IS NULL", [sessionId]);

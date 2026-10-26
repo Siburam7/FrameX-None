@@ -5,6 +5,46 @@
 
 ## Now
 
+- [x] 2026-10-26 **Admin → Promotions BUILT** (owner: "hmm abhi code main banao"; design Desktop\FrameX-Promotions-Admin-Design).
+      Migration 023 `promotions` (placement, title = alt text, link, laptop / phone picture: website file or uploaded,
+      position, on / off, first / last day, hide rule COUPON:<code> / FIRST_ORDER_FREE), seeded with today's 5 banners +
+      6 strips. services/promotion-service.js; admin routes /api/admin/promotions (list, create, change, move, delete,
+      picture upload → WebP no wider than the place, a warning for a different shape); public GET /api/promotions (1 min
+      cache); /media/promo/:id/:which. Website: ui/promotions.js (replaces promo-strips.js) fills every
+      data-promo-slot; offers.js waits for the banners; without the backend the page's own pictures stay. Admin: menu
+      "Promotions" (ADMIN only), list by place with ↑↓ / Edit / on-off / delete, form with size check + live preview.
+      Checks: backend 476 pass / 0 fail (promotions 7), browser 19/19 (admin flow + website), home 40, Studio 37, shop 50,
+      account 13, banners/strips 35. Local, not pushed.
+- [x] 2026-10-26 **Google + Facebook login BUILT** (owner: "Haan banao dono"; design Desktop\FrameX-Social-Login-Design).
+      Buttons on the customer login, sign-up and the login dialog, above the form, with "or log in with email / phone";
+      not on the Local shop tab. Google draws its own button (Google Identity Services, ID token); Facebook's SDK gives an
+      access token; the backend checks either with Google / Facebook (lib/social-login.js: Google's keys + aud / iss / exp /
+      verified email; Facebook debug_token for FrameX's app + appsecret_proof). New email = new CUSTOMER (no password, no
+      phone); same email = that customer account; staff / shop / artist emails must use their password. Account page: "Set
+      password" for such accounts, delete with DELETE only. Migration 022 (users.google_sub, users.facebook_id) — backup
+      before deploy. CSP on 39 pages allows accounts.google.com and Facebook. Privacy notice updated. Buttons show ONLY when
+      the server has GOOGLE_CLIENT_ID / FACEBOOK_APP_ID + FACEBOOK_APP_SECRET (none set yet = nothing changes on the site).
+      Checks: backend 469 pass / 0 fail (new social-login test 10), browser 16/16 (stand-in Google / Facebook), off-mode 4/4,
+      account 13/13. Local, not pushed.
+- [x] 2026-10-26 Google OAuth client made by the owner (Google Cloud project "FrameX", client "FrameX website", origins
+      https://shopframex.in + http://localhost:5500; account siburam.n7). Client ID set in the LOCAL backend/.env; the owner's
+      :4000 backend restarted (migrations 020-022 applied; copy first: backend/.data.backup-2026-10-26-before-heic-review-social).
+- [x] 2026-10-26 Real Google login WORKS locally (owner tested on localhost:5500 with the :4000 backend). App published
+      (In production; only name + email asked, so no 100-user cap applies).
+- [ ] Owner: Google Auth Platform → Branding (home page, privacy + terms links, authorized domain shopframex.in; no logo)
+      → Audience → Publish app. Then delete the client secret (not used; it was shown in a screenshot). Render: GOOGLE_CLIENT_ID.
+- [x] 2026-10-26 **Picture banners + promotion strips BUILT** (owner: "abhi sabhi jitna strip or banner sab lagao page par
+      direct"; designs in Desktop\FrameX-Banner-Design and Desktop\FrameX-Promo-Strip-Design). Home: the 5 offer banners are
+      now one picture each (laptop 2400×760 / phone 1080×608, assets/img/home/banners), the whole banner is the link, the
+      banner takes the picture's shape (nothing cut off); Diwali "Copy code" is gone (the code is in the picture). 6 strips
+      (assets/img/promo, laptop 2400×300 / phone 1080×260, `.promo-strip` in components.css): Home after the banners
+      (Diwali fest), after Recommended (featured shop Mithus Frame FRX-SHOP-1001, "AD"), after Shops (Sell on FrameX →
+      partner.html); Shop page under the Shops list, above All frames (free delivery; moved there by the owner); Product page above "You may also like" (Studio); Home Decor after
+      Featured (gift). No hover effect on any banner or strip (owner). New `ui/promo-strips.js` (started by main.js): a coupon strip goes when the coupon ends, the
+      free-delivery strip when that offer is off — like the banners. The old offer photos were removed from the site (kept
+      with the generator scripts in Desktop\FrameX-Banner-Design\0 - Source). Checks 35/35 (phone + laptop, pictures,
+      shapes, links, no script errors, coupon ended), home UX 40/40. Local, not pushed.
+      Open (owner to answer): an admin "Promotions" section to change strips without code; paid shop promotion or not.
 - [x] 2026-10-25 **DEPLOYED** (owner: "jitna sab change kiya sabhi push karke live kar do", "Bina backup live karo"): main 5434cc3 +
       fe0060c. Migrations 020 + 021 ran on production; newest backup is still 2026-10-24 19:12. Before the push: backend
       459/0, Studio 37/37, shop 50/50, home/UX 40/40. Live check (phone, read-only): Home, product, Studio, Customer gallery

@@ -76,6 +76,8 @@
     FrameX.cart.init();
     // The help chat button (customer pages)
     if (FrameX.helpChat) FrameX.helpChat.init();
+    // Promotion strips (home, shop, product, Home Decor) from Admin -> Promotions; a strip whose offer is off goes
+    if (FrameX.promotions) FrameX.promotions.init();
     try {
       await (PAGES[document.body.dataset.page] || PAGES.about)();
     } catch (error) {

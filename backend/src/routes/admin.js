@@ -24,6 +24,7 @@ import * as support from "../services/support-service.js";
 import * as care from "../services/care-service.js";
 import * as edits from "../services/order-edit-service.js";
 import { INDIAN_STATES, readAddress } from "../services/address-service.js";
+import * as promotions from "../services/promotion-service.js";
 
 const router = Router();
 /* ---- Orders: admins and FrameX Care (owner, 2026-10-24: a care person changes an order when the customer asks in
@@ -372,6 +373,15 @@ router.delete("/messages/:id", async (req, res) => res.json(await contact.adminD
 
 /* ---- The help chat (customers write from any page; FrameX answers here) ---- */
 // Admin -> Care team: FrameX Care logins (CARE role). They open the admin panel with only Live chats (/api/care) and Orders (staffOrders above).
+/* ---- Promotions: the home banners and the promotion strips (services/promotion-service.js) ---- */
+router.get("/promotions", async (req, res) => res.json(await promotions.adminList()));
+router.post("/promotions", async (req, res) => res.status(201).json({ promotion: await promotions.create(req.body || {}, { actor: req.auth.user, ip: req.ip }) }));
+router.patch("/promotions/:id", async (req, res) => res.json({ promotion: await promotions.update(req.params.id, req.body || {}, { actor: req.auth.user, ip: req.ip }) }));
+router.post("/promotions/:id/move", async (req, res) => res.json(await promotions.move(req.params.id, req.body && req.body.direction === "up" ? "up" : "down", { actor: req.auth.user, ip: req.ip })));
+router.delete("/promotions/:id", async (req, res) => res.json(await promotions.remove(req.params.id, { actor: req.auth.user, ip: req.ip })));
+// The body is the picture's own bytes; :which = laptop | phone
+router.post("/promotions/:id/picture/:which", async (req, res) => res.json(await promotions.savePicture(req.params.id, req.params.which, req, { actor: req.auth.user, ip: req.ip })));
+
 router.get("/care-team", async (req, res) => res.json(await care.team()));
 router.post("/care-team", async (req, res) => {
   const data = validate(req.body, {

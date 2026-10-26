@@ -110,13 +110,17 @@
 
         <section class="account-card" aria-labelledby="acc-password">
           <h2 id="acc-password">${icon("lock")} Password</h2>
-          <p class="account-card__lead">Changing your password signs you out on other devices.</p>
-          <form id="password-form" class="form-grid" novalidate>
-            ${forms().field("currentPassword", "Current password", { required: true, type: "password", autocomplete: "current-password", toggle: true, prefix: "pw" })}
+          ${
+            user.hasPassword === false
+              ? `<p class="account-card__lead">You log in with ${user.linked && user.linked.facebook && !user.linked.google ? "Facebook" : "Google"}. Set a password if you also want to log in with your email.</p>`
+              : `<p class="account-card__lead">Changing your password signs you out on other devices.${user.linked && (user.linked.google || user.linked.facebook) ? ` You can also log in with ${user.linked.google ? "Google" : "Facebook"}.` : ""}</p>`
+          }
+          <form id="password-form" class="form-grid" novalidate${user.hasPassword === false ? " data-first" : ""}>
+            ${user.hasPassword === false ? "" : forms().field("currentPassword", "Current password", { required: true, type: "password", autocomplete: "current-password", toggle: true, prefix: "pw" })}
             ${forms().field("newPassword", "New password", { required: true, type: "password", autocomplete: "new-password", toggle: true, hint: "At least 8 characters, with a letter and a number.", prefix: "pw" })}
             ${forms().field("confirmPassword", "Confirm new password", { required: true, type: "password", autocomplete: "new-password", toggle: true, prefix: "pw" })}
             <div class="form-status" role="status" aria-live="polite"></div>
-            <div><button class="btn btn--dark btn--sm" type="submit">Change password</button></div>
+            <div><button class="btn btn--dark btn--sm" type="submit">${user.hasPassword === false ? "Set password" : "Change password"}</button></div>
           </form>
         </section>
       </div>
@@ -131,7 +135,7 @@
             ? `<details class="account-edit" data-delete-box><summary>Delete my account</summary>
           <p class="account-card__lead">Deleting your account can't be undone. Your login, addresses, saved photos, saved designs and cart are removed at once. Records of your past orders are kept only as FrameX needs them for tax, without your name, email, phone or address. Your reviews stay without your name. An order or custom painting that is still under way has to be delivered or cancelled first.</p>
           <form id="delete-form" class="form-grid" novalidate>
-            ${forms().field("password", "Your password", { required: true, type: "password", autocomplete: "current-password", toggle: true, prefix: "del" })}
+            ${user.hasPassword === false ? "" : forms().field("password", "Your password", { required: true, type: "password", autocomplete: "current-password", toggle: true, prefix: "del" })}
             ${forms().field("confirm", "Type DELETE to confirm", { required: true, autocomplete: "off", maxlength: 10, prefix: "del", placeholder: "DELETE" })}
             <div class="form-status" role="status" aria-live="polite"></div>
             <div><button class="btn btn--dark btn--sm" type="submit">${icon("trash")} Delete my account for good</button></div>
@@ -210,10 +214,16 @@
       });
     const pw = $("#password-form", root);
     forms().handle(pw, {
-      busyLabel: "Changing…",
-      send: (v) => auth().changePassword(v.currentPassword, v.newPassword, v.confirmPassword),
+      busyLabel: pw.hasAttribute("data-first") ? "Saving…" : "Changing…",
+      send: (v) => (pw.hasAttribute("data-first") ? auth().setPassword(v.newPassword, v.confirmPassword) : auth().changePassword(v.currentPassword, v.newPassword, v.confirmPassword)),
       onSuccess() {
         pw.reset();
+        if (pw.hasAttribute("data-first")) {
+          // From now on this form changes the password (it asks for the current one)
+          forms().status($(".form-status", pw), "success", "Password set. You can now also log in with your email and this password.");
+          setTimeout(() => window.location.reload(), 1800);
+          return;
+        }
         forms().status($(".form-status", pw), "success", "Password changed. Other devices have been signed out.");
       },
     });

@@ -119,6 +119,14 @@ export const config = {
     domain: env.COOKIE_DOMAIN || ""
   },
   allowBearer: bool(env.AUTH_ALLOW_BEARER, false),
+  // "Continue with Google / Facebook" (lib/social-login.js). The Client ID and App ID are public; the App secret is not.
+  social: {
+    googleClientId: (env.GOOGLE_CLIENT_ID || "").trim(),
+    googleJwksUrl: env.GOOGLE_JWKS_URL || "https://www.googleapis.com/oauth2/v3/certs",
+    facebookAppId: (env.FACEBOOK_APP_ID || "").trim(),
+    facebookAppSecret: (env.FACEBOOK_APP_SECRET || "").trim(),
+    facebookGraphUrl: (env.FACEBOOK_GRAPH_URL || "https://graph.facebook.com/v19.0").replace(/\/$/, "")
+  },
 
   frontendUrl: (env.FRONTEND_URL || `http://localhost:${port}`).replace(/\/+$/, ""),
   // false = FRONTEND_URL wasn't set: links in messages then point back at the (allowed) site the request came from.

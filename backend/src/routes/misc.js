@@ -13,6 +13,8 @@ import { v, validate } from "../lib/validate.js";
 import { SEARCH_KINDS, searchAll } from "../services/search-service.js";
 import { activeCoupons } from "../services/coupon-service.js";
 import { publicStatus as publicCare } from "../services/care-service.js";
+import { socialStatus } from "../lib/social-login.js";
+import { publicList as publicPromotions } from "../services/promotion-service.js";
 
 const router = Router();
 
@@ -75,6 +77,8 @@ router.get("/config", (req, res) => {
     cod: { enabled: config.checkout.cod.enabled, fee: config.checkout.cod.fee },
     // FrameX Care live chat: the team's hours, whether they are open, and whether someone can join right now.
     care: publicCare(),
+    // "Continue with Google / Facebook": the Google Client ID / Facebook App ID when switched on (public ids, no secret).
+    auth: socialStatus(),
     // Delivery: its fee, and whether a customer's first order has free delivery (the home page's offer banner).
     delivery: { fee: config.checkout.shippingFee, freeAbove: config.checkout.freeShippingAbove, firstOrderFree: config.checkout.firstOrderFreeDelivery },
     // Visitor statistics: whether the website may send them (only ever for visitors who said yes there),
@@ -83,6 +87,12 @@ router.get("/config", (req, res) => {
     // Custom paintings: how the price is split, and how many reference photos a request may carry.
     paintings: { advancePercent: config.paintings.advancePercent, maxReferencePhotos: config.paintings.maxReferencePhotos }
   });
+});
+
+// The banners and promotion strips to show now (Admin -> Promotions). Short cache: a change shows within a minute.
+router.get("/promotions", async (req, res) => {
+  res.set("Cache-Control", "public, max-age=60");
+  res.json({ items: await publicPromotions() });
 });
 
 /**

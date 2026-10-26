@@ -2006,3 +2006,29 @@ textarea.input {
 :root[data-theme="dark"] .uploader__tile.is-missing {
   background: var(--tint-bad);
 }
+
+/* Promotion strips (owner, 2026-10-26; ui/promo-strips.js): one picture, the whole strip is the link */
+.promo-strip {
+  display: grid;
+  gap: 12px;
+  margin-block: clamp(14px, 2vw, 24px);
+}
+
+.promo-strip__link {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 6px 18px rgba(13, 27, 62, 0.12); /* no hover effect (owner, 2026-10-26) */
+}
+
+.promo-strip__link:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.promo-strip img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 2400 / 300;
+}

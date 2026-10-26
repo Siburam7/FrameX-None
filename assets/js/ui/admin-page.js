@@ -47,6 +47,7 @@
     ["orders", "Orders", "receipt"],
     ["payouts", "Payouts", "wallet"],
     ["coupons", "Coupons", "gift"],
+    ["promotions", "Promotions", "gift"],
     ["products", "Shop products", "image"],
     ["artists", "Artists", "users"],
     ["artworks", "Artworks", "frame"],
@@ -673,6 +674,7 @@
       if (section === "users") await (parts[1] ? FrameX.adminAnalytics.customer(main, parts[1], params, { head }) : art.users(main, params, { head }));
       if (section === "settings") await art.settings(main, params, { head });
       if (section === "coupons") await art.coupons(main, params, { head });
+      if (section === "promotions") await (parts[1] === "new" ? FrameX.adminPromotions.edit(main, null, params, { head }) : parts[1] ? FrameX.adminPromotions.edit(main, parts[1], params, { head }) : FrameX.adminPromotions.list(main, { head }));
       loaded(true);
     } catch (error) {
       loaded(false);

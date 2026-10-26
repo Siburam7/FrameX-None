@@ -30,6 +30,7 @@ import { handleWebhook } from "./services/payment-service.js";
 import { sendReviewPhoto } from "./services/review-service.js";
 import { sendMedia } from "./services/shop-product-service.js";
 import { noteVisits } from "./lib/activity.js";
+import { sendPicture as sendPromotionPicture } from "./services/promotion-service.js";
 
 export function createApp() {
   const app = express();
@@ -90,6 +91,7 @@ export function createApp() {
 
   /* ---- Product pictures uploaded by shops (public, like the pictures on any product page) ---- */
   app.get("/media/review/:id", sendReviewPhoto); // the photo of a published review
+  app.get("/media/promo/:id/:which", sendPromotionPicture); // a promotion's uploaded picture (Admin -> Promotions)
   app.get("/media/:id", sendMedia);
   app.get("/media/:id/:variant", sendMedia);
 

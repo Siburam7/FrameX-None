@@ -44,6 +44,20 @@ router.post("/login", rateLimit("login-ip", { windowMs: 15 * MINUTE, max: 30 }),
   await startSession(req, res, userId);
 });
 
+// "Continue with Google": { credential } = Google's ID token. "Continue with Facebook": { accessToken }.
+// Both are checked with Google / Facebook before anyone is logged in (services/auth-service.js socialLogin).
+router.post("/google", rateLimit("social-login", { windowMs: 15 * MINUTE, max: 30 }), async (req, res) => {
+  const { credential } = validate(req.body, { credential: v.string({ min: 20, max: 4096, label: "Google login" }) });
+  const { userId, created } = await auth.socialLogin("google", credential, { ip: req.ip });
+  await startSession(req, res, userId, created ? 201 : 200);
+});
+
+router.post("/facebook", rateLimit("social-login", { windowMs: 15 * MINUTE, max: 30 }), async (req, res) => {
+  const { accessToken } = validate(req.body, { accessToken: v.string({ min: 20, max: 2000, label: "Facebook login" }) });
+  const { userId, created } = await auth.socialLogin("facebook", accessToken, { ip: req.ip });
+  await startSession(req, res, userId, created ? 201 : 200);
+});
+
 router.post("/logout", async (req, res) => {
   if (req.auth) await auth.logout(req.auth.sessionId);
   clearSessionCookie(res);
@@ -91,6 +105,14 @@ router.post("/reset-password", rateLimit("reset", { windowMs: 15 * MINUTE, max: 
   const result = await auth.completePasswordToken(data.token, data.password, req.ip);
   clearSessionCookie(res);
   res.json({ ok: true, ...result });
+});
+
+// A customer who came through Google / Facebook and has no password yet sets one (then email + password works too).
+router.post("/set-password", requireAuth, rateLimit("change-password", { windowMs: 15 * MINUTE, max: 10 }), async (req, res) => {
+  const data = validate(req.body, { newPassword: v.password(), confirmPassword: v.secret({ label: "Confirm password" }) });
+  if (data.newPassword !== data.confirmPassword) throw errors.validation({ confirmPassword: "The passwords don't match." });
+  await auth.setFirstPassword(req.auth.user.id, data.newPassword);
+  res.json({ ok: true });
 });
 
 router.post("/change-password", requireAuth, rateLimit("change-password", { windowMs: 15 * MINUTE, max: 10 }), async (req, res) => {

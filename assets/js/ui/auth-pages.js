@@ -17,6 +17,108 @@
 
   const PASSWORD_HINT = "At least 8 characters, with a letter and a number.";
 
+  /* ---------------------------------------------------------------- Continue with Google / Facebook (owner, 2026-10-26)
+     Shown on the customer login, the sign-up and the login dialog, only when the backend says so (GET /api/config ->
+     auth.google / auth.facebook: public ids, no secret). Google draws its own button (Google Identity Services) and
+     answers with an ID token; Facebook's SDK answers with an access token. Either goes to the backend, which checks
+     it with Google / Facebook before anyone is logged in (backend lib/social-login.js). */
+  const GOOGLE_SDK = "https://accounts.google.com/gsi/client";
+  const FACEBOOK_SDK = "https://connect.facebook.net/en_US/sdk.js";
+  const FACEBOOK_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07C0 18.1 4.39 23.1 10.13 24v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.8-4.7 4.54-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.5c-1.5 0-1.96.93-1.96 1.89v2.26h3.32l-.53 3.5h-2.8V24C19.62 23.1 24 18.1 24 12.07"/></svg>';
+  const sdks = {};
+  const loadSdk = (src) =>
+    (sdks[src] =
+      sdks[src] ||
+      new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = src;
+        s.async = true;
+        s.onload = resolve;
+        s.onerror = () => {
+          delete sdks[src];
+          reject(new Error(src + " didn't load"));
+        };
+        document.head.appendChild(s);
+      }));
+  let googleFor = ""; // the Client ID Google's library was started with (once per page)
+  let googleAnswer = null; // what the button on screen does with Google's answer
+  let facebookFor = "";
+
+  /** The (still empty) place for the buttons; mountSocial() fills it, or removes it when neither is switched on. */
+  const socialBlock = (mode) => `<div class="soc" data-social data-for="customer">
+        <div class="soc__buttons"></div>
+        <div class="form-status" role="status" aria-live="polite"></div>
+        <p class="soc__or"><span>${mode === "signup" ? "or sign up with email" : "or log in with email / phone"}</span></p>
+      </div>`;
+
+  async function mountSocial(root, mode, onSuccess) {
+    const box = $("[data-social]", root);
+    if (!box) return;
+    let ids = null;
+    try {
+      const settings = FrameX.http && FrameX.http.serverConfig ? await FrameX.http.serverConfig() : null;
+      ids = settings && settings.auth;
+    } catch (error) {
+      ids = null;
+    }
+    if (!ids || (!ids.google && !ids.facebook)) return box.remove();
+    const buttons = $(".soc__buttons", box);
+    const status = $(".form-status", box);
+    const finish = async (provider, body) => {
+      forms().status(status, "info", "Logging you in…");
+      try {
+        onSuccess(await auth().socialLogin(provider, body));
+      } catch (error) {
+        forms().status(status, "error", esc(error.message || "That didn't work. Please try again."));
+      }
+    };
+    const width = () => Math.min(400, Math.max(220, Math.round(buttons.clientWidth || box.clientWidth || 320)));
+
+    if (ids.google) {
+      const holder = document.createElement("div");
+      holder.className = "soc__google";
+      buttons.appendChild(holder);
+      try {
+        await loadSdk(GOOGLE_SDK);
+        const google = window.google.accounts.id;
+        if (googleFor !== ids.google) {
+          google.initialize({ client_id: ids.google, callback: (answer) => googleAnswer && googleAnswer(answer), ux_mode: "popup", auto_select: false, cancel_on_tap_outside: true });
+          googleFor = ids.google;
+        }
+        googleAnswer = (answer) => answer && answer.credential && finish("google", { credential: answer.credential });
+        box.classList.add("is-ready");
+        google.renderButton(holder, { type: "standard", theme: "outline", size: "large", shape: "pill", text: mode === "signup" ? "signup_with" : "continue_with", logo_alignment: "center", width: width() });
+      } catch (error) {
+        holder.remove(); // Google can't be reached from here (blocked, offline): the email form still works
+      }
+    }
+
+    if (ids.facebook) {
+      try {
+        await loadSdk(FACEBOOK_SDK);
+        if (facebookFor !== ids.facebook) {
+          window.FB.init({ appId: ids.facebook, cookie: false, xfbml: false, version: "v19.0" });
+          facebookFor = ids.facebook;
+        }
+        buttons.insertAdjacentHTML("beforeend", `<button class="soc__facebook" type="button">${FACEBOOK_ICON}<span>${mode === "signup" ? "Sign up with Facebook" : "Continue with Facebook"}</span></button>`);
+        box.classList.add("is-ready");
+        $(".soc__facebook", buttons).addEventListener("click", () =>
+          // FB.login straight from the click, so the browser lets its window open
+          window.FB.login(
+            (answer) => {
+              if (answer && answer.authResponse && answer.authResponse.accessToken) finish("facebook", { accessToken: answer.authResponse.accessToken });
+              else forms().status(status, "error", "Facebook login was cancelled.");
+            },
+            { scope: "public_profile,email" },
+          ),
+        );
+      } catch (error) {
+        /* Facebook can't be reached from here: no Facebook button */
+      }
+    }
+    if (!buttons.children.length) box.remove();
+  }
+
   function shell(root, title, lead, body) {
     const heading = root.dataset.embedded ? `<h2 class="auth-card__title" id="auth-gate-title">${title}</h2>` : `<h1 class="auth-card__title">${title}</h1>`;
     root.innerHTML = `<div class="auth-card">
@@ -82,6 +184,7 @@
         <button class="auth-tabs__btn" type="button" role="tab" id="tab-customer" aria-controls="login-form" data-type="customer">${icon("user")} Customer</button>
         <button class="auth-tabs__btn" type="button" role="tab" id="tab-shop" aria-controls="login-form" data-type="shop">${icon("store")} Local shop</button>
       </div>
+      ${socialBlock("login")}
       <form id="login-form" class="form-grid" role="tabpanel" novalidate>
         ${forms().field("identifier", copy[type].label, { required: true, autocomplete: "username", prefix: "login" })}
         ${forms().field("password", "Password", { required: true, type: "password", autocomplete: "current-password", toggle: true, prefix: "login" })}
@@ -118,6 +221,7 @@
       if (e.key === "ArrowRight" || e.key === "ArrowLeft") setType(type === "shop" ? "customer" : "shop", true);
     });
     setType(type);
+    mountSocial(root, "login", onSuccess);
 
     forms().handle(form, {
       busyLabel: "Logging in…",
@@ -133,7 +237,8 @@
       root,
       "Create your FrameX account",
       "Save your details and order frames from local shops.",
-      `<form id="signup-form" class="form-grid" novalidate>
+      `${socialBlock("signup")}
+      <form id="signup-form" class="form-grid" novalidate>
         ${forms().field("name", "Name", { required: true, autocomplete: "name", maxlength: 80, prefix: "su" })}
         ${forms().field("email", "Email", { required: true, type: "email", autocomplete: "email", prefix: "su" })}
         ${forms().field("phone", "Phone", { type: "tel", autocomplete: "tel", inputmode: "tel", placeholder: "10-digit mobile number", prefix: "su" })}
@@ -157,6 +262,7 @@
       onSuccess,
     });
     form.elements.name.focus();
+    mountSocial(root, "signup", onSuccess);
   }
 
   /* ---------------------------------------------------------------- Forgot password

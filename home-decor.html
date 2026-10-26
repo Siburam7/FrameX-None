@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-bY082ZUbml92XX9F3EOzh2NG30bLhAgTZfWBMj1p02U=' 'sha256-URy6msmneyqM9p/X7i+xrvPyoVlIXY1QWAMjU0QbQnw=' 'sha256-qXPs0U9Xd/l342+5ojEZkjc+ORl4yrnFimWbqsnk2o8=' https://*.razorpay.com https://*.cashfree.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000 https://*.razorpay.com https://*.cashfree.com https://*.google-analytics.com https://*.googletagmanager.com; media-src 'self' blob: https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000; connect-src 'self' https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000 https://*.razorpay.com https://*.cashfree.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://*.razorpay.com https://*.cashfree.com https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' https://*.razorpay.com https://*.cashfree.com">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com https://connect.facebook.net 'sha256-bY082ZUbml92XX9F3EOzh2NG30bLhAgTZfWBMj1p02U=' 'sha256-URy6msmneyqM9p/X7i+xrvPyoVlIXY1QWAMjU0QbQnw=' 'sha256-qXPs0U9Xd/l342+5ojEZkjc+ORl4yrnFimWbqsnk2o8=' https://*.razorpay.com https://*.cashfree.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000 https://*.razorpay.com https://*.cashfree.com https://*.google-analytics.com https://*.googletagmanager.com; media-src 'self' blob: https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000; connect-src 'self' https://accounts.google.com https://*.facebook.com https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000 https://*.razorpay.com https://*.cashfree.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://accounts.google.com https://*.facebook.com https://*.razorpay.com https://*.cashfree.com https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' https://*.razorpay.com https://*.cashfree.com">
   <title>Home Decor &amp; Wall Art — FrameX</title>
   <meta name="description"
     content="Framed wall art for every room: quotes, nature, gaming, anime-style scenes, museum classics and multi-panel sets. Split your own photo across 2 to 5 frames.">
@@ -79,6 +79,16 @@
         <div class="collection-grid collection-grid--rail" id="hd-featured" data-skeleton="tile" data-skeleton-count="6" aria-busy="true"></div>
       </div>
     </section>
+
+    <!-- Promotion strip (Admin -> Promotions; ui/promotions.js). This picture shows when the backend can't be reached. -->
+    <div class="promo-strip container" data-promo-slot="decor-after-featured">
+      <a class="promo-strip__link" href="shop.html?category=gifts#collection">
+        <picture>
+          <source media="(max-width: 639px)" srcset="assets/img/promo/strip-6-gift-phone.webp" width="1080" height="260">
+          <img src="assets/img/promo/strip-6-gift-laptop.webp" alt="Gift a memory: birthday, anniversary or wedding. Their favourite photo, framed by a local shop. Shop now." width="2400" height="300" loading="lazy" decoding="async">
+        </picture>
+      </a>
+    </div>
 
     <!-- Category chips -->
     <section class="section section--warm" id="collections" aria-labelledby="collections-title">
@@ -258,6 +268,7 @@
   <script src="assets/js/ui/decor-page.js" defer></script>
   <script src="assets/js/services/analytics.js" defer></script>
   <script src="assets/js/ui/help-chat.js" defer></script>
+  <script src="assets/js/ui/promotions.js" defer></script>
   <script src="assets/js/main.js" defer></script>
 </body>
 

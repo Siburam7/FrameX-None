@@ -24,6 +24,12 @@
 
 ## Owner decisions (log)
 
+- 2026-10-26 Admin → Promotions built (banners + strips managed without code), then everything pushed together.
+- 2026-10-26 Google + Facebook login built ("Haan banao dono"). Only customers; staff / shop / artist keep password login.
+  A social login with an existing customer email joins that account. Off until the server has the ids.
+- 2026-10-26 Social login: Google yes (free), Facebook design now / setup later, Apple no ($99/yr, needs a card).
+- 2026-10-26 Home offer banners as whole pictures (no HTML text / buttons) and 6 promotion strips on Home, Shop, Product,
+  Home Decor — built straight after the designs ("sab lagao page par direct"). Diwali "Copy code" button dropped.
 - 2026-10-25 Deploy HEIC photos, medium review photos, Studio / cart on phones, hero steps removal WITHOUT a fresh backup
   ("Bina backup live karo") — main 5434cc3 + fe0060c; migrations 020 + 021 ran; newest backup 2026-10-24 19:12.
 - 2026-10-25 Review photos: keep the customer's high-quality original, SHOW a medium copy (WebP 1600 px) so pages with many

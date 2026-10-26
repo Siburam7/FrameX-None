@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-bY082ZUbml92XX9F3EOzh2NG30bLhAgTZfWBMj1p02U=' 'sha256-URy6msmneyqM9p/X7i+xrvPyoVlIXY1QWAMjU0QbQnw=' 'sha256-qXPs0U9Xd/l342+5ojEZkjc+ORl4yrnFimWbqsnk2o8=' https://*.razorpay.com https://*.cashfree.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000 https://*.razorpay.com https://*.cashfree.com https://*.google-analytics.com https://*.googletagmanager.com; media-src 'self' blob: https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000; connect-src 'self' https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000 https://*.razorpay.com https://*.cashfree.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://*.razorpay.com https://*.cashfree.com https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' https://*.razorpay.com https://*.cashfree.com">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com https://connect.facebook.net 'sha256-bY082ZUbml92XX9F3EOzh2NG30bLhAgTZfWBMj1p02U=' 'sha256-URy6msmneyqM9p/X7i+xrvPyoVlIXY1QWAMjU0QbQnw=' 'sha256-qXPs0U9Xd/l342+5ojEZkjc+ORl4yrnFimWbqsnk2o8=' https://*.razorpay.com https://*.cashfree.com https://*.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000 https://*.razorpay.com https://*.cashfree.com https://*.google-analytics.com https://*.googletagmanager.com; media-src 'self' blob: https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000; connect-src 'self' https://accounts.google.com https://*.facebook.com https://framex-api.onrender.com https://api.shopframex.in http://localhost:4000 http://127.0.0.1:4000 https://*.razorpay.com https://*.cashfree.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com; frame-src https://accounts.google.com https://*.facebook.com https://*.razorpay.com https://*.cashfree.com https://www.youtube-nocookie.com https://www.youtube.com https://player.vimeo.com; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self' https://*.razorpay.com https://*.cashfree.com">
   <title>Privacy Notice — FrameX</title>
   <meta name="description" content="How FrameX handles information, today and as the site grows.">
   <meta name="theme-color" content="#02030a">
@@ -203,7 +203,7 @@
           </section>
           <section class="legal-section" id="s7">
             <h2>7. Third-party services</h2>
-            <p>The site loads fonts from Google Fonts. If you grant permission, it uses your browser&rsquo;s built-in
+            <p>The site loads fonts from Google Fonts. The login pages load Google&rsquo;s and Facebook&rsquo;s login buttons, only where those logins are switched on (see section 9). If you grant permission, it uses your browser&rsquo;s built-in
               location feature to find nearby shops. Where FrameX accounts are not switched on, the distance is worked
               out on your device and your coordinates are not sent to FrameX. Where they are switched on, your
               coordinates are sent to the FrameX server only to calculate distances and are not stored in the FrameX database (see section 9).
@@ -218,7 +218,7 @@
               data&rdquo; gives you one file with your profile, addresses, orders, custom painting requests, reviews and
               messages to FrameX. Photo files are not in it: you can open them from your order pages.</p>
             <p><strong>Delete your account.</strong> Account &rarr; &ldquo;Your data&rdquo; &rarr; &ldquo;Delete my
-              account&rdquo; (customer accounts), with your password and the word DELETE. It can't be done while an order
+              account&rdquo; (customer accounts), with your password (if your account has one) and the word DELETE. It can't be done while an order
               or a custom painting is still under way. When you delete your account, your login, addresses, saved photos, saved designs,
               cart and notifications are removed at once. Records of your past orders and custom paintings are kept only
               as FrameX needs them for tax (order number, items, amounts, dates and the state of delivery), without your
@@ -234,6 +234,11 @@
               <li><strong>Your account.</strong> If you create an account, FrameX stores your name, email address and
                 phone number (if you give one). Your password is stored only as a one-way hash; FrameX staff cannot
                 read it. You can see and edit your details on your account page.</li>
+              <li><strong>Log in with Google or Facebook.</strong> If you choose &ldquo;Continue with Google&rdquo; or
+                &ldquo;Continue with Facebook&rdquo;, Google or Facebook tells FrameX your name, your email address and a
+                number that stands for your Google or Facebook account. FrameX uses them only to make and open your account;
+                it does not get your Google or Facebook password, contacts or posts, and posts nothing for you. You can set a
+                FrameX password later on your account page.</li>
               <li><strong>Login records.</strong> To notice someone guessing passwords, FrameX keeps a record of each
                 login and each failed login: the time, the account it was aimed at, the reason it failed and the
                 network address it came from. What was typed is never stored. These records are deleted after the

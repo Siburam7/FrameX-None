@@ -63,6 +63,9 @@
 
   const signup = (data) => http.post("/auth/signup", data).then(startSession);
 
+  // "Continue with Google / Facebook": { credential } or { accessToken }, checked by the backend with Google / Facebook
+  const socialLogin = (provider, proof) => http.post("/auth/" + provider, proof).then(startSession);
+
   async function logout() {
     try {
       await http.post("/auth/logout");
@@ -130,6 +133,7 @@
     },
     login,
     signup,
+    socialLogin,
     logout,
     refresh,
     guard,
@@ -143,6 +147,8 @@
     tokenInfo: (token) => http.post("/auth/token-info", { token }),
     resetPassword: (token, password, confirmPassword) =>
       http.post("/auth/reset-password", { token, password, confirmPassword }),
+    // A customer who came through Google / Facebook (no password yet) sets one
+    setPassword: (newPassword, confirmPassword) => http.post("/auth/set-password", { newPassword, confirmPassword }),
     changePassword: (currentPassword, newPassword, confirmPassword) =>
       http.post("/auth/change-password", { currentPassword, newPassword, confirmPassword }),
     updateProfile: (data) => http.patch("/users/me", data).then((r) => (set(r.user), r.user)),

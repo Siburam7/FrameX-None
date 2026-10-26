@@ -16,6 +16,7 @@
    ========================================================================== */
 import { db } from "../db/index.js";
 import { listFiles } from "../lib/storage.js";
+import { storedKeys as storedPromotionKeys } from "./promotion-service.js";
 
 let last = null;
 /** What the last check found: null (none yet, or it could not run) or { known, missing, lost, checkedAt }. */
@@ -62,6 +63,11 @@ async function knownFiles() {
     const where = `review of ${r.source_type === "ORDER" ? "order" : "custom painting"} ${r.source_id}`;
     known.set(r.photo_key, { what: "review photo", where, since: day(r.created_at), underWay: false });
     if (r.photo_view_key) known.set(r.photo_view_key, { what: "review photo (medium copy)", where, since: day(r.created_at), underWay: false });
+  }
+  for (const p of await storedPromotionKeys()) {
+    const where = `promotion ${p.placement}`;
+    if (p.laptop_key) known.set(p.laptop_key, { what: "promotion picture (laptop)", where, since: day(p.created_at), underWay: false });
+    if (p.phone_key) known.set(p.phone_key, { what: "promotion picture (phone)", where, since: day(p.created_at), underWay: false });
   }
   return known;
 }

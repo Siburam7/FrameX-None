@@ -2049,3 +2049,44 @@ p.iu-errors {
   font-size: 1rem;
   font-weight: 700;
 }
+
+/* Admin -> Promotions (owner, 2026-10-26; ui/admin-promotions.js) */
+.pr-sum { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; }
+.pr-sum span { padding: 6px 12px; border-radius: 999px; background: var(--surface-soft); font-size: 0.85rem; font-weight: 700; }
+.pr-group { margin-bottom: 18px; }
+.pr-group__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.pr-group__head h2 { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; font-size: 1.05rem; }
+.pr-group__head small { flex-basis: 100%; color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
+.pr-empty { margin: 0; padding: 12px 0; border-top: 1px solid var(--line); }
+.pr-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; padding: 12px 0; border-top: 1px solid var(--line); }
+.pr-row--off .pr-thumb { opacity: 0.45; }
+.pr-thumb { display: grid; place-items: center; width: 220px; overflow: hidden; border-radius: 10px; background: var(--surface-soft); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+.pr-thumb img { display: block; width: 100%; height: auto; object-fit: cover; }
+.pr-thumb--banner img, .pr-thumb--banner span { aspect-ratio: 2400 / 760; }
+.pr-thumb--strip img, .pr-thumb--strip span { aspect-ratio: 2400 / 300; }
+.pr-thumb span { display: grid; place-items: center; width: 100%; color: var(--text-muted); }
+.pr-info strong { display: block; margin: 6px 0 4px; font-size: 0.95rem; }
+.pr-meta { display: flex; flex-wrap: wrap; gap: 6px 12px; color: var(--text-muted); font-size: 0.8rem; }
+.pr-meta code { padding: 1px 6px; border-radius: 6px; background: var(--surface-soft); font-size: 0.78rem; }
+.pr-acts { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+.pr-ic { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--text); font-weight: 800; cursor: pointer; }
+.pr-ic:disabled { opacity: 0.35; cursor: default; }
+.pr-del { color: #b91c1c; }
+.pr-form { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); align-items: start; gap: 20px; }
+.pr-drop { display: grid; gap: 8px; padding: 12px; border: 2px dashed var(--line); border-radius: 14px; background: var(--surface-soft); cursor: pointer; }
+.pr-drop img { display: block; width: 100%; border-radius: 8px; }
+.pr-drop small { color: var(--text-muted); }
+.pr-days { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pr-radio { display: grid; gap: 8px; margin: 0; padding: 0; border: 0; }
+.pr-radio legend { margin-bottom: 6px; font-weight: 700; }
+.pr-radio label { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-weight: 600; }
+.pr-radio input[type="radio"] { flex: none; width: 18px; height: 18px; min-height: 0; margin: 0; }
+.pr-radio input[type="text"] { flex: none; width: 140px; min-height: 40px; text-transform: uppercase; }
+.pr-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+.pr-prev { position: sticky; top: 90px; display: grid; gap: 12px; }
+.pr-prev h2 { margin: 0; }
+.pr-prev h3 { margin: 0; font-size: 0.9rem; }
+.pr-laptop { padding: 10px; border: 8px solid #222; border-radius: 10px; background: var(--surface-soft); }
+.pr-phone { width: 220px; padding: 10px 8px; border: 10px solid #111; border-radius: 28px; background: var(--surface-soft); }
+.pr-laptop img, .pr-phone img { display: block; width: 100%; border-radius: 8px; background: var(--line); object-fit: cover; }
+.pr-laptop img:not([src]), .pr-phone img:not([src]) { visibility: hidden; }

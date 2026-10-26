@@ -1254,3 +1254,34 @@
     display: none;
   }
 }
+
+/* Phones: the picture banners and promotion strips use their phone pictures, in those pictures' shape (2026-10-26) */
+@media (max-width: 639px) {
+  .offers .offer--pic {
+    min-height: 0;
+    padding: 0;
+    aspect-ratio: 1080 / 608;
+  }
+
+  .promo-strip {
+    margin-block: 12px;
+  }
+
+  .promo-strip__link {
+    border-radius: 12px;
+  }
+
+  .promo-strip img {
+    aspect-ratio: 1080 / 260;
+  }
+}
+
+/* Admin -> Promotions on phones: one column */
+@media (max-width: 639px) {
+  .pr-row { grid-template-columns: 1fr; gap: 8px; }
+  .pr-thumb { width: 100%; }
+  .pr-acts { justify-content: flex-start; }
+  .pr-group__head { flex-direction: column; }
+  .pr-form { grid-template-columns: 1fr; }
+  .pr-prev { position: static; }
+}

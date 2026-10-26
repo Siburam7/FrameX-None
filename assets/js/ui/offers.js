@@ -21,10 +21,13 @@
 
   const INTERVAL = 5000;
 
-  function init() {
+  async function init() {
     const root = $("[data-offers]");
     const track = root && $("[data-offers-track]", root);
     if (!track) return;
+    // Today's banners from Admin -> Promotions (ui/promotions.js); without the backend the page's own stay
+    if (FrameX.promotions) await FrameX.promotions.fillBanners(track);
+    if (!root.isConnected) return; // no banner today
     let banners = $$(".offer", track);
     const dotsBox = $("[data-offers-dots]", root);
     let dots = [];

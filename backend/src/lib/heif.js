@@ -10,7 +10,8 @@
 
      detectHeif(head)              -> { format: "heic" | "avif", width, height } | null   (from the file's first bytes)
      toJpeg(filePath, format)      -> { jpeg: Buffer, width, height }
-     toView(filePath, format)      -> { webp: Buffer, width, height }   a medium copy to SHOW (review photos), any format
+     toView(filePath, format, opts) -> { webp: Buffer, width, height }  a copy to SHOW (review photos: 1600 px inside;
+                                    promotion pictures: { edge: 2400, fit: "width", quality: 86 }), any format
    HEIC is decoded with libheif (libheif-js, WebAssembly), AVIF by sharp; sharp
    writes the JPEG (quality 92, no colour subsampling). One photo is converted
    at a time: a 24-megapixel photo needs about 100 MB of memory while it is open.
@@ -62,14 +63,15 @@ const JPEG = { quality: 92, chromaSubsampling: "4:4:4" };
 
 /** The longest side of a medium copy: sharp on a phone and a laptop, a fraction of a camera photo's size. */
 export const VIEW_EDGE = 1600;
-/** A medium WebP copy, the right way up (one conversion at a time, like toJpeg). The original is not touched. */
-export function toView(filePath, format) {
+/** A WebP copy to show, the right way up (one conversion at a time, like toJpeg). The original is not touched.
+    fit "inside": the longest side at most `edge`; "width": the width at most `edge`. Never made bigger. */
+export function toView(filePath, format, { edge = VIEW_EDGE, fit = "inside", quality = 80 } = {}) {
   const run = queue.then(async () => {
     const source = format === "heic" ? (await convert(filePath, format)).jpeg : await fs.promises.readFile(filePath);
     const { data, info } = await sharpLib()(source, { limitInputPixels: MAX_PIXELS })
       .rotate()
-      .resize({ width: VIEW_EDGE, height: VIEW_EDGE, fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 80 })
+      .resize(fit === "width" ? { width: edge, withoutEnlargement: true } : { width: edge, height: edge, fit: "inside", withoutEnlargement: true })
+      .webp({ quality })
       .toBuffer({ resolveWithObject: true });
     return { webp: data, width: info.width, height: info.height };
   });

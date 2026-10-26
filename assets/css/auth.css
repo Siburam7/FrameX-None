@@ -889,3 +889,80 @@ code {
   background: repeating-linear-gradient(45deg, rgba(234, 120, 14, 0.12) 0 12px, rgba(234, 120, 14, 0.2) 12px 24px);
   color: var(--on-tint-warn);
 }
+
+/* "Continue with Google / Facebook" (owner, 2026-10-26; ui/auth-pages.js). Hidden until a button is ready.
+   Google draws its own button (white, its "G"); Facebook's follows Facebook's colours. */
+.soc {
+  display: grid;
+  gap: 10px;
+}
+
+.soc:not(.is-ready) {
+  display: none;
+}
+
+.soc__buttons {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.soc__google {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 40px;
+}
+
+.soc__facebook {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: min(100%, 400px);
+  min-height: 40px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: #1877f2;
+  color: #fff;
+  font: 600 0.9375rem/1 var(--font-body, "Plus Jakarta Sans", sans-serif);
+  cursor: pointer;
+}
+
+.soc__facebook svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.soc__facebook:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.soc .form-status:empty {
+  display: none;
+}
+
+.soc__or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.soc__or::before,
+.soc__or::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.soc[hidden] {
+  display: none;
+}
