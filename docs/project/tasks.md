@@ -5,6 +5,10 @@
 
 ## Now
 
+- [x] 2026-10-27 **DEPLOYED** main 22575b6 (owner: "Abhi bhai Live kar doo"; no migration, so no backup needed): "Add a frame" + My
+      frames + admin All frames + customer photo inside the real frame + see-through View on My Wall. Live check: new files
+      served, admin / shop dashboard pages load them, /media sends CORS, Home / Product / Home Decor open with no errors
+      (phone + laptop). Not yet: a real frame added live by a shop / the admin.
 - [x] 2026-10-27 **Simple "Add a frame" BUILT** (owner: "Broo garate Work ! , abhi Code par change karo"; design
       Desktop\FrameX-Add-Frame-Design). Shop dashboard "My frames" + 4-step editor (ui/frame-editor.js): Photos (model photos;
       frame FRONT uploaded to /media/frame-art: server lib/frame-cutout.js removes the plain background outside and the
