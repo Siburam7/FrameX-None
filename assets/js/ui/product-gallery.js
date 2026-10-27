@@ -23,7 +23,8 @@
     FrameX.productModel
       ? FrameX.productModel.viewType(v.type)
       : { id: v.type, label: v.type, short: v.type };
-  const labelOf = (v) => (v.type && v.type !== "PHOTO" ? typeOf(v).label : "");
+  // A view may carry its own words ("Your photo in this frame"); otherwise its type names it
+  const labelOf = (v) => v.label || (v.type && v.type !== "PHOTO" ? typeOf(v).label : "");
 
   function mount(
     root,
@@ -82,7 +83,7 @@
               v,
             ) => `<button class="pg-thumb" type="button" role="tab" data-thumb="${v.index}" aria-selected="false" aria-label="${esc(labelOf(v) || "Photo " + (v.index + 1))}">
             <span class="pg-thumb__img"><img alt="" loading="lazy" decoding="async" data-thumb-src="${esc(v.thumb || v.url)}"></span>
-            ${labelOf(v) ? `<span class="pg-thumb__label">${esc(typeOf(v).short)}</span>` : ""}</button>`,
+            ${labelOf(v) ? `<span class="pg-thumb__label">${esc(v.short || typeOf(v).short)}</span>` : ""}</button>`,
           )
           .join("")}
         ${has360 ? `<button class="pg-thumb pg-thumb--360" type="button" role="tab" data-open-360 aria-selected="false"><span class="pg-thumb__img"><b>360°</b></span><span class="pg-thumb__label">360° View</span></button>` : ""}

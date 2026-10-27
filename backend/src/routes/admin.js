@@ -166,8 +166,27 @@ router.get("/analytics/live", (req, res) => res.json(analytics.live()));
    waiting for review (PRODUCT_MODERATION=true), or take any product off sale. */
 router.get("/products", async (req, res) => {
   const { status } = validate(req.query, { status: v.enumOf(["draft", "pending_review", "published", "unpublished"], { required: false }) });
-  res.json({ items: await shopProducts.adminList({ status }) });
+  res.json({ items: await shopProducts.adminList({ status, shopId: typeof req.query.shop === "string" ? req.query.shop : "" }) });
 });
+
+/* ---- Frames for any shop (owner, 2026-10-27): the admin adds and edits a shop's frames like the shop would ---- */
+const shopOf = (req) => {
+  if (!isUuid(req.params.shopId)) throw errors.notFound("We couldn't find that shop.", "SHOP_NOT_FOUND");
+  return shopProducts.shopForProducts(req.params.shopId);
+};
+const who = (req) => ({ actor: req.auth.user, ip: req.ip });
+router.get("/shops/:shopId/products/:id", async (req, res) => res.json({ product: await shopProducts.getOwn(await shopOf(req), req.params.id) }));
+router.put("/shops/:shopId/products/:id", async (req, res) => {
+  await shopOf(req);
+  res.json({ product: await shopProducts.adminSave(req.params.shopId, req.params.id, req.body, who(req)) });
+});
+router.delete("/shops/:shopId/products/:id", async (req, res) => {
+  await shopProducts.deleteOwn(await shopOf(req), req.params.id, who(req));
+  res.json({ ok: true });
+});
+router.post("/shops/:shopId/media", async (req, res) => res.status(201).json({ media: await shopProducts.receiveMedia(await shopOf(req), req.auth.user, req) }));
+router.post("/shops/:shopId/media/frame-art", async (req, res) => res.status(201).json({ media: await shopProducts.receiveFrameArt(await shopOf(req), req.auth.user, req, { mode: req.query.mode === "keep" ? "keep" : "auto" }) }));
+router.post("/shops/:shopId/media/:id/thumb", async (req, res) => res.status(201).json({ media: await shopProducts.receiveMedia(await shopOf(req), req.auth.user, req, { thumbOf: req.params.id }) }));
 
 router.post("/products/:id/listing", async (req, res) => {
   const { status, note } = validate(req.body, { status: v.enumOf(["published", "unpublished"], { label: "Status" }), note: v.string({ max: 300, label: "Note" }) });

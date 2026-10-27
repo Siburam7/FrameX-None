@@ -35,7 +35,7 @@
   const NAV = [
     ["overview", "Overview", "frame"],
     ["profile", "Shop profile", "store"],
-    ["products", "Products", "image"],
+    ["products", "My frames", "image"],
     ["orders", "Orders", "bag"],
     ["inventory", "Inventory", "package"],
     ["payouts", "Payouts", "wallet"],
@@ -176,6 +176,35 @@
     }
     FrameX.toast.show(failed ? `${moved} moved. ${failed} couldn't be moved: open ${failed === 1 ? "it" : "them"} and try again.` : `${moved} ${moved === 1 ? "product" : "products"} moved to your shop account${moved ? " as saved" : ""}.`, { duration: 6000 });
     productsView(main);
+  }
+
+  /** "My frames": the shop's own frames, with Add / Edit / Duplicate (the simple 4-step editor). */
+  async function framesView(main) {
+    main.innerHTML = FrameX.templates.skeletonPage("dash");
+    const items = ((await http().get(api("/products"))).items || []).map(FrameX.frameEditor.summary);
+    main.innerHTML = `<div class="af"><header class="sd-head"><div><h1 class="sd-title">My frames</h1><p class="sd-lead">Your frames on FrameX. Add one in 4 easy steps; edit or duplicate any of them.</p></div>
+        <a class="af-btn af-btn--pri" href="#/products/new">＋ Add a frame</a></header>
+      ${shop.status === "ACTIVE" ? "" : `<p class="wz-note">${icon("alert")} Your shop isn't listed to customers right now, so published frames are not on sale yet. You can still prepare them.</p>`}
+      <div class="af-card">${FrameX.frameEditor.listHtml(items)}</div>
+      <p class="af-sub">Need every option (print papers, mats, 360° photos, video)? Open a frame and press “Full editor”.</p></div>`;
+    main.onclick = async (e) => {
+      const row = e.target.closest("[data-frame]");
+      const btn = e.target.closest("[data-row]");
+      if (!row || !btn) return;
+      const id = row.dataset.frame;
+      if (btn.dataset.row === "edit") location.hash = `#/products/${encodeURIComponent(id)}`;
+      if (btn.dataset.row === "duplicate") {
+        btn.disabled = true;
+        try {
+          const copy = await FrameX.frameEditor.duplicate(api(""), id);
+          FrameX.toast.show(`Made “${copy.name}” as a draft.`);
+          location.hash = `#/products/${encodeURIComponent(copy.id)}`;
+        } catch (error) {
+          btn.disabled = false;
+          FrameX.toast.show(error.message || "The copy couldn't be made.");
+        }
+      }
+    };
   }
 
   async function productsView(main) {
@@ -616,6 +645,15 @@
         }
         return await ordersView(main, params);
       }
+      // The simple 4-step frame editor (owner, 2026-10-27); "…/advanced" opens the full product wizard
+      if (section === "products" && parts[1] && parts[2] !== "advanced") {
+        const box = document.createElement("div");
+        main.innerHTML = "";
+        main.appendChild(box);
+        await FrameX.frameEditor.open(box, { base: api(""), productId: parts[1] === "new" ? null : decodeURIComponent(parts[1]), onExit: () => (location.hash = "#/products") });
+        document.title = `${parts[1] === "new" ? "Add a frame" : "Edit frame"} · ${shop.name} — FrameX`;
+        return;
+      }
       if (section === "products" && parts[1]) {
         const box = document.createElement("div");
         main.appendChild(box);
@@ -628,7 +666,7 @@
         document.title = `${parts[1] === "new" ? "New product" : "Edit product"} · ${shop.name} — FrameX`;
         return;
       }
-      if (section === "products") await productsView(main);
+      if (section === "products") await framesView(main);
       if (section === "inventory") await inventoryView(main);
     } catch (error) {
       if (error.status === 401) return window.location.replace(FrameX.auth.loginUrl("shop"));

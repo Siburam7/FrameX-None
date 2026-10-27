@@ -5,6 +5,50 @@
 
 ## Now
 
+- [x] 2026-10-27 **Simple "Add a frame" BUILT** (owner: "Broo garate Work ! , abhi Code par change karo"; design
+      Desktop\FrameX-Add-Frame-Design). Shop dashboard "My frames" + 4-step editor (ui/frame-editor.js): Photos (model photos;
+      frame FRONT uploaded to /media/frame-art: server lib/frame-cutout.js removes the plain background outside and the
+      photo space inside, finds that space, shop drags the orange box to adjust; full PNG for View on My Wall or "same as
+      front"; "I only have model photos"), Details (name, category, style, material, colour, cover, customer photos,
+      description, sizes + prices table, discount, stock, copy from another frame), Frame Components (layers: add / edit /
+      ↑↓ / remove / photo, kept in the shop's order), Check & publish. The old 9-step wizard stays as "Full editor"
+      (#/products/<id>/advanced). Admin "All frames" (ui/admin-frames.js): every shop's frames, filter by shop / status,
+      search, Edit / Duplicate / Approve / Hide / Show again, "Add a frame" → "For which shop?" → same editor; admin
+      publish goes live at once (routes /api/admin/shops/:shopId/products|media). Customers: product.frameArt; product
+      page "How it fits" and the gallery's first picture show their photo INSIDE the real frame (services/frame-art.js,
+      shaped spaces kept); cart / order picture = frame + photo; View on My Wall from the frame picture at the chosen size.
+      /media now answers the website's CORS (canvas). No migration. npm test now runs 6 files at a time
+      (--test-concurrency=6): 16 at once ran the PC out of memory. Checks: backend 482 / 0 (frames 6 new), browser
+      frames 23/23, shop 50/50 (updated for My frames), frame 55, Studio 37, home 40, banners 35. Local, not pushed.
+      Not done: catalogue-file frames (js/edit.js samples) don't show in a linked shop's "My frames" (they are FrameX's,
+      removed at launch). Artists: later (owner).
+      Fix 2026-10-27 (owner saw an empty "With a sample photo" on Live Server :5500 + backend :4000): a picture first shown as a
+      plain <img> was cached without CORS, so it couldn't be drawn. /media now sends Vary: Origin, and frame-art.js loads its
+      drawing copy with ?draw=1. Checked with the site and the API on different addresses (:4200 / :4100).
+      Fix 2026-10-27: the View on My Wall button vanished once the customer added a photo (the gallery is drawn again for
+      "Your photo in this frame"); it is now put back. The button shows only on a device with a camera (phones; a laptop
+      without a webcam shows none). Frames browser test 25/25 (phone check added).
+      Fix 2026-10-27 (owner: black background on the camera): View on My Wall drew every piece as a solid box, so a frame
+      PNG's transparent parts showed black. Cut-out pieces (ld-subject fromFrameArt) are now drawn see-through in WebGL
+      (no box sides, premultiplied texture, discard where clear) with a shadow in the picture's own shape. Checked by reading
+      WebGL pixels (inside / corner transparent, frame solid); frames test 25/25.
+- [ ] 2026-10-27 **Frames shown the right way** (owner corrected my first idea: do NOT put the customer photo into the styled
+      photo). Each frame = a MODEL photo (styled, to sell it) + a FRONT PNG (straight, background and opening transparent);
+      the customer's photo goes inside the FRONT for the product preview, cart, order, shop / admin order and View on My Wall;
+      drawn corner / back pictures stop. Owner: delete today's dummy frame products + images, list fewer frames properly.
+      DESIGN READY in DesktopFrameX-New-Frames-Design: 6 frames drawn by me (Classic Black, Natural Oak, Walnut Heritage,
+      Royal Gold, Modern White, Silver Metal), screens, shop form with the 2 pictures (plain background removed, opening found
+      automatically). Owner then asked for 20-30 unique designs → DESIGN READY in DesktopFrameX-30-Frames-Design: 30 frames
+      drawn by me in 6 groups (Family 4, Pets 3, Baby 3, Love & wedding 4, Trending borders 10 incl. coral / wavy / scalloped /
+      rattan / arch, Classic 6), model photo + front PNG + a photo-space mask each (heart / cloud / arch shapes keep the photo
+      inside). Pet model photos use the cat poster until the owner gives a real pet photo. Waiting for "haan".
+      Old folders FrameX-Real-Frame-Preview-Design (wrong idea) and FrameX-New-Frames-Design (first 6) are superseded.
+      Udyam: owner, 2026-10-28.
+- [ ] **Facebook login: waiting for Meta business verification** (2026-10-26). Meta app "FrameX" made (App ID 2610632082716960,
+      public; email + public_profile added; App domains, privacy / terms / data-deletion URLs, icon, category Shopping filled).
+      Publish needs a verified Meta Business portfolio = business documents (Udyam / GST / bank statement in the business
+      name). Owner has none yet → do Udyam first, then verify, publish, and only then set FACEBOOK_APP_ID + FACEBOOK_APP_SECRET
+      on Render (the secret only there, never in chat). Until then the Facebook button stays hidden; Google login is live.
 - [x] 2026-10-26 **DEPLOYED** main bfcb26f (owner: "Promotions karlete hai fir direct sabhi push karenge"; production backup taken
       first by the owner: pen drive `framex-db-live-20261026-2109.fxdb`). Live: migrations 022 + 023 ran; API lists 11
       promotions; GOOGLE_CLIENT_ID set on Render by the owner (full id, checked via /api/config); Facebook off. Live check

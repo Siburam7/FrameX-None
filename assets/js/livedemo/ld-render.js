@@ -43,9 +43,18 @@
     uniform vec3 uSide;
     uniform float uLight;
     uniform float uAlpha;
+    uniform float uCut;
     varying vec2 vUv;
     varying vec3 vNormal;
     void main() {
+      // A cut-out picture (a frame's own PNG): only its picture, see-through where the picture is (no sides)
+      if (uCut > 0.5) {
+        if (vNormal.z < 0.5) discard;
+        vec4 t = texture2D(uTex, vUv);
+        if (t.a < 0.02) discard;
+        gl_FragColor = vec4(t.rgb * uLight, t.a) * uAlpha;
+        return;
+      }
       vec3 color;
       if (vNormal.z > 0.5) {
         color = texture2D(uTex, vUv).rgb;
@@ -70,6 +79,20 @@
       float dist = length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
       float a = uStrength * (1.0 - smoothstep(-uBlur * 0.3, uBlur, dist));
       gl_FragColor = vec4(0.0, 0.0, 0.0, a);
+    }`;
+
+  // The shadow of a cut-out picture: its own shape (the picture's alpha, softened), not a rectangle.
+  const FRAG_CUT_SHADOW = `
+    precision mediump float;
+    uniform sampler2D uTex;
+    uniform vec2 uBlurUv;
+    uniform float uStrength;
+    varying vec2 vUv;
+    void main() {
+      float a = 0.0;
+      for (int i = -2; i <= 2; i++)
+        for (int j = -2; j <= 2; j++) a += texture2D(uTex, vUv + vec2(float(i), float(j)) * uBlurUv * 0.5).a;
+      gl_FragColor = vec4(0.0, 0.0, 0.0, a / 25.0 * uStrength);
     }`;
 
   // The aiming mark in AR, before the piece is placed: a ring lying on the surface the phone found.
@@ -146,9 +169,10 @@
     }
     if (!gl) return null;
 
-    let box, shadow, ring, boxBuffer, squareBuffer;
+    let box, shadow, cutShadow, ring, boxBuffer, squareBuffer;
     try {
-      box = program(gl, FRAG_BOX, ["uMvp", "uTex", "uSide", "uLight", "uAlpha"]);
+      box = program(gl, FRAG_BOX, ["uMvp", "uTex", "uSide", "uLight", "uAlpha", "uCut"]);
+      cutShadow = program(gl, FRAG_CUT_SHADOW, ["uMvp", "uTex", "uBlurUv", "uStrength"]);
       shadow = program(gl, FRAG_SHADOW, ["uMvp", "uSize", "uHalf", "uBlur", "uStrength"]);
       ring = program(gl, FRAG_RING, ["uMvp", "uSide", "uAlpha"]);
       boxBuffer = gl.createBuffer();
@@ -200,7 +224,10 @@
         const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+        // A cut-out picture is premultiplied, so its soft edges blend without a dark fringe
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, Boolean(piece.cutout));
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, pot);
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
         gl.generateMipmap(gl.TEXTURE_2D);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
@@ -252,7 +279,23 @@
           { blur: Math.max(0.004, depth * 0.35), offset: depth * 0.25, strength: (cfg.strength || 0.34) * 0.9 },
           { blur: Math.max(0.02, depth * 2.4), offset: depth * 0.95, strength: (cfg.strength || 0.34) * 0.75 },
         ];
-        subject.pieces.forEach((piece) => {
+        subject.pieces.forEach((piece, i) => {
+          if (piece.cutout) {
+            // Its own shape: the picture's alpha, moved down the wall a little and softened
+            gl.useProgram(cutShadow.p);
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, textures[i]);
+            gl.uniform1i(cutShadow.uniforms.uTex, 0);
+            layers.forEach((layer) => {
+              const local = m.multiply(m.translation([piece.x + shadowDir[0] * layer.offset, piece.y + shadowDir[1] * layer.offset, 0.0005]), m.scaling(piece.w, piece.h, 1));
+              gl.uniformMatrix4fv(cutShadow.uniforms.uMvp, false, m.multiply(vp, m.multiply(model, local)));
+              gl.uniform2f(cutShadow.uniforms.uBlurUv, layer.blur / piece.w, layer.blur / piece.h);
+              gl.uniform1f(cutShadow.uniforms.uStrength, layer.strength * alpha);
+              gl.drawArrays(gl.TRIANGLES, 0, 6);
+            });
+            gl.useProgram(shadow.p);
+            return;
+          }
           layers.forEach((layer) => {
             const pad = layer.blur * 2.2;
             const w = piece.w + pad * 2;
@@ -282,6 +325,7 @@
         const local = m.multiply(m.translation([piece.x, piece.y, 0]), m.scaling(piece.w, piece.h, depth));
         gl.uniformMatrix4fv(box.uniforms.uMvp, false, m.multiply(vp, m.multiply(model, local)));
         gl.uniform3fv(box.uniforms.uSide, hexRgb(piece.side || subject.side));
+        gl.uniform1f(box.uniforms.uCut, piece.cutout ? 1 : 0);
         gl.bindTexture(gl.TEXTURE_2D, textures[i]);
         gl.drawArrays(gl.TRIANGLES, 0, 30);
       });

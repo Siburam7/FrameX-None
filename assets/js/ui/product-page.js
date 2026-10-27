@@ -280,8 +280,9 @@
       if (!b) return;
       const frame = $("[data-fit-frame]", fit);
       const img = $("img", frame);
-      // The opening is drawn in the size's own proportions, as large as the space allows.
       const stage = $("[data-fit-stage]", fit);
+      if (artOf) return paintFitArt(b, frame, img, stage);
+      // The opening is drawn in the size's own proportions, as large as the space allows.
       const room = { w: Math.max(60, stage.clientWidth - 12), h: 208 };
       const fitScale = Math.min(room.w / b.w, room.h / b.h);
       frame.style.width = Math.round(b.w * fitScale) + "px";
@@ -301,6 +302,54 @@
       const top = Math.min(0, Math.max(H - dh, H / 2 - b.photo.y * dh));
       Object.assign(b.photo, { x: (W / 2 - left) / dw, y: (H / 2 - top) / dh });
       Object.assign(img.style, { width: dw + "px", height: dh + "px", transform: `translate(${left}px, ${top}px)` });
+      frame._fit = { dw, dh, left, top, W, H };
+    }
+
+    /* A frame with its own front picture (owner, 2026-10-27): the photo is shown INSIDE the real frame
+       (FrameX.frameArt), moved and zoomed the same way as the plain preview above. */
+    let artOf = null;
+    if (!preview && M().hasFrameArt(p) && FrameX.frameArt)
+      FrameX.frameArt.art(p).then((a) => {
+        artOf = a;
+        paintFit();
+      });
+    function paintFitArt(b, frame, img, stage) {
+      $("[data-fit-size]", fit).textContent = b.label;
+      $("[data-fit-zoom]", fit).value = b.photo.zoom;
+      frame.classList.add("pp-fit__frame--art");
+      const room = { w: Math.max(60, stage.clientWidth - 12), h: 260 };
+      const k = Math.min(room.w / artOf.W, room.h / artOf.H);
+      const FW = Math.round(artOf.W * k);
+      const FH = Math.round(artOf.H * k);
+      frame.style.width = FW + "px";
+      frame.style.height = FH + "px";
+      frame.style.borderColor = "";
+      if (img.getAttribute("src") !== b.photo.url) img.src = b.photo.url;
+      if (!img.complete || !img.naturalWidth) {
+        img.onload = () => paintFit();
+        return;
+      }
+      let canvas = $("canvas", frame);
+      if (!canvas) {
+        canvas = document.createElement("canvas");
+        frame.appendChild(canvas);
+      }
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = Math.round(FW * dpr);
+      canvas.height = Math.round(FH * dpr);
+      Object.assign(canvas.style, { width: FW + "px", height: FH + "px" });
+      // Where the photo sits inside the photo space: the same rule as the plain preview
+      const W = artOf.box.w * k;
+      const H = artOf.box.h * k;
+      const scale = Math.max(W / b.photo.width, H / b.photo.height) * b.photo.zoom;
+      const dw = b.photo.width * scale;
+      const dh = b.photo.height * scale;
+      const left = Math.min(0, Math.max(W - dw, W / 2 - b.photo.x * dw));
+      const top = Math.min(0, Math.max(H - dh, H / 2 - b.photo.y * dh));
+      Object.assign(b.photo, { x: (W / 2 - left) / dw, y: (H / 2 - top) / dh });
+      const ctx = canvas.getContext("2d");
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      FrameX.frameArt.draw(ctx, artOf, img, b.photo, k * dpr);
       frame._fit = { dw, dh, left, top, W, H };
     }
 
@@ -470,7 +519,8 @@
         return {
           ok: true,
           photos: Object.fromEntries(need.slots.map((slot) => [slot, { uploadId: result.uploadIds[slot], placement: placed ? { x: chosen[slot].x, y: chosen[slot].y, zoom: chosen[slot].zoom } : null }])),
-          thumbnail: await svc.thumbnail(chosen[need.slots[0]].id),
+          // A frame with its own front picture: the cart and the order show the photo inside that frame
+          thumbnail: (artOf && need.count === 1 && (await FrameX.frameArt.thumbnail(p, chosen[need.slots[0]].url, chosen[need.slots[0]]))) || (await svc.thumbnail(chosen[need.slots[0]].id)),
         };
       },
       /** The server refused the photos after all (e.g. one was removed elsewhere): say why, here. */
@@ -536,11 +586,36 @@
         })
         .catch(() => {});
 
-    const gallery = FrameX.productGallery.mount($("[data-gallery]", root), {
-      name: p.name,
-      views: M().sortedViews(p),
-      product360: p.product360,
-    });
+    // The model photos, then the frame's front picture; once the customer's photo is in, "Your photo in this frame" first
+    const baseViews = () => {
+      const list = M().sortedViews(p).slice();
+      if (M().hasFrameArt(p)) list.push({ id: "frame-front", type: "FRONT", url: p.frameArt.front, alt: `${p.name}, seen from the front` });
+      return list;
+    };
+    const mountGallery = (views, startIndex = 0) => FrameX.productGallery.mount($("[data-gallery]", root), { name: p.name, views, product360: p.product360, startIndex });
+    let gallery = mountGallery(baseViews());
+    let mountWall = () => {};
+    let yourPhotoShown = "";
+    let yourPhotoTimer = 0;
+    function showYourPhoto() {
+      clearTimeout(yourPhotoTimer);
+      yourPhotoTimer = setTimeout(async () => {
+        if (preview || !M().hasFrameArt(p) || !FrameX.frameArt) return;
+        const list = photos.list();
+        const one = list.length === 1 ? list[0] : null;
+        const key = one ? `${one.id}:${one.x}:${one.y}:${one.zoom}` : "";
+        if (key === yourPhotoShown) return;
+        yourPhotoShown = key;
+        let views = baseViews();
+        if (one) {
+          const canvas = await FrameX.frameArt.compose(p, one.url, one, { width: 1100 });
+          if (canvas && key === yourPhotoShown) views = [{ id: "your-photo", type: "PHOTO", url: canvas.toDataURL("image/png"), alt: `Your photo in ${p.name}`, label: "Your photo in this frame", short: "Your photo" }].concat(views);
+        }
+        gallery.destroy();
+        gallery = mountGallery(views, 0);
+        mountWall();
+      }, 350);
+    }
 
     /* ---- the customer's own photos (products that are made from them) ---- */
     const photos = mountPhotos(root, p, sel, { preview });
@@ -551,7 +626,11 @@
     photos.onChange = () => {
       studioLinks(); // a photo chosen here opens in FrameX Studio too
       guide();
+      showYourPhoto();
     };
+    // Moving or zooming the photo in "How it fits" changes "Your photo in this frame" too
+    const photoBox = $("[data-photos]", root);
+    if (photoBox && M().hasFrameArt(p)) ["pointerup", "input", "click", "keyup"].forEach((t) => photoBox.addEventListener(t, showYourPhoto));
 
     /* ---- the step guide under the price and the hint in the buy bar: what is done, what comes next ---- */
     function guide() {
@@ -584,7 +663,9 @@
        Only for products that can be shown (productModel.liveDemoSupport) and only where a camera can open;
        the button reads the choice when it is pressed and changes nothing on this page. ---- */
     const wall = !preview && FrameX.liveDemo ? M().liveDemoSupport(p) : { ok: false };
-    if (wall.ok && wall.kind !== "panels" && $(".pg-stage", root))
+    // On the gallery's picture; put back each time the gallery is drawn again (the customer's photo added or moved)
+    mountWall = () =>
+      wall.ok && wall.kind !== "panels" && $(".pg-stage", root) && !$(".pg-stage [data-live-demo]", root) &&
       FrameX.liveDemo.mount($(".pg-stage", root), {
         context: { productId: p.id, page: "product" },
         getSpec: () =>
@@ -592,6 +673,7 @@
             ? { kind: "decor", product: p, selection: { sizeId: sel.sizeId, colorId: sel.colorId, printMaterialId: sel.printMaterialId } }
             : { kind: "product", product: p, selection: { sizeId: sel.sizeId, colorId: sel.colorId, printMaterialId: sel.printMaterialId, protection: sel.protection }, photos: photos.list() },
       });
+    mountWall();
 
     /* ---- price + options ---- */
     function refresh() {

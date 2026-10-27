@@ -90,6 +90,11 @@ router.post("/:shopCode/media", requireOwnShop, rateLimit("media", { windowMs: 1
   res.status(201).json({ media: await products.receiveMedia(await products.shopForProducts(req.auth.user.shopId), req.auth.user, req) });
 });
 
+// The frame's front picture: ?mode=auto removes the background and the photo space; ?mode=keep keeps a ready PNG
+router.post("/:shopCode/media/frame-art", requireOwnShop, rateLimit("media", { windowMs: 10 * 60_000, max: 300 }), async (req, res) => {
+  res.status(201).json({ media: await products.receiveFrameArt(await products.shopForProducts(req.auth.user.shopId), req.auth.user, req, { mode: req.query.mode === "keep" ? "keep" : "auto" }) });
+});
+
 router.post("/:shopCode/media/:id/thumb", requireOwnShop, rateLimit("media", { windowMs: 10 * 60_000, max: 300 }), async (req, res) => {
   res.status(201).json({ media: await products.receiveMedia(await products.shopForProducts(req.auth.user.shopId), req.auth.user, req, { thumbOf: req.params.id }) });
 });

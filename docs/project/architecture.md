@@ -77,6 +77,7 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   `uploads.print_key` + `print_bytes` (the JPEG copy, stored as `<key>-print`), formats heic and avif; 021 `reviews.photo_view_key` (the medium copy of a review photo, `<key>-thumb`); 022 `users.google_sub` + `users.facebook_id` (social login); 023 `promotions` (home banners + promotion strips, Admin → Promotions) — 022-023 local, not deployed), `backup.js`, `ssl.js` (local, not deployed).
 - `src/payments/` — one payment system, gateway adapters `razorpay.js`, `cashfree.js`.
 - `src/lib/` — security (CORS, CSRF, cookies), storage (disk or bucket), sealed (AES-256-GCM for payout details),
+  frame-cutout.js (a frame's front picture: plain background outside + photo space inside made transparent, the space found),
   social-login.js (Google ID token via Google's keys; Facebook token via debug_token + appsecret_proof), mailer, sms, file links (signed URLs; `o:1` in a token = the original of a HEIC / AVIF photo), `heif.js` (HEIC via
   libheif-js, AVIF via sharp → one full-quality JPEG copy; `toView` → the medium WebP copy of a review photo, 1600 px;
   one at a time, max 60 MP).

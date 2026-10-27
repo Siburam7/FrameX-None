@@ -111,6 +111,11 @@
      The page keeps a size, a colour, and where the customer's photo sits in the
      opening ("How it fits"). The same Studio engine draws it, with exactly that part of the photo. */
   async function fromProduct({ product, selection = {}, photos = [] }) {
+    // A frame with its own pictures (owner, 2026-10-27): the real frame, from its full / front PNG, with the photo in it
+    if (FrameX.productModel && FrameX.productModel.hasFrameArt(product) && FrameX.frameArt) {
+      const own = await fromFrameArt({ product, selection, photos });
+      if (own) return own;
+    }
     const engine = FrameX.studioEngine;
     // The page offers every listed colour and turns the frame to suit the photo, whatever the shop lets
     // customers change inside FrameX Studio. So the engine is asked about the product as the page sells it.
@@ -156,6 +161,36 @@
     return fromStudio({ cfg, ctx, images, title: product.name, matHex: OWN_MAT[ownMat] || "" });
   }
   const OWN_MAT = { red: "#ca2219" };
+
+  /** The frame's own picture with the customer's photo, at the chosen size (its longest side = the size's longest side). */
+  async function fromFrameArt({ product, selection = {}, photos = [] }) {
+    const photo = photos.find((x) => x && x.url) || null;
+    const canvas = await FrameX.frameArt.compose(product, photo ? photo.url : "", photo || {}, { width: 1280, wall: true });
+    if (!canvas) return null;
+    const size = (product.sizes || []).find((s) => s.id === selection.sizeId) || (product.sizes || [])[0] || {};
+    const k = TO_INCH[size.unit] || 1;
+    const longest = Math.max(Number(size.width) || 0, Number(size.height) || 0) * k;
+    if (!(longest > 0)) return null;
+    const ratio = canvas.width / canvas.height;
+    const width = (ratio >= 1 ? longest : longest * ratio) * INCH;
+    const height = (ratio >= 1 ? longest / ratio : longest) * INCH;
+    const depth = (Number(product.frame && product.frame.depth) > 0 ? Number(product.frame.depth) : 22) * MM;
+    return {
+      kind: "product",
+      title: product.name,
+      sizeText: sizeText(width, height),
+      printText: "",
+      width,
+      height,
+      depth,
+      side: "#3a2f27",
+      // cutout: the picture has transparent parts (outside the frame, a shaped frame): drawn see-through
+      pieces: [{ x: 0, y: 0, w: width, h: height, canvas, cutout: true }],
+      shadow: { strength: 0.36 },
+      missingPhotos: photo ? 0 : 1,
+      model: null,
+    };
+  }
 
   /** The part of the photo the product page's "How it fits" shows: x, y = the photo point at the centre, zoom ≥ 1. */
   function cropLikePage(img, aspect, { x = 0.5, y = 0.5, zoom = 1 }) {

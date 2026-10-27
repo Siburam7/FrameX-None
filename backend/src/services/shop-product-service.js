@@ -28,6 +28,7 @@ import { config } from "../config.js";
 import { db } from "../db/index.js";
 import { ACTIONS, audit } from "../lib/audit.js";
 import { HttpError, errors } from "../lib/errors.js";
+import { cutout } from "../lib/frame-cutout.js";
 import { inspectImage } from "../lib/image-info.js";
 import * as storage from "../lib/storage.js";
 import { newId } from "../lib/tokens.js";
@@ -66,6 +67,8 @@ function mediaFields(p) {
   (p.media || []).forEach((m) => m && (add(m, "url"), add(m, "thumbnail")));
   ((p.print && p.print.materials) || []).forEach((m) => m && add(m, "image"));
   (p.components || []).forEach((c) => c && add(c, "image"));
+  // The frame's own pictures (owner, 2026-10-27): its front (background removed) and its full PNG for View on My Wall
+  if (p.frameArt && typeof p.frameArt === "object") (add(p.frameArt, "front"), add(p.frameArt, "wall"));
   return out;
 }
 
@@ -148,6 +151,48 @@ export async function receiveMedia(shop, user, req, { thumbOf = null } = {}) {
   }
 }
 
+/**
+ * The frame's FRONT picture (owner, 2026-10-27): the empty frame straight from the front. mode "auto": the plain
+ * background outside it and the photo space inside it are removed (lib/frame-cutout.js); "keep": a PNG the shop
+ * made is kept as it is. -> { id, ref, width, height, opening (fractions) | null, removedBackground, alreadyCut }
+ */
+export async function receiveFrameArt(shop, user, req, { mode = "auto" } = {}) {
+  const max = config.media.maxBytes;
+  const tooLarge = () => new HttpError(413, "MEDIA_TOO_LARGE", `That picture is larger than ${Math.round(max / (1024 * 1024))} MB. Please choose a smaller one.`);
+  if (Number(req.headers["content-length"]) > max) throw tooLarge();
+  const count = (await db.query("SELECT count(*)::int AS n FROM media_files WHERE shop_id = $1", [shop.id])).rows[0].n;
+  if (count >= config.media.maxPerShop) throw new HttpError(409, "MEDIA_LIMIT", "Your shop has reached its limit of uploaded pictures. Remove pictures you no longer use, or contact FrameX.");
+  let received;
+  try {
+    received = await storage.receive(req, max);
+  } catch (error) {
+    if (error instanceof storage.TooLarge) throw tooLarge();
+    throw new HttpError(400, "MEDIA_FAILED", "We couldn't upload that picture. Please try again.");
+  }
+  try {
+    const info = await inspectImage(received.tempPath);
+    if (!info || !received.bytes || info.format === "heic") throw new HttpError(415, "MEDIA_UNSUPPORTED", "Please upload a JPG, PNG or WebP picture of the frame.");
+    let cut;
+    try {
+      cut = await cutout(received.tempPath, { keep: mode === "keep" });
+    } catch {
+      throw new HttpError(415, "MEDIA_UNSUPPORTED", "We couldn't read that picture. Please try another one.");
+    }
+    const id = newId();
+    const key = storage.newKey("public", id);
+    await storage.put(key, cut.png);
+    try {
+      await db.query("INSERT INTO media_files (id, shop_id, storage_key, kind, mime_type, bytes, width, height, created_by) VALUES ($1, $2, $3, 'frame-art', 'image/webp', $4, $5, $6, $7)", [id, shop.id, key, cut.png.length, cut.width, cut.height, user.id]);
+    } catch (error) {
+      await storage.remove(key);
+      throw error;
+    }
+    return { id, ref: `media:${id}`, width: cut.width, height: cut.height, opening: cut.opening, removedBackground: cut.removedBackground, alreadyCut: cut.alreadyCut };
+  } finally {
+    await storage.discard(received.tempPath).catch(() => {});
+  }
+}
+
 /** GET /media/<id>[/thumb]: a product picture. Public, and safe to cache: a picture never changes once uploaded. */
 export async function sendMedia(req, res, next) {
   const id = String(req.params.id || "");
@@ -155,7 +200,7 @@ export async function sendMedia(req, res, next) {
   const row = (await db.query("SELECT storage_key, thumb_key, mime_type FROM media_files WHERE id = $1", [id])).rows[0];
   const key = row ? (req.params.variant === "thumb" && row.thumb_key ? row.thumb_key : row.storage_key) : null;
   if (!key || !(await storage.exists(key))) return next();
-  res.set({ "Content-Type": key === row.thumb_key ? "image/jpeg" : row.mime_type, "Cache-Control": "public, max-age=31536000, immutable", "Cross-Origin-Resource-Policy": "cross-origin", "X-Content-Type-Options": "nosniff" });
+  res.set({ "Content-Type": key === row.thumb_key ? "image/jpeg" : row.mime_type, "Cache-Control": "public, max-age=31536000, immutable", Vary: "Origin", "Cross-Origin-Resource-Policy": "cross-origin", "X-Content-Type-Options": "nosniff" });
   storage.open(key).on("error", next).pipe(res);
 }
 
@@ -318,13 +363,35 @@ export async function deleteOwn(shop, id, { actor, ip = null }) {
 
 /* ---------------------------------------------------------------- FrameX staff */
 
-/** Shop products for FrameX staff. status: "" (all) or a listing status, e.g. "pending_review". */
-export async function adminList({ status = "" } = {}) {
+/** Shop products for FrameX staff. status: "" (all) or a listing status, e.g. "pending_review"; shopId: one shop. */
+export async function adminList({ status = "" , shopId = "" } = {}) {
   const params = [];
   let where = "p.source = 'shop' AND p.status <> 'REMOVED'";
   if (status) where += ` AND p.listing_status = $${params.push(status)}`;
+  if (shopId && isUuid(shopId)) where += ` AND p.owner_shop_id = $${params.push(shopId)}`;
   const { rows } = await db.query(`${SHOP_SQL} WHERE ${where} ORDER BY p.updated_at DESC LIMIT 500`, params);
-  return rows.map((r) => ({ id: r.id, name: r.name, slug: r.slug, shopCode: r.shop_code, shopName: r.owner_name, status: r.listing_status, onSale: r.status === "ACTIVE" && r.owner_listed, productType: r.data.productType || "", image: withMediaPaths(r.data).listingImage || "", updatedAt: r.updated_at }));
+  return rows.map((r) => {
+    const sizes = (r.data.sizes || []).map((s) => Number(s.price) || Number((r.data.pricing || {}).basePrice) || 0).filter((n) => n > 0);
+    const art = r.data.frameArt || {};
+    return {
+      id: r.id, name: r.name, slug: r.slug, shopId: r.owner_shop_id, shopCode: r.shop_code, shopName: r.owner_name, status: r.listing_status, onSale: r.status === "ACTIVE" && r.owner_listed,
+      productType: r.data.productType || "", image: withMediaPaths(r.data).listingImage || "", updatedAt: r.updated_at,
+      sizes: (r.data.sizes || []).length, priceFrom: sizes.length ? Math.min(...sizes) : Number((r.data.pricing || {}).basePrice) || null, priceTo: sizes.length ? Math.max(...sizes) : null,
+      // Can customers see their own photo inside this frame (and on their wall)?
+      hasFront: Boolean(art.front && art.opening), modelOnly: Boolean(art.modelOnly)
+    };
+  });
+}
+
+/** An admin saves a frame for a shop: like the shop would, and "published" goes live at once (the admin is the reviewer). */
+export async function adminSave(shopId, id, input, who) {
+  const shop = await shopForProducts(shopId);
+  const saved = await saveOwn(shop, id, input, who);
+  if (input && input.status === "published" && saved.status === "pending_review") {
+    await adminSetListing(id, "published", { ...who, note: "Added / changed by FrameX" });
+    return getOwn(shop, id);
+  }
+  return saved;
 }
 
 /** The platform's own switch: approve a product waiting for review, or take a product off sale. */

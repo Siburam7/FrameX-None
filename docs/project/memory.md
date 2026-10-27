@@ -24,6 +24,9 @@
 
 ## Owner decisions (log)
 
+- 2026-10-27 Frames: model photos to sell + a frame FRONT (outer + inner background removed) for "your photo inside the
+  real frame" (product page, cart, order, View on My Wall). Simple 4-step "Add a frame" for shops; admin adds / edits any
+  shop's frames. The drawn 30 sample frames were dropped (owner). Artists' version later.
 - 2026-10-26 Deployed banners / strips / Admin Promotions / Google + Facebook login (main bfcb26f) after a fresh production
   backup (pen drive, 21:09). GOOGLE_CLIENT_ID set on Render.
 - 2026-10-26 Admin → Promotions built (banners + strips managed without code), then everything pushed together.

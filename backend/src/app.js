@@ -52,6 +52,7 @@ export function createApp() {
 
   /* ---- API ---- */
   app.use("/api", cors);
+  app.use("/media", cors); // the website draws product pictures (a frame's front with the customer's photo) on a canvas
   app.use("/api", rateLimit("api", { windowMs: 60_000, max: 300, skip: isLoadTest }));
   // A shop's product record (text, sizes, components) is larger than other requests.
   app.use("/api/shops/:shopCode/products", express.json({ limit: "400kb" }));

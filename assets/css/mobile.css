@@ -1285,3 +1285,15 @@
   .pr-form { grid-template-columns: 1fr; }
   .pr-prev { position: static; }
 }
+
+/* "Add a frame" on phones: one column (owner, 2026-10-27) */
+@media (max-width: 639px) {
+  .af-two, .af-three { grid-template-columns: 1fr; }
+  .af-layer { grid-template-columns: 28px 48px 1fr; }
+  .af-layer > :nth-child(4), .af-layer > :nth-child(5) { grid-column: 3; }
+  .af-pic, .af-add { width: 96px; height: 120px; }
+  .af-listtbl thead { display: none; }
+  .af-listtbl tr { display: grid; grid-template-columns: 64px 1fr; gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .af-listtbl td { padding: 0; border: 0; }
+  .af-listtbl td:first-child { grid-row: span 5; }
+}

@@ -428,6 +428,13 @@
         orientation: false,
       },
       liveDemo: { enabled: null, model: "" },
+      // The frame's own pictures (owner, 2026-10-27), besides its model photos (views):
+      //   front     the empty frame straight from the front, background outside and photo space inside removed:
+      //             the customer's photo is shown inside it (product page, cart, order)
+      //   opening   where the photo goes in the front: { x, y, w, h } as fractions of the picture
+      //   wall      the full frame PNG for "View on My Wall" ("" = the front is used)
+      //   modelOnly true = the shop has only model photos (no "your photo inside" preview)
+      frameArt: { front: "", frontSize: null, opening: null, wall: "", wallOpening: null, modelOnly: false },
       views: [],
       product360: null,
       media: [],
@@ -472,6 +479,7 @@
       "personalization",
     ].forEach((k) => (out[k] = Object.assign({}, base[k], p[k] || {})));
     out.liveDemo = cleanLiveDemo(p.liveDemo);
+    out.frameArt = cleanFrameArt(p.frameArt);
     out.giftWrap = p.giftWrap !== false;
     [
       "included",
@@ -879,6 +887,25 @@
     "multi-panel",
   ];
 
+  /** A product's frame pictures, field by field (numbers inside the picture; addresses are checked by the server). */
+  function cleanFrameArt(value) {
+    const v = value && typeof value === "object" ? value : {};
+    const text = (x) => (typeof x === "string" ? x.trim().slice(0, 300) : "");
+    const frac = (x) => Math.min(1, Math.max(0, Number(x) || 0));
+    const o = v.opening && typeof v.opening === "object" ? v.opening : null;
+    const opening = o && Number(o.w) > 0.02 && Number(o.h) > 0.02 ? { x: frac(o.x), y: frac(o.y), w: Math.min(frac(o.w), 1 - frac(o.x)), h: Math.min(frac(o.h), 1 - frac(o.y)) } : null;
+    const sz = v.frontSize && typeof v.frontSize === "object" ? v.frontSize : null;
+    const frontSize = sz && Number(sz.w) > 0 && Number(sz.h) > 0 ? { w: Math.round(Number(sz.w)), h: Math.round(Number(sz.h)) } : null;
+    const front = text(v.front);
+    const w = v.wallOpening && typeof v.wallOpening === "object" ? v.wallOpening : null;
+    const wallOpening = w && Number(w.w) > 0.02 && Number(w.h) > 0.02 ? { x: frac(w.x), y: frac(w.y), w: Math.min(frac(w.w), 1 - frac(w.x)), h: Math.min(frac(w.h), 1 - frac(w.y)) } : null;
+    const wall = text(v.wall);
+    return { front, frontSize: front ? frontSize : null, opening: front ? opening : null, wall, wallOpening: wall ? wallOpening : null, modelOnly: v.modelOnly === true };
+  }
+
+  /** Can this product show the customer's photo inside its real frame picture? */
+  const hasFrameArt = (p) => Boolean(p && p.frameArt && p.frameArt.front && p.frameArt.opening && !p.frameArt.modelOnly);
+
   function cleanLiveDemo(value) {
     const enabled =
       typeof value === "boolean"
@@ -922,6 +949,11 @@
       return { ok: !reasons.length, kind: "decor", reasons };
     }
     const photos = photoRequirement(p).count;
+    // A frame with its own front / full picture is shown from that picture: nothing has to be drawn
+    if (hasFrameArt(p) && photos === 1) {
+      if (!measured) reasons.push("Add at least one size with width and height.");
+      return { ok: !reasons.length, kind: "product", reasons };
+    }
     if (photos > 1)
       reasons.push(
         "Live Demo can't show a product made from several photos yet.",
@@ -1220,6 +1252,9 @@
   function componentsOf(p) {
     const own = (p.components || []).filter((c) => c && (c.name || c.type));
     const list = own.length ? own : deriveComponents(p);
+    // Layers a shop put in its own order (the simple frame editor) stay in that order
+    if (own.length && p.componentOrder === "own")
+      return own.map((c, i) => Object.assign({ id: c.id || "c" + i }, c, { name: c.name || (byId(COMPONENT_TYPES, c.type) || {}).name || "Part" }));
     return list
       .map((c, i) =>
         Object.assign({ id: c.id || "c" + i }, c, {
@@ -1417,6 +1452,9 @@
     if (!(num(p.pricing.basePrice) > 0)) add("sizes", "Add a base price");
     if (!(p.views || []).some((v) => v && v.url))
       add("images", "Add at least one product image");
+    const art = p.frameArt || {};
+    if (art.front && !art.opening && !art.modelOnly)
+      add("images", "Mark where the customer's photo goes in the frame front");
     // Frame details are part of a framed product; a ready-made piece or an accessory may have none.
     if (type.frame) {
       if (!has(p.frame.type)) add("frame", "Choose the frame type");
@@ -1639,6 +1677,8 @@
     studioSupport,
     studioOptions,
     liveDemoSupport,
+    cleanFrameArt,
+    hasFrameArt,
     LIVE_DEMO_TYPES,
     protectionOptions,
     defaultSelection,

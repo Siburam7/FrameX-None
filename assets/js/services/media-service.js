@@ -82,12 +82,14 @@
   const refused = (error) => new MediaError(error && error.status && !error.network && error.message ? error.message : "We couldn't upload that picture. Check your connection and try again.");
 
   /** Check one picture, size it for the web and upload it. Throws MediaError with a friendly message. */
-  async function prepare(file, kind = "view", onProgress = () => {}) {
+  /** base: where to upload ("/shops/<code>" by default; the admin uses "/admin/shops/<id>" for a shop). */
+  async function prepare(file, kind = "view", onProgress = () => {}, { base = "" } = {}) {
     const problem = validate(file, kind);
     if (problem) throw new MediaError(problem);
     const rule = RULES[kind];
     const code = shopCode();
-    if (!code) throw new MediaError("Please log in to your shop account to add pictures.");
+    const root = base || (code ? `/shops/${encodeURIComponent(code)}` : "");
+    if (!root) throw new MediaError("Please log in to your shop account to add pictures.");
     onProgress(5);
     const { image, url } = await decode(file);
     try {
@@ -99,10 +101,10 @@
       if (!large) throw new MediaError("That photo couldn't be prepared. Please try another one.");
       let saved;
       try {
-        saved = (await FrameX.http.upload(`/shops/${encodeURIComponent(code)}/media`, large, { name: file.name, onProgress: (p) => onProgress(15 + Math.round(p * 0.6)) })).media;
+        saved = (await FrameX.http.upload(`${root}/media`, large, { name: file.name, onProgress: (p) => onProgress(15 + Math.round(p * 0.6)) })).media;
         if (rule.thumb) {
           const small = await resize(image, rule.thumb, 0.8);
-          if (small) await FrameX.http.upload(`/shops/${encodeURIComponent(code)}/media/${saved.id}/thumb`, small, { name: file.name });
+          if (small) await FrameX.http.upload(`${root}/media/${saved.id}/thumb`, small, { name: file.name });
         }
       } catch (error) {
         throw error instanceof MediaError ? error : refused(error);

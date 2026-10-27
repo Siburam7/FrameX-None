@@ -2061,3 +2061,23 @@ body.pp-has-buybar .toast-region {
 :root[data-theme="dark"] .pvid__frame {
   background: #000;
 }
+
+/* A frame with its own front picture (owner, 2026-10-27; services/frame-art.js): the photo inside the real frame */
+.pp-fit__frame--art {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+  filter: drop-shadow(0 8px 14px rgba(43, 38, 34, 0.25));
+}
+
+.pp-fit__frame--art img {
+  visibility: hidden;
+}
+
+.pp-fit__frame--art canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
