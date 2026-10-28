@@ -57,7 +57,11 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
 
 - Header menu (owner, 2026-10-21): Home · Art & Artists · Shop · Home Decor · Templates · Studio. "Studio" opens
   FrameX Studio (`studio.html?mode=photo`; the studio with a template stays under Templates); FAQ is in the footer
-  (Support), and the footer still says "FrameX Studio".
+  (Help), and the footer still says "FrameX Studio".
+- Footer (owner, 2026-10-28, from their reference picture): deep navy #0d1b3e at the top turning near-black #0c0d0f,
+  a thin orange light line on its top edge (option E); a centred heading + line, grey
+  feature badges (laptop only), a large faint FRAMEX word, brand + Shop / Create / Company / Help, copyright left and
+  Terms / Privacy / Cookie settings right. Built in ui/chrome.js footer() + footer-faq.css (phones: mobile.css).
 - Header logo 150px wide on desktop. "Gallery" is in the footer, not the top menu. The orange header button follows
   the section (Shop Frames / Explore Art / Shop Decor / All Templates).
 - Phone breakpoints: `mobile.css` blocks at max-width 639px, 374px and 359px. Target widths 320-430px.

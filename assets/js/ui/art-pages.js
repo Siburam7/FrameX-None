@@ -46,14 +46,23 @@
     </a>`;
   }
 
-  function artworkCard(w) {
+  /**
+   * One artwork. by: show who made it (the artist's face, name and city: on the Art & Artists page); off on the
+   * artist's own profile, where it is clear. Prints in several sizes show "from ₹ · N sizes".
+   */
+  function artworkCard(w, { by = true } = {}) {
+    const sizes = (w.sizes || []).length;
     return `<a class="artwork-card" href="${esc(qs().artworkUrl(w))}">
-      <div class="artwork-card__media">${w.image ? `<img src="${esc(img(w.image))}" alt="${esc(w.title)}" loading="lazy" decoding="async">` : ""}${w.available ? "" : `<span class="artwork-card__flag">Sold</span>`}</div>
+      <div class="artwork-card__media">${w.image ? `<img src="${esc(img(w.image))}" alt="${esc(w.title)}" loading="lazy" decoding="async">` : ""}${w.available ? "" : `<span class="artwork-card__flag">Sold</span>`}${w.reference ? `<span class="artwork-card__ba">⇆ Before / After</span>` : ""}</div>
       <div class="artwork-card__body">
         <span class="artwork-card__label">${esc(w.kind === "PRINT" ? "Print" : "Original")} · ${esc(w.artTypeName)}</span>
         <span class="artwork-card__title">${esc(w.title)}</span>
-        <span class="artwork-card__meta">by ${esc(w.artist.name)} · ${esc(w.medium)} · ${esc(w.size)}</span>
-        <span class="artwork-card__price">${rupees(w.price)}</span>
+        ${
+          by
+            ? `<span class="artwork-card__by">${photo(w.artist)}<span>${esc([w.artist.name, w.artist.city].filter(Boolean).join(" · "))}</span></span>`
+            : `<span class="artwork-card__meta">${esc([w.medium, w.size].filter(Boolean).join(" · "))}</span>`
+        }
+        <span class="artwork-card__price">${sizes > 1 ? `from ${rupees(w.price)} · ${sizes} sizes` : rupees(w.price)}</span>
       </div>
     </a>`;
   }
@@ -74,7 +83,8 @@
     const root = $("#art-root");
     if (!root) return;
     if (!http().enabled()) return offline(root);
-    const state = { view: qs().param("view") === "artworks" ? "artworks" : "artists", q: qs().param("q") || "", style: qs().param("style") || "", city: qs().param("city") || "", artType: "", page: 1 };
+    // Artworks first (owner, 2026-10-28): buyers see the art without opening every profile
+    const state = { view: qs().param("view") === "artists" ? "artists" : "artworks", q: qs().param("q") || "", style: qs().param("style") || "", city: qs().param("city") || "", artType: "", page: 1 };
     let facets = { styles: [], mediums: [], cities: [] };
     let artTypes = [];
     try {
@@ -85,15 +95,16 @@
 
     root.innerHTML = `<div class="art-toolbar">
         <div class="art-toolbar__row">
-          <label class="art-search"><span class="visually-hidden">Search artists and artworks</span>${icon("search")}<input class="input" type="search" id="art-q" placeholder="Search by artist, username, style or city" value="${esc(state.q)}" autocomplete="off"></label>
+          <label class="art-search"><span class="visually-hidden">Search artworks and artists</span>${icon("search")}<input class="input" type="search" id="art-q" placeholder="Search artworks, artists, styles or cities" value="${esc(state.q)}" autocomplete="off"></label>
           <div class="segmented" role="group" aria-label="Show">
-            <button class="chip" type="button" data-view="artists" aria-pressed="${state.view === "artists"}">Artists</button>
             <button class="chip" type="button" data-view="artworks" aria-pressed="${state.view === "artworks"}">Artworks</button>
+            <button class="chip" type="button" data-view="artists" aria-pressed="${state.view === "artists"}">Artists</button>
           </div>
         </div>
         <div class="chip-scroll" id="art-chips" role="group" aria-label="Filter"></div>
         <p class="art-count" id="art-count" role="status" aria-live="polite"></p>
       </div>
+      <section class="art-meet" id="art-meet" aria-label="Meet the artists" hidden></section>
       <div id="art-list"></div>
       <div class="section-more" id="art-more" hidden><button class="btn btn--outline" type="button">Load more</button></div>`;
 
@@ -101,7 +112,23 @@
     const more = $("#art-more", root);
     const count = $("#art-count", root);
     const chipsBox = $("#art-chips", root);
+    const meet = $("#art-meet", root);
     let shown = [];
+    let artists = null; // the "Meet the artists" strip: loaded once, shown above the artworks
+
+    async function meetStrip() {
+      if (!artists) {
+        try {
+          artists = await http().get("/artists", { limit: 12 });
+        } catch (error) {
+          artists = { items: [], total: 0 };
+        }
+      }
+      meet.hidden = state.view !== "artworks" || !artists.items.length;
+      if (meet.hidden) return;
+      meet.innerHTML = `<div class="art-meet__head"><h2>Meet the artists</h2><button type="button" class="art-meet__all" data-view="artists">See all ${artists.total} ${artists.total === 1 ? "artist" : "artists"} →</button></div>
+        <div class="art-meet__strip">${artists.items.map((a) => `<a class="art-meet__artist" href="${esc(qs().artistUrl(a))}">${photo(a)}<span><strong>${esc(a.name)}</strong><small>${esc([a.location && a.location.city, `${a.artworkCount} ${a.artworkCount === 1 ? "artwork" : "artworks"}`].filter(Boolean).join(" · "))}</small></span></a>`).join("")}</div>`;
+    }
 
     function chips() {
       const chip = (kind, value, label, on) => `<button class="chip" type="button" data-${kind}="${esc(value)}" aria-pressed="${on}">${esc(label)}</button>`;
@@ -130,10 +157,11 @@
           artTypes = r.artTypes || artTypes;
           shown = shown.concat(r.items);
           count.textContent = r.total ? `${r.total} ${r.total === 1 ? "artwork" : "artworks"}` : "";
-          list.innerHTML = shown.length ? `<div class="product-grid">${shown.map(artworkCard).join("")}</div>` : empty(state.q || state.artType ? "No artwork matches that" : "No artworks are on show yet", state.q || state.artType ? "Try another word, or look at all artworks." : "Artworks appear here once an artist has added them and FrameX has approved them.");
+          list.innerHTML = shown.length ? `<div class="product-grid">${shown.map((w) => artworkCard(w)).join("")}</div>` : empty(state.q || state.artType ? "No artwork matches that" : "No artworks are on show yet", state.q || state.artType ? "Try another word, or look at all artworks." : "Artworks appear here once an artist has added them and FrameX has approved them.");
           more.hidden = shown.length >= r.total;
         }
         chips();
+        if (reset) meetStrip();
       } catch (error) {
         FrameX.templates.showError(list, "This couldn't be loaded.", () => load(true));
       }
@@ -144,7 +172,8 @@
       const view = e.target.closest("[data-view]");
       if (view) {
         state.view = view.dataset.view;
-        $$("[data-view]", root).forEach((b) => b.setAttribute("aria-pressed", String(b === view)));
+        $$(".segmented [data-view]", root).forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.view === state.view)));
+        if (!view.closest(".segmented")) $(".art-toolbar", root).scrollIntoView({ block: "start" });
         return load();
       }
       const chip = e.target.closest("#art-chips .chip");
@@ -246,7 +275,7 @@
 
       <section class="art-section" id="artworks" aria-labelledby="aw-title">
         <div class="section-head"><h2 class="section-title section-title--sm" id="aw-title">Artwork gallery</h2></div>
-        ${data.artworks.length ? `<div class="product-grid">${data.artworks.map(artworkCard).join("")}</div>` : empty("No artworks on show yet", "Finished artworks appear here once FrameX has approved them.")}
+        ${data.artworks.length ? `<div class="product-grid">${data.artworks.map((w) => artworkCard(w, { by: false })).join("")}</div>` : empty("No artworks on show yet", "Finished artworks appear here once FrameX has approved them.")}
       </section>
 
       <section class="art-section" id="custom" aria-labelledby="cp-title">
@@ -470,11 +499,22 @@
     const crumb = $("#artwork-crumb");
     if (crumb) crumb.textContent = w.title;
     const fact = (label, value) => (value ? `<div><dt>${esc(label)}</dt><dd>${esc(value)}</dd></div>` : "");
+    // The sizes it is sold in (owner, 2026-10-27): an original has one; prints may have several, each with its price
+    const sizes = w.sizes && w.sizes.length ? w.sizes : [{ id: "s1", label: w.size, price: w.price }];
+    let chosen = sizes[0];
+    // Before / After (owner, 2026-10-27): the original photo it was drawn from, compared with the artwork; shown first
+    const compare = Boolean(w.reference && w.images[0] && FrameX.beforeAfter);
+    const thumbs = (compare ? 1 : 0) + w.images.length > 1;
 
     root.innerHTML = `<div class="aw">
         <div class="aw-gallery">
-          <div class="aw-gallery__main"><img id="aw-main" src="${esc(img(w.images[0] || ""))}" alt="${esc(w.title)} by ${esc(w.artist.name)}"></div>
-          ${w.images.length > 1 ? `<div class="aw-thumbs" role="group" aria-label="Artwork pictures">${w.images.map((src, i) => `<button type="button" data-pic="${esc(img(src))}" aria-pressed="${i === 0}" aria-label="Picture ${i + 1}"><img src="${esc(img(src))}" alt="" loading="lazy"></button>`).join("")}</div>` : ""}
+          <div class="aw-gallery__main">${compare ? `<div data-ba-view>${FrameX.beforeAfter.html(img(w.reference), img(w.images[0]))}</div>` : ""}<img id="aw-main" src="${esc(img(w.images[0] || ""))}" alt="${esc(w.title)} by ${esc(w.artist.name)}"${compare ? " hidden" : ""}></div>
+          ${compare ? `<p class="ba-note" data-ba-view>Drawn from this photo. Drag the line to compare the photo and the artwork.</p>` : ""}
+          ${
+            thumbs
+              ? `<div class="aw-thumbs" role="group" aria-label="Artwork pictures">${compare ? `<button type="button" class="ba-thumb" data-ba-show aria-pressed="true" aria-label="Before / After"><img src="${esc(img(w.images[0]))}" alt="" loading="lazy"><span>Before / After</span></button>` : ""}${w.images.map((src, i) => `<button type="button" data-pic="${esc(img(src))}" aria-pressed="${!compare && i === 0}" aria-label="Picture ${i + 1}"><img src="${esc(img(src))}" alt="" loading="lazy"></button>`).join("")}</div>`
+              : ""
+          }
         </div>
         <div class="aw-info">
           <div>
@@ -482,8 +522,14 @@
             <h1 class="pp-title">${esc(w.title)}</h1>
             <div class="artist-head__meta">${stars(w.rating)}</div>
           </div>
-          <div class="aw-price">${rupees(w.price)}</div>
+          <div class="aw-price" data-aw-price>${rupees(w.price)}</div>
           <p class="pp-muted">${w.available ? (w.kind === "ORIGINAL" ? "One original. Once it is bought, it is gone." : `${w.stock} ${w.stock === 1 ? "print" : "prints"} available.`) : "This artwork has been sold."}</p>
+          ${
+            sizes.length > 1
+              ? `<div class="aw-sizes" role="radiogroup" aria-label="Size">${sizes.map((s) => `<button type="button" role="radio" class="aw-size" data-aw-size="${esc(s.id)}" aria-checked="${s.id === chosen.id}"><strong>${esc(s.label)}</strong><span>${rupees(s.price)}</span></button>`).join("")}</div>`
+              : ""
+          }
+          ${w.delivery ? `<p class="aw-delivery">${icon("truck")}<span>Delivered in about <strong>${w.delivery.readyDays + w.delivery.transitMin}–${w.delivery.readyDays + w.delivery.transitMax} days</strong>: ready to send in ${w.delivery.readyDays} ${w.delivery.readyDays === 1 ? "day" : "days"}, then ${w.delivery.transitMin}–${w.delivery.transitMax} days on the way.</span></p>` : ""}
           <div class="aw-buy">
             ${w.available ? `<button class="btn btn--primary" type="button" id="aw-buy">Buy Artwork</button><button class="btn btn--outline" type="button" id="aw-cart">${icon("bag")} Add to cart</button>` : `<button class="btn btn--outline" type="button" disabled>Sold</button>`}
             ${w.artist.customEnabled ? `<a class="btn btn--light" href="${esc(qs().artistUrl(w.artist))}#custom">Request Custom Painting</a>` : ""}
@@ -495,7 +541,7 @@
               ${fact("Artist", w.artist.name)}${fact("Medium", w.medium)}${fact("Size", w.size)}${fact("Original or print", w.kind === "PRINT" ? "Print" : "Original")}
               ${fact("Handmade", w.handmade ? "Yes, made by hand" : "No")}${fact("Frame", w.frameIncluded ? `Included${w.frameDetails ? `: ${w.frameDetails}` : ""}` : "Not included")}
               ${fact("Canvas", w.canvasDetails)}${fact("Year", w.year ? String(w.year) : "")}${fact("Availability", w.available ? "Available" : "Sold")}
-              ${fact("Delivery", w.shipping || "Packed and sent by the artist. Delivery is added at checkout.")}
+              ${fact("Delivery", w.deliveryText || w.shipping || "Packed and sent by the artist. Delivery is added at checkout.")}
               ${fact("Payment", "Paid online at checkout. Cash on Delivery is not offered for artworks.")}
             </dl>
           </section>
@@ -504,16 +550,32 @@
         </div>
       </div>`;
 
+    if (compare) FrameX.beforeAfter.bind(root);
+    const showCompare = (on) => {
+      $$("[data-ba-view]", root).forEach((x) => (x.hidden = !on));
+      $("#aw-main", root).hidden = on;
+    };
+
     root.addEventListener("click", async (e) => {
       const pic = e.target.closest("[data-pic]");
-      if (pic) {
-        $("#aw-main", root).src = pic.dataset.pic;
-        $$("[data-pic]", root).forEach((b) => b.setAttribute("aria-pressed", String(b === pic)));
+      const both = e.target.closest("[data-ba-show]");
+      if (pic || both) {
+        if (pic) $("#aw-main", root).src = pic.dataset.pic;
+        showCompare(Boolean(both));
+        $$("[data-pic], [data-ba-show]", root).forEach((b) => b.setAttribute("aria-pressed", String(b === (pic || both))));
         return;
       }
-      const item = { productId: w.id, quantity: 1 };
+      const size = e.target.closest("[data-aw-size]");
+      if (size) {
+        chosen = sizes.find((s) => s.id === size.dataset.awSize) || sizes[0];
+        $$("[data-aw-size]", root).forEach((b) => b.setAttribute("aria-checked", String(b === size)));
+        $("[data-aw-price]", root).textContent = rupees(chosen.price);
+        return;
+      }
+      // The chosen size goes with the line: the server prices it (sizeOptions in the artwork's catalogue record)
+      const item = { productId: w.id, quantity: 1, selection: sizes.length > 1 ? { sizeId: chosen.id } : {} };
       if (e.target.closest("#aw-buy")) return FrameX.buyNow.start({ name: w.title, item });
-      if (e.target.closest("#aw-cart")) FrameX.cart.add({ productId: w.id, name: w.title, quantity: 1 });
+      if (e.target.closest("#aw-cart")) FrameX.cart.add({ productId: w.id, name: w.title, quantity: 1, selection: item.selection });
     });
   }
 

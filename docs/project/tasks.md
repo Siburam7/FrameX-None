@@ -1,10 +1,75 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-10-24 (FrameX Care live chat, local).
+> Last updated: 2026-10-28 (artworks: Before / After in place of View on My Wall, local).
 
 ## Now
 
+- [x] 2026-10-28 **Footer: the "what FrameX offers" row runs** (owner, straight to code): one line moving right to left,
+      both ends fading (mask), loops without a jump (the list twice; the copy aria-hidden), pauses under the pointer; for
+      "less motion" it stands still and wraps. Phones: shown too since 2026-10-28 (owner: "mobile scrren par bhi"; smaller, checked at 390 and 320 px). chrome.js + footer-faq.css +
+      mobile.css. Checked: moves ~41 px a second, one line, fades, no sideways scroll; still with less motion. Local.
+- [x] 2026-10-28 **Footer: fade from the page into the black footer** (owner: the hard white-to-black edge looks bad).
+      DESIGN READY in Desktop\FrameX-Footer-Fade-Design: A = a plain long fade, B = the fade + a soft orange glow; the fade
+      starts from the colour just above the footer (light blue or white). Owner: neither ("bilkul acha nehi lag raha":
+      grey between white and black looks muddy). Second try in Desktop\FrameX-Footer-Naya-Jod-Design: C = rounded dark
+      card on the page colour, D = curved top edge, E = deep navy + a thin orange light line, F = card + orange glow.
+      Owner chose **E** ("ye wala"). **BUILT 2026-10-28**, local, not pushed (footer-faq.css only): the footer is deep navy
+      #0d1b3e turning black (#0c0d0f by 640 px), with a thin orange light line along its top edge (its glow spills a little
+      above; overflow clips sideways only). Checked: Home + Art page, laptop + phone, no sideways scroll, no errors.
+- [x] 2026-10-28 **New footer like the owner’s reference picture** (near-black; centred heading + line; grey feature badges;
+      a huge faint FRAMEX word; brand + 4 short columns Shop / Create / Company / Help; copyright left, legal links right).
+      DESIGN in Desktop\FrameX-Footer-Design; owner: no feature badges on phones (3-phone-footer-NAYA.png).
+      **BUILT 2026-10-28** ("hm abhi code chnage karo"), local, not pushed: ui/chrome.js footer() (every page), footer-faq.css
+      (laptop), mobile.css (phones: badges hidden, smaller heading). The Legal column is gone: Terms / Privacy / Cookie
+      settings stay on the bottom line. Every old link is kept, regrouped. Checked: one screenshot each (laptop, phone), no
+      sideways scroll, no script errors, Cookie settings button present.
+- [x] 2026-10-28 **Footer bottom line** (owner, straight to code, no design): "© 2026 FrameX. All rights reserved." on the left,
+      Terms of Use / Privacy Notice / Cookie settings on the right, from 600 px up (footer-faq.css). Phones unchanged.
+      Checked with one screenshot each (laptop, phone). Local, not pushed. The FrameX Care button can sit over "Cookie
+      settings" at the very bottom of a laptop page (it floats; it was so before, too).
+- [x] 2026-10-28 **Art & Artists page: artworks first** (owner: only artists were listed, buyers had to open every profile to
+      see art). DESIGN READY in Desktop\FrameX-Art-Page-Design: the page opens on all artworks (Artworks | Artists, Artworks
+      first), type filters, a small "Meet the artists" strip above the grid ("See all artists" = the old list), cards with
+      the artist's face + city, "from ₹ · N sizes" for prints, a "Before / After" badge; hero button "See the artworks".
+      **BUILT 2026-10-28** (owner: "hm bhai abhi code par karo"), local, not pushed, frontend only (ui/art-pages.js, art.html,
+      art.css). art.html?view=artists still opens the artists list. On the artist's own profile the cards show medium and
+      size instead of the artist. Fixed on the way: "Load more" showed even when everything was shown (.section-more's
+      display: flex beat [hidden]; #art-more[hidden] now hides it). Checks: browser artwork 36/36 (Art page 6 new), art
+      74/74 (its directory checks now open ?view=artists).
+- [ ] 2026-10-27 **Artists: the same easy "Add artwork"** (owner: main photo → PNG for View on My Wall → sizes + prices →
+      delivery time → submit; admin approves; admin can list for any artist; artworks inside admin All frames). DESIGN READY in
+      DesktopFrameX-Add-Artwork-Design: My artworks, 4 steps (Photos, Sizes & price, Delivery, Check & submit), admin All
+      frames with Frames | Artworks tabs and "For which artist?". Owner: "Done abhi Code par banao".
+      **BUILT 2026-10-27, local, not pushed** (no migration). Artist dashboard Artworks → Add / Edit opens the 4-step editor
+      (ui/artwork-editor.js); the old long form stays as "…/<id>/advanced". Step 1 Photos: up to 8 photos + the View on My
+      Wall picture: the main photo, its own picture (POST /api/artist/media/wall-art?mode=auto|keep: lib/frame-cutout.js
+      removes the plain wall around the artwork, keeps the art itself, WebP) or none. Step 2: title, art type, medium,
+      Original (exactly 1 size, 1 piece) or Prints (up to 8 sizes, each its own price, one copies count), frame included.
+      Step 3: ready-to-send days, days on the way (min–max), packing (tube / flat / crate), ships from; "Buyers see" line.
+      Step 4: check and submit → waiting for FrameX review. Admin: All frames → tab Artworks (#/products?tab=artworks):
+      filter by artist / status, Edit / Approve / Reject (reason) / Hide / Show again; "Add artwork" → "For which artist?" →
+      same editor; admin save is published at once (GET /api/admin/artworks?artist=, GET/PUT
+      /api/admin/artists/:artistId/artworks/:id, POST /api/admin/artists/:artistId/media[/wall-art]). Buyers: artwork page
+      size chips with prices, "Delivered in about X–Y days", delivery fact; cart / Buy now carry the chosen size (sizeOptions
+      priceDelta). (View on My Wall for artworks was built here and replaced on 2026-10-28 by Before / After, see below.)
+      Checks: backend 486 / 0 (artwork-steps 4 new), browser artwork 22/22, art 74/74 (run with PROVIDER=cashfree: the
+      custom-painting advance test needs the Cashfree stand-in), shop 50/50.
+      Not done: one artwork that is both an original and prints; a real artwork added live.
+      **CHANGE 2026-10-27 (owner):** "View on My Wall" is no use for art. Instead the artist adds the photo of the drawing
+      (main) + the original / reference photo it was drawn from; buyers compare them with a Before / After slider on the
+      artwork page (no View on My Wall there). NEW DESIGN in DesktopFrameX-Add-Artwork-Design (old one in "Purana (View on My
+      Wall wala)"): step 1 = artwork photo, original photo (+ "I may show this photo" tick, or "Drawn from imagination"),
+      Before / After preview, more photos; step 4 and the buyer page show the slider.
+      **BUILT 2026-10-28** (owner: "hm bhai aabhi Code main Karo"), local, not pushed, no migration. The wall-picture code is
+      gone (no /media/wall-art, frame-cutout and ld-subject back as they were, no View on My Wall on artwork pages). Artwork
+      data: reference { media, consent } (shown only when the artist ticked "I may show this photo"; never one of the
+      artwork's pictures) or imagination: true. New ui/before-after.js (drag with mouse / finger, arrow keys; styles .ba in
+      art.css) used by the editor (step 1 preview, step 4) and the artwork page (Before / After first, then the photos as
+      thumbnails). The old long form ("…/advanced") now keeps sizes, delivery and the original photo when saved.
+      Checks: backend 486 / 0 (artwork-steps 4: the original photo rules), browser artwork 31/31, art 74/74 (Cashfree
+      stand-in). Once, a full npm test run had 5 storage.test.js failures (files left on disk) that did not come back:
+      storage alone 12/12, the next full run 486 / 0.
 - [x] 2026-10-27 **DEPLOYED** main 22575b6 (owner: "Abhi bhai Live kar doo"; no migration, so no backup needed): "Add a frame" + My
       frames + admin All frames + customer photo inside the real frame + see-through View on My Wall. Live check: new files
       served, admin / shop dashboard pages load them, /media sends CORS, Home / Product / Home Decor open with no errors

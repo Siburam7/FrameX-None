@@ -434,6 +434,37 @@
     padding-block: 12px;
     font-size: 0.75rem;
   }
+
+  /* The new footer on phones (owner, 2026-10-28): no "what FrameX offers" row, a smaller line */
+  .site-footer__hero h2 {
+    font-size: 1.45rem;
+  }
+
+  .site-footer__hero h2 span {
+    display: inline;
+  }
+
+  /* The running "what FrameX offers" line on phones too (owner, 2026-10-28): a little smaller and closer */
+  .site-footer__marquee {
+    margin-top: 22px;
+  }
+
+  .site-footer__marquee .site-footer__badges {
+    gap: 0 28px;
+    padding-right: 28px;
+  }
+
+  .site-footer__badges li {
+    font-size: 0.8rem;
+  }
+
+  .site-footer__word {
+    margin-top: 34px;
+  }
+
+  .site-footer__top {
+    padding-top: 48px;
+  }
 }
 
 /* Narrow phones (320px to 374px): a swiping row shows one card and most of the
@@ -1296,4 +1327,10 @@
   .af-listtbl tr { display: grid; grid-template-columns: 64px 1fr; gap: 4px 10px; padding: 10px 0; border-top: 1px solid var(--line); }
   .af-listtbl td { padding: 0; border: 0; }
   .af-listtbl td:first-child { grid-row: span 5; }
+}
+
+/* "Add artwork" on phones */
+@media (max-width: 639px) {
+  .aa-time { grid-template-columns: 1fr; }
+  .aa-tabs a { flex: 1; text-align: center; }
 }

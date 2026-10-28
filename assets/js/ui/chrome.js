@@ -157,41 +157,52 @@
   const col = (title, items, extra = "") =>
     `<div><h3>${esc(title)}</h3><ul>${items.map(([label, href]) => `<li><a href="${href}">${esc(label)}</a></li>`).join("")}${extra}</ul></div>`;
 
+  /* The footer (owner, 2026-10-28, from their reference picture): a centred line, what FrameX offers (hidden on
+     phones), a large faint FRAMEX word, the brand and four short link columns, the legal links on the bottom line. */
   function footer() {
+    const badge = (ic, label) => `<li>${icon(ic)}<span>${label}</span></li>`;
+    // One running line (owner, 2026-10-28): the list twice, so it loops without a gap; the copy is hidden from screen readers
+    const badges = badge("store", "Local framing shops") + badge("eye", "Your photo, previewed") + badge("edit", "Art by real artists") + badge("lock", "Secure online payment") + badge("cash", "Cash on Delivery");
     return `<footer class="site-footer">
+      <div class="container site-footer__hero">
+        <h2>Frame the moments that matter, <span>with framing shops near you</span></h2>
+        <p>Choose a frame from a local shop, see your own photo in it, then collect it or have it delivered to your door.</p>
+        <div class="site-footer__marquee"><div class="site-footer__track">
+          <ul class="site-footer__badges">${badges}</ul><ul class="site-footer__badges" aria-hidden="true">${badges}</ul>
+        </div></div>
+      </div>
+      <div class="site-footer__word" aria-hidden="true">FRAMEX</div>
       <div class="container site-footer__top">
         <div class="site-footer__brand">
           <a class="brand" href="${pages.home}" aria-label="FrameX home"><img src="assets/img/ui/logo-framex-light.png" alt="FrameX" width="160" height="40" loading="lazy"></a>
           <p>Premium photo frames from local framing shops. Choose your frame, preview your own photo in it, then collect it or have it delivered.</p>
           ${contactLinks()}
         </div>
-        ${col("Company", [
-          ["Our Story", pages.story],
-          ["About FrameX", pages.about],
-          ["Customer Gallery", pages.customerGallery],
-        ])}
         ${col("Shop", [
           ["All Frames", pages.shop],
           ["Home Decor & Wall Art", pages.decor],
           ["Art & Artists", pages.art],
-          ["Templates", pages.templates],
-          ["FrameX Studio", pages.studio + "?mode=photo"],
-          ["Custom Frames", pages.home + "#custom-frame"],
           ["Categories", pages.home + "#categories"],
+        ])}
+        ${col("Create", [
+          ["FrameX Studio", pages.studio + "?mode=photo"],
+          ["Templates", pages.templates],
+          ["Custom Frames", pages.home + "#custom-frame"],
           ["Gallery", pages.gallery],
         ])}
-        ${col("Support", [
-          ["Services", pages.services],
+        ${col("Company", [
+          ["Our Story", pages.story],
+          ["About FrameX", pages.about],
+          ["Customer Gallery", pages.customerGallery],
           ["Contact Us", pages.contact],
+        ])}
+        ${col("Help", [
+          ["Services", pages.services],
           ["FAQ", pages.faq],
           ["How It Works", pages.services + "#journey"],
           ["Register Your Shop", pages.partner],
           ["Join as an Artist", pages.joinArtist],
           ["Shop Login", pages.login + "?type=shop"],
-        ])}
-        ${col("Legal", [
-          ["Terms of Use", pages.terms],
-          ["Privacy Notice", pages.privacy],
         ])}
       </div>
       <div class="container site-footer__bottom">

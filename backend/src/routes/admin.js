@@ -328,8 +328,18 @@ router.post("/artists/:id/credentials", async (req, res) => {
    Nothing an artist adds is public until an admin approves it here. */
 router.get("/artworks", async (req, res) => {
   const { status } = validate(req.query, { status: v.enumOf(artworks.ARTWORK_STATUSES, { required: false }) });
-  res.json({ items: await artworks.adminList({ status }), counts: await artworks.adminCounts() });
+  res.json({ items: await artworks.adminList({ status, artistId: typeof req.query.artist === "string" ? req.query.artist : "" }), counts: await artworks.adminCounts() });
 });
+
+/* ---- Artworks for any artist (owner, 2026-10-27): the admin adds and changes an artist's artworks with the same steps ---- */
+const artistOf = (req) => {
+  if (!isUuid(req.params.artistId)) throw errors.notFound("We couldn't find that artist.", "ARTIST_NOT_FOUND");
+  return artists.artistContext(req.params.artistId);
+};
+router.get("/artists/:artistId/artworks/:id", async (req, res) => res.json({ artwork: await artworks.getOwn(await artistOf(req), req.params.id) }));
+router.put("/artists/:artistId/artworks/:id", async (req, res) => res.json({ artwork: await artworks.adminSave(await artistOf(req), req.params.id, req.body, { actor: req.auth.user, ip: req.ip }) }));
+router.post("/artists/:artistId/media", async (req, res) => res.status(201).json({ media: await artists.receiveMedia(await artistOf(req), req.auth.user, req) }));
+
 router.post("/artworks/:id/review", async (req, res) => {
   const data = validate(req.body, { decision: v.enumOf(["APPROVED", "REJECTED"], { label: "Decision" }), reason: v.string({ max: 500, label: "Reason" }) });
   res.json({ artwork: await artworks.adminReview(req.params.id, data, { actor: req.auth.user, ip: req.ip }) });

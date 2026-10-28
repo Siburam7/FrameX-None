@@ -24,6 +24,19 @@
 
 ## Owner decisions (log)
 
+- 2026-10-28 New footer from the owner's reference picture (near-black, centred line, faint FRAMEX word, 4 short
+  columns; no feature badges on phones). The page-to-footer join: a grey fade was rejected; chosen "E" = deep navy
+  turning black with a thin orange light line on top.
+- 2026-10-28 Art & Artists opens on ALL artworks (owner: buyers should not have to open every profile), with a small
+  "Meet the artists" strip; the artists list stays one tap away. Built after the design.
+- 2026-10-28 Artworks: NO View on My Wall ("bekar option hai art ke liye"). The artist adds the photo of the artwork (main)
+  and the original photo it was drawn from; buyers compare them with a Before / After slider. Built after the new design.
+  My choices (unconfirmed): the original photo is optional ("Recommended"); it shows only with the artist's "I may show
+  this photo" tick; "Drawn from imagination" when there is none.
+- 2026-10-27 Artworks get the same easy 4 steps as frames (owner): main photo → picture for View on My Wall → sizes with
+  prices → delivery time → submit; FrameX approves; the admin can add artworks for any artist (published at once) and
+  sees them in All frames → Artworks. My choices (unconfirmed): an original has exactly 1 size; prints share one copies
+  count. (The wall picture part was replaced on 2026-10-28 by Before / After.)
 - 2026-10-27 Frames: model photos to sell + a frame FRONT (outer + inner background removed) for "your photo inside the
   real frame" (product page, cart, order, View on My Wall). Simple 4-step "Add a frame" for shops; admin adds / edits any
   shop's frames. The drawn 30 sample frames were dropped (owner). Artists' version later.
@@ -147,6 +160,9 @@ header button labels per section.
 | HEIC upload (Chrome, phone screen, local :4100) | verified 2026-10-25 with a public libheif sample; **not yet with a real iPhone photo** |
 
 ## Lessons (for whoever works on this next)
+
+- The art browser suite (art-e2e) must run with the Cashfree stand-in (PROVIDER=cashfree): with the Razorpay stand-in the
+  "closing the payment window pays nothing" check fails because that stand-in pays at once (2026-10-27).
 
 - 2026-10-24 Writing code through `node -e '…'` in bash loses backslashes (`/^\s*(\d…)/` became `/^s*(d…)/`) and
   `$$` / `$&` in String.replace replacements are special: write edit scripts with the Write tool and use a replacement

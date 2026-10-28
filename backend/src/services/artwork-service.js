@@ -53,28 +53,42 @@ async function clean(artist, input, q = db) {
   const fields = {};
   const title = text(body.title, 140);
   if (title.length < 3) fields.title = "Give the artwork a title.";
-  const price = Number(body.price);
-  if (!Number.isInteger(price) || price < 1 || price > MAX_PRICE) fields.price = `Enter a price in whole rupees, up to ${MAX_PRICE.toLocaleString("en-IN")}.`;
+  // Sizes and prices (owner, 2026-10-27): an original has one size; prints may come in several, each with its price.
+  // An older form sends one "size" and one "price": that is one size.
+  const kind = body.kind === "PRINT" ? "PRINT" : "ORIGINAL";
+  const sizes = readSizes(body, kind, fields);
+  const price = sizes.length ? Math.min(...sizes.map((s) => s.price)) : Number(body.price);
+  if (!sizes.length && (!Number.isInteger(price) || price < 1 || price > MAX_PRICE)) fields.price = `Enter a price in whole rupees, up to ${MAX_PRICE.toLocaleString("en-IN")}.`;
   const artType = ART_TYPES.includes(body.artType) ? body.artType : "";
   if (!artType) fields.artType = "Choose the kind of artwork.";
   const medium = text(body.medium, 80);
   if (!medium) fields.medium = "Say what it is made with, e.g. oil on canvas.";
-  const size = text(body.size, 60);
+  const size = sizes.length ? sizes[0].label : text(body.size, 60);
   if (!size) fields.size = "Enter the size, e.g. 18 x 24 in.";
   const images = await ownMediaIds(artist.id, body.images, q);
   if (!images.length) fields.images = "Add at least one picture of the artwork.";
   if (images.length > MAX_PICTURES) fields.images = `An artwork can have up to ${MAX_PICTURES} pictures.`;
-  const kind = body.kind === "PRINT" ? "PRINT" : "ORIGINAL";
   const year = body.year === "" || body.year === null || body.year === undefined ? null : Number(body.year);
   if (year !== null && (!Number.isInteger(year) || year < 1800 || year > new Date().getFullYear())) fields.year = "Enter the year it was made.";
   // An original exists once. Prints can have more copies.
   const copies = kind === "ORIGINAL" ? 1 : Number(body.stock);
   if (kind === "PRINT" && (!Number.isInteger(copies) || copies < 1 || copies > 500)) fields.stock = "Enter how many prints are available (1 to 500).";
+  const delivery = readDelivery(body.delivery, fields);
+  // The original photo it was drawn or painted from: buyers compare it with the artwork (Before / After).
+  // It may show real people, so the artist confirms they may show it.
+  const ref = body.reference && typeof body.reference === "object" ? body.reference : {};
+  const refMedia = ref.media ? (await ownMediaIds(artist.id, [ref.media], q))[0] || null : null;
+  if (ref.media && !refMedia) fields.reference = "Upload the original photo again.";
+  else if (refMedia && ref.consent !== true) fields.reference = "Tick that you may show the original photo, or remove it.";
   if (Object.keys(fields).length) throw errors.validation(fields);
   return {
     title,
     price,
     data: {
+      sizes,
+      delivery,
+      reference: refMedia ? { media: refMedia, consent: true } : null,
+      imagination: !refMedia && ref.imagination === true,
       description: text(body.description, 3000),
       artType,
       medium,
@@ -94,6 +108,53 @@ async function clean(artist, input, q = db) {
   };
 }
 
+/** The sizes an artwork is sold in: [{ id, label, width, height, price }] (inches, whole rupees). */
+function readSizes(body, kind, fields) {
+  if (!Array.isArray(body.sizes) || !body.sizes.length) return [];
+  const list = body.sizes.slice(0, kind === "ORIGINAL" ? 1 : 8);
+  const out = [];
+  list.forEach((s, i) => {
+    const w = Number(s && s.width);
+    const h = Number(s && s.height);
+    const p = Number(s && s.price);
+    if (!(w > 0 && w <= 400 && h > 0 && h <= 400)) fields.sizes = `Size ${i + 1}: enter its width and height in inches.`;
+    else if (!Number.isInteger(p) || p < 1 || p > MAX_PRICE) fields.sizes = `Size ${i + 1}: enter a price in whole rupees.`;
+    else {
+      const n = (v) => String(Math.round(v * 100) / 100);
+      out.push({ id: `s${i + 1}`, label: `${n(w)} × ${n(h)} in`, width: w, height: h, price: p });
+    }
+  });
+  return out;
+}
+
+/** How long it takes: { readyDays, transitMin, transitMax, packing, shipsFrom } or null when not given. */
+function readDelivery(value, fields) {
+  if (!value || typeof value !== "object") return null;
+  const int = (v) => (v === "" || v === null || v === undefined ? null : Number(v));
+  const ready = int(value.readyDays);
+  const min = int(value.transitMin);
+  const max = int(value.transitMax);
+  if (ready === null && min === null && max === null) return null;
+  if (!Number.isInteger(ready) || ready < 0 || ready > 60) fields.delivery = "Enter the days you need to send it (0 to 60).";
+  else if (!Number.isInteger(min) || !Number.isInteger(max) || min < 1 || max < min || max > 60) fields.delivery = "Enter the days on the way, e.g. 3 to 6.";
+  const packing = ["tube", "flat", "crate"].includes(value.packing) ? value.packing : "";
+  return { readyDays: ready, transitMin: min, transitMax: max, packing, shipsFrom: text(value.shipsFrom, 80) };
+}
+
+const PACKING = { tube: "Rolled in a tube", flat: "Flat, bubble-wrapped", crate: "Wooden crate" };
+/** "Ready in 2 days, then 3–6 days on the way (5–8 days in all)" */
+const deliveryText = (d) => (d ? `Ready to send in ${d.readyDays} ${d.readyDays === 1 ? "day" : "days"}, then ${d.transitMin}–${d.transitMax} days on the way (usually ${d.readyDays + d.transitMin}–${d.readyDays + d.transitMax} days in all)${d.packing ? `. ${PACKING[d.packing]}` : ""}${d.shipsFrom ? `, from ${d.shipsFrom}` : ""}.` : "");
+/** The sizes of an older artwork (one size, one price). */
+const sizesOf = (row) => {
+  const d = row.data || {};
+  if (Array.isArray(d.sizes) && d.sizes.length) return d.sizes;
+  const m = /([\d.]+)\s*[x×]\s*([\d.]+)\s*(in|cm)?/i.exec(String(d.size || ""));
+  const k = m && /cm/i.test(m[3] || "") ? 1 / 2.54 : 1;
+  return [{ id: "s1", label: d.size || "", width: m ? Number(m[1]) * k : null, height: m ? Number(m[2]) * k : null, price: row.price }];
+};
+/** The original photo for Before / After (an address), or "" when there is none. */
+const referencePhoto = (d) => (d.reference && d.reference.media ? mediaPath(d.reference.media) : "");
+
 /* ---------------------------------------------------------------- Shapes */
 
 const pictures = (data) => (data.images || []).map((id) => mediaPath(id));
@@ -106,6 +167,7 @@ function ownShape(row) {
     description: d.description || "", artType: d.artType, artTypeName: ART_TYPE_NAMES[d.artType] || "Artwork", medium: d.medium, size: d.size, kind: d.kind, handmade: Boolean(d.handmade),
     frameIncluded: Boolean(d.frameIncluded), frameDetails: d.frameDetails || "", canvasDetails: d.canvasDetails || "", year: d.year || null, stock: d.stock || 1, shipping: d.shipping || "",
     care: d.care || [], tags: d.tags || [], images: pictures(d), imageRefs: (d.images || []).map((id) => `media:${id}`),
+    sizes: sizesOf(row), delivery: d.delivery || null, deliveryText: deliveryText(d.delivery), reference: referencePhoto(d), referenceRef: d.reference && d.reference.media ? `media:${d.reference.media}` : "", imagination: Boolean(d.imagination),
     rejectionReason: row.status === "REJECTED" ? row.rejection_reason || "" : "", reviewedAt: row.reviewed_at, submittedAt: row.submitted_at, updatedAt: row.updated_at,
     onSale: row.status === "APPROVED" && row.artist_status === "ACTIVE",
     artistCode: row.artist_code, artistName: row.artist_name
@@ -120,6 +182,7 @@ function publicShape(row) {
     id: row.id, title: row.title, slug: row.slug, price: row.price, currency: "INR", description: d.description || "", artType: d.artType, artTypeName: ART_TYPE_NAMES[d.artType] || "Artwork", medium: d.medium, size: d.size,
     kind: d.kind, handmade: Boolean(d.handmade), frameIncluded: Boolean(d.frameIncluded), frameDetails: d.frameDetails || "", canvasDetails: d.canvasDetails || "", year: d.year || null, shipping: d.shipping || "",
     care: d.care || [], tags: d.tags || [], images: pictures(d), image: pictures(d)[0] || "", available: stock > 0, stock,
+    sizes: sizesOf(row), delivery: d.delivery || null, deliveryText: deliveryText(d.delivery), reference: referencePhoto(d),
     artist: { artistCode: row.artist_code, username: row.username, name: row.artist_name, photo: mediaPath(row.photo_media), city: row.city, state: row.state, customEnabled: Boolean(row.custom_enabled) },
     rating: { average: row.rating_avg === null || row.rating_avg === undefined ? null : Math.round(Number(row.rating_avg) * 10) / 10, count: Number(row.rating_count) || 0 }
   };
@@ -142,7 +205,10 @@ function productRecord(row, artist) {
     id: row.id, shopId: artist.artist_code, name: row.title, slug: row.slug, productType: "artwork", image: images[0] || "", images,
     views: images.map((url, i) => ({ type: i === 0 ? "FRONT" : "DETAIL", url, alt: `${row.title} by ${artist.name}` })),
     description: d.description || "", categoryIds: ["art"], tags: d.tags || [], price: row.price, discountPercent: 0, currency: "INR", stock: d.stock || 1, isAvailable: true, isVisible: true,
-    material: d.medium, sizes: [d.size], colors: [],
+    material: d.medium, colors: [],
+    sizes: sizesOf(row).map((s) => s.label),
+    sizeOptions: sizesOf(row).map((s) => ({ id: s.id, label: s.label, dimensions: s.width && s.height ? `${s.width} x ${s.height} in` : null, priceDelta: s.price - row.price })),
+    shipping: deliveryText(d.delivery) || d.shipping || "",
     // Decided by the platform, not by the artist: an artwork is paid online and is not gift wrapped.
     cod: false, giftWrap: false,
     artwork: { artistCode: artist.artist_code, artistName: artist.name, artType: d.artType, medium: d.medium, size: d.size, kind: d.kind, handmade: Boolean(d.handmade), frameIncluded: Boolean(d.frameIncluded), year: d.year || null },
@@ -201,7 +267,7 @@ export async function ownCounts(artist) {
  * Add an artwork (id is new) or change one of the artist's own.
  * Either way it waits for FrameX's review afterwards.
  */
-export async function saveOwn(artist, id, input, { actor, ip = null }) {
+export async function saveOwn(artist, id, input, { actor, ip = null, byAdmin = false }) {
   if (!ARTWORK_ID.test(String(id || ""))) throw errors.validation({ id: "This artwork can't be saved. Add it again from your dashboard." });
   const existing = (await db.query("SELECT * FROM artworks WHERE id = $1", [id])).rows[0];
   // An id that exists but isn't this artist's own is not reachable from here.
@@ -229,7 +295,7 @@ export async function saveOwn(artist, id, input, { actor, ip = null }) {
     await syncProduct(q, id);
     await audit(q, { actor, action: ACTIONS.ARTWORK_SUBMITTED, targetType: "artwork", targetId: id, metadata: { artist: artist.code, changed: Boolean(existing) }, ip });
   });
-  await notifyUsers(await adminUserIds(), { kind: "ARTWORK_PENDING_REVIEW", ref: `${id}:${Date.now()}`, title: "An artwork is waiting for review", body: `${artist.name} submitted an artwork for review.`, link: "admin.html#/artworks" });
+  if (!byAdmin) await notifyUsers(await adminUserIds(), { kind: "ARTWORK_PENDING_REVIEW", ref: `${id}:${Date.now()}`, title: "An artwork is waiting for review", body: `${artist.name} submitted an artwork for review.`, link: "admin.html#/products?tab=artworks" });
   return getOwn(artist, id);
 }
 
@@ -266,10 +332,21 @@ export async function setOwnStatus(artist, id, status, { actor, ip = null }) {
 
 /* ---------------------------------------------------------------- FrameX staff */
 
-export async function adminList({ status = "" } = {}) {
+export async function adminList({ status = "", artistId = "" } = {}) {
   const params = [];
-  const { rows } = await db.query(`${SQL} ${status ? `WHERE w.status = $${params.push(status)}` : ""} ORDER BY (w.status = 'PENDING_REVIEW') DESC, w.submitted_at DESC LIMIT 500`, params);
-  return rows.map(ownShape);
+  const where = [];
+  if (status) where.push(`w.status = $${params.push(status)}`);
+  if (artistId && /^[0-9a-f-]{36}$/i.test(artistId)) where.push(`w.artist_id = $${params.push(artistId)}`);
+  const { rows } = await db.query(`${SQL} ${where.length ? "WHERE " + where.join(" AND ") : ""} ORDER BY (w.status = 'PENDING_REVIEW') DESC, w.submitted_at DESC LIMIT 500`, params);
+  return rows.map((r) => ({ ...ownShape(r), artistId: r.artist_id }));
+}
+
+/** FrameX adds or changes an artwork for an artist: saved as the artist would, then approved at once (FrameX is the reviewer). */
+export async function adminSave(artist, id, input, who) {
+  await saveOwn(artist, id, input, { ...who, byAdmin: true });
+  const row = (await db.query("SELECT status FROM artworks WHERE id = $1", [id])).rows[0];
+  if (input && input.publish && row && row.status === "PENDING_REVIEW") await adminReview(id, { decision: "APPROVED" }, who);
+  return getOwn(artist, id);
 }
 
 export async function adminCounts() {

@@ -314,6 +314,9 @@
           title: v.title, price: Number(v.price), artType: v.artType, medium: v.medium, size: v.size, kind: v.kind, stock: v.kind === "PRINT" ? Number(v.stock) : 1, year: v.year ? Number(v.year) : null,
           handmade: form.handmade.checked, frameIncluded: form.frameIncluded.checked, frameDetails: v.frameDetails, canvasDetails: v.canvasDetails, description: v.description, shipping: v.shipping,
           care: v.care.split("\n"), tags: v.tags.split(","), images: pics.map((p) => p.ref),
+          // Set in the 4-step editor and not on this form: kept as they are (several print sizes, delivery, original photo)
+          sizes: w.sizes && w.sizes.length > 1 ? w.sizes : undefined, delivery: w.delivery || undefined,
+          reference: w.referenceRef ? { media: w.referenceRef, consent: true } : { imagination: Boolean(w.imagination) },
         }),
       onSuccess() {
         FrameX.toast.show("Saved. It is waiting for FrameX's review.");
@@ -479,7 +482,10 @@
     try {
       if (section === "overview") await overview(main);
       if (section === "requests") await (parts[1] ? request(main, parts[1]) : requests(main, params));
-      if (section === "artworks") await (parts[1] ? artworkForm(main, parts[1]) : artworks(main, params));
+      // The 4-step editor (owner, 2026-10-27, ui/artwork-editor.js); "…/<id>/advanced" opens the older full form
+      if (section === "artworks" && parts[1] && parts[2] !== "advanced")
+        await FrameX.artworkEditor.open(main, { base: "/artist", artworkId: parts[1] === "new" ? null : decodeURIComponent(parts[1]), onExit: () => (location.hash = "#/artworks") });
+      else if (section === "artworks") await (parts[1] ? artworkForm(main, parts[1]) : artworks(main, params));
       if (section === "services") await services(main);
       if (section === "orders") await (parts[1] ? order(main, parts[1]) : orders(main));
       if (section === "profile") await profile(main);

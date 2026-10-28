@@ -2191,3 +2191,20 @@ p.iu-errors {
 .af-filters { margin-bottom: 14px; }
 .af-filters [data-q] { flex: 1; min-width: 200px; }
 .af-note { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; padding: 10px 14px; border-radius: 12px; background: #fef3c7; color: #92400e; font-weight: 700; font-size: 14px; }
+
+/* "Add artwork" (owner, 2026-10-27; ui/artwork-editor.js) and the Artworks tab of admin "All frames" */
+.aa-tabs { display: flex; gap: 8px; margin: 0 0 14px; }
+.aa-tabs a { padding: 9px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font-weight: 800; text-decoration: none; }
+.aa-tabs .on { border-color: var(--ink); background: var(--ink); color: #fff; }
+.aa-days { display: flex; align-items: center; gap: 10px; }
+.aa-days .af-in { width: 90px; }
+.aa-time { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 6px; }
+.aa-time div { padding: 12px; border-radius: 12px; background: var(--surface-soft); text-align: center; }
+.aa-time b { display: block; font: 800 18px var(--font-display, Sora, sans-serif); }
+.aa-time span { color: var(--text-muted); font-size: 12px; }
+.aa-slot { position: relative; padding: 10px; border: 2px dashed var(--line); border-radius: 14px; background: var(--surface-soft); text-align: center; }
+.aa-slot img { display: block; width: 100%; max-height: 320px; object-fit: contain; border-radius: 10px; }
+.aa-slot em { position: absolute; left: 18px; top: 18px; padding: 4px 10px; border-radius: 999px; background: var(--ink); color: var(--surface); font: 700 12px Sora, sans-serif; font-style: normal; }
+.aa-slot .af-row { justify-content: center; margin-top: 10px; }
+.aa-compare { max-width: 620px; --ba-max: 440px; }
+.af-three .ba { --ba-max: 260px; }

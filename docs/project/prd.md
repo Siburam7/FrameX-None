@@ -44,7 +44,7 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
 | Cash on Delivery, gift wrap | Configurable fees | Built, live |
 | Orders | Order pages, emails, shop fulfilment steps, admin orders, refunds recorded by admin | Built, live |
 | Customer photos | Stored unchanged, private, short-lived signed links only. JPG, PNG, WebP, HEIC (iPhone), AVIF | Built, live (Backblaze B2 bucket). HEIC / AVIF built 2026-10-25, local |
-| Art & Artists | Artists, artworks, custom paintings paid 40% / 60% | Built; not used live yet |
+| Art & Artists | Artists, artworks, custom paintings paid 40% / 60%. Easy 4-step "Add artwork" (artwork photo + the original photo it was drawn from, shown to buyers as a Before / After slider; sizes with prices, delivery time, submit → FrameX approves); admin adds for any artist in All frames → Artworks | Built; not used live yet. 4-step editor built 2026-10-27, Before / After 2026-10-28, Art & Artists opens on the artworks 2026-10-28, local |
 | Payouts | Bank / UPI payout accounts (sealed), payouts recorded by admin with UTR, 2% payout charge | Built, live code; payout key set on Render 2026-10-21: accounts can be saved (live log READY) |
 | Emails | Password reset, orders, applications… from `FrameX <support@shopframex.in>` (Brevo, domain authenticated: DKIM shopframex.in), "orange line" design, logo on a white badge for dark mode | Built, live since 2026-10-20 |
 | Support inbox | Mail to `support@shopframex.in` (any `@shopframex.in`) is forwarded by ImprovMX (free) to `support.framex@gmail.com`; replies go out from that Gmail until "Send mail as" is set up (architecture §9) | Live since 2026-10-20 |

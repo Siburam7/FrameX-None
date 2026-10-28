@@ -634,3 +634,228 @@
 .site-footer__cookies:focus-visible {
   color: var(--white);
 }
+
+/* Footer bottom line (owner, 2026-10-28): the copyright on the left, Terms / Privacy / Cookie settings on the right.
+   Phones keep their own layout (the copyright on its own line above the links). */
+@media (min-width: 600px) {
+  .site-footer__bottom span {
+    margin-right: auto;
+    padding-left: 0;
+  }
+
+  .site-footer__cookies {
+    padding-right: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------------
+   The footer since 2026-10-28 (owner's reference picture): near-black, a centred line
+   and what FrameX offers, a large faint FRAMEX word, the brand + four short columns,
+   the copyright on the left and the legal links on the right. Phones: mobile.css.
+   --------------------------------------------------------------------------------- */
+.site-footer {
+  overflow: hidden;
+  background: #0c0d0f;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.site-footer__hero {
+  max-width: 800px;
+  padding-top: clamp(56px, 8vw, 96px);
+  text-align: center;
+}
+
+.site-footer__hero h2 {
+  margin: 0;
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3.2vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+}
+
+.site-footer__hero h2 span {
+  display: block;
+}
+
+.site-footer__hero p {
+  max-width: 520px;
+  margin: 18px auto 0;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.site-footer__badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px 34px;
+  margin: 34px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__badges li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.42);
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.site-footer__badges .icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* The faint word: decoration only (aria-hidden), never wider than the screen */
+.site-footer__word {
+  margin-top: 46px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.012) 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-family: var(--font-display);
+  font-size: clamp(5rem, 19vw, 17rem);
+  font-weight: 900;
+  line-height: 0.8;
+  letter-spacing: -0.02em;
+  text-align: center;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+}
+
+.site-footer__top {
+  padding-block: clamp(56px, 8vw, 110px) 0;
+}
+
+.site-footer h3 {
+  color: var(--white);
+  font-family: var(--font-display);
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.site-footer li a {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.site-footer li a:hover {
+  color: var(--white);
+  text-decoration: none;
+}
+
+.site-footer__brand p {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.site-footer__bottom {
+  padding-block: clamp(28px, 4vw, 44px) 36px;
+  border-top: 0;
+}
+
+/* Terms · Privacy · Cookie settings: a dot between them instead of a line */
+.site-footer__bottom a,
+.site-footer__bottom .site-footer__cookies {
+  border-left: 0;
+  padding-inline: 0;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.site-footer__bottom a + a::before,
+.site-footer__bottom a + .site-footer__cookies::before {
+  content: "·";
+  margin-inline: 12px;
+  color: rgba(255, 255, 255, 0.35);
+}
+
+/* The footer meets the page (owner, 2026-10-28, option E): FrameX's deep navy turning black lower down, and a thin
+   warm light line along the top edge, so the light page and the dark footer meet softly. The line's glow may spill
+   a little above the footer (overflow clips sideways only; older browsers just hide it). */
+.site-footer {
+  position: relative;
+  overflow: hidden;
+  overflow: clip visible;
+  background: linear-gradient(180deg, #0d1b3e 0%, #0b1430 260px, #0c0d0f 640px);
+}
+
+.site-footer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 10%;
+  left: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 138, 76, 0), rgba(255, 138, 76, 0.85), rgba(255, 200, 120, 0.9), rgba(255, 138, 76, 0.85), rgba(255, 138, 76, 0));
+  box-shadow: 0 0 24px 2px rgba(255, 120, 60, 0.35);
+  pointer-events: none;
+}
+
+/* "What FrameX offers" as one running line, right to left, fading at both ends (owner, 2026-10-28).
+   The track holds the list twice and moves by half its width, so it loops without a jump. Paused while the
+   pointer is on it; still (and wrapped) for people who ask for less motion. */
+.site-footer__marquee {
+  max-width: 900px;
+  margin: 34px auto 0;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 16%, #000 84%, transparent);
+}
+
+.site-footer__track {
+  display: flex;
+  width: max-content;
+  animation: footer-marquee 26s linear infinite;
+}
+
+.site-footer__marquee:hover .site-footer__track {
+  animation-play-state: paused;
+}
+
+.site-footer__marquee .site-footer__badges {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 0 40px;
+  margin: 0;
+  padding-right: 40px;
+}
+
+.site-footer__marquee .site-footer__badges li {
+  white-space: nowrap;
+}
+
+@keyframes footer-marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-footer__marquee {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .site-footer__track {
+    width: auto;
+    justify-content: center;
+    animation: none;
+  }
+
+  .site-footer__marquee .site-footer__badges {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px 34px;
+    padding-right: 0;
+  }
+
+  .site-footer__marquee .site-footer__badges[aria-hidden="true"] {
+    display: none;
+  }
+}

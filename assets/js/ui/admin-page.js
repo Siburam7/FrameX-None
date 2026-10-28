@@ -662,7 +662,9 @@
       if (section === "orders") await (parts[1] ? FrameX.adminOrders.detail(main, parts[1], { head }) : FrameX.adminOrders.list(main, params, { head }));
       if (section === "payouts") await (parts[1] ? FrameX.adminPayouts.detail(main, parts[1], parts[2], { head }) : FrameX.adminPayouts.list(main, { head }));
       // Every shop's frames: add / edit for any shop with the 4-step editor (ui/admin-frames.js)
-      if (section === "products") await (parts[1] === "new" ? FrameX.adminFrames.newFrame(main, { head }) : parts[1] && parts[2] ? FrameX.adminFrames.editor(main, decodeURIComponent(parts[1]), decodeURIComponent(parts[2])) : FrameX.adminFrames.list(main, params, { head }));
+      if (section === "products" && parts[1] === "new-artwork") await FrameX.adminFrames.newArtwork(main, { head });
+      else if (section === "products" && parts[1] === "artist") await FrameX.adminFrames.artworkEditor(main, decodeURIComponent(parts[2]), decodeURIComponent(parts[3]));
+      else if (section === "products") await (parts[1] === "new" ? FrameX.adminFrames.newFrame(main, { head }) : parts[1] && parts[2] ? FrameX.adminFrames.editor(main, decodeURIComponent(parts[1]), decodeURIComponent(parts[2])) : FrameX.adminFrames.list(main, params, { head }));
       if (section === "activity") await activity(main);
       const art = FrameX.adminArt;
       if (section === "artists") await art.artists(main, params, { head });
