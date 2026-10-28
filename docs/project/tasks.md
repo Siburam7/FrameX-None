@@ -5,6 +5,15 @@
 
 ## Now
 
+- [x] 2026-10-28 **DEPLOYED** main 010875c (owner: "abhi ssabhi push karke live kar dooo"; no migration, so no backup
+      needed): easy "Add artwork" + admin Artworks tab, Before / After (no View on My Wall for artworks), Art & Artists
+      opens on the artworks, footer bottom line, the new footer (running strip, navy + warm line). Before the push:
+      backend 486 / 0, browser frame 55, shop 50, artwork 36, art 74 (Cashfree stand-in), Studio 37, decor 26 — all
+      passed. npm test ran out of memory at 6 files at once with 4.3 GB free (V8 "Fatal process out of memory: Zone"):
+      passed at 3 at once. Also in the commit: the owner's VS Code reformatting of index.html / login.html (line
+      wrapping only; their inline-script CSP hashes still match). Live check (read-only, laptop + phone): Home, Art, Shop,
+      artwork, login open with no script / CSP errors, navy footer + running strip on every page, Art & Artists opens on
+      Artworks (live has no artworks yet), no sideways scroll. Not yet: a real artwork added live (also proves the backend).
 - [x] 2026-10-28 **Footer: the "what FrameX offers" row runs** (owner, straight to code): one line moving right to left,
       both ends fading (mask), loops without a jump (the list twice; the copy aria-hidden), pauses under the pointer; for
       "less motion" it stands still and wraps. Phones: shown too since 2026-10-28 (owner: "mobile scrren par bhi"; smaller, checked at 390 and 320 px). chrome.js + footer-faq.css +

@@ -24,6 +24,7 @@
 
 ## Owner decisions (log)
 
+- 2026-10-28 Deployed everything of 2026-10-27/28 (main 010875c), no migration so no backup.
 - 2026-10-28 New footer from the owner's reference picture (near-black, centred line, faint FRAMEX word, 4 short
   columns; no feature badges on phones). The page-to-footer join: a grey fade was rejected; chosen "E" = deep navy
   turning black with a thin orange light line on top.
