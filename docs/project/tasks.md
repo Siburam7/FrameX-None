@@ -8,7 +8,7 @@
 - [x] 2026-10-28 **Header stops at the footer** (owner: navbar must not stay stuck over the footer, "direct code"): when
       the footer reaches the header, the footer pushes the header up and out of view (ui/nav.js, CSS translate, all
       pages, laptop + phone); scrolling back up brings it back; opening the phone menu brings it back too. Checked on
-      :4100, Home + Art, laptop + phone, no errors. Local, NOT pushed yet.
+      :4100, Home + Art, laptop + phone, no errors. **DEPLOYED 2026-10-29** main 7958b8a (owner: "abhi sabhi live karoo"; no migration): before the push browser frame 55, shop 50, artwork 36, art 74, Studio 37, decor 26 and backend 486 / 0 all passed; live check laptop + phone, Home + Art: header gone at the bottom, back at the top, no errors.
 - [x] 2026-10-28 **DEPLOYED** main 010875c (owner: "abhi ssabhi push karke live kar dooo"; no migration, so no backup
       needed): easy "Add artwork" + admin Artworks tab, Before / After (no View on My Wall for artworks), Art & Artists
       opens on the artworks, footer bottom line, the new footer (running strip, navy + warm line). Before the push:
