@@ -62,6 +62,8 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
   a thin orange light line on its top edge (option E); a centred heading + line, grey
   feature badges (laptop only), a large faint FRAMEX word, brand + Shop / Create / Company / Help, copyright left and
   Terms / Privacy / Cookie settings right. Built in ui/chrome.js footer() + footer-faq.css (phones: mobile.css).
+- The header stays at the top while scrolling, but the footer pushes it up and away (it never sits over the footer;
+  owner, 2026-10-28).
 - Header logo 150px wide on desktop. "Gallery" is in the footer, not the top menu. The orange header button follows
   the section (Shop Frames / Explore Art / Shop Decor / All Templates).
 - Phone breakpoints: `mobile.css` blocks at max-width 639px, 374px and 359px. Target widths 320-430px.

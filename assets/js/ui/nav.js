@@ -13,6 +13,15 @@
     let ticking = false;
     const update = () => {
       header.classList.toggle("is-scrolled", window.scrollY > 24);
+      // The footer pushes the header up and out of view instead of sliding under it (owner, 2026-10-28).
+      // `translate`, not `transform`, so the header's entry animation is left alone; never while the menu is open,
+      // as a moved header would carry the fixed menu panel with it.
+      const footer = $(".site-footer");
+      const h = header.offsetHeight;
+      const push = footer && !header.classList.contains("is-menu-open")
+        ? Math.min(Math.max(h - footer.getBoundingClientRect().top, 0), h + 32)
+        : 0;
+      header.style.translate = push ? `0 ${-push}px` : "";
       ticking = false;
     };
     window.addEventListener(
@@ -25,6 +34,7 @@
       },
       { passive: true },
     );
+    window.addEventListener("resize", update);
     update();
 
     // Mobile menu -----------------------------------------------------------------
@@ -34,6 +44,7 @@
       toggle.setAttribute("aria-expanded", String(open));
       toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
       document.body.classList.toggle("is-locked", open);
+      update();
     };
 
     toggle.addEventListener("click", () =>
