@@ -37,6 +37,7 @@
 
 ## Owner decisions (log)
 
+- 2026-11-01 Deployed everything of 2026-10-29 to 11-01 (main 65f41c4) after a Neon backup; costs.md kept out of the public repo.
 - 2026-10-31 Cart reminder emails: ONE reminder 24 h after a cart is left, WITH a coupon (XUSE10 by default), only
   9 am to 9 pm; free with Brevo (300 a day shared with login codes and order emails, so at most 100 reminders a
   day). WhatsApp reminders need the WhatsApp Business API (paid per message) — not built. A "payment left" reminder

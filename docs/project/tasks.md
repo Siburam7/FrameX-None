@@ -5,6 +5,15 @@
 
 ## Now
 
+- [x] 2026-11-01 **DEPLOYED** main 65f41c4 (owner: "backup done abhi push karke live kardoo"; backup taken on Neon by the
+      owner; migrations 024 login_codes + 025 cart reminders ran on Render at start): login box, cart reminder emails,
+      admin Overview + Analytics, Shop by category tiles, ticker fade, real hero frames, footer without the personal
+      number, whole-site-test fixes, npm security updates. Before: backend 504 / 0, browser suites all passed (login 45,
+      cart 47, frame 55, shop 50, account 13, artwork 36, Studio 37, decor 26, payout 38, coupon 20, Care 53, art 74,
+      analytics 45 + 54). Live check (read-only, laptop + phone): API health ok, new routes answer (401 / 422, not 404),
+      hero frames use the mouldings, the header opens the login box with Google, login.html -> home with the box, no
+      script errors. NOT in this push: docs/project/costs.md and its CLAUDE.md line (margins; the repo is public — owner
+      to decide). Still to try live: a real login code email, a real cart reminder ("Send reminder"), admin pages.
 - [x] 2026-11-01 Home hero: the hanging frames look like real frames (owner: "full really 100% frame", swing kept): three
       moulding pictures made for it (assets/img/ui/frames/moulding-black|oak|gold.webp, 4-8 KB: mitred corners, rounded lit
       profile, oak grain) used as border-image on .page-hero__piece--framed, a mat with a bevelled window, a glass sheen;
