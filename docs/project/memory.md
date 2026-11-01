@@ -37,6 +37,22 @@
 
 ## Owner decisions (log)
 
+- 2026-11-01 The login SMS arrives as "Team Global Net" (sender CP-GLBLNT-S, APITxT's no-DLT route): owner keeps it for now and
+  will change it later (own DLT "FRAMEX" once Udyam / GST exists). No "SMS partner" note on the code screen for now.
+- 2026-11-01 Login OTP by SMS ("masagee par chahiye", not WhatsApp), through APITxT's no-DLT OTP (₹0.30, APITxT's sender, no
+  documents); FrameX's own DLT (sender FRAMEX) later, once Udyam / GST exists. A new mobile number's email is OPTIONAL
+  (owner chose "Email optional (skip kar sakein)" over "ask once" and "phone only"): users.email may be empty; such
+  customers get no emails. My choices: the mobile option shows only while SMS is set up; a shop / staff number gets no
+  SMS; at most 6 SMS sends an hour per network address.
+- 2026-11-01 WhatsApp: the messages the admin sent by hand become automatic ("jitna bhi abhi manual send karna padta hai
+  … automatic"), from a FrameX business number (a family member's old keypad-phone number without WhatsApp, owner's
+  choice) through Fast2SMS (no monthly fee, ₹0.25 a utility message). Templates approved by Meta in the Fast2SMS panel.
+  Login OTP on WhatsApp waits for Meta business verification (Udyam first). My choices (owner can change): the checkout
+  box is ticked by default (remembered when unticked) and appears only while WhatsApp is set up; WhatsApp for placed,
+  payment failed, shipped, out for delivery (WhatsApp only), delivered, cancelled and refunds, not for confirmed /
+  processing; "approved" only after the setup email really went, never with a link; each kind has an Admin switch.
+- 2026-11-01 No WhatsApp number anywhere on the site (it was the owner's personal number); customers are invited to
+  email only. Add a WhatsApp number again only if the owner gives a business number.
 - 2026-11-01 View on My Wall: one phone found no wall live. Owner chose Apple's AR Quick Look (ARKit) for iPhone / iPad
   (free, built into iOS; the 3D model made on the phone, nothing uploaded), a plain error where a phone can't do AR, and
   "open in Chrome / Safari" inside Instagram, WhatsApp, Facebook… Android Scene Viewer was offered but not chosen (it

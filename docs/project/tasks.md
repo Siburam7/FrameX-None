@@ -5,14 +5,111 @@
 
 ## Now
 
+- [x] 2026-11-01 **DEPLOYED** main ec65434 (owner: "push karke live karo"; Neon backup taken by the owner with
+      backup-to-pendrive / backup-live-db first; migration 026 runs on Render at start): phone + SMS login with the
+      "Phone number | Email" toggle, email optional for new numbers, automatic WhatsApp messages (code only: switched on
+      later with WHATSAPP_PROVIDER), WhatsApp number removed, reset page ?token=. Before: backend 529 / 0 (1 skipped,
+      concurrency 2: no out-of-memory), browser suites login 45 (SMS=none), phone login 20, cart 47 (re-run alone after a
+      15 s navigation timeout under load), frame 55, Studio 37, decor 26, shop 50, account 13, artwork 36, payout 38,
+      coupon 20, Care 53, art 74, View on My Wall iPhone 44 + products 49, WhatsApp 10, no-WhatsApp-number 46, reset
+      link 6, analytics 45 + 54 + off 7. Render env set before the push ("Save only"): SMS_API_KEY, WHATSAPP_API_KEY,
+      WHATSAPP_PHONE_NUMBER_ID. AFTER the deploy the owner sets SMS_PROVIDER=apitxt (then the toggle appears live);
+      WHATSAPP_PROVIDER=fast2sms only once Meta approves the 3 templates. NOT in this push: docs/project/costs.md and its
+      CLAUDE.md line.
+- [x] 2026-11-01 **Log in / sign up with a mobile number + SMS code BUILT** (owner: "otp masagee par chahiye", not
+      WhatsApp; SMS company APITxT, no DLT of our own; email for a new number OPTIONAL: owner chose "Email optional
+      (skip kar sakein)"). Local, NOT pushed; same migration 026 (now `026_whatsapp_phone_login.sql`).
+      - Login box (owner's layout 2026-11-01, changed the same evening): Google on top, then a TOGGLE "Phone number |
+        Email" (the existing .auth-tabs look, Phone chosen first), the chosen box ("Phone number": number keyboard, "We'll
+        send a 6-digit code by SMS." / "Email"), "Send me a code", "Log in using password" below. No toggle while SMS isn't
+        set up (email only, as before). "← Change number / email" comes back on the same side, filled in.
+        Same height on both sides (owner: the box must not change height): the Email box got the same one-line hint
+        "We'll send a 6-digit code by email."; the test measures the box (equal to the pixel, laptop + phone).
+        Tests: phone-login-e2e 20/20 (laptop + phone) + 1/1 SMS off; login-e2e must now run with SMS=none (45/45);
+        e2e-cart 47/47. Earlier the same day: one box "Email or phone number" (replaced by the toggle). Step 1: "Email or phone number" (only while the server can send SMS: GET /api/config
+        features.smsDelivery; otherwise "Email" as before). A number -> "We sent a 6-digit code by SMS to ******3210",
+        "← Change number" -> a new number: name + "Email (optional)" ("For order emails. Leave it empty to skip.");
+        an existing number: straight in. Emails work exactly as before.
+      - Backend: POST /api/auth/code/send|verify accept { phone } (Indian mobiles only) next to { email };
+        /code/signup takes an optional email for a phone ticket (an email that already has an account -> 409
+        EMAIL_TAKEN "log in with that email, then add this mobile number on your account page"). Codes, wait, hourly
+        cap and wrong-try limit are the email ones (login_codes.email holds +91…); a shop / staff number gets no SMS.
+        Per network address at most 6 SMS sends an hour (on top of the general limit).
+      - `users.email` may be empty now: `sendMail` skips an empty address (no_address); orders / painting requests store
+        ""; cart reminders skip such customers (admin "Send reminder" says so); password recovery offers SMS only;
+        account page "Email: Not added"; the order confirmation drops "a confirmation is on its way to…"; deleting the
+        account deletes its SMS codes. Privacy Notice §9: login by mobile + APITxT + no emails without an address.
+      - `lib/sms.js`: SMS_PROVIDER=apitxt -> POST https://apitxt.com/api/sendOTP (form: authkey, mobile 91…, otp;
+        optional template_id); FrameX makes and checks the code. Config SMS_API_BASE only for the tests' stand-in.
+      - Tests: backend phone-login.test.js 11/11 (with an APITxT stand-in); whole backend 448 + 81 re-run alone after
+        out-of-memory crashes of account / analytics / api (machine limit, not failures); browser phone-login-e2e 13/13
+        (laptop + phone) + 1/1 with SMS off; login-e2e 45/45 (email box unchanged).
+      - Still open: APITxT answers (minimum recharge, GST, sender shown), an APITxT account + key in backend/.env and
+        Render (SMS_PROVIDER=apitxt, SMS_API_KEY), one real SMS to the owner's number, then deploy (backup first).
+      - 2026-11-01 17:1x the owner's LOCAL backend (:4000): stopped, `.data` backed up to
+        `.data.backup-2026-11-01-before-whatsapp-phone-login`, migration 026 proven on a copy (all row counts the same, email
+        now optional), local `.env` SMS_PROVIDER=none -> dev (codes at http://localhost:4000/dev/mailbox), restarted: health
+        200, config sms "dev", email "real", WhatsApp checkbox on (real Fast2SMS key; templates still in review).
+      - 2026-11-01 17:4x the owner made the APITxT account (APITxT added ₹10 test credit after a call); key in local
+        backend/.env. FIRST REAL SMS: `npm run sms:test` (SMS_PROVIDER=apitxt) -> APITxT accepted (SMS-OTP-17FDC6D97BB871B7) and
+        the owner got the code on the phone. Local .env SMS_PROVIDER dev -> apitxt, backend restarted: config sms "real".
+        2026-11-01 18:1x the owner added on Render ("Save only", no restart): SMS_API_KEY (APITxT), WHATSAPP_API_KEY
+        (Fast2SMS), WHATSAPP_PHONE_NUMBER_ID. NOT yet: SMS_PROVIDER=apitxt (the live code doesn't know "apitxt": the server
+        would refuse to start) -> only right after the push; WHATSAPP_PROVIDER=fast2sms -> after the push AND Meta's template
+        approval. Still open: Neon backup + push.
+      - What customers get (owner's screenshot): sender CP-GLBLNT-S, text "Your OTP is 758682. DO NOT DISCLOSE THIS TO
+        ANYONE BY ANY MEANS. This is for login use by you only. Team Global Net" — APITxT's no-DLT route sends under
+        another company's ("Global Net") DLT template; FrameX's name is nowhere. Owner: keep it for now, change later.
+        Later: FrameX's own DLT (sender FRAMEX, own text) once Udyam / GST exists, or an APITxT template with the brand
+        (SMS_TEMPLATE_ID is supported); optional now: a line on the code screen naming the SMS partner (not wanted yet).
+- [x] 2026-11-01 **Automatic WhatsApp messages BUILT** (owner: what the admin sent by hand on WhatsApp should go by
+      itself; setup done by the owner in Fast2SMS today, see F-15 below). Local, NOT pushed; **migration 026** -> fresh
+      backup before deploying.
+      - `lib/whatsapp.js`: Fast2SMS Advanced API `POST /dev/whatsapp/v26.0/<phone_number_id>/messages` (Meta's shape:
+        template name + language "en", a body component with the values, a separate url-button component with the
+        button's {{1}}; Fast2SMS support confirmed 2026-11-01 that the button value must NOT go in variables_values and
+        that phone_number_id is required). Key in the Authorization header only; dev mailbox mode; Indian mobile numbers
+        only; values cleaned (no "|" / new lines).
+      - `services/whatsapp-service.js`: order updates (placed COD / paid, payment failed, shipped, out for delivery,
+        delivered, cancelled, refund started / done) from `order-service notify()` + OUT_FOR_DELIVERY in `adminAdvance`;
+        new-order alert to each shop / artist from `alertSellers()`; "approved" from shop / artist `deliverSetup()` only
+        when the setup email was delivered. One row per (kind, ref, phone) in `whatsapp_messages`: never twice; FAILED
+        keeps Fast2SMS's reason. Nothing stored or sent while WhatsApp isn't set up.
+      - Config: WHATSAPP_PROVIDER (fast2sms | dev | none), WHATSAPP_API_KEY, WHATSAPP_PHONE_NUMBER_ID (required),
+        template names (defaults framex_order_update / framex_seller_new_order / framex_account_approved),
+        WHATSAPP_TEMPLATE_LANGUAGE (en); production refuses "dev". Start-up banner line "WhatsApp:".
+      - Checkout: "Send order updates to my WhatsApp <phone>" above Place Order (ticked, remembered when unticked; only
+        when GET /api/config says `features.whatsappOrderUpdates`); `orders.whatsapp_updates`.
+      - Admin → Settings → "WhatsApp messages": service status, last 30 days sent / failed, latest 5 messages, 3 switches
+        (GET /api/admin/whatsapp). Privacy Notice §9 says what is sent and through whom. Deleting an account deletes the
+        WhatsApp rows of its orders. backend/README.md + .env.example: WhatsApp section.
+      - Tests: backend whatsapp.test.js 14/14 (a Fast2SMS stand-in reads every request); whole backend 492 + analytics 26
+        alone (the full run crashed once out of memory in analytics.test.js, a known machine limit); browser
+        whatsapp-e2e 10/10 (WHATSAPP_PROVIDER=dev) + 2/2 without WhatsApp (no checkbox, order as before).
+      - Still open: Meta approval of the 3 templates (in review), the key + Phone Number ID in backend/.env (owner)
+        and Render, one real test message to the owner's own number, then deploy (backup first: migration 026).
+      - 2026-11-01 16:3x the owner put the key in backend/.env (Phone Number ID added too). First real send of
+        framex_order_update to the owner's own number: Fast2SMS answered 404 "Template not found" (also with en_US): the key
+        and the phone_number_id are accepted, the template is still in Meta review. Try again once it is Approved.
+- [x] 2026-11-01 **WhatsApp number removed from the whole site** (owner: "WhatsApp number sabhi jagah se hata do"; it was
+      the owner's personal number). `assets/data/site.seed.js` contact.whatsapp = "" (so the Contact page line, the
+      "WhatsApp FrameX" button on the shop / artist application "done" screens and the order page's WhatsApp link are
+      gone; "Send photos" on an old order now opens the Contact page); the number and "or on WhatsApp at …" removed
+      from privacy-notice.html §10 and terms-of-use.html §14; "WhatsApp or by email" -> "by email" on index.html,
+      services.html, our-story.html, faq.seed.js and the contact form's error. Kept on purpose: FrameX's security lines
+      ("we never ask … by phone, WhatsApp or email"), "don't send photos by WhatsApp", the admin's WhatsApp buttons to
+      customers' / shops' own numbers. Check: 10 pages x laptop + phone, no wa.me link / number / "write on WhatsApp",
+      email shown, no script errors (46/46). Local, NOT pushed. The number is still in OLD git commits (public repo
+      history: 0c3e2d6, 3c51a7f, 5f1ca8a) and in local database files / backups (not touched).
+      Noticed, not changed: our-story.html still says online checkout "is still to come" (it is live).
 - [x] 2026-11-01 **DEPLOYED** main 3db81de (owner: "abhi push karke live karo"; no migration, so no backup needed): View
       on My Wall with iPhone AR Quick Look, "open in Safari / Chrome" in app browsers, plain no-AR error. Before: backend
       504 / 0 (1 skipped), browser suites login 45, cart 47, frame 55, Studio 37, decor 26, shop 50, account 13, artwork
       36, payout 38, coupon 20, Care 53, art 74, Live Demo iPhone 44, Live Demo products 49, analytics 45 + 54 — all
-      passed. analytics-off: 6 / 7 — the "We use cookies" banner now shows even when the server's analytics is off
-      (owner's own "Cookie" change of 2026-10-16, already live; analytics.js not touched here): decide whether the
-      banner should show when analytics is off, then fix the banner or the test. Still to try: one product on a real
-      iPhone (Safari): upright, facing out of the wall, real size.
+      passed. analytics-off was 6 / 7 only because the old test expected no banner when the server's analytics is
+      off; since the cookie banner of 2026-10-16 the banner shows on every page on purpose (written in analytics.js:
+      the choice is kept for when analytics is on). Test updated, 7 / 7. Still to try: one product on a real iPhone
+      (Safari): upright, facing out of the wall, real size.
 - [x] 2026-11-01 **View on My Wall on iPhone / iPad: Apple's AR Quick Look (ARKit)** (owner: "ek ek phone pe wall detect
       nahi kar raha… iPhone/iPad: Apple AR Quick Look… ye wala karo; if mobile support na kare error dikhao; Instagram ya
       WhatsApp support na kare to likho open in Chrome"). LIVE 2026-11-01 (main 3db81de), no migration, no design change
@@ -119,9 +216,8 @@
       DESIGN DONE 2026-10-31: 6 screens (login, code, password, sign-up, code, "Almost done" name) + before, laptop +
       phone, README in Hinglish; open question to the owner: an unknown email on the login page -> (A) straight to a new
       account or (B) a message. Waiting for "haan".
-- [ ] Waiting on the owner (2026-10-31): push the local work (Shop by category tiles, ticker fade, footer without the
-      WhatsApp number, the 3 fixes from the site test, security updates: npm packages + personal details out of code /
-      docs); WhatsApp number on Contact / Privacy / Terms / application / order pages (remove or business number);
+- [ ] Waiting on the owner (2026-10-31; the push itself was DONE 2026-11-01, main 65f41c4; WhatsApp number removed
+      everywhere 2026-11-01): WhatsApp number on Contact / Privacy / Terms / application / order pages (remove or business number);
       "Explore Wall Art" target; sample-item links at launch clean-up; after the push, one real email (nodemailer update).
 - [x] 2026-10-30 **Security check** (owner sent an Instagram reel on securing AI-built sites; only its caption could be
       read): no secrets in tracked files or in any of the 76 commits; .env ignored; Pages serves no backend/docs/.bat
@@ -201,7 +297,7 @@
       courier for shop products → then update costs.md §3 with them.
 - [x] 2026-10-29 Footer: the WhatsApp number is no longer shown (owner: it is their personal number); only the
       email stays (ui/chrome.js contactLinks). Local, NOT pushed yet.
-- [ ] Owner to decide: the same number is still on the Contact page, the shop / artist application "done" screens
+- [x] 2026-11-01 DONE (owner: "WhatsApp number sabhi jagah se hata do"), see Now. Was: the same number is still on the Contact page, the shop / artist application "done" screens
       (WhatsApp button), the order page ("send photos on WhatsApp"), and written into privacy-notice.html and
       terms-of-use.html. It comes from `contact.whatsapp` in assets/data/site.seed.js (the two legal pages have it
       typed in). Remove everywhere, or replace with a business number?
@@ -266,7 +362,7 @@
       size instead of the artist. Fixed on the way: "Load more" showed even when everything was shown (.section-more's
       display: flex beat [hidden]; #art-more[hidden] now hides it). Checks: browser artwork 36/36 (Art page 6 new), art
       74/74 (its directory checks now open ?view=artists).
-- [ ] 2026-10-27 **Artists: the same easy "Add artwork"** (owner: main photo → PNG for View on My Wall → sizes + prices →
+- [x] 2026-10-27 (LIVE 2026-10-28, main 010875c) **Artists: the same easy "Add artwork"** (owner: main photo → PNG for View on My Wall → sizes + prices →
       delivery time → submit; admin approves; admin can list for any artist; artworks inside admin All frames). DESIGN READY in
       DesktopFrameX-Add-Artwork-Design: My artworks, 4 steps (Photos, Sizes & price, Delivery, Check & submit), admin All
       frames with Frames | Artworks tabs and "For which artist?". Owner: "Done abhi Code par banao".
@@ -330,7 +426,7 @@
       PNG's transparent parts showed black. Cut-out pieces (ld-subject fromFrameArt) are now drawn see-through in WebGL
       (no box sides, premultiplied texture, discard where clear) with a shadow in the picture's own shape. Checked by reading
       WebGL pixels (inside / corner transparent, frame solid); frames test 25/25.
-- [ ] 2026-10-27 **Frames shown the right way** (owner corrected my first idea: do NOT put the customer photo into the styled
+- [x] 2026-10-27 (LIVE 2026-10-27, main 22575b6) **Frames shown the right way** (owner corrected my first idea: do NOT put the customer photo into the styled
       photo). Each frame = a MODEL photo (styled, to sell it) + a FRONT PNG (straight, background and opening transparent);
       the customer's photo goes inside the FRONT for the product preview, cart, order, shop / admin order and View on My Wall;
       drawn corner / back pictures stop. Owner: delete today's dummy frame products + images, list fewer frames properly.
@@ -584,6 +680,79 @@
       paid VMC/CMC certificate + trademark — not now). Owner test: add support@shopframex.in to a Gmail's contacts
 - [ ] F-15 SMS / WhatsApp OTP: owner put it aside 2026-10-20 (WhatsApp idea explained: ~₹0.12-0.35 a message,
       needs Meta business verification, a new number and a payment method; the grey SMS button stays for now)
+      2026-11-01 owner asked again (mobile OTP: cost + DLT days). Found: an OTP by SMS in India needs the business's
+      OWN DLT registration. Fast2SMS's own OTP page now says "SMS OTPs in India need DLT like all business SMS"; its
+      no-DLT "Quick SMS" route costs ₹5-7 a message and every message is approved by their staff, so it is useless for
+      OTP. The note in backend/src/lib/sms.js ("its OTP route sends without the business doing its own DLT
+      registration") is out of date. Path told to the owner: Udyam (free, online, PAN + Aadhaar) -> DLT Principal
+      Entity on one operator portal (about ₹5,900 incl. GST, 1-7 working days) -> header "FRAMEX" + one OTP template
+      (about 1-3 days each) -> an SMS provider's DLT route (about ₹0.15-0.25 + GST a message) -> keys on Render ->
+      build the phone-OTP login (today SMS is used only for password recovery). About 1-2 weeks in all. Owner to decide.
+      Then asked about WhatsApp OTP (2026-11-01): no DLT needed; Meta's India authentication rate ≈ ₹0.115 + 18% GST;
+      through Fast2SMS ₹0.25 a message, no setup / monthly / per-number fee, prepaid wallet from ₹100 (no card needed);
+      needs a separate number not in use on WhatsApp (new SIM or landline), a Meta business portfolio, display name
+      "FrameX" review, one authentication template (up to 24 h); can start before Meta business verification at a
+      starter limit (verification needs GST / registration certificate / utility bill in the business name). About
+      1-3 days to start. Not built: a WhatsApp sender in backend/src/lib/sms.js and a phone option in the login box.
+      Owner then saw "OTP SMS without DLT" on APITxT (apitxt.com). Such offers (also Message Central "Verify Now")
+      send through the PROVIDER's own DLT entity + approved OTP template: no ₹5,900 and no documents for FrameX, but the
+      sender shown is the provider's header (not FRAMEX), the text is their template with the brand name in it, and
+      FrameX depends on their registration. Not to be confused with "international / Quick SMS" no-DLT routes (₹5-7,
+      random sender, staff approval). APITxT's page could not be read in full; its API (seen in a public GitHub PR)
+      uses sender + PE ID + template ID. Questions for the provider before choosing: domestic DLT route or
+      international, sender shown, exact text, price per OTP, minimum recharge. 2Factor (already supported in
+      sms.js) worked the same way; its current offer is not re-checked.
+      APITxT public pricing page (read 2026-11-01): SMS pay as you go, no subscription — OTP Services ₹0.22 / credit,
+      OTP Platform ₹0.30 / credit, Transactional ₹0.18, Promotional ₹0.20; WhatsApp Authentication ₹0.15 / message but
+      WhatsApp needs a monthly plan (Developer ₹199 / month, Starter ₹999). NOT on the public page: minimum recharge,
+      GST, what one credit is, the difference between "OTP Services" and "OTP Platform", the sender shown — to ask them.
+      Compare: Fast2SMS WhatsApp OTP ₹0.25, no monthly fee (cheaper than APITxT below ~2,000 OTP a month).
+      Owner asked APITxT on WhatsApp (2026-11-01); their reply (a price list, looks automatic): OTP SMS without DLT
+      ₹0.30 / SMS, OTP SMS with DLT ₹0.20 / SMS (own DLT mandatory), text SMS ₹0.20. Still unanswered: minimum
+      recharge, GST, sender shown, exact text, Indian or international route.
+      Owner asked (2026-11-01) whether the WhatsApp messages the admin sends BY HAND today can be automatic with the
+      same Fast2SMS WhatsApp setup. Today by hand (admin's own WhatsApp, one press each): order status to customers
+      (admin-orders.js waText, #/orders/updates), new-order alert to the order's shops / artists (sellerText), a new
+      shop's login link (admin-page.js). Answer: yes, all three, from the FrameX business number, with Meta-approved
+      utility templates (about ₹0.25 each through Fast2SMS), a WhatsApp opt-in for customers at checkout, and an
+      Admin switch per message; marketing ones (cart reminder with coupon) cost about ₹0.95. Not built.
+      2026-11-01 owner set it up: Fast2SMS account (₹50 free balance; WhatsApp rates shown there: Auth / Utility ₹0.25,
+      Marketing ₹0.95, Session ₹0.13, no monthly or setup fee) -> "Login with Facebook" (Meta embedded signup): new
+      business portfolio "FrameX", WhatsApp Business account "FrameX", messaging account "FrameX - Fast2SMS". Number:
+      a family member's old keypad-phone number that has no WhatsApp (owner's choice; customers will see it and may
+      call it). Meta: "Fast2SMS will need to verify your business; you'll receive an email". Waiting for that email,
+      then: display name check, templates, the API key into Render (never in chat).
+      Number shows "Pending" in Fast2SMS (2026-11-01 14:41). Templates page works while pending (Fast2SMS added its own
+      sample "payment_completed"). Templates given to the owner to add (names the code will use): framex_login_code
+      (Authentication, copy-code button, 10 min), framex_order_update (Utility: name, order number, status; button
+      order.html?id=), framex_seller_new_order (Utility: seller, order, items, payment; button to the dashboard),
+      framex_account_password (Utility: name, shop / artist, FrameX ID, valid until; button
+      reset-password.html#token=). If Meta refuses the "#" in a button address, the reset page must also accept ?token=.
+      First try (framex_login_code, Copy code, 10 min): "Cannot create message template: This WhatsApp Business account
+      does not have permission to create message template" — the new WhatsApp account is still under review (number
+      Pending). Wait for the approval email / Fast2SMS support, then submit the 4 templates.
+      15:04 Fast2SMS support (chat): "Your WhatsApp number has been successfully connected… you can now proceed with
+      creating your message templates". Next: submit the 4 templates.
+      15:07 the same error again for framex_login_code. Cause (MSG91 help + Meta developer forum): Meta requires
+      BUSINESS VERIFICATION for Authentication (OTP) templates; Utility templates work without it. So: the 3 Utility
+      templates now; the WhatsApp login OTP only after Meta business verification (needs a document in the business
+      name, e.g. Udyam / GST / shop licence) — Udyam is the owner's simplest route (also helps Razorpay's name and
+      Facebook login). Until then login stays email code + Google.
+      15:23 framex_order_update + framex_seller_new_order submitted (Utility, Pending review). 15:28
+      framex_account_password REJECTED within minutes (likely: "password" wording, two variables side by side
+      "{{1}}, {{2}}", or the "#" in the button address). Replacement given: framex_account_setup (no "password" word,
+      no adjacent variables, button https://shopframex.in/reset-password.html?token={{1}}). The reset page now also
+      reads ?token= (assets/js/ui/auth-pages.js reset(); still removed from the address bar at once). Local, not pushed.
+      15:42 framex_account_setup REJECTED too, within minutes. Most likely Meta does not take a one-time account-setup
+      link in a Utility template (account access belongs to Authentication, which is OTP-only). Plan: no setup link on
+      WhatsApp at all — framex_account_approved says the shop / artist is approved, gives the FrameX ID and says the
+      setup link was emailed (the email is already automatic); a fixed button to shopframex.in. Owner to read Meta's
+      reason in business.facebook.com > WhatsApp Manager > Message templates first.
+      15:52 Meta showed no reason on the template page; rejected ones deleted. Now 3 Utility templates in review:
+      framex_order_update, framex_seller_new_order, framex_account_approved (no link / token, static button to
+      shopframex.in; the setup link stays email-only). Still to do: approval, business profile logo + description,
+      Fast2SMS's WhatsApp send API format ("Sample Code" on a template), the API key into backend/.env (owner) and
+      Render, then the code. WhatsApp login OTP waits for Meta business verification (Udyam).
 - [ ] Next candidates (owner chooses)
 
 ## Waiting for the end of development (one combined step, owner's approval needed)

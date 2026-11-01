@@ -16,7 +16,8 @@ FrameX API  framex-api.onrender.com  (Render web service, free plan, Node.js / E
    ├── File storage Backblaze B2 bucket (private, S3-compatible) — customer photos, product / review pictures
    ├── Payments     Razorpay (live keys) · Cashfree adapter (not configured live)
    ├── Email        Brevo, sender FrameX <support@shopframex.in> (see §9)
-   └── SMS          Fast2SMS (not configured)
+   ├── SMS          Fast2SMS (not configured)
+   └── WhatsApp     Fast2SMS WhatsApp Business API, FrameX business number (built 2026-11-01, local; key not on Render yet)
 ```
 
 Free plan: the API sleeps after ~15 idle minutes and needs ~50 s to wake. The pages show the catalogue without the
@@ -75,7 +76,7 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   are audited like an admin's.
 - `src/services/` — business logic (cart, checkout, orders, payments, payouts, uploads, analytics, settings…).
 - `src/db/` — `index.js` (PostgreSQL via `pg` when `DATABASE_URL` is set, else embedded PGlite in `backend/.data`),
-  `migrations/001…025` (applied automatically at start, never reset; 013 XUSE10 limits, 014 `users.deleted_at`, 015 `saved_designs`, 016 product approval on, 017 `shops.featured` / `featured_until`, 018 help chat `support_threads` + `support_messages`, one open conversation per customer, 019 CARE role + `users.care_available`, live columns on `support_threads`, SYSTEM messages and `author_name`, 020 HEIC / AVIF:
+  `migrations/001…026` (026 `orders.whatsapp_updates` + `whatsapp_messages`, local; applied automatically at start, never reset; 013 XUSE10 limits, 014 `users.deleted_at`, 015 `saved_designs`, 016 product approval on, 017 `shops.featured` / `featured_until`, 018 help chat `support_threads` + `support_messages`, one open conversation per customer, 019 CARE role + `users.care_available`, live columns on `support_threads`, SYSTEM messages and `author_name`, 020 HEIC / AVIF:
   `uploads.print_key` + `print_bytes` (the JPEG copy, stored as `<key>-print`), formats heic and avif; 021 `reviews.photo_view_key` (the medium copy of a review photo, `<key>-thumb`); 022 `users.google_sub` + `users.facebook_id` (social login); 023 `promotions` (home banners + promotion strips, Admin → Promotions) — 022-023 local, not deployed), `backup.js`, `ssl.js` (local, not deployed).
 - `src/payments/` — one payment system, gateway adapters `razorpay.js`, `cashfree.js`.
 - `src/lib/` — security (CORS, CSRF, cookies), storage (disk or bucket), sealed (AES-256-GCM for payout details),
