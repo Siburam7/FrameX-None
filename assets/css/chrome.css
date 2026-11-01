@@ -39,6 +39,16 @@
   border-color: var(--line);
 }
 
+/* At the very top of a page the header has no background (owner, 2026-11-01): the page shows through, with the thin
+   line under it kept (owner, same day). The frosted background comes back as soon as the visitor scrolls a little
+   (.is-scrolled, ui/nav.js: past 24 px) or opens the phone menu. (Stronger than .site-header--solid below.) */
+.site-header:not(.is-scrolled):not(.is-menu-open)::before {
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 @keyframes header-in {
   from {
     opacity: 0;
@@ -563,4 +573,304 @@
 
 :root[data-theme="dark"] .site-header .brand__logo--dark-bg {
   display: block;
+}
+
+/* Search that grows (owner's experiment, 2026-11-01; ui/nav.js) -----------------------------------------------
+   The round search button is a small search form. It grows into a search box while everything in the header but
+   the logo fades out: on a laptop on hover, to about 28% of the bar (--hs-w) from its own middle (--hs-x); on a
+   phone or tablet on a tap, across the room between the logo and the bar's edge. Its X makes it small again.
+   Its place in the bar stays 46px wide, so nothing else moves. Below 360px the search stays in the menu. */
+.hdr-search {
+  display: none;
+}
+
+@media (min-width: 360px) {
+  .hdr-search {
+    position: relative;
+    display: block;
+    flex: none;
+    width: 46px;
+    height: 46px;
+  }
+
+  .hdr-search .search-btn {
+    display: none;
+  }
+
+  .hdr-search__form {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    width: 46px;
+    height: 46px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    color: var(--on-surface);
+    transition:
+      width 450ms var(--ease-out),
+      left 450ms var(--ease-out),
+      background-color var(--dur-base) var(--ease-out),
+      box-shadow 450ms var(--ease-out);
+  }
+
+  .hdr-search__form:hover {
+    background: rgba(5, 8, 22, 0.06);
+  }
+
+  .hdr-search__go,
+  .hdr-search__close {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    color: inherit;
+  }
+
+  .hdr-search__go .icon,
+  .hdr-search__close .icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .hdr-search__close {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 150ms var(--ease-out);
+  }
+
+  .hdr-search__input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    font-size: var(--text-sm);
+    opacity: 0;
+    transition: opacity 150ms var(--ease-out);
+  }
+
+  /* (the box has its own X) */
+  .hdr-search__input::-webkit-search-cancel-button {
+    display: none;
+    -webkit-appearance: none;
+  }
+
+  .site-header.is-searching .hdr-search__form {
+    left: var(--hs-x, 0);
+    width: var(--hs-w, 46px);
+    background: var(--surface);
+    box-shadow: 0 8px 24px -12px rgba(5, 8, 22, 0.3);
+  }
+
+  .site-header.is-searching .hdr-search__form:focus-within {
+    border-color: var(--accent);
+  }
+
+  .site-header.is-searching .hdr-search__input,
+  .site-header.is-searching .hdr-search__close {
+    visibility: visible;
+    opacity: 1;
+    transition-delay: 180ms;
+  }
+
+  /* Everything but the logo and the search fades out, and back in when the search closes */
+  .site-header__actions > :not(.hdr-search) {
+    transition:
+      opacity 280ms var(--ease-out) 120ms,
+      visibility 0s;
+  }
+
+  .site-header.is-searching .site-header__actions > :not(.hdr-search) {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 200ms var(--ease-out),
+      visibility 0s 200ms;
+  }
+}
+
+/* Phones: the text a little bigger in the box (16px also stops iPhones zooming the page in) */
+@media (min-width: 360px) and (max-width: 1099px) {
+  .hdr-search__input {
+    font-size: 1rem;
+  }
+}
+
+/* Laptops: the menu fades with the buttons */
+@media (min-width: 1100px) {
+  .site-header .primary-nav {
+    transition:
+      opacity 280ms var(--ease-out) 120ms,
+      visibility 0s;
+  }
+
+  .site-header.is-searching .primary-nav {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity 200ms var(--ease-out),
+      visibility 0s 200ms;
+  }
+}
+
+@media (min-width: 360px) and (prefers-reduced-motion: reduce) {
+  .hdr-search__form,
+  .hdr-search__input,
+  .hdr-search__close,
+  .site-header__actions > :not(.hdr-search) {
+    transition: none;
+  }
+}
+
+@media (min-width: 1100px) and (prefers-reduced-motion: reduce) {
+  .site-header .primary-nav {
+    transition: none;
+  }
+}
+
+/* The results under the search box (owner, 2026-11-01; ui/nav.js): phones and tablets across the screen under the
+   header, laptops under the box itself (their right edges in line, --hr-x / --hr-w). Scrolls when long. */
+.hdr-results {
+  position: fixed;
+  top: calc(var(--header-h) + 6px);
+  right: 12px;
+  left: 12px;
+  z-index: 3;
+  max-height: calc(100dvh - var(--header-h) - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--on-surface);
+  box-shadow: 0 18px 48px -18px rgba(5, 8, 22, 0.35);
+  animation: hdr-results-in 180ms var(--ease-out);
+}
+
+.hdr-results[hidden],
+.site-header:not(.is-searching) .hdr-results {
+  display: none;
+}
+
+@keyframes hdr-results-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@media (min-width: 1100px) {
+  .hdr-results {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: auto;
+    left: var(--hr-x, 0);
+    width: var(--hr-w, 420px);
+    max-height: min(70vh, 560px);
+  }
+}
+
+.hdr-results__group + .hdr-results__group {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.hdr-results__label {
+  margin: 6px 8px 4px;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.hdr-results__label span {
+  font-weight: 600;
+}
+
+.hdr-results__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.hdr-results__row:hover,
+.hdr-results__row:focus-visible {
+  outline: 0;
+  background: var(--surface-soft);
+}
+
+.hdr-results__row img,
+.hdr-results__row > span[aria-hidden] {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--surface-soft);
+  font-weight: 700;
+}
+
+.hdr-results__row > span:last-child {
+  display: grid;
+  min-width: 0;
+}
+
+.hdr-results__row strong,
+.hdr-results__row small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hdr-results__row strong {
+  font-size: var(--text-sm);
+}
+
+.hdr-results__row small {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.hdr-results__note {
+  margin: 0;
+  padding: 14px 12px;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.hdr-results__all {
+  display: block;
+  margin-top: 6px;
+  padding: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--accent);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hdr-results {
+    animation: none;
+  }
 }

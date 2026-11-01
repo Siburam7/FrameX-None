@@ -23,6 +23,7 @@
         call("guide"),
         call("trendingTemplates"),
         call("homeArt"),
+        call("homePopular"),
       ]);
     },
     shop: async () => {

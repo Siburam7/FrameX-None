@@ -402,11 +402,19 @@
               <p class="section-lead">Framed quotes, landscapes, gaming and anime-style art, museum classics and
                 multi-panel sets.</p>
             </div>
-            <a class="btn btn--outline btn--sm" href="home-decor.html">Explore wall art <svg class="icon icon--nudge"
-                aria-hidden="true">
-                <use href="#i-arrow-right"></use>
-              </svg></a>
+            <div class="section-head__tools">
+              <div class="rail-arrows" data-rail-arrows="decor-popular-rail" role="group" aria-label="Scroll wall art" hidden>
+                <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon" aria-hidden="true"><use href="#i-chev-left"></use></svg></button>
+                <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon" aria-hidden="true"><use href="#i-chev-right"></use></svg></button>
+              </div>
+              <a class="btn btn--outline btn--sm" href="home-decor.html">Explore wall art <svg class="icon icon--nudge"
+                  aria-hidden="true">
+                  <use href="#i-arrow-right"></use>
+                </svg></a>
+            </div>
           </div>
+          <!-- The most popular wall art (ui/home-popular.js); hidden until it is filled -->
+          <div class="product-grid product-grid--rail product-grid--slide home-popular" id="decor-popular-rail" hidden></div>
           <div class="promo-band__wall">
             <a href="home-decor.html?c=multi-panel#browse"><img src="assets/img/decor/hd-mp-cherry-tree-3.webp"
                 alt="A cherry tree picture split across three frames above a sofa" width="800" height="1000"
@@ -434,11 +442,19 @@
               <h2 class="section-title" id="art-home-title">Art &amp; Artists</h2>
               <p class="section-lead">Discover original art. Meet artists. Find artwork made with passion.</p>
             </div>
-            <a class="btn btn--outline btn--sm" href="art.html">Explore Art &amp; Artists <svg class="icon icon--nudge"
-                aria-hidden="true">
-                <use href="#i-arrow-right"></use>
-              </svg></a>
+            <div class="section-head__tools">
+              <div class="rail-arrows" data-rail-arrows="art-popular-rail" role="group" aria-label="Scroll artworks" hidden>
+                <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon" aria-hidden="true"><use href="#i-chev-left"></use></svg></button>
+                <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon" aria-hidden="true"><use href="#i-chev-right"></use></svg></button>
+              </div>
+              <a class="btn btn--outline btn--sm" href="art.html">Explore Art &amp; Artists <svg class="icon icon--nudge"
+                  aria-hidden="true">
+                  <use href="#i-arrow-right"></use>
+                </svg></a>
+            </div>
           </div>
+          <!-- The most popular artworks (ui/home-popular.js); hidden when there are none -->
+          <div class="product-grid product-grid--rail product-grid--slide home-popular" id="art-popular-rail" hidden></div>
           <div class="promo-tiles promo-tiles--two" data-reveal>
             <a class="promo-tile promo-tile--lilac" href="art.html?view=artworks">
               <span class="promo-tile__body">
@@ -831,7 +847,11 @@
   <script src="assets/js/ui/template-components.js" defer></script>
   <script src="assets/js/ui/templates-page.js" defer></script>
   <script src="assets/js/ui/shops.js" defer></script>
+  <script src="assets/js/services/popular.js" defer></script>
   <script src="assets/js/ui/recommended.js" defer></script>
+  <script src="js/decor.js" defer></script>
+  <script src="assets/js/ui/decor-page.js" defer></script>
+  <script src="assets/js/ui/home-popular.js" defer></script>
   <script src="assets/js/ui/reviews.js" defer></script>
   <script src="assets/js/ui/community.js" defer></script>
   <script src="assets/js/ui/guide.js" defer></script>

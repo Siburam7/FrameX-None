@@ -113,7 +113,15 @@
         </nav>
         <div class="site-header__actions">${locationChip}
           <a class="btn signup-btn" href="${ctaHref}">${ctaLabel}</a>
-          <a class="search-btn" href="${pages.search}" aria-label="Search FrameX">${icon("search")}</a>
+          <div class="hdr-search" data-hdr-search>
+            <a class="search-btn" href="${pages.search}" aria-label="Search FrameX">${icon("search")}</a>
+            <form class="hdr-search__form" action="${pages.search}" method="get" role="search">
+              <button class="hdr-search__go" type="submit" aria-label="Search">${icon("search")}</button>
+              <input class="hdr-search__input" type="search" name="q" placeholder="Search frames, wall art, artists…" aria-label="Search FrameX" autocomplete="off" enterkeyhint="search">
+              <button class="hdr-search__close" type="button" aria-label="Close search">${icon("close")}</button>
+            </form>
+            <div class="hdr-results" role="region" aria-label="Search results" aria-live="polite" hidden></div>
+          </div>
           ${accountBtn()}
           <button class="cart-btn" type="button" data-action="open-cart" aria-label="Open cart, 0 items">${icon("bag")}<span class="cart-btn__count" hidden>0</span></button>
           <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav" aria-label="Open menu"><span class="nav-toggle__bars"></span></button>

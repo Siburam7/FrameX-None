@@ -27,7 +27,8 @@
       return product.sizeOptions;
     return (product.sizes || []).map((label, i) => ({
       id: String(i),
-      label,
+      // a size can come as a record ({ id, label, width, height, … }): its name, not "[object Object]"
+      label: label && typeof label === "object" ? String(label.label || "") : label,
       dimensions: null,
       priceDelta: 0,
     }));

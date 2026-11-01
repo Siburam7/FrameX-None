@@ -1040,6 +1040,56 @@ body[data-page="home"] main {
   }
 }
 
+/* "Highly recommended frames" (owner, 2026-11-01): two full lines at most (3, 4 or 5 a line); phones swipe all 10 */
+@media (min-width: 640px) and (max-width: 999px) {
+  #recommended-rail > :nth-child(n + 7) {
+    display: none;
+  }
+}
+
+@media (min-width: 1000px) and (max-width: 1799px) {
+  #recommended-rail > :nth-child(n + 9) {
+    display: none;
+  }
+}
+
+/* Home Decor and Art & Artists: their popular row (ui/home-popular.js, owner 2026-11-01) stays ONE line that moves
+   sideways, as on the product page; a shelf's other rails turn into a grid from 640px (above) */
+@media (min-width: 640px) {
+  .shelf .product-grid--slide {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 2 * var(--grid-gap) - 48px) / 3);
+    padding-bottom: 8px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .shelf .product-grid--slide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .shelf .product-grid--slide > * {
+    scroll-snap-align: start;
+  }
+}
+
+@media (min-width: 1000px) {
+  .shelf .product-grid--slide {
+    grid-auto-columns: calc((100% - 3 * var(--grid-gap) - 64px) / 4);
+  }
+}
+
+.home-popular {
+  margin-bottom: 20px;
+}
+
+.home-popular[hidden] {
+  display: none;
+}
+
 /* Categories as a mosaic: the first one large, the others as small tiles beside it */
 .shelf--cats .collection-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -166,5 +166,55 @@ export async function templatesById(ids, q = db) {
   return new Map(rows.map((r) => [r.id, template(r)]));
 }
 
+/**
+ * Popular products over the last `days` days (owner, 2026-11-01: 30): first the ones ordered most, then the ones
+ * viewed most, each list most first. Frames, wall art and artworks (an artwork's id is its product id) together: the
+ * home page's rows (frames, wall art, artworks) and the product page's suggestions each take their own kind, so they
+ * change with every order and every view.
+ * Only the ids leave the server: how many orders or views a product had stays private.
+ */
+export async function popularProducts({ days = 30, limit = 100 } = {}, q = db) {
+  const ordered = await mostOrdered({ days, limit }, q);
+  const seen = new Set(ordered);
+  return ordered.concat((await mostViewed({ days, limit }, q)).filter((id) => !seen.has(id)));
+}
+
+/** Ordered most: a product counts once per order. Test orders, unpaid ones and those cancelled, returned or refunded don't count. */
+async function mostOrdered({ days, limit }, q) {
+  const { rows } = await q.query(
+    `SELECT i.product_id AS id
+       FROM order_items i JOIN orders o ON o.id = i.order_id
+      WHERE i.product_id IS NOT NULL
+        AND o.created_at >= now() - make_interval(days => $1)
+        AND NOT coalesce(o.is_test, false)
+        AND o.status NOT IN ('PENDING_PAYMENT', 'CANCELLED', 'RETURNED')
+        AND o.payment_status NOT IN ('FAILED', 'CANCELLED', 'REFUNDED')
+      GROUP BY i.product_id
+      ORDER BY count(DISTINCT o.id) DESC, sum(i.quantity) DESC, max(o.created_at) DESC, i.product_id
+      LIMIT $2`,
+    [days, limit],
+  );
+  return rows.map((r) => r.id);
+}
+
+/**
+ * Viewed most: product and artwork pages opened, counted once per visitor (opening it again, or refreshing, adds
+ * nothing). Views are known only from visitors who allowed analytics on the website (analytics_events).
+ */
+async function mostViewed({ days, limit }, q) {
+  const { rows } = await q.query(
+    `SELECT item_id AS id
+       FROM analytics_events
+      WHERE ((name = 'view_item' AND item_type = 'product') OR (name = 'view_artwork' AND item_type = 'artwork'))
+        AND item_id IS NOT NULL AND visitor_id IS NOT NULL
+        AND occurred_at >= now() - make_interval(days => $1)
+      GROUP BY item_id
+      ORDER BY count(DISTINCT visitor_id) DESC, max(occurred_at) DESC, item_id
+      LIMIT $2`,
+    [days, limit],
+  );
+  return rows.map((r) => r.id);
+}
+
 export const getProduct = async (id, q = db) => (await productsById([id], q)).get(id) || null;
 export const getTemplate = async (id, q = db) => (await templatesById([id], q)).get(id) || null;

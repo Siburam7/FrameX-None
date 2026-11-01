@@ -2081,3 +2081,50 @@ body.pp-has-buybar .toast-region {
   inset: 0;
   display: block;
 }
+
+/* Suggestions under the product (owner, 2026-11-01; ui/suggestions.js) */
+.suggest + .suggest {
+  padding-top: 8px;
+}
+
+.suggest__sub {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+/* Under "More products for you": seen when the next cards are about to come */
+.suggest__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 20px 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.suggest__more[hidden] {
+  display: none;
+}
+
+.suggest__more i {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: suggest-spin 0.9s linear infinite;
+}
+
+@keyframes suggest-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .suggest__more i {
+    animation: none;
+  }
+}

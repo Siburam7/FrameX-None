@@ -1046,34 +1046,6 @@
       <a class="btn btn--dark" href="shop.html">Browse all frames</a></div>`;
   }
 
-  async function loadRelated(p) {
-    const box = $("#related-grid");
-    if (!box) return;
-    $("#related-section").hidden = false;
-    try {
-      const wallArt = Boolean(p.decor && FrameX.decorUI);
-      const { items } = await FrameX.api.getProducts({
-        category: wallArt ? "hd-" + p.decor.collection : p.category,
-        limit: wallArt ? 60 : 12,
-      });
-      const related = items
-        .filter((x) => x.id !== p.id && (!wallArt || !x.decor.customPhoto))
-        .sort((a, b) => (b.shopId === p.shopId) - (a.shopId === p.shopId))
-        .slice(0, 4);
-      if (wallArt) FrameX.decorUI.wire();
-      box.innerHTML = related.length
-        ? related.map(wallArt ? FrameX.decorUI.card : FrameX.templates.productCard).join("")
-        : `<div class="state-message"><strong>No related frames yet</strong><a class="btn btn--outline btn--sm" href="shop.html">Browse all frames</a></div>`;
-    } catch (error) {
-      console.error("Related products failed", error);
-      FrameX.templates.showError(
-        box,
-        "Related frames couldn't be loaded.",
-        () => loadRelated(p),
-      );
-    }
-  }
-
   async function init() {
     const root = $("#pdp-root");
     if (!root) return;
@@ -1145,11 +1117,6 @@
           ? a.setAttribute("aria-current", "page")
           : a.removeAttribute("aria-current"),
       );
-      const more = $("#related-section .section-head a");
-      if (more) {
-        more.href = ui.collectionUrl(product.decor.collection);
-        more.firstChild.textContent = `More ${ui.collectionName(product.decor.collection)} `;
-      }
     }
     if (previewId) {
       root.insertAdjacentHTML(
@@ -1165,7 +1132,8 @@
       const step = $("#your-photo", root);
       if (step) step.scrollIntoView({ block: "center" });
     }
-    if (!previewId) loadRelated(product);
+    // Similar products, You may also like, Recently viewed, More products for you (ui/suggestions.js)
+    if (!previewId && FrameX.suggestions) FrameX.suggestions.load(product);
   }
 
   FrameX.productPage = { init, render };

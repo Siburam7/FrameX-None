@@ -34,6 +34,7 @@ import { FULFILMENT_STATUSES } from "../services/order-service.js";
 import * as shopOrders from "../services/shop-order-service.js";
 import * as payouts from "../services/payout-service.js";
 import * as products from "../services/shop-product-service.js";
+import * as catalog from "../services/catalog-service.js";
 
 const router = Router();
 const who = (req) => ({ actor: req.auth.user, ip: req.ip });
@@ -101,6 +102,9 @@ router.post("/:shopCode/media/:id/thumb", requireOwnShop, rateLimit("media", { w
 
 export default router;
 
-/** GET /api/catalog/shop-products — public: what listed shops have on sale (the website adds it to its catalogue). */
+/** GET /api/catalog/shop-products — public: what listed shops have on sale (the website adds it to its catalogue).
+    GET /api/catalog/popular       — public: the ids of the products (frames, wall art, artworks) ordered most in the
+                                     last 30 days, then of those viewed most, most first (no counts). */
 export const catalogRoutes = Router();
 catalogRoutes.get("/shop-products", async (req, res) => res.json({ items: await products.publicShopProducts() }));
+catalogRoutes.get("/popular", async (req, res) => res.json({ days: 30, items: await catalog.popularProducts({ days: 30 }) }));

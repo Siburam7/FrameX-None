@@ -58,15 +58,62 @@
       </a>
     </div>
 
-    <section class="section section--tight-top" id="related-section" aria-labelledby="related-title" hidden>
+    <!-- Suggestions (ui/suggestions.js): three rows that move sideways, then a mixed list that grows as you scroll -->
+    <section class="section section--tight-top suggest" id="similar-section" aria-labelledby="similar-title" hidden>
       <div class="container">
         <div class="section-head">
-          <h2 class="section-title section-title--sm" id="related-title">You may also like</h2><a class="btn btn--outline btn--sm"
-            href="shop.html">All frames <svg class="icon icon--nudge" aria-hidden="true">
-              <use href="#i-arrow-right"></use>
-            </svg></a>
+          <div>
+            <h2 class="section-title section-title--sm" id="similar-title">Similar products</h2>
+            <p class="suggest__sub" id="similar-sub"></p>
+          </div>
+          <div class="section-head__tools">
+            <div class="rail-arrows" data-rail-arrows="similar-rail" role="group" aria-label="Scroll similar products" hidden>
+              <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon" aria-hidden="true"><use href="#i-chev-left"></use></svg></button>
+              <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon" aria-hidden="true"><use href="#i-chev-right"></use></svg></button>
+            </div>
+          </div>
         </div>
-        <div class="product-grid product-grid--related" id="related-grid" data-skeleton="product"></div>
+        <div class="product-grid product-grid--rail product-grid--slide" id="similar-rail" data-skeleton="product"></div>
+      </div>
+    </section>
+
+    <section class="section section--tight-top suggest" id="like-section" aria-labelledby="like-title" hidden>
+      <div class="container">
+        <div class="section-head">
+          <h2 class="section-title section-title--sm" id="like-title">You may also like</h2>
+          <div class="section-head__tools">
+            <div class="rail-arrows" data-rail-arrows="like-rail" role="group" aria-label="Scroll suggestions" hidden>
+              <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon" aria-hidden="true"><use href="#i-chev-left"></use></svg></button>
+              <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon" aria-hidden="true"><use href="#i-chev-right"></use></svg></button>
+            </div>
+          </div>
+        </div>
+        <div class="product-grid product-grid--rail product-grid--slide" id="like-rail"></div>
+      </div>
+    </section>
+
+    <section class="section section--tight-top suggest" id="recent-section" aria-labelledby="recent-title" hidden>
+      <div class="container">
+        <div class="section-head">
+          <h2 class="section-title section-title--sm" id="recent-title">Recently viewed</h2>
+          <div class="section-head__tools">
+            <div class="rail-arrows" data-rail-arrows="recent-rail" role="group" aria-label="Scroll recently viewed" hidden>
+              <button class="showcase__arrow" type="button" data-rail-prev aria-label="Previous"><svg class="icon" aria-hidden="true"><use href="#i-chev-left"></use></svg></button>
+              <button class="showcase__arrow" type="button" data-rail-next aria-label="Next"><svg class="icon" aria-hidden="true"><use href="#i-chev-right"></use></svg></button>
+            </div>
+          </div>
+        </div>
+        <div class="product-grid product-grid--rail product-grid--slide" id="recent-rail"></div>
+      </div>
+    </section>
+
+    <section class="section section--tight-top suggest" id="more-section" aria-labelledby="more-title" hidden>
+      <div class="container">
+        <div class="section-head">
+          <h2 class="section-title section-title--sm" id="more-title">More products for you</h2>
+        </div>
+        <div class="product-grid" id="more-grid"></div>
+        <p class="suggest__more" id="more-sentinel"><i aria-hidden="true"></i> More frames appear as you scroll</p>
       </div>
     </section>
   </main>
@@ -119,6 +166,9 @@
   <script src="assets/js/ui/product-sections.js" defer></script>
   <script src="assets/js/ui/product-page.js" defer></script>
   <script src="assets/js/ui/decor-page.js" defer></script>
+  <script src="assets/js/ui/rail-nav.js" defer></script>
+  <script src="assets/js/services/popular.js" defer></script>
+  <script src="assets/js/ui/suggestions.js" defer></script>
   <script src="assets/js/services/analytics.js" defer></script>
   <script src="assets/js/ui/help-chat.js" defer></script>
   <script src="assets/js/ui/promotions.js" defer></script>

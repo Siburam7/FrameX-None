@@ -436,7 +436,9 @@
     /** How many visible products each shop has: { shopId: count }. */
     countByShop() {
       const counts = {};
-      visibleProducts().forEach(
+      // "N frames" on a shop card: wall art is not counted, so the number is the same on every page
+      // (pages that load the wall-art catalogue, js/decor.js, and pages that don't)
+      visibleProducts().filter((p) => !p.decor).forEach(
         (p) => (counts[p.shopId] = (counts[p.shopId] || 0) + 1),
       );
       return counts;

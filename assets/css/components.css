@@ -856,6 +856,29 @@ textarea.input {
   }
 }
 
+/* A row that moves sideways on a laptop too (the product page's suggestions): four cards and a slice of the
+   fifth, so it is clear there is more; the arrows and the touchpad move it. Smaller screens: as the rail above. */
+@media (min-width: 1000px) {
+  .product-grid--slide {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 3 * var(--grid-gap) - 64px) / 4);
+    padding-bottom: 8px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .product-grid--slide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .product-grid--slide > * {
+    scroll-snap-align: start;
+  }
+}
+
 /* Four related products: two by two until there is room for a row of four */
 @media (max-width: 999px) {
   .product-grid--related {
