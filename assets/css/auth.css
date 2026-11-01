@@ -966,3 +966,164 @@ code {
 .soc[hidden] {
   display: none;
 }
+
+/* ---------------------------------------------------------------- Simple login / sign-up (owner, 2026-10-31)
+   The login pages are at least one screen tall on every device, so the footer never rises into view under a short
+   card. The code step has six boxes; the "using password" links sit under the email box. */
+body[data-page="login"] .auth-section,
+body[data-page="signup"] .auth-section,
+body[data-page="forgot-password"] .auth-section,
+body[data-page="reset-password"] .auth-section {
+  min-height: 100vh;
+}
+
+.auth-link--strong {
+  font-size: var(--text-sm);
+}
+
+.auth-card__sep {
+  height: 1px;
+  margin: 2px 0;
+  background: var(--line);
+}
+
+.auth-card__center {
+  text-align: center;
+}
+
+.auth-back {
+  justify-self: start;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-mail {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--surface-soft);
+  color: var(--on-surface);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.auth-mail svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+
+.otp-boxes {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.otp-boxes legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--on-surface);
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.otp-boxes__row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.otp-boxes__digit {
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 1 / 1.15;
+  padding: 0;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--on-surface);
+  font: 700 1.5rem/1 var(--font-body, sans-serif);
+  text-align: center;
+}
+
+.otp-boxes__digit:focus {
+  border-color: var(--amber-strong);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 106, 53, 0.18);
+}
+
+/* The login box (owner, 2026-10-31): three step bars (email, code, name) above the heading, clear of the close
+   button; the name filled in from the email carries a small green "from email" tag until it is changed. */
+.auth-steps {
+  display: flex;
+  gap: 6px;
+  margin: 4px 52px 0 0;
+}
+
+.auth-steps i {
+  flex: 1;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--line);
+}
+
+.auth-steps i.is-on {
+  background: var(--amber-strong);
+}
+
+.auth-filled label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.auth-filled__tag {
+  display: none;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: #e9f7ee;
+  color: #1f7a3f;
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.auth-filled.is-guess .auth-filled__tag {
+  display: inline-block;
+}
+
+/* Account page: an on / off choice with a line of explanation (cart reminder emails, owner 2026-10-31) */
+.acc-switch {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.acc-switch input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 2px 0 0;
+  accent-color: var(--amber-strong);
+}
+
+.acc-switch span {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.acc-switch strong {
+  display: block;
+  color: var(--on-surface);
+}

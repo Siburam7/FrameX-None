@@ -19,6 +19,7 @@ import { checkKnownFiles, describeLost } from "./services/storage-check.js";
 import { loadSettings } from "./services/settings-service.js";
 import { sweepUnusedMedia } from "./services/shop-product-service.js";
 import { sweepFinishedOrderPhotos, sweepUnusedUploads } from "./services/upload-service.js";
+import { runDue as remindCarts } from "./services/cart-reminder-service.js";
 
 async function main() {
   assertConfig();
@@ -68,6 +69,12 @@ async function main() {
   const closePaintings = () => expireUnpaidAdvances().catch((error) => console.error("[paintings] closing unpaid requests failed:", error.message));
   setInterval(unlessQuiet("unpaid paintings", closePaintings), 60 * 60 * 1000).unref();
   closePaintings();
+  // Cart reminder emails (one per left cart, 9 am to 9 pm India time, a daily limit): checked every 10 minutes.
+  const reminders = () =>
+    remindCarts()
+      .then((r) => r.sent && console.log(`[reminders] ${r.sent} cart reminder email(s) sent`))
+      .catch((error) => console.error("[reminders] cart reminders failed:", error.message));
+  setInterval(unlessQuiet("cart reminders", reminders), 10 * 60 * 1000).unref();
 
   const admins = (await db.query("SELECT count(*)::int AS n FROM users WHERE role = 'ADMIN'")).rows[0].n;
   // Whether the payout key works (it seals and opens a test value, and opens every saved account); never the key itself.

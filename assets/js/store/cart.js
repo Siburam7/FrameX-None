@@ -172,12 +172,14 @@
   }
 
   /** Ask for a login (keeping the chosen item), then add it. */
+  let loggingIn = false; // the login box was opened for an item: that item is added here, not by resumePending()
   async function throughLogin(action) {
     savePending(action);
+    loggingIn = true;
     const loggedIn = await FrameX.authGate.require({
       reason: "add",
       itemName: action.label,
-    });
+    }).finally(() => (loggingIn = false));
     clearPending();
     if (!loggedIn) return { ok: false, cancelled: true };
     return post(action);
@@ -321,8 +323,10 @@
       const next = event.detail.user ? event.detail.user.id : null;
       if (next === userId) return; // same person (e.g. a profile update)
       userId = next;
-      if (userId) refresh();
-      else reset();
+      if (userId) {
+        refresh();
+        resumePending(); // logged in with the login box after a detour (e.g. "Forgot password?")
+      } else reset();
     });
 
     // Coming back to this tab: pick up changes made on another device or tab.
@@ -330,22 +334,24 @@
       if (!document.hidden && userId && Date.now() - loadedAt > 30000) refresh();
     });
 
-    // Back from the full login page with an item still waiting: add it now.
-    FrameX.auth.ready.then(async (state) => {
-      if (!state.authenticated || !hasPending()) return;
-      const action = takePending();
-      if (!action) return;
-      let result;
-      try {
-        result = await post(action);
-      } catch (error) {
-        result = { ok: false, message: error.message };
-      }
-      announce(
-        result,
-        `${action.label || "Your item"} added to your cart.`,
-      );
-    });
+    // Logged in with an item still waiting from before a detour: add it now.
+    FrameX.auth.ready.then((state) => state.authenticated && resumePending());
+  }
+
+  async function resumePending() {
+    if (loggingIn || !hasPending()) return;
+    const action = takePending();
+    if (!action) return;
+    let result;
+    try {
+      result = await post(action);
+    } catch (error) {
+      result = { ok: false, message: error.message };
+    }
+    announce(
+      result,
+      `${action.label || "Your item"} added to your cart.`,
+    );
   }
 
   FrameX.cart = {

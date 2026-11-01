@@ -66,6 +66,12 @@
   // "Continue with Google / Facebook": { credential } or { accessToken }, checked by the backend with Google / Facebook
   const socialLogin = (provider, proof) => http.post("/auth/" + provider, proof).then(startSession);
 
+  // Log in / sign up with a code by email (owner, 2026-10-31). A correct code logs an existing customer in (-> the user);
+  // a new address answers { newAccount, signupToken, masked } and becomes an account with codeSignup().
+  const sendLoginCode = (email) => http.post("/auth/code/send", { email });
+  const verifyLoginCode = (email, code) => http.post("/auth/code/verify", { email, code }).then((r) => (r.newAccount ? r : startSession(r)));
+  const codeSignup = (signupToken, name, phone) => http.post("/auth/code/signup", { signupToken, name, phone }).then(startSession);
+
   async function logout() {
     try {
       await http.post("/auth/logout");
@@ -114,7 +120,12 @@
   async function guard(roles, { accountType = "customer", onForbidden = null } = {}) {
     await init();
     if (!state.authenticated) {
-      window.location.replace(loginUrl(accountType));
+      // The login box over this page (owner, 2026-10-31): logged in -> the page opens again; closed -> the home page
+      if (FrameX.authGate) {
+        const ok = await FrameX.authGate.require({ reason: "page", view: accountType === "shop" ? "shop" : "login" });
+        if (ok) window.location.reload();
+        else window.location.href = "index.html";
+      } else window.location.replace(loginUrl(accountType));
       return null;
     }
     if (!roles.includes(state.role)) {
@@ -134,6 +145,9 @@
     login,
     signup,
     socialLogin,
+    sendLoginCode,
+    verifyLoginCode,
+    codeSignup,
     logout,
     refresh,
     guard,
@@ -152,5 +166,7 @@
     changePassword: (currentPassword, newPassword, confirmPassword) =>
       http.post("/auth/change-password", { currentPassword, newPassword, confirmPassword }),
     updateProfile: (data) => http.patch("/users/me", data).then((r) => (set(r.user), r.user)),
+    // Cart reminder emails on / off for this account (owner, 2026-10-31)
+    setCartReminders: (on) => http.put("/users/me/cart-reminders", { on }).then((r) => (set(r.user), r.user)),
   };
 })((window.FrameX = window.FrameX || {}));

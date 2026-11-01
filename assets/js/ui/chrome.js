@@ -135,7 +135,8 @@
     },
   };
 
-  /** Email / WhatsApp from assets/data/site.seed.js, shown in the footer brand block when set. */
+  /** The email from assets/data/site.seed.js, shown in the footer brand block when set. The WhatsApp number is
+      not shown in the footer: it is the owner's personal number (owner, 2026-10-29). */
   function contactLinks() {
     const c =
       (FrameX.seed && FrameX.seed.site && FrameX.seed.site.contact) || {};
@@ -143,10 +144,6 @@
     if (c.email)
       links.push(
         `<li><a href="mailto:${esc(c.email)}">${icon("mail")}<span>${esc(c.email)}</span></a></li>`,
-      );
-    if (c.whatsapp)
-      links.push(
-        `<li><a href="${esc(FrameX.contact.whatsappUrl(c.whatsapp))}" target="_blank" rel="noopener noreferrer">${icon("phone")}<span>WhatsApp ${esc(FrameX.contact.formatWhatsapp(c.whatsapp))}</span></a></li>`,
       );
     return links.length
       ? `<ul class="site-footer__contact">${links.join("")}</ul>`

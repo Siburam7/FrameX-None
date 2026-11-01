@@ -2208,3 +2208,288 @@ p.iu-errors {
 .aa-slot .af-row { justify-content: center; margin-top: 10px; }
 .aa-compare { max-width: 620px; --ba-max: 440px; }
 .af-three .ba { --ba-max: 260px; }
+
+/* ---------------------------------------------------------------- Admin Overview (owner, 2026-10-31)
+   Today's four figures, "Needs your attention", the last 7 days as bars (hover / focus shows the day), the latest
+   orders, carts left without ordering, low stock. One colour (the site's orange) for the single series. */
+.ov-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ov-kpi {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.ov-kpi b {
+  color: var(--on-surface);
+  font-size: 1.7rem;
+  line-height: 1.1;
+}
+
+.ov-kpi span {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.ov-kpi small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+  color: var(--on-surface);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.ov-up::before,
+.ov-down::before {
+  font-size: 0.68rem;
+}
+
+.ov-up::before {
+  content: "▲";
+  color: #1f9d55;
+}
+
+.ov-down::before {
+  content: "▼";
+  color: #d64545;
+}
+
+.ov-live::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #1f9d55;
+  box-shadow: 0 0 0 4px rgba(31, 157, 85, 0.15);
+}
+
+.ov-note {
+  margin: 8px 0 18px;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.ov-two {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.ov-card {
+  min-width: 0;
+  margin-bottom: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.ov-two .ov-card {
+  margin-bottom: 0;
+}
+
+.ov-card__title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 12px;
+  color: var(--on-surface);
+  font-size: 1.05rem;
+}
+
+.ov-card__title a {
+  color: var(--text-brown);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ov-todo {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ov-todo li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.ov-todo__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--accent);
+}
+
+.ov-todo__icon .icon {
+  width: 17px;
+  height: 17px;
+}
+
+.ov-todo b {
+  min-width: 28px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: rgba(255, 106, 53, 0.14);
+  color: var(--amber-strong);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.ov-todo__label {
+  flex: 1;
+  min-width: 0;
+  color: var(--on-surface);
+  font-size: 0.9rem;
+}
+
+.ov-todo a {
+  color: var(--text-brown);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ov-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 150px;
+  padding-top: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.ov-bars__col {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  height: 100%;
+  outline: none;
+}
+
+.ov-bars__col i {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: var(--amber-strong);
+}
+
+.ov-bars__col em {
+  position: absolute;
+  bottom: calc(100% - 4px);
+  left: 50%;
+  z-index: 1;
+  display: none;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: var(--on-surface);
+  color: var(--surface);
+  font-size: 0.72rem;
+  font-style: normal;
+  font-weight: 600;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.ov-bars__col:hover em,
+.ov-bars__col:focus-visible em {
+  display: block;
+}
+
+.ov-bars__col:hover i,
+.ov-bars__col:focus-visible i {
+  box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px rgba(255, 106, 53, 0.4);
+}
+
+.ov-days {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.ov-days span {
+  flex: 1;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  text-align: center;
+}
+
+.ov-total {
+  margin: 10px 0 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+
+.ov-total--top {
+  margin: 0 0 10px;
+}
+
+.ov-total b {
+  color: var(--on-surface);
+}
+
+.ov-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.ov-table th {
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.ov-table td {
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--line);
+  color: var(--on-surface);
+  vertical-align: middle;
+}
+
+.ov-table td small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+
+.ov-table a {
+  color: var(--on-surface);
+}
+
+@media (max-width: 999px) {
+  .ov-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ov-two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -64,7 +64,7 @@
             </a>`,
             )
             .join("")
-        : `<div class="state-message"><strong>You haven't asked for a custom painting yet</strong><span>Find an artist, choose a size and type, and send your reference photo. You pay nothing until the artist accepts.</span><a class="btn btn--primary btn--sm" href="art.html">Meet the artists</a></div>`;
+        : `<div class="state-message"><strong>You haven't asked for a custom painting yet</strong><span>Find an artist, choose a size and type, and send your reference photo. You pay nothing until the artist accepts.</span><a class="btn btn--primary btn--sm" href="art.html?view=artists">Meet the artists</a></div>`;
     } catch (error) {
       FrameX.templates.showError(root, "Your requests couldn't be loaded.", list);
     }

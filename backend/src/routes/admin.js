@@ -25,6 +25,7 @@ import * as care from "../services/care-service.js";
 import * as edits from "../services/order-edit-service.js";
 import { INDIAN_STATES, readAddress } from "../services/address-service.js";
 import * as promotions from "../services/promotion-service.js";
+import * as reminders from "../services/cart-reminder-service.js";
 
 const router = Router();
 /* ---- Orders: admins and FrameX Care (owner, 2026-10-24: a care person changes an order when the customer asks in
@@ -129,6 +130,15 @@ router.get("/overview", async (req, res) => {
     support.adminUnread()
   ]);
   res.json({ ...base, orders: orderCounts, artists: { total: artistCount.length, active: artistCount.filter((a) => a.status === "ACTIVE").length, applicationsPending: artistApps.length }, artworks: artworkCounts, paintings: paintingCounts, messages: { unread: unreadMessages }, chats: { unread: unreadChats } });
+});
+
+// The richer Overview (owner, 2026-10-31): today, things to do, the last 7 days, latest orders, left carts, low stock
+router.get("/dashboard", async (req, res) => res.json(await analytics.dashboard()));
+// Carts left without ordering, and "Send reminder" (one email per cart until it changes)
+router.get("/carts", async (req, res) => res.json(await reminders.leftCarts(100)));
+router.post("/carts/:id/remind", async (req, res) => {
+  if (!isUuid(req.params.id)) throw errors.notFound("That cart doesn't exist.");
+  res.json(await reminders.sendNow(req.params.id));
 });
 
 /* ---- Orders ----

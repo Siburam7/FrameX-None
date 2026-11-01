@@ -22,8 +22,34 @@
 - **Backup:** production `pg_dump` (custom format) 2026-10-19, encrypted `.7z` verified, isolated restore test passed.
   Copies are on the same SSD (C: and D: are one disk) — off-site copy pending.
 
+## Costs and margins (2026-10-29, estimates)
+
+- All calculations live in `costs.md` (running cost; order costs with 50% COD and 20% COD returns). Short version:
+  running cost ≈ ₹1,300 / month at 500 users, ≈ ₹6–9k at 2000+; with 10–15% ordering, total ≈ ₹10–15k / month at 500
+  users and ≈ ₹41–62k at 2000 users (≈ ₹216–247 per delivered order). Placeholders (order value ₹600, courier ₹90,
+  making cost ₹250 …) wait for the owner's real numbers.
+- Profit plan (costs.md §3): the owner's plan (shop price + 18%, COD +3%, UPI −4%, free delivery) LOSES ≈ ₹69 per
+  ₹1,000 order; more users = more loss. Suggested Plan B (30%, UPI −2%, ₹49 delivery) and B2 (+ custom photo frames
+  online-only) make a profit. Owner has not chosen yet. GST / TCS not counted (CA question).
+- Marketing (costs.md §4): with Instagram / Meta ads (≈ ₹4.5k / ₹18k a month) only ~35–40% markup stays in profit at
+  both user levels; one order from a cold ad costs ≈ ₹750 at a 2% order rate.
+- WhatsApp (costs.md §5) ≈ ₹2.1k / ₹4.8–5k a month; owner has a private "FrameX Profit Calculator" page to try values.
+
 ## Owner decisions (log)
 
+- 2026-10-31 Cart reminder emails: ONE reminder 24 h after a cart is left, WITH a coupon (XUSE10 by default), only
+  9 am to 9 pm; free with Brevo (300 a day shared with login codes and order emails, so at most 100 reminders a
+  day). WhatsApp reminders need the WhatsApp Business API (paid per message) — not built. A "payment left" reminder
+  10-15 minutes after a failed / closed payment was explained, not built.
+- 2026-10-31 Login is a box over the page, not a page (asked after how Flipkart does it): email -> code -> name
+  filled in from the email (changeable) -> in; no "Create an account", no password sign-up. Built locally.
+- 2026-10-31 Simple login / sign-up: Google or email + code; an unknown email on the login page goes straight to
+  "Almost done" (option A); every login page at least 100vh on laptop and phone. Built locally, not pushed.
+- 2026-10-29 **Design is FIXED**: the owner said the whole design is final; from now on only feature upgrades
+  (rules.md §4). No redesigns or design suggestions unless the owner asks.
+- 2026-10-29 Home: of the shorter-home design only the new "Shop by category" tiles stay (owner removed the
+  trust strip, occasions and the combined Decor + Art after seeing them built); then the tiles replaced the three
+  boxes under "Start here" and the separate category section went.
 - 2026-10-28 The fixed header must not sit over the footer: the footer now pushes it up and away. Live 2026-10-29 (main 7958b8a).
 - 2026-10-28 Deployed everything of 2026-10-27/28 (main 010875c), no migration so no backup.
 - 2026-10-28 New footer from the owner's reference picture (near-black, centred line, faint FRAMEX word, 4 short

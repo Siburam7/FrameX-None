@@ -133,6 +133,7 @@ export async function deleteAccount(actor, { password, confirm } = {}, { ip = nu
     // What only made sense for the login
     for (const table of ["addresses", "sessions", "auth_tokens", "otp_codes", "notifications", "saved_designs", "support_threads"]) await q.query(`DELETE FROM ${table} WHERE user_id = $1`, [user.id]);
     await q.query("DELETE FROM carts WHERE user_id = $1", [user.id]);
+    await q.query("DELETE FROM login_codes WHERE email = lower($1)", [user.email]); // login codes are kept by address
     await q.query("UPDATE auth_events SET user_id = NULL WHERE user_id = $1", [user.id]);
 
     // The account row: emptied, switched off for good, its email freed

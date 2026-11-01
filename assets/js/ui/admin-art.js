@@ -249,12 +249,14 @@
     const { items } = await http().get("/admin/settings");
     const groups = [...new Set(items.map((s) => s.group))];
     const control = (s) =>
-      s.unit === "boolean"
+      s.unit === "text"
+        ? `<input class="input" type="text" maxlength="30" autocapitalize="characters" data-setting="${esc(s.key)}" data-unit="text" value="${esc(s.value)}" aria-label="${esc(s.label)}">`
+        : s.unit === "boolean"
         ? `<select class="select" data-setting="${esc(s.key)}" data-unit="boolean" aria-label="${esc(s.label)}"><option value="true"${s.value ? " selected" : ""}>On</option><option value="false"${s.value ? "" : " selected"}>Off</option></select>`
         : `<input class="input" type="number" inputmode="decimal" step="${s.unit === "percent" && s.key !== "customPaintingAdvancePercent" ? "0.01" : "1"}" min="0" data-setting="${esc(s.key)}" data-unit="${esc(s.unit)}" value="${esc(s.value)}" aria-label="${esc(s.label)}">`;
     main.innerHTML = `${head("Platform settings", "Fees and rules FrameX decides. A change applies from the next quote or request; orders and requests already made keep what was agreed. Keys and passwords are not settings: they stay on the server.")}
       <form class="set-list" novalidate>
-        ${groups.map((g) => `<h2 class="adm-subtitle">${esc(g)}</h2>${items.filter((s) => s.group === g).map((s) => `<div class="set-row"><div><strong>${esc(s.label)}</strong> <span class="sd-item__meta">(${esc(s.unit === "rupees" ? "₹" : s.unit === "percent" ? "%" : "on / off")})</span><small>${esc(s.hint || "")}${s.changed ? ` Changed by an admin; the server's default is ${esc(String(s.default))}.` : " Using the server's default."}</small></div><div>${control(s)}${s.changed ? `<button class="iu-btn" type="button" data-reset="${esc(s.key)}" style="margin-top:6px">Back to default</button>` : ""}</div></div>`).join("")}`).join("")}
+        ${groups.map((g) => `<h2 class="adm-subtitle">${esc(g)}</h2>${items.filter((s) => s.group === g).map((s) => `<div class="set-row"><div><strong>${esc(s.label)}</strong> <span class="sd-item__meta">(${esc({ rupees: "₹", percent: "%", hours: "hours", count: "number", text: "code", boolean: "on / off" }[s.unit] || s.unit)})</span><small>${esc(s.hint || "")}${s.changed ? ` Changed by an admin; the server's default is ${esc(String(s.default))}.` : " Using the server's default."}</small></div><div>${control(s)}${s.changed ? `<button class="iu-btn" type="button" data-reset="${esc(s.key)}" style="margin-top:6px">Back to default</button>` : ""}</div></div>`).join("")}`).join("")}
         <div class="form-status" role="status" aria-live="polite"></div>
         <div><button class="btn btn--primary" type="submit">Save settings</button></div>
       </form>`;
@@ -275,7 +277,7 @@
       const changes = {};
       form.querySelectorAll("[data-setting]").forEach((el) => {
         const s = items.find((x) => x.key === el.dataset.setting);
-        const value = el.dataset.unit === "boolean" ? el.value === "true" : Number(el.value);
+        const value = el.dataset.unit === "boolean" ? el.value === "true" : el.dataset.unit === "text" ? el.value.trim().toUpperCase() : Number(el.value);
         if (value !== s.value) changes[s.key] = value;
       });
       if (!Object.keys(changes).length) return forms().status(status, "info", "Nothing was changed.");

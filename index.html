@@ -156,23 +156,31 @@
                 order</span></div>
           </li>
         </ol>
-        <div class="how__ways">
-          <a class="how__way how__way--main" href="studio.html?mode=photo"><img src="assets/img/products/luxury-hd.webp"
-              alt="" width="900" height="600" loading="lazy" decoding="async"><span><strong>Frame my
-                photo</strong><small>Design it in FrameX Studio</small></span><svg class="icon" aria-hidden="true">
-              <use href="#i-chev-right"></use>
-            </svg></a>
-          <a class="how__way" href="home-decor.html"><img src="assets/img/decor/hd-mp-cherry-tree-3.webp" alt=""
-              width="800" height="1000" loading="lazy" decoding="async"><span><strong>Ready-made
-                decor</strong><small>Framed art, no photo needed</small></span><svg class="icon" aria-hidden="true">
-              <use href="#i-chev-right"></use>
-            </svg></a>
-          <a class="how__way" href="templates.html"><img src="assets/img/products/wedding-anniversary.webp" alt=""
-              width="720" height="964" loading="lazy" decoding="async"><span><strong>Gift
-                templates</strong><small>Birthday, anniversary, family</small></span><svg class="icon"
-              aria-hidden="true">
-              <use href="#i-chev-right"></use>
-            </svg></a>
+        <!-- Shop by category, in place of the three ways in (owner, 2026-10-29). Phones: one swipe row. -->
+        <div class="how__cats" id="categories">
+          <div class="how__cats-head">
+            <h3 class="how__cats-title" id="categories-title">Shop by category</h3>
+            <a class="btn btn--outline btn--sm" href="shop.html#collection">All categories <svg class="icon icon--nudge"
+                aria-hidden="true">
+                <use href="#i-arrow-right"></use>
+              </svg></a>
+          </div>
+          <div class="hm-cats">
+            <a class="hm-cat" href="shop.html?category=photo-frames#collection"><img
+                src="assets/img/products/luxury-hd-photo.webp" alt="" width="600" height="600" loading="lazy"
+                decoding="async"><span>Photo Frames</span></a>
+            <a class="hm-cat" href="shop.html?category=collage#collection"><img
+                src="assets/img/products/collage-set-photo.webp" alt="" width="600" height="600" loading="lazy"
+                decoding="async"><span>Collage Frames</span></a>
+            <a class="hm-cat" href="studio.html?mode=photo"><img src="assets/img/home/home-studio.webp" alt=""
+                width="600" height="600" loading="lazy" decoding="async"><span>Create Your Frame</span></a>
+            <a class="hm-cat" href="templates.html"><img src="assets/img/home/home-templates.webp" alt="" width="600"
+                height="600" loading="lazy" decoding="async"><span>Ready Designs</span></a>
+            <a class="hm-cat" href="home-decor.html"><img src="assets/img/home/home-decor.webp" alt="" width="600"
+                height="600" loading="lazy" decoding="async"><span>Home Decor</span></a>
+            <a class="hm-cat" href="art.html"><img src="assets/img/art/hero-artist.webp" alt="" width="600" height="600"
+                loading="lazy" decoding="async"><span>Art &amp; Artists</span></a>
+          </div>
         </div>
       </div>
     </section>
@@ -263,82 +271,6 @@
         </picture>
       </a>
     </div>
-
-    <section class="section shelf-section" id="categories" aria-labelledby="categories-title">
-      <div class="container">
-        <div class="shelf shelf--cats">
-          <div class="section-head" data-reveal>
-            <div>
-              <h2 class="section-title" id="categories-title">Shop by category</h2>
-              <p class="section-lead">Everything on FrameX in one place: shops near you, art, your own frame, ready
-                designs and
-                wall decor.</p>
-            </div>
-            <a class="btn btn--outline btn--sm" href="shop.html">Shop all frames <svg class="icon icon--nudge"
-                aria-hidden="true">
-                <use href="#i-arrow-right"></use>
-              </svg></a>
-          </div>
-          <!-- The parts of FrameX, in the order the owner chose. The frame categories follow as links
-               (ui/categories.js fills #category-more). -->
-          <div class="category-row" id="category-row">
-            <div class="collection-grid" data-reveal-stagger>
-              <a class="collection-card" href="#shops">
-                <img src="assets/img/home/home-shop.webp" alt="" width="1200" height="900" loading="lazy"
-                  decoding="async">
-                <span><span class="collection-card__name">Nearby Shops</span><span
-                    class="collection-card__blurb">Framing shops
-                    near you. Browse their frames, then pick up or get it delivered.</span>
-                  <span class="collection-card__count">Find a shop <svg class="icon" aria-hidden="true">
-                      <use href="#i-arrow-right"></use>
-                    </svg></span></span>
-              </a>
-              <a class="collection-card" href="art.html">
-                <img src="assets/img/art/hero-artist.webp" alt="" width="720" height="900" loading="lazy"
-                  decoding="async">
-                <span><span class="collection-card__name">Art &amp; Artists</span>
-                  <span class="collection-card__count">Explore art <svg class="icon" aria-hidden="true">
-                      <use href="#i-arrow-right"></use>
-                    </svg></span></span>
-              </a>
-              <a class="collection-card" href="studio.html?mode=photo">
-                <img src="assets/img/home/home-studio.webp" alt="" width="900" height="720" loading="lazy"
-                  decoding="async">
-                <span><span class="collection-card__name">Make Your Frame</span>
-                  <span class="collection-card__count">FrameX Studio <svg class="icon" aria-hidden="true">
-                      <use href="#i-arrow-right"></use>
-                    </svg></span></span>
-              </a>
-              <a class="collection-card" href="templates.html">
-                <img src="assets/img/home/home-templates.webp" alt="" width="900" height="720" loading="lazy"
-                  decoding="async">
-                <span><span class="collection-card__name">Templates</span>
-                  <span class="collection-card__count">Browse designs <svg class="icon" aria-hidden="true">
-                      <use href="#i-arrow-right"></use>
-                    </svg></span></span>
-              </a>
-              <a class="collection-card" href="home-decor.html">
-                <img src="assets/img/home/home-decor.webp" alt="" width="900" height="720" loading="lazy"
-                  decoding="async">
-                <span><span class="collection-card__name">Home Decor &amp; Wall Art</span>
-                  <span class="collection-card__count">Shop decor <svg class="icon" aria-hidden="true">
-                      <use href="#i-arrow-right"></use>
-                    </svg></span></span>
-              </a>
-              <a class="collection-card" href="shop.html#collection">
-                <img src="assets/img/home/home-trend.webp" alt="" width="1400" height="780" loading="lazy"
-                  decoding="async">
-                <span><span class="collection-card__name">Trending Frames</span>
-                  <span class="collection-card__count">See frames <svg class="icon" aria-hidden="true">
-                      <use href="#i-arrow-right"></use>
-                    </svg></span></span>
-              </a>
-            </div>
-            <div id="category-more"></div>
-          </div>
-        </div>
-      </div>
-    </section>
 
     <section class="section shelf-section" id="recommended" aria-labelledby="recommended-title">
       <div class="container">
@@ -519,7 +451,7 @@
               <img src="assets/img/art/hero-canvas.webp" alt="" width="720" height="900" loading="lazy"
                 decoding="async">
             </a>
-            <a class="promo-tile promo-tile--peach" href="art.html#browse">
+            <a class="promo-tile promo-tile--peach" href="art.html?view=artists#browse">
               <span class="promo-tile__body">
                 <span class="promo-tile__label">Custom painting</span>
                 <strong class="promo-tile__title">A painting made from your photo</strong>

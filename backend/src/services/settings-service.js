@@ -17,6 +17,7 @@ import { errors } from "../lib/errors.js";
 const whole = (min, max) => (value) => (Number.isInteger(value) && value >= min && value <= max ? null : `Enter a whole number from ${min} to ${max}.`);
 const percent = (min, max) => (value) => (typeof value === "number" && Number.isFinite(value) && value >= min && value <= max ? null : `Enter a number from ${min} to ${max}.`);
 const flag = (value) => (typeof value === "boolean" ? null : "Choose on or off.");
+const couponCode = (value) => (typeof value === "string" && /^[A-Z0-9_-]{0,30}$/.test(value) ? null : "Enter a coupon code (letters and numbers), or leave it empty for no coupon.");
 
 /* key -> { label, group, unit, check(value), get(), set(value) } */
 const SPEC = {
@@ -78,6 +79,41 @@ const SPEC = {
     check: percent(0, 20),
     get: () => config.payouts.feePercent,
     set: (v) => (config.payouts.feePercent = v)
+  },
+  cartRemindersOn: {
+    label: "Cart reminder emails",
+    hint: "On: a customer who leaves items in the cart gets one email after the wait below (9 am to 9 pm only). Customers can turn these off for themselves.",
+    group: "Cart reminders",
+    unit: "boolean",
+    check: flag,
+    get: () => config.cartReminders.enabled,
+    set: (v) => (config.cartReminders.enabled = v)
+  },
+  cartReminderHours: {
+    label: "Send after the cart is left for",
+    group: "Cart reminders",
+    unit: "hours",
+    check: whole(1, 168),
+    get: () => config.cartReminders.hours,
+    set: (v) => (config.cartReminders.hours = v)
+  },
+  cartReminderCoupon: {
+    label: "Coupon in the email",
+    hint: "A coupon code from Admin → Coupons. Shown only while the coupon works and the customer can still use it. Empty = no coupon.",
+    group: "Cart reminders",
+    unit: "text",
+    check: couponCode,
+    get: () => config.cartReminders.coupon,
+    set: (v) => (config.cartReminders.coupon = v)
+  },
+  cartReminderDailyLimit: {
+    label: "Most cart reminders a day",
+    hint: "Keeps room in the free email allowance (300 a day) for login codes and order emails.",
+    group: "Cart reminders",
+    unit: "count",
+    check: whole(0, 290),
+    get: () => config.cartReminders.dailyLimit,
+    set: (v) => (config.cartReminders.dailyLimit = v)
   },
   productModeration: {
     label: "Shop products need FrameX approval",

@@ -5,6 +5,173 @@
 
 ## Now
 
+- [x] 2026-11-01 Home hero: the hanging frames look like real frames (owner: "full really 100% frame", swing kept): three
+      moulding pictures made for it (assets/img/ui/frames/moulding-black|oak|gold.webp, 4-8 KB: mitred corners, rounded lit
+      profile, oak grain) used as border-image on .page-hero__piece--framed, a mat with a bevelled window, a glass sheen;
+      the nail moved above the moulding. Art & Artists slide (photos) unchanged. Local, NOT pushed.
+- [x] 2026-10-31 **Admin Overview + Analytics upgrade + cart reminder emails** BUILT (owner: "abhi direct code par design or
+      ye email automation karo"; 1 reminder, with a coupon, 9 am to 9 pm), local, NOT pushed (migration 025 -> backup).
+      Overview (admin-page.js + GET /api/admin/dashboard): today's sales / orders / visitors (+ on the site now) / visits
+      that ordered (7 days) with change, "Needs your attention" (non-zero only), 7-day sales bars (hover / focus shows
+      the day), latest 5 orders, carts left (+ "Send reminder"), low stock, then the old tiles. Analytics overview
+      (admin-analytics.js): funnel (visits -> opened a frame -> checkout -> ordered, with a note on the consent-only
+      steps), customers (average order, ordered more than once, new / returning, top cities, day x 2-hour heatmap),
+      carts left + reminders sent + came back within 7 days. Reminders: services/cart-reminder-service.js, timer every
+      10 min in server.js (unlessQuiet), migration 025 (carts.reminded_at, users.cart_reminders_off, cart_reminders),
+      email messages.cartReminder (products' own pictures, never the customer's photo; coupon only while usable;
+      "Don't send me cart reminders" -> index.html?reminders=off&t=… -> POST /api/reminders/unsubscribe), account page
+      switch (PUT /api/users/me/cart-reminders), Admin -> Settings: on / off, hours (24), coupon (XUSE10), daily limit
+      (100, leaves the free 300-a-day Brevo quota for login codes and order emails). test/cart-reminders.test.js (11).
+      Earlier design request: owner asked for a more advanced
+      Overview and a better Analytics. Pictures + README in DesktopFrameX-Admin-Upgrade-Design. Overview: today's 4
+      numbers with change, "Needs your attention" (only non-zero tasks), 7-day sales bars, latest 5 orders, carts left
+      without ordering (+ "Send reminder"), low stock, then today's shop / artist tiles. Analytics (on top of what is
+      there): visitor-to-order funnel, customers (average order, repeat, new / returning, top cities, day x hour
+      heatmap), carts left list with reminders. "Send reminder" = a NEW feature (abandoned-cart email via Brevo;
+      WhatsApp needs the WhatsApp Business API). Owner also asked how big sites message visitors who didn't order:
+      explained in chat (logged-in carts -> email / WhatsApp with consent; anonymous visitors -> ad retargeting only).
+- [x] 2026-10-31 **Login as a BOX, no login / sign-up page** BUILT 2026-10-31 (owner: "abhi code par karoo"), local, NOT
+      pushed. ui/auth-gate.js is the box: every link to login.html / signup.html opens it while logged out (header "Log
+      in", phone Account tab, footer "Shop Login"); login.html / signup.html send old links to index.html?login=1 (with
+      ?next / ?type=shop) and the box opens there; a page that needs a login (auth.guard) opens it over itself ("Log in
+      to open this page"; closed -> home; logged in -> the page reloads); cart / add / buy keep their notice. After a
+      login the box asked for itself: a customer stays on the page (or goes to ?next); shop / artist / staff go to their
+      dashboard. ui/auth-pages.js: codeStart "Log in or sign up" (Google, email, "Send me a code", "Log in using
+      password", Terms line), codeEntry "Enter the code" (step 2, "← Change email"), nameStep "Welcome to FrameX!"
+      (name guessed from the email, "from email" tag until changed, no phone), passwordLogin (both tabs). Sign-up form
+      and "Sign up using password" removed. CSS: step bars + name tag (auth.css), box 440 px / round (overlays.css),
+      phone bottom sheet (mobile.css). login-e2e 45 / 45 (laptop + phone); old suites log in through the box's password
+      form (mx-e2e-lib signUp = API account + box password login). store/cart.js: an item waiting from before a detour
+      (e.g. "Forgot password?") is added right after the next login in the box too, not only on a page load (never twice
+      when the box itself was opened for the item). Design request: owner (after asking how
+      Flipkart does it): no separate login page, a box over the current page: email (or Google) -> code -> name filled
+      in from the email (changeable) -> in; existing customers skip the name. Pictures + README in
+      DesktopFrameX-Login-Box-Design (laptop centred box, phone bottom sheet, 3-step bar). Plan: signup.html and
+      "Create an account" / "Sign up using password" removed; login.html opens home with the box; password login
+      (shops, artists, old users) inside the box; forgot-password page stays.
+- [x] **(owner, 2026-10-31): a simple login and sign-up** BUILT 2026-10-31, local, NOT pushed (needs migration 024 ->
+      fresh backup before the deploy). Owner chose "A" (an unknown email on the login page gets a code and then "Almost
+      done" = a new account) and "every login page at least 100vh, laptop and phone". Backend: login_codes table
+      (024), POST /api/auth/code/send | verify | signup (services/auth-service.js sendLoginCode / verifyLoginCode /
+      completeCodeSignup), emails loginCode + loginCodeRefused (a shop / artist / staff / disabled address gets "log in
+      with your password", so the answer never shows who has an account); same limits as the reset codes (10 min, 30 s
+      wait, 5 an hour, 5 tries); account deletion removes the address's codes; test/login-code.test.js (8). Frontend:
+      ui/auth-pages.js codeStart / codeEntry (6 boxes, typing moves on, paste fills, sends itself) / nameStep /
+      passwordLogin (the earlier tabs + form) / passwordSignup (the earlier form); the login dialog uses the same;
+      store/auth.js sendLoginCode / verifyLoginCode / codeSignup; auth.css (.otp-boxes, .auth-mail, login pages
+      min-height 100vh), mobile.css (code boxes). Browser: login-e2e (laptop + phone). Old suites updated to press
+      "using password" first (mx-e2e-lib usePassword).
+      Original request:  ("login ko simple karna hai nahi toh user bhag jayega").
+      Two ways only: (1) email (Gmail) with a one-time code (OTP) sent to it, (2) Continue with Google. Sign-up the same
+      (email + code, or Google). It must look simple: one email box, and under it a small "Log in using password" link.
+      Design first: pictures in Desktop\FrameX-Simple-Login-Design, build only after the owner's "haan". (This reopens
+      the fixed design for the login / sign-up pages only, at the owner's request.) Backend: a code login is new (today
+      codes exist only for password reset, by email; SMS has no key), so it needs new /auth routes + tests.
+      DESIGN DONE 2026-10-31: 6 screens (login, code, password, sign-up, code, "Almost done" name) + before, laptop +
+      phone, README in Hinglish; open question to the owner: an unknown email on the login page -> (A) straight to a new
+      account or (B) a message. Waiting for "haan".
+- [ ] Waiting on the owner (2026-10-31): push the local work (Shop by category tiles, ticker fade, footer without the
+      WhatsApp number, the 3 fixes from the site test, security updates: npm packages + personal details out of code /
+      docs); WhatsApp number on Contact / Privacy / Terms / application / order pages (remove or business number);
+      "Explore Wall Art" target; sample-item links at launch clean-up; after the push, one real email (nodemailer update).
+- [x] 2026-10-30 **Security check** (owner sent an Instagram reel on securing AI-built sites; only its caption could be
+      read): no secrets in tracked files or in any of the 76 commits; .env ignored; Pages serves no backend/docs/.bat
+      (404); all private routes guarded (live: 401 without login on admin / orders / cart / addresses / uploads / shop
+      dashboard / artist / care / users); CORS only shopframex.in; API headers HSTS + CSP + XFO + nosniff; SQL always
+      parameterised; 500s say nothing internal; public forms validated (javascript: portfolio refused); script-in-text
+      probe through shop / artist applications, contact, customer name and address shows as plain text on account and
+      22 admin views (never HTML). Fixed: npm audit (body-parser 2.4.0 high, nodemailer 10.3.1, qs 6.17.1) -> 0
+      vulnerabilities, backend 486 / 0; owner's personal Gmail removed from a code comment and their UPI ID from these
+      docs (still in old commits; history not rewritten). Report: DesktopFrameX-Site-Test-ReportSECURITY-CHECK.txt.
+      After the next deploy: check one real email (nodemailer update). Local, NOT pushed yet.
+- [x] 2026-10-30 Fixed from the whole-site test (owner: "jo galtia hai usko thik karo ... everything change ke bina"):
+      (1) artist.html / artwork.html without a name in the link now say "We couldn't find that artist / artwork"
+      (ui/art-pages.js; no request with an empty name); (2) custom painting links open the artists list
+      (art.html?view=artists): home "Custom painting" tile, paintings.html "Find an artist", the empty-list "Meet the
+      artists" button (ui/painting-pages.js), the artist-not-found "See all artists"; (4) Admin -> Promotions -> New /
+      Change opens at the top of the form (ui/admin-promotions.js). Checked on :4100, no errors. Not touched: (3)
+      sample-item links (launch clean-up), (5) WhatsApp number and (6) "Explore Wall Art" (owner to decide).
+      Local, NOT pushed yet.
+- [x] 2026-10-29/30 **Whole-site test before the December launch** (owner asked: every page, link and button). Test site
+      :4100 with data (incl. the unpushed local changes) as guest / customer / shop / artist / admin, laptop + phone: 273
+      page loads, 16,454 link checks (272 destinations), 3,039 buttons pressed: no broken link, no missing jump target,
+      no button error. Live shopframex.in read-only: 72 pages, 396 links, all fine. Flow suites all pass (frame 55, shop
+      50, artwork 36, art 74, Studio 37, decor 26, cart 47, account 13, coupon 20, care 53 with CARE_HOURS=0-24
+      CARE_WAIT_SECONDS=30, payout 38 with PLATFORM_COMMISSION_PERCENT=10, join 22, shops 35, social 16 with the :4012
+      stand-in, designs 14, frames 25). Old suites that fail on outdated expectations (not site bugs): e2e-auth /
+      e2e-checkout (missing seed files), chat-e2e, coupon(-admin) home banner, theme (dark default), rv (JPEG vs WebP),
+      heic (GET /uploads), promo (Save button under the fixed header after the jump), buynow (env fees vs admin settings).
+      Report: DesktopFrameX-Site-Test-Report (README + every link and button). Found:
+      (1) artist.html / artwork.html without an id stay on the grey loader (TypeError; GET /artists/ returns the list);
+      (2) home "Custom painting" tile (art.html#browse) and paintings.html "Find an artist" (art.html) open the artworks
+      view, should be art.html?view=artists; (3) hard-wired links to sample items (index hero p-001/p-002/p-004,
+      services "Shop Now" p-017, hd-custom-split-3) must be re-pointed at launch clean-up; (4) admin New promotion keeps
+      the list scroll; (5) WhatsApp number still on contact / legal / application / order pages; (6) services "Explore
+      Wall Art" opens shop.html?category=wall-art. Waiting for the owner on what to fix.
+- [x] 2026-10-29 Running-cost estimate for the owner (first step before margins), 500 vs 2000+ users a month:
+      ≈ ₹1,300 / month (₹15–16k a year) at 500, ≈ ₹6,000–9,000 / month (₹75k–1.1 lakh a year) at 2000+.
+      Prices from web pages on 2026-10-29, not confirmed with the providers. All calculations: `costs.md`.
+- [x] 2026-10-29 Order costs (costs.md §2): 10–15% of users order, 50% COD / 50% online, 20% of COD returned →
+      ≈ ₹177 per order on average, total with running cost ≈ ₹10–15k / month (500 users), ≈ ₹41–62k (2000 users).
+- [x] 2026-10-29 Profit plan (costs.md §3): shop price + 18%, COD +3%, UPI −4% → LOSS on every order (≈ −₹69 at
+      ₹1,000; −₹4.8k / month at 500 users, −₹21–28k at 2000). Suggested Plan B (30%, UPI −2%, ₹49 delivery) ≈ +₹1.6–10k /
+      month; Plan B2 (+ no COD on custom frames) ≈ +₹3.5–21.5k. Owner to choose.
+- [x] 2026-10-29 Marketing added (costs.md §4): Instagram / Meta ads ≈ ₹4.5k / month (500 users), ≈ ₹18k (2000).
+      With ads: Plan A −₹9–46k / month, B2 about break-even, 40% markup (C40) +₹1.5–18k. Ad buyers order less (1–3%), so
+      test ads small first.
+- [x] 2026-10-29 WhatsApp added (costs.md §5): ≈ ₹2.1k / month (500 users), ≈ ₹4.8–5k (2000); with it only C40 at 15%
+      ordering stays in profit. Built the "FrameX Profit Calculator" (private claude.ai page) where the owner changes every value.
+- [x] 2026-10-29 Lean start (costs.md §6): with 30% markup, no COD on photo frames, free tools and small ads → +₹3.4–6k /
+      month at 500 users, +₹5.8–16k at 2000. With 18% markup still a loss. Owner to choose the markup.
+- [x] 2026-10-29 Explained how Amazon / Flipkart earn from sellers (costs.md §7) and what FrameX can copy: shop packs and
+      bears COD-return loss, customer pays delivery, sell featured shop / banner places. Owner to decide.
+- [x] 2026-10-29 Excel "FrameX Expencivess.xlsx" on the owner's Desktop (name as the owner asked): website + delivery
+      cost a month for 500 / 2000 users at 10 / 15%, yellow cells editable, formulas checked. ₹49 delivery from customers
+      covers about 30% of delivery cost (not half: returned orders pay nothing, average delivery ₹145).
+- [x] 2026-10-29 Same numbers as a 2-page PDF for the co-founder: "FrameX Expencivess.pdf" on the Desktop (English).
+- [x] 2026-10-29 Delivery options listed (costs.md §8). Finding: no courier integration in the code yet (booking + tracking would be manual).
+- [ ] Owner: sign up free on 2–3 aggregators (Shiprocket, NimbusPost, Shipmozo), check real rates with a real box size.
+      2026-10-31: Shiprocket account created (seller panel open; profile 1/5, KYC not done, wallet ₹0, no pickup address).
+      Process given in chat: rate calculator first, KYC (individual), bank, pickup address, wallet only after the
+      founders decide; "Connect My Store" is not for FrameX (custom site) → orders by hand (Add Order) until an API is built.
+      First real quote (2026-10-31): 759024 → 759017 (same district, Dhenkanal), prepaid, value ₹500, chargeable 0.75 kg,
+      "Dangerous goods: Yes" + "Secure shipment: Yes" → only 2 couriers (Delhivery Air / Surface) at ₹137.72. To re-check
+      with Dangerous goods = No (glass frame is fragile, not dangerous) and a box under 0.5 kg.
+- [x] 2026-10-29 "FrameX Delivery Process.pdf" on the Desktop for the co-founder (English, 3 pages, diagrams): how an
+      aggregator works, one-time setup, every order, delivered / not delivered, address entry, zones, decision (a) / (b).
+- [ ] Owner is thinking of launching on 1 January 2027 (not final). Launch hype plan given in chat 2026-10-29 (waitlist,
+      shops / artists first, photo contest, countdown, midnight launch, launch coupon via Admin → Coupons, Valentine's
+      follow-up). Before launch: real listings instead of samples, Render paid plan (no sleep), SMS key, GA4 ID, courier
+      account, fresh backup, full test of orders / payments. Marketing must stay factual (prd.md §4: no fake numbers).
+- [x] 2026-10-30 "FrameX Launching Plan.pdf" on the Desktop for the co-founder (English, 2 pages: timeline to scale,
+      4 phases, budget ₹5–15k, launch checklist).
+- [ ] Owner: small orders (₹100–250) lose money on delivery (costs.md §9). Choose: minimum order value, COD minimum,
+      combos, add-on items (minimum order + COD minimum are NOT built; small features).
+- [ ] Owner: choose the plan; decide who pays the shop for a returned COD photo frame; ask a CA about GST / TCS; real
+      courier rates. Still open from before: real numbers for making cost, courier / COD / RTO charges, packing, who pays the
+      courier for shop products → then update costs.md §3 with them.
+- [x] 2026-10-29 Footer: the WhatsApp number is no longer shown (owner: it is their personal number); only the
+      email stays (ui/chrome.js contactLinks). Local, NOT pushed yet.
+- [ ] Owner to decide: the same number is still on the Contact page, the shop / artist application "done" screens
+      (WhatsApp button), the order page ("send photos on WhatsApp"), and written into privacy-notice.html and
+      terms-of-use.html. It comes from `contact.whatsapp` in assets/data/site.seed.js (the two legal pages have it
+      typed in). Remove everywhere, or replace with a business number?
+- [x] 2026-10-29 Home ticker under the hero (Premium frames, HD printing …): words show only across the page content width and fade at the content edges (140 px), laptop and up only (owner
+      asked; layout-hero.css, two overlays in the strip colour, dark mode too). Phone unchanged. Local, NOT pushed yet.
+- [x] 2026-10-29 Owner: the design is FIXED, from now on only feature upgrades (rules.md §4, memory.md).
+- [x] 2026-10-29 **Home page: new "Shop by category" only** (owner first chose 4 parts of the design in
+      DesktopFrameX-Home-Naya-Design and had them built, then: "shop by catagory ko chod kar jitnaa bhi change kiya
+      hai removed kar doo"). Kept: `#categories` as 6 square picture tiles (Photo Frames, Collage Frames, Create Your
+      Frame, Ready Designs, Home Decor, Art & Artists; phones one swipe row of 84 px tiles); the old big cards and
+      the category chips row under them are gone. Removed again (back as before): the new trust strip, Shop by
+      occasion, and Home Decor + Art in one part. CSS: layout-hero.css + mobile.css (phones). Checked on :4100
+      laptop + phone: rest of the home unchanged, no sideways scroll, no errors.
+      Then (owner, same day, "ye 3 box ko removed karke shop by category add karo usmain"): the three boxes under
+      "Your photo, framed by a local shop" / "Start here" (Frame my photo, Ready-made decor, Gift templates) are
+      gone and the category tiles sit there instead (`.how__cats`, id `categories` kept for the footer link); the
+      separate category section further down is gone. Laptop: the 1-2-3 steps, then the tiles. Phone: "Start
+      here" heading hidden (the tiles have their own "Shop by category" heading). Old `.how__way*` CSS removed.
+      Checked :4100 laptop + phone, no errors. Local, NOT pushed yet.
 - [x] 2026-10-28 **Header stops at the footer** (owner: navbar must not stay stuck over the footer, "direct code"): when
       the footer reaches the header, the footer pushes the header up and out of view (ui/nav.js, CSS translate, all
       pages, laptop + phone); scrolling back up brings it back; opening the phone menu brings it back too. Checked on
@@ -337,7 +504,7 @@
       35/35 (new suite); before/after pictures on the Desktop (FrameX-shops-laptop-v2.png, FrameX-shops-phone-v2.png)
 - [x] 2026-10-21 Header menu: FAQ → "Studio" (FrameX Studio); FAQ stays in the footer (Support) — LIVE (1aa4aa8). Fits on one line
       at 1280 / 1366 / 1920 px, phone menu checked, Studio marked current on FrameX Studio
-- [ ] UPI apps show "Siburam7" and a VPA like siburam754620.rzp@rxairtel when paying (owner: hurts trust). Cause: Razorpay
+- [ ] UPI apps show "Siburam7" and a VPA like (the owner’s personal UPI ID) when paying (owner: hurts trust). Cause: Razorpay
       Brand name = account / primary website name. "FrameX" refused: must match the business name (SIBURAM NAYAK) or the
       PRIMARY website (still https://siburam7.github.io/FrameX-None/; shopframex.in is an additional, verified site).
       Razorpay ticket #21472429 (2026-10-21): remove the additional shopframex.in, then edit the primary website to
@@ -352,7 +519,7 @@
       shopframex.in): instant on checkout, 1-2 h for UPI apps. [ ] owner: check PhonePe shows FrameX (open a payment, don't pay)
       [x] owner also set the Razorpay checkout background to the FrameX orange (header shows the F logo + FrameX)
       [ ] LATER (owner: "yaad rakho"): paying from the website on a phone shows "FrameX" in PhonePe, but scanning the
-          checkout UPI QR still shows "Siburam7", no picture, and the old VPA siburam754620.rzp@rxairtel (the QR carries the
+          checkout UPI QR still shows "Siburam7", no picture, and the old VPA (the owner’s personal UPI ID) (the QR carries the
           VPA, named at account creation). Ask Razorpay (ticket #21478745) to rename the VPA / QR payee to FrameX — they may
           ask for a business document (Udyam / GST)
 - [ ] Tax shown at checkout is 2% (Admin → Settings), not the 18% in older notes — confirm with a CA (F-18)

@@ -6,6 +6,7 @@ import { v, validate } from "../lib/validate.js";
 import { requireAuth } from "../middleware/auth.js";
 import { blockers, deleteAccount, exportData } from "../services/account-service.js";
 import { publicUser, updateProfile } from "../services/auth-service.js";
+import { setOwnChoice } from "../services/cart-reminder-service.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -17,6 +18,13 @@ router.get("/me", async (req, res) => res.json({ user: await publicUser(req.auth
 router.patch("/me", async (req, res) => {
   const data = validate(req.body, { name: v.optional(v.string({ min: 2, max: 80, label: "Name" })), phone: v.optional(v.phone()) });
   await updateProfile(req.auth.user.id, data);
+  res.json({ user: await publicUser(req.auth.user.id) });
+});
+
+// Cart reminder emails on / off for this account (owner, 2026-10-31)
+router.put("/me/cart-reminders", async (req, res) => {
+  const { on } = validate(req.body, { on: v.boolean() });
+  await setOwnChoice(req.auth.user.id, on);
   res.json({ user: await publicUser(req.auth.user.id) });
 });
 

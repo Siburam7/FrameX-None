@@ -58,6 +58,35 @@ router.post("/facebook", rateLimit("social-login", { windowMs: 15 * MINUTE, max:
   await startSession(req, res, userId, created ? 201 : 200);
 });
 
+/* ---- Log in / sign up with a code by email (owner, 2026-10-31) ----
+   send   -> a 6-digit code goes to the address (the same answer whether or not it has an account)
+   verify -> a customer account is logged in; a new address gets { newAccount, signupToken }
+   signup -> the new address's name (and, if given, mobile number): a new customer account, logged in */
+router.post("/code/send", rateLimit("code-send", { windowMs: 15 * MINUTE, max: 12 }), async (req, res) => {
+  const { email } = validate(req.body, { email: v.email() });
+  res.json(await auth.sendLoginCode(email));
+});
+
+router.post("/code/verify", rateLimit("code-verify", { windowMs: 15 * MINUTE, max: 40 }), async (req, res) => {
+  const data = validate(req.body, {
+    email: v.email(),
+    code: v.string({ min: 6, max: 6, label: "Code", pattern: /^\d{6}$/, patternMessage: "Enter the 6-digit code." })
+  });
+  const result = await auth.verifyLoginCode(data.email, data.code, { ip: req.ip });
+  if (result.signupToken) return res.json({ newAccount: true, signupToken: result.signupToken, masked: result.masked });
+  await startSession(req, res, result.userId);
+});
+
+router.post("/code/signup", rateLimit("signup", { windowMs: 60 * MINUTE, max: 10 }), async (req, res) => {
+  const data = validate(req.body, {
+    signupToken: v.string({ min: 20, max: 600, label: "Sign-up" }),
+    name: v.string({ min: 2, max: 80, label: "Name" }),
+    phone: v.phone()
+  });
+  const userId = await auth.completeCodeSignup(data.signupToken, { name: data.name, phone: data.phone }, { ip: req.ip });
+  await startSession(req, res, userId, 201);
+});
+
 router.post("/logout", async (req, res) => {
   if (req.auth) await auth.logout(req.auth.sessionId);
   clearSessionCookie(res);

@@ -1,14 +1,16 @@
 /* ==========================================================================
-   Login, sign-up, forgot-password and reset-password pages.
+   The login box's content, and the forgot-password and reset-password pages.
+   (Since 2026-10-31 there is no login or sign-up page: login.html / signup.html open the home page with the
+   login box, ui/auth-gate.js.)
 
    - Sign-up creates customer accounts only. There is no shop or admin sign-up:
      shops apply on partner.html and receive credentials after FrameX approves.
-   - The login page has two tabs (Customer / Local shop). The tab only tells
-     the backend where to look; the role always comes from the backend.
+   - Logging in also signs up: Google, or an email + a 6-digit code (a new email
+     gives its name and becomes an account). "Log in using password" keeps the
+     password form; it has two tabs (Customer / Local shop): the tab only tells the
+     backend where to look; the role always comes from the backend.
    - Passwords go straight to the backend over the API and are never stored
      in the browser.
-   - The login and sign-up forms are also shown inside the login dialog
-     (ui/auth-gate.js) through mount(): same code, same backend calls.
    ========================================================================== */
 (function (FrameX) {
   const { $, $$, escapeHtml: esc, icon } = FrameX.dom;
@@ -45,10 +47,10 @@
   let facebookFor = "";
 
   /** The (still empty) place for the buttons; mountSocial() fills it, or removes it when neither is switched on. */
-  const socialBlock = (mode) => `<div class="soc" data-social data-for="customer">
+  const socialBlock = (mode, or = mode === "signup" ? "or sign up with email" : "or log in with email / phone") => `<div class="soc" data-social data-for="customer">
         <div class="soc__buttons"></div>
         <div class="form-status" role="status" aria-live="polite"></div>
-        <p class="soc__or"><span>${mode === "signup" ? "or sign up with email" : "or log in with email / phone"}</span></p>
+        <p class="soc__or"><span>${or}</span></p>
       </div>`;
 
   async function mountSocial(root, mode, onSuccess) {
@@ -119,9 +121,11 @@
     if (!buttons.children.length) box.remove();
   }
 
-  function shell(root, title, lead, body) {
+  /** top: what sits above the heading (the login box's step bars, a "Back" link). */
+  function shell(root, title, lead, body, top = "") {
     const heading = root.dataset.embedded ? `<h2 class="auth-card__title" id="auth-gate-title">${title}</h2>` : `<h1 class="auth-card__title">${title}</h1>`;
     root.innerHTML = `<div class="auth-card">
+      ${top}
       ${heading}
       ${lead ? `<p class="auth-card__lead">${lead}</p>` : ""}
       ${body}
@@ -162,29 +166,193 @@
     after(user);
   };
 
-  /** Keeps "?next=…" when moving between the login and sign-up pages, so the visitor still returns where they were. */
-  const carryNext = () => {
-    const next = auth().safeNext(FrameX.qs.param("next"));
-    return next ? "?next=" + encodeURIComponent(next) : "";
-  };
+  /* ---------------------------------------------------------------- Login box (owner, 2026-10-31)
+     No login or sign-up page: everything happens in a box over the page (ui/auth-gate.js). Two ways in: Continue
+     with Google, or an email + a 6-digit code. A new address that gets a correct code is asked only for its name
+     (filled in from the email, changeable) and becomes a customer account; an existing customer goes straight in.
+     "Log in using password" keeps the password form (old accounts, shops, artists, staff).
+     onSuccess(user) is what the box does after a login. */
+  const MAIL_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>';
+  /** Step 1 email, 2 code, 3 name: three short bars at the top of the box. */
+  const steps = (n) => `<div class="auth-steps" aria-hidden="true">${[1, 2, 3].map((i) => `<i${i <= n ? ' class="is-on"' : ""}></i>`).join("")}</div>`;
 
-  /* ---------------------------------------------------------------- Login
-     onSuccess(user) replaces the usual "go to the next page" (the login dialog uses it). */
-  function login(root, { onSuccess = welcome } = {}) {
-    let type = FrameX.qs.param("type") === "shop" ? "shop" : "customer";
+  /** "siburam.n7@gmail.com" -> "Siburam", "ravi.kumar@x.in" -> "Ravi Kumar": only a guess, the person can change it. */
+  const nameFromEmail = (email) =>
+    String(email || "")
+      .split("@")[0]
+      .split(/[^a-z]+/i)
+      .filter((part) => part.length >= 2)
+      .slice(0, 3)
+      .map((part) => part[0].toUpperCase() + part.slice(1).toLowerCase())
+      .join(" ")
+      .slice(0, 80);
+
+  function codeStart(root, { onSuccess, email = "" }) {
+    shell(
+      root,
+      "Log in or sign up",
+      "Use your email or Google. New here? Your account is made when you log in.",
+      `${socialBlock("login", "or use your email")}
+      <form id="code-form" class="form-grid" novalidate>
+        ${forms().field("email", "Email", { required: true, type: "email", autocomplete: "email", inputmode: "email", placeholder: "you@gmail.com", value: email, prefix: "cl" })}
+        <div class="form-status" role="status" aria-live="polite"></div>
+        <button class="btn btn--primary btn--block" type="submit">Send me a code</button>
+      </form>
+      <p class="auth-card__alt"><button class="auth-link auth-link--strong" type="button" data-use-password>Log in using password</button></p>
+      <p class="auth-card__fine auth-card__center">By continuing you agree to the <a href="terms-of-use.html">Terms of Use</a> and <a href="privacy-notice.html">Privacy Notice</a>.</p>`,
+      steps(1),
+    );
+    const form = $("#code-form", root);
+    $("[data-use-password]", root).addEventListener("click", () => passwordLogin(root, { onSuccess }));
+    forms().handle(form, {
+      busyLabel: "Sending…",
+      send: (v) => auth().sendLoginCode(v.email.trim()).then((info) => ({ info, email: v.email.trim() })),
+      onSuccess: ({ info, email: sentTo }) => codeEntry(root, { onSuccess, email: sentTo, info }),
+    });
+    mountSocial(root, "login", onSuccess);
+    form.elements.email.focus();
+  }
+
+  /** "Enter the code": six boxes (typing moves on, pasting fills them all, the sixth digit sends it). */
+  function codeEntry(root, { onSuccess, email, info }) {
+    shell(
+      root,
+      "Enter the code",
+      "",
+      `${info.devMode ? devBanner() : ""}
+      <p class="auth-mail">${MAIL_ICON}<span>We sent a 6-digit code to <strong>${esc(info.masked)}</strong></span></p>
+      <form id="code-verify-form" class="form-grid" novalidate>
+        <fieldset class="otp-boxes">
+          <legend class="visually-hidden">The 6-digit code</legend>
+          <div class="otp-boxes__row">${[1, 2, 3, 4, 5, 6]
+            .map((n) => `<input class="otp-boxes__digit" type="text" inputmode="numeric" maxlength="1" aria-label="Digit ${n} of 6"${n === 1 ? ' autocomplete="one-time-code"' : ' autocomplete="off"'}>`)
+            .join("")}</div>
+          <input type="hidden" name="code">
+        </fieldset>
+        <div class="form-status" role="status" aria-live="polite"></div>
+        <button class="btn btn--primary btn--block" type="submit">Continue</button>
+      </form>
+      <p class="auth-card__alt">Didn't get it? Check your spam folder.<br><button class="auth-link" type="button" data-resend disabled></button></p>`,
+      `${steps(2)}<button class="auth-link auth-back" type="button" data-change>← Change email</button>`,
+    );
+    const form = $("#code-verify-form", root);
+    const status = $(".form-status", form);
+    const boxes = $$(".otp-boxes__digit", form);
+    const hidden = form.elements.code;
+    const sync = () => (hidden.value = boxes.map((b) => b.value).join(""));
+    const fill = (digits, from = 0) => {
+      digits.split("").forEach((d, i) => boxes[from + i] && (boxes[from + i].value = d));
+      sync();
+      (boxes.find((b) => !b.value) || boxes[5]).focus();
+      if (hidden.value.length === 6) form.requestSubmit();
+    };
+    boxes.forEach((box, i) => {
+      box.addEventListener("input", () => {
+        const digits = box.value.replace(/\D/g, "");
+        box.value = "";
+        if (digits) fill(digits.slice(0, 6 - i), i);
+        else sync();
+      });
+      box.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace" && !box.value && i > 0) {
+          boxes[i - 1].value = "";
+          boxes[i - 1].focus();
+          sync();
+          e.preventDefault();
+        }
+        if (e.key === "ArrowLeft" && i > 0) boxes[i - 1].focus();
+        if (e.key === "ArrowRight" && i < 5) boxes[i + 1].focus();
+      });
+      box.addEventListener("paste", (e) => {
+        const digits = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
+        if (!digits) return;
+        e.preventDefault();
+        boxes.forEach((b) => (b.value = ""));
+        fill(digits, 0);
+      });
+    });
+
+    // "Send a new code" unlocks after the backend's wait time
+    const resend = $("[data-resend]", root);
+    let left = info.resendAfterSeconds || 30;
+    const tick = () => {
+      if (!resend.isConnected) return;
+      resend.disabled = left > 0;
+      resend.textContent = left > 0 ? `You can ask for a new code in 0:${String(left).padStart(2, "0")}` : "Send a new code";
+      if (left-- > 0) setTimeout(tick, 1000);
+    };
+    tick();
+    resend.addEventListener("click", async () => {
+      resend.disabled = true;
+      try {
+        codeEntry(root, { onSuccess, email, info: await auth().sendLoginCode(email) });
+      } catch (error) {
+        forms().status(status, "error", esc(error.message));
+        left = error.retryAfterSeconds || 0;
+        tick();
+      }
+    });
+    $("[data-change]", root).addEventListener("click", () => codeStart(root, { onSuccess, email }));
+
+    forms().handle(form, {
+      busyLabel: "Checking…",
+      send: (v) => {
+        if (!/^\d{6}$/.test(v.code)) throw new FrameX.http.ApiError("Enter the 6-digit code from the email.");
+        return auth().verifyLoginCode(email, v.code);
+      },
+      // A new address: its name; an existing customer is in
+      onSuccess: (result) => (result && result.newAccount ? nameStep(root, { onSuccess, ticket: result.signupToken, email }) : onSuccess(result)),
+    });
+    boxes[0].focus();
+  }
+
+  /** "Welcome to FrameX!": a new address, its code checked. The name is filled in from the email and can be changed. */
+  function nameStep(root, { onSuccess, ticket, email }) {
+    const guess = nameFromEmail(email);
+    shell(
+      root,
+      "Welcome to FrameX!",
+      guess ? "We filled in your name from your email. Change it if you like." : "Tell us your name to finish.",
+      `<form id="name-form" class="form-grid" novalidate>
+        <div class="auth-filled${guess ? " is-guess" : ""}">
+          ${forms().field("name", "Your name", { required: true, autocomplete: "name", maxlength: 80, value: guess, hint: "This name goes on your orders.", prefix: "cn" })}
+          <em class="auth-filled__tag" aria-hidden="true">from email</em>
+        </div>
+        <div class="form-status" role="status" aria-live="polite"></div>
+        <button class="btn btn--primary btn--block" type="submit">Continue</button>
+        <p class="auth-card__fine auth-card__center">You can add a mobile number and a password later in your account.</p>
+      </form>`,
+      steps(3),
+    );
+    const form = $("#name-form", root);
+    const input = form.elements.name;
+    $("label", $(".auth-filled", form)).appendChild($(".auth-filled__tag", form)); // the tag sits at the end of the label
+    // Once they change it, it is no longer "from email"
+    input.addEventListener("input", () => $(".auth-filled", form).classList.remove("is-guess"));
+    forms().handle(form, {
+      busyLabel: "Creating your account…",
+      send: (v) => auth().codeSignup(ticket, v.name.trim()),
+      onSuccess,
+    });
+    input.focus();
+    input.select();
+  }
+
+  /* ---------------------------------------------------------------- Log in using password (old accounts, shops, artists, staff) */
+  function passwordLogin(root, { onSuccess, type: startType } = {}) {
+    let type = startType === "shop" ? "shop" : "customer";
     const copy = {
       customer: { label: "Email or phone", placeholder: "you@example.com", autocomplete: "username" },
       shop: { label: "Shop ID or email", placeholder: "FRX-SHOP-1001", autocomplete: "username" },
     };
     shell(
       root,
-      "Log in to FrameX",
+      "Log in with password",
       "",
       `<div class="auth-tabs" role="tablist" aria-label="Account type">
-        <button class="auth-tabs__btn" type="button" role="tab" id="tab-customer" aria-controls="login-form" data-type="customer">${icon("user")} Customer</button>
+        <button class="auth-tabs__btn" type="button" role="tab" id="tab-customer" aria-controls="login-form" data-type="customer">${icon("user")} Customer / artist</button>
         <button class="auth-tabs__btn" type="button" role="tab" id="tab-shop" aria-controls="login-form" data-type="shop">${icon("store")} Local shop</button>
       </div>
-      ${socialBlock("login")}
       <form id="login-form" class="form-grid" role="tabpanel" novalidate>
         ${forms().field("identifier", copy[type].label, { required: true, autocomplete: "username", prefix: "login" })}
         ${forms().field("password", "Password", { required: true, type: "password", autocomplete: "current-password", toggle: true, prefix: "login" })}
@@ -192,8 +360,9 @@
         <div class="form-status" role="status" aria-live="polite"></div>
         <button class="btn btn--primary btn--block" type="submit">Log in</button>
       </form>
-      <p class="auth-card__alt" data-for="customer">New to FrameX? <a href="signup.html${carryNext()}" data-auth-view="signup">Create an account</a></p>
+      <p class="auth-card__alt" data-for="customer"><button class="auth-link auth-link--strong" type="button" data-use-code>Log in with an email code instead</button></p>
       <p class="auth-card__alt" data-for="shop">Shop logins are created by FrameX after your shop is approved. <a href="partner.html">Partner with FrameX</a></p>`,
+      `<button class="auth-link auth-back" type="button" data-back>← Back</button>`,
     );
 
     const form = $("#login-form", root);
@@ -221,7 +390,9 @@
       if (e.key === "ArrowRight" || e.key === "ArrowLeft") setType(type === "shop" ? "customer" : "shop", true);
     });
     setType(type);
-    mountSocial(root, "login", onSuccess);
+    const toCode = () => codeStart(root, { onSuccess });
+    $("[data-back]", root).addEventListener("click", toCode);
+    $("[data-use-code]", root).addEventListener("click", toCode);
 
     forms().handle(form, {
       busyLabel: "Logging in…",
@@ -229,40 +400,6 @@
       onSuccess,
     });
     form.elements.identifier.focus();
-  }
-
-  /* ---------------------------------------------------------------- Sign up (customers only) */
-  function signup(root, { onSuccess = welcome } = {}) {
-    shell(
-      root,
-      "Create your FrameX account",
-      "Save your details and order frames from local shops.",
-      `${socialBlock("signup")}
-      <form id="signup-form" class="form-grid" novalidate>
-        ${forms().field("name", "Name", { required: true, autocomplete: "name", maxlength: 80, prefix: "su" })}
-        ${forms().field("email", "Email", { required: true, type: "email", autocomplete: "email", prefix: "su" })}
-        ${forms().field("phone", "Phone", { type: "tel", autocomplete: "tel", inputmode: "tel", placeholder: "10-digit mobile number", prefix: "su" })}
-        ${forms().field("password", "Password", { required: true, type: "password", autocomplete: "new-password", toggle: true, hint: PASSWORD_HINT, prefix: "su" })}
-        ${forms().field("confirmPassword", "Confirm password", { required: true, type: "password", autocomplete: "new-password", toggle: true, prefix: "su" })}
-        <div class="form-status" role="status" aria-live="polite"></div>
-        <button class="btn btn--primary btn--block" type="submit">Create account</button>
-        <p class="auth-card__fine">By creating an account you agree to the <a href="terms-of-use.html">Terms of Use</a> and <a href="privacy-notice.html">Privacy Notice</a>.</p>
-      </form>
-      <p class="auth-card__alt">Already have an account? <a href="login.html${carryNext()}" data-auth-view="login">Log in</a></p>
-      <p class="auth-card__alt">Own a framing shop? <a href="partner.html">Partner with FrameX</a></p>`,
-    );
-    const form = $("#signup-form", root);
-    forms().handle(form, {
-      busyLabel: "Creating your account…",
-      send(v) {
-        if (v.password !== v.confirmPassword) throw new FrameX.http.ApiError("Please check the highlighted fields.", { fields: { confirmPassword: "The passwords don't match." } });
-        // Only these fields are sent. The backend always creates a CUSTOMER.
-        return auth().signup({ name: v.name, email: v.email, phone: v.phone, password: v.password, confirmPassword: v.confirmPassword });
-      },
-      onSuccess,
-    });
-    form.elements.name.focus();
-    mountSocial(root, "signup", onSuccess);
   }
 
   /* ---------------------------------------------------------------- Forgot password
@@ -467,13 +604,20 @@
     const page = document.body.dataset.page;
     const state = await auth().ready;
     if (!state.available || !state.reachable) return unavailable(root);
-    // Already logged in: the login and sign-up pages have nothing to offer.
+    // Already logged in: the login and sign-up addresses have nothing to offer.
     if (state.authenticated && (page === "login" || page === "signup")) return after(state.user);
-    ({ login, signup, "forgot-password": forgot, "reset-password": reset })[page](root);
+    // No login or sign-up page any more (owner, 2026-10-31): the home page opens with the login box; "next" and
+    // "type=shop" go along, so old links, emails and bookmarks still work (ui/auth-gate.js reads ?login=1).
+    if (page === "login" || page === "signup") {
+      const q = new URLSearchParams(window.location.search);
+      q.set("login", "1");
+      return window.location.replace("index.html?" + q);
+    }
+    ({ "forgot-password": forgot, "reset-password": reset })[page](root);
   }
 
-  /** Show the login or sign-up form inside `root` (the login dialog). view: "login" | "signup" */
-  const mount = (root, view, options) => (view === "signup" ? signup : login)(root, options);
+  /** The login box's content inside `root`. view: "login" (email code, Google) | "shop" (password form, shop tab) */
+  const mount = (root, view, options) => (view === "shop" ? passwordLogin(root, { ...options, type: "shop" }) : codeStart(root, options));
 
-  FrameX.authPages = { init, mount, unavailable };
+  FrameX.authPages = { init, mount, unavailable, destination, welcome };
 })((window.FrameX = window.FrameX || {}));

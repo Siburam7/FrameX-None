@@ -153,18 +153,90 @@
     `<div class="chip-scroll" role="group" aria-label="Filter">${options.map(([id, label]) => `<a class="chip" href="#/${base}${id ? "?status=" + id : ""}" aria-pressed="${current === id}">${esc(label)}</a>`).join("")}</div>`;
 
   /* ---------------------------------------------------------------- Overview */
+  /* The Overview (owner, 2026-10-31): today's figures, what needs doing, the last 7 days, the latest orders, carts left
+     without ordering (with "Send reminder"), what is running out, then the shop and artist tiles. */
+  const ORDER_LABEL = { PENDING_PAYMENT: "Waiting for payment", PLACED: "New", CONFIRMED: "Confirmed", PROCESSING: "Being made", SHIPPED: "Shipped", OUT_FOR_DELIVERY: "Out for delivery", DELIVERED: "Delivered", CANCELLED: "Cancelled" };
+  const ORDER_TONE = { PENDING_PAYMENT: "draft", PLACED: "pending_review", DELIVERED: "published", CANCELLED: "unpublished" };
+  const rupees = (n) => "₹" + Math.round(Number(n) || 0).toLocaleString("en-IN");
+  const ago = (iso) => {
+    const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (min < 60) return `${Math.max(1, min)} min ago`;
+    if (min < 1440) return `${Math.round(min / 60)} h ago`;
+    const days = Math.round(min / 1440);
+    return days === 1 ? "yesterday" : `${days} days ago`;
+  };
+  /** "▲ 18% vs yesterday" (or "▼") from two values; "" when there is nothing to compare. */
+  const change = (now, before, words) => {
+    if (!before && !now) return "";
+    if (!before) return `<small>nothing ${words}</small>`;
+    const pct = Math.round(((now - before) / before) * 100);
+    return pct === 0 ? `<small>same as ${words}</small>` : `<small class="${pct > 0 ? "ov-up" : "ov-down"}">${Math.abs(pct)}% vs ${words}</small>`;
+  };
+
   async function overview(main) {
-    const [o, apps] = await Promise.all([http().get("/admin/overview"), http().get("/admin/applications", { status: "PENDING" })]);
+    const [o, apps, d] = await Promise.all([http().get("/admin/overview"), http().get("/admin/applications", { status: "PENDING" }), http().get("/admin/dashboard")]);
     const tile = (n, label, href, tone = "") => `<a class="adm-tile ${tone}" href="${href}"><strong>${n}</strong><span>${esc(label)}</span></a>`;
-    main.innerHTML = `${head("Overview", "Shop onboarding at a glance.", `<a class="btn btn--outline btn--sm" href="#/analytics">${icon("chart")} Analytics</a>`)}
+    const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", hour: "numeric", hourCycle: "h23" }).format(new Date()));
+    const hello = `Good ${hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening"}, ${esc(admin.name.split(" ")[0])} · ${new Intl.DateTimeFormat(undefined, { timeZone: "Asia/Kolkata", weekday: "long", day: "numeric", month: "long" }).format(new Date())}`;
+
+    // Things to do: only the ones that are not zero
+    const todo = [
+      [o.orders.placed, "New orders to confirm", "#/orders?status=PLACED", "receipt", "Confirm"],
+      [o.applications.pending + o.applications.underReview, "Shop applications to review", "#/applications?status=PENDING", "store", "Review"],
+      [o.artists ? o.artists.applicationsPending : 0, "Artist applications to review", "#/artists", "users", "Review"],
+      [o.artworks ? o.artworks.PENDING_REVIEW : 0, "Artworks waiting for approval", "#/artworks?status=PENDING_REVIEW", "image", "Review"],
+      [o.paintings ? o.paintings.refundPending : 0, "Painting refunds to make", "#/paintings?status=CANCELLED", "wallet", "Open"],
+      [o.chats ? o.chats.unread : 0, "Unread chats from customers", "#/chats?status=OPEN", "mail", "Open"],
+      [o.messages ? o.messages.unread : 0, "New messages from the Contact page", "#/messages?status=NEW", "mail", "Open"],
+    ].filter(([n]) => n > 0);
+
+    const most = Math.max(1, ...d.last7.map((x) => x.value));
+    const dayName = (ymd) => new Intl.DateTimeFormat(undefined, { weekday: "short", timeZone: "UTC" }).format(new Date(ymd + "T00:00:00Z"));
+    const dayLong = (ymd) => new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(ymd + "T00:00:00Z"));
+    const week = d.last7.reduce((a, x) => ({ value: a.value + x.value, orders: a.orders + x.orders }), { value: 0, orders: 0 });
+    const conv = d.conversion.week;
+
+    main.innerHTML = `${head("Overview", hello, `<a class="btn btn--outline btn--sm" href="#/analytics">${icon("chart")} Analytics</a>`)}
+      <div class="ov-kpis">
+        <div class="ov-kpi"><b>${rupees(d.today.value)}</b><span>Sales today</span>${change(d.today.value, d.yesterday.value, "yesterday")}</div>
+        <div class="ov-kpi"><b>${d.today.orders}</b><span>Orders today</span>${change(d.today.orders, d.yesterday.orders, "yesterday")}</div>
+        <div class="ov-kpi"><b>${d.today.visitors}</b><span>Visitors today</span>${d.today.live === null ? "" : `<small class="ov-live">${d.today.live} on the site now</small>`}</div>
+        <div class="ov-kpi"><b>${conv === null ? "—" : conv + "%"}</b><span>Visits that ordered (7 days)</span>${conv === null || d.conversion.weekBefore === null ? "" : `<small class="${conv >= d.conversion.weekBefore ? "ov-up" : "ov-down"}">${Math.abs(Math.round((conv - d.conversion.weekBefore) * 10) / 10)} points vs the week before</small>`}</div>
+      </div>
+      <p class="ov-note">Sales = orders placed (not cancelled, not waiting for payment). Visitors count only people who allowed analytics.</p>
+      <div class="ov-two">
+        <section class="ov-card"><h2 class="ov-card__title">Needs your attention</h2>
+          ${todo.length ? `<ul class="ov-todo">${todo.map(([n, label, href, ic, verb]) => `<li><span class="ov-todo__icon">${icon(ic)}</span><b>${n}</b><span class="ov-todo__label">${esc(label)}</span><a href="${href}">${verb} →</a></li>`).join("")}</ul>` : `<div class="sd-empty">${icon("check")}<strong>All clear</strong><span>Nothing is waiting for you right now.</span></div>`}
+        </section>
+        <section class="ov-card"><h2 class="ov-card__title">Sales, last 7 days <a href="#/analytics">Analytics</a></h2>
+          <div class="ov-bars" role="list">${d.last7
+            .map((x) => `<div class="ov-bars__col" role="listitem" tabindex="0" aria-label="${esc(`${dayLong(x.date)}: ${rupees(x.value)}, ${x.orders} ${x.orders === 1 ? "order" : "orders"}`)}"><i style="height:${x.value ? Math.max(3, (x.value / most) * 100) : 0}%"></i><em>${esc(dayLong(x.date))} · ${rupees(x.value)} · ${x.orders} ${x.orders === 1 ? "order" : "orders"}</em></div>`)
+            .join("")}</div>
+          <div class="ov-days">${d.last7.map((x) => `<span>${esc(dayName(x.date))}</span>`).join("")}</div>
+          <p class="ov-total">This week <b>${rupees(week.value)}</b> from <b>${week.orders}</b> ${week.orders === 1 ? "order" : "orders"}${week.orders ? ` · average order <b>${rupees(week.value / week.orders)}</b>` : ""}</p>
+        </section>
+      </div>
+      <div class="ov-two">
+        <section class="ov-card"><h2 class="ov-card__title">Latest orders <a href="#/orders">All orders</a></h2>
+          ${d.latestOrders.length ? `<table class="ov-table"><thead><tr><th>Order</th><th class="ov-hide-s">Customer</th><th>Total</th><th>Status</th></tr></thead><tbody>${d.latestOrders
+            .map((x) => `<tr><td><a href="#/orders/${encodeURIComponent(x.orderNumber)}"><b>${esc(x.orderNumber)}</b></a><small>${esc(ago(x.createdAt))}</small></td><td class="ov-hide-s">${esc(x.customer || "")}</td><td>${rupees(x.total)}</td><td><span class="sd-status sd-status--${ORDER_TONE[x.status] || "pending_review"}">${esc(ORDER_LABEL[x.status] || x.status)}</span></td></tr>`)
+            .join("")}</tbody></table>` : `<div class="sd-empty">${icon("receipt")}<strong>No orders yet</strong></div>`}
+        </section>
+        <section class="ov-card" data-carts><h2 class="ov-card__title">Carts left without ordering <a href="#/analytics">All</a></h2>
+          <p class="ov-total ov-total--top"><b>${d.carts.carts}</b> ${d.carts.carts === 1 ? "cart" : "carts"} worth <b>${rupees(d.carts.value)}</b> untouched for ${d.carts.afterHours} hours or more</p>
+          ${d.carts.items.length ? `<table class="ov-table"><tbody>${d.carts.items.map(cartRow).join("")}</tbody></table>` : ""}
+        </section>
+      </div>
+      ${d.lowStock.length ? `<section class="ov-card"><h2 class="ov-card__title">Running low on stock <a href="#/products">All frames</a></h2><table class="ov-table"><tbody>${d.lowStock
+        .map((p) => `<tr><td><b>${esc(p.name)}</b>${p.shop ? ` · ${esc(p.shop)}` : ""}</td><td>${p.stock ? `${p.stock} left` : `<span class="sd-status sd-status--unpublished">Out of stock</span>`}</td></tr>`)
+        .join("")}</tbody></table></section>` : ""}
+      <h2 class="adm-subtitle">Shops</h2>
       <div class="adm-tiles">
         ${tile(o.applications.pending + o.applications.underReview, "Shop applications to review", "#/applications?status=PENDING", o.applications.pending ? "adm-tile--alert" : "")}
         ${tile(o.shops.approved, "Approved shops", "#/shops?status=APPROVED")}
         ${tile(o.shops.pending, "Pending shops", "#/shops?status=PENDING")}
         ${tile(o.shops.active, "Active shops (listed)", "#/shops?status=ACTIVE")}
         ${tile(o.shops.inactive, "Inactive shops (hidden)", "#/shops?status=INACTIVE")}
-        ${o.chats ? tile(o.chats.unread, "New chat messages from customers", "#/chats?status=OPEN", o.chats.unread ? "adm-tile--alert" : "") : ""}
-        ${o.messages ? tile(o.messages.unread, "New messages from the Contact page", "#/messages?status=NEW", o.messages.unread ? "adm-tile--alert" : "") : ""}
       </div>
       <h2 class="adm-subtitle">Orders</h2>
       <div class="adm-tiles">
@@ -176,6 +248,31 @@
       ${FrameX.adminArt ? FrameX.adminArt.overviewTiles(o) : ""}
       <h2 class="adm-subtitle">Waiting for review</h2>
       ${apps.items.length ? `<ul class="sd-list">${apps.items.slice(0, 5).map(applicationRow).join("")}</ul>` : `<div class="sd-empty">${icon("check")}<strong>No applications waiting</strong><span>New shop applications from the “Partner With FrameX” page appear here.</span></div>`}`;
+    bindReminders(main, () => overview(main));
+  }
+
+  /** A cart left without ordering, with its reminder (one per cart until it changes). */
+  const cartRow = (c) => `<tr><td><b>${esc(c.customer || "Customer")}</b><small>${c.items} ${c.items === 1 ? "item" : "items"} · left ${esc(ago(c.leftAt))}</small></td><td>${rupees(c.value)}</td><td>${
+    c.reminderSentAt ? `<small>Reminded ${esc(ago(c.reminderSentAt))}</small>` : c.remindersOff ? `<small>Turned reminders off</small>` : `<button class="btn btn--outline btn--sm" type="button" data-remind="${esc(c.cartId)}">Send reminder</button>`
+  }</td></tr>`;
+
+  /** "Send reminder" buttons inside `scope`; `again` redraws the screen after one was sent. */
+  function bindReminders(scope, again) {
+    scope.addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-remind]");
+      if (!btn) return;
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      try {
+        await http().post(`/admin/carts/${encodeURIComponent(btn.dataset.remind)}/remind`);
+        FrameX.toast.show("Reminder email sent.");
+        again();
+      } catch (error) {
+        FrameX.toast.show(error.message || "The reminder couldn't be sent.");
+        btn.disabled = false;
+        btn.textContent = "Send reminder";
+      }
+    });
   }
 
   /* ---------------------------------------------------------------- Applications */

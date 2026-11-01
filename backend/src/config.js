@@ -309,6 +309,18 @@ export const config = {
     // A cart that still holds items and was not touched for this long counts as abandoned.
     abandonedCartHours: Math.min(720, Math.max(1, int(env.ANALYTICS_ABANDONED_CART_HOURS, 24)))
   },
+  // Cart reminder emails (owner, 2026-10-31): one email to a customer whose cart was left untouched for "hours",
+  // sent only between fromHour and toHour (India time), at most dailyLimit a day so the free email quota stays
+  // free for login codes and order emails; "coupon" (a coupon code, "" = none) is offered in the email.
+  // Admin -> Settings can change all of these while the server runs.
+  cartReminders: {
+    enabled: bool(env.CART_REMINDERS, true),
+    hours: Math.min(168, Math.max(1, int(env.CART_REMINDER_HOURS, 24))),
+    coupon: String(env.CART_REMINDER_COUPON ?? "XUSE10").trim().toUpperCase(),
+    dailyLimit: Math.min(290, Math.max(0, int(env.CART_REMINDER_DAILY_LIMIT, 100))),
+    fromHour: 9,
+    toHour: 21
+  },
 
   tokens: { passwordResetMinutes: 60, accountSetupHours: 72 },
   rateLimit: { enabled: bool(env.RATE_LIMIT_ENABLED, true) }

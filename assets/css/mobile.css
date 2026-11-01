@@ -910,7 +910,7 @@
   }
 }
 
-/* Home (owner, 2026-10-23): under the hero, "Start here" with the three ways in as picture tiles
+/* Home (owner, 2026-10-23): under the hero, "Start here"; since 2026-10-29 with the category tiles in it
    (the 1-2-3 steps that were in the hero on phones were removed by the owner, 2026-10-25) */
 @media (max-width: 639px) {
   .how {
@@ -921,54 +921,23 @@
     font-size: 1rem;
   }
 
-  .how__title-wide,
+  /* the category tiles below carry their own heading, so the phone shows no "Start here" above them */
+  .how__title,
   .how__lead,
   .how__steps {
     display: none;
   }
 
-  .how__title-phone {
-    display: inline;
+  .how__cats {
+    margin-top: 0;
   }
 
-  .how__ways {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 8px;
-    margin-top: 10px;
+  .how__cats-head {
+    margin-bottom: 10px;
   }
 
-  .how__way {
-    flex-direction: column;
-    gap: 6px;
-    padding: 0;
-    border: 0;
-    background: none;
-    text-align: center;
-  }
-
-  .how__way img {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 1;
-    border: 2px solid var(--line);
-  }
-
-  .how__way--main {
-    background: none;
-  }
-
-  .how__way--main img {
-    border-color: var(--amber-strong);
-  }
-
-  .how__way strong {
-    font-size: 0.78rem;
-    line-height: 1.25;
-  }
-
-  .how__way small,
-  .how__way .icon {
-    display: none;
+  .how__cats-title {
+    font-size: 0.95rem;
   }
 }
 
@@ -1333,4 +1302,146 @@
 @media (max-width: 639px) {
   .aa-time { grid-template-columns: 1fr; }
   .aa-tabs a { flex: 1; text-align: center; }
+}
+
+/* Phones: the home page's "Shop by category" as one swipe row of small tiles (owner, 2026-10-29: "chota chota"). */
+@media (max-width: 639px) {
+  .hm-cats {
+    display: flex;
+    gap: 10px;
+    margin-inline: calc(-1 * var(--gutter));
+    padding-inline: var(--gutter);
+    overflow-x: auto;
+    scroll-padding-inline: var(--gutter);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .hm-cats::-webkit-scrollbar {
+    display: none;
+  }
+
+  .how__cats-head .btn--sm {
+    min-height: 34px;
+    padding-inline: 12px;
+    font-size: 0.76rem;
+  }
+
+  .hm-cat {
+    flex: 0 0 84px;
+    scroll-snap-align: start;
+  }
+
+  .hm-cat img {
+    border-radius: 16px;
+  }
+
+  .hm-cat span {
+    margin-top: 6px;
+    font-size: 0.72rem;
+    line-height: 1.25;
+  }
+}
+
+/* Phones: the six code boxes of the login code a little closer together (owner, 2026-10-31) */
+@media (max-width: 639px) {
+  .otp-boxes__row {
+    gap: 6px;
+  }
+
+  .otp-boxes__digit {
+    border-radius: 10px;
+    font-size: 1.3rem;
+  }
+}
+
+/* Phones: the login box is a sheet that comes up from the bottom (owner, 2026-10-31) */
+@media (max-width: 639px) {
+  .auth-gate {
+    padding: 0;
+    place-items: end stretch;
+  }
+
+  .auth-gate__panel {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 22px 22px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .auth-gate__panel::before {
+    content: "";
+    display: block;
+    width: 44px;
+    height: 5px;
+    margin: 10px auto 0;
+    border-radius: 5px;
+    background: var(--line);
+  }
+
+  .auth-gate__notice {
+    border-radius: 0;
+  }
+
+  .auth-gate__body .auth-card {
+    padding: 14px 18px 22px;
+  }
+}
+
+/* Phones: the admin Overview (owner, 2026-10-31) */
+@media (max-width: 639px) {
+  .ov-kpis {
+    gap: 10px;
+  }
+
+  .ov-kpi {
+    padding: 12px 14px;
+  }
+
+  .ov-kpi b {
+    font-size: 1.3rem;
+  }
+
+  .ov-card {
+    padding: 14px;
+  }
+
+  .ov-bars,
+  .ov-days {
+    gap: 6px;
+  }
+
+  .ov-hide-s {
+    display: none;
+  }
+
+  .ov-todo li {
+    gap: 8px;
+    padding: 8px 10px;
+  }
+}
+
+/* Phones: the analytics funnel and the day x hour grid (owner, 2026-10-31) */
+@media (max-width: 639px) {
+  .an-fun {
+    padding: 14px;
+  }
+
+  .an-fun__step {
+    grid-template-columns: 92px minmax(0, 1fr) 70px;
+    gap: 8px;
+  }
+
+  .an-fun__drop {
+    margin-left: 100px;
+  }
+
+  .an-heat {
+    grid-template-columns: 30px repeat(12, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .an-heat i {
+    height: 18px;
+  }
 }

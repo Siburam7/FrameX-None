@@ -9,6 +9,22 @@
 - **"Light and clean" with one colour, deep blue.** White and soft-blue sections, dark navy text, orange only on
   buttons. No dark or multi-colour sections. Same palette on every page (per-page colours were removed on the
   owner's request, 2026-10-08).
+- Admin Overview (owner, 2026-10-31): 4 white figure cards (big number, small label, green ▲ / red ▼ change), then two
+  white cards side by side ("Needs your attention" rows on soft blue with an orange count; "Sales, last 7 days" as
+  orange bars, a dark tooltip on hover), latest orders table with status pills, carts left with "Send reminder", low
+  stock; phones: one column. Analytics adds an orange funnel and a one-hue orange heatmap (light = few orders).
+- Login box (owner, 2026-10-31): no login page; a white box (440 px, 24 px corners) over the page, a sheet from the
+  bottom on phones (handle bar, 22 px top corners). Three orange step bars on top (email, code, name), a round close
+  button. Step 1 "Log in or sign up": Google, "or use your email", one Email box, orange "Send me a code", a small
+  underlined "Log in using password", the Terms line. Step 2 "Enter the code": soft-blue box with the masked address,
+  six square boxes (orange ring on the active one). Step 3 "Welcome to FrameX!": the name filled in from the email
+  with a small green "from email" tag. Forgot / reset pages stay pages, at least 100vh tall.
+- Home hero frames (owner, 2026-11-01): real mouldings (black lacquer, oak, gold leaf pictures as border-image), a cream
+  mat with a white bevel, a soft glass sheen; they still drop onto their nails and swing.
+- Home ticker under the hero: words show only across the content width and fade at its edges on laptop and up (owner, 2026-10-29); plain on phones.
+- Home "Shop by category" (owner, 2026-10-29): 6 square picture tiles with the name under each, inside the
+  "Your photo, framed by a local shop" part under the 1-2-3 steps (in place of the three boxes); phones: one swipe
+  row of small 84 px tiles right under the hero strip (owner: "chota chota").
 - Home page below the hero: **"shopping-site style"** (Amazon / Flipkart-like): soft page, white shelves, category
   circles, banner tiles, scrolling product rows.
 - **Hero: the carousel hero** (`assets/js/ui/hero.js`). The home hero's soft colour changes per slide (`tint` in

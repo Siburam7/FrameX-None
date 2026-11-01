@@ -41,6 +41,10 @@
 
 ## 4. Design
 
+- **The whole design is FIXED (owner, 2026-10-29: "this all design is fix or kuch change nahi hoga bas upgrade
+  hoga feature").** From now on only features are added or improved. Do not redesign, restyle or move existing
+  parts, and do not suggest design changes. A new feature's screens use the existing look (same colours, fonts,
+  cards, buttons, spacing). Only the owner can reopen a design change, by asking for it in so many words.
 - Preserve the existing colours, fonts, logo, layout and hero unless the owner asks for a change (`design.md`).
 - **Desktop / laptop design is final.** Phone-only changes go in `assets/css/mobile.css` inside
   `@media (max-width: 639px)`. Compare desktop before / after.

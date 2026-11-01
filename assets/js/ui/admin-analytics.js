@@ -160,6 +160,80 @@
   const period = (r) =>
     `<p class="an-period" data-period>${icon("clock")}<span>${r.from === r.to ? esc(longDay(r.from)) : `${esc(longDay(r.from))} to ${esc(longDay(r.to))}`} · ${r.days} ${r.days === 1 ? "day" : "days"} · days are counted in ${zone(r.utcOffsetMinutes)}</span></p>`;
 
+  /* ---------------------------------------------------------------- Growth (owner, 2026-10-31) */
+
+  const HEAT = ["var(--surface-soft)", "#ffd3bd", "#ffad85", "#ff8550", "#e2541c", "#a8380d"]; // one hue, light -> dark: more orders
+  const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const ago = (iso) => {
+    const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (min < 60) return `${Math.max(1, min)} min ago`;
+    if (min < 1440) return `${Math.round(min / 60)} h ago`;
+    const days = Math.round(min / 1440);
+    return days === 1 ? "yesterday" : `${days} days ago`;
+  };
+
+  /** Visits -> opened a frame -> started checkout -> ordered, with how many stopped between two steps. */
+  function funnelView(f) {
+    const top = Math.max(1, ...f.steps.map((x) => x.n));
+    const rows = f.steps
+      .map((step, i) => {
+        const prev = i ? f.steps[i - 1].n : 0;
+        const drop = i && prev && step.n <= prev ? `<p class="an-fun__drop">${Math.round(((prev - step.n) / prev) * 100)}% stopped here</p>` : "";
+        const share = i && prev && step.n <= prev ? `<small>${Math.round((step.n / prev) * 100)}% of the step before</small>` : "";
+        return `${drop}<div class="an-fun__step"><span>${esc(step.label)}</span><div class="an-fun__track"><i style="width:${Math.max(step.n ? 1.5 : 0, Math.min(100, (step.n / top) * 100))}%"></i></div><strong>${num(step.n)}${share}</strong></div>`;
+      })
+      .join("");
+    return `<div class="co-card an-fun">${rows}</div>${note(esc(f.note))}`;
+  }
+
+  /** Orders by day of the week and two-hour slot, darker = more orders. */
+  function heatView(grid) {
+    const max = Math.max(0, ...grid.flat());
+    if (!max) return `<div class="an-rank an-rank--empty">No orders in this period</div>`;
+    const step = (v) => (v ? Math.min(5, Math.ceil((v / max) * 5)) : 0);
+    const cells = grid
+      .map((row, d) => `<span>${DAYS[d]}</span>${row.map((v, h) => `<i style="background:${HEAT[step(v)]}" title="${DAYS[d]}, ${h * 2}:00 to ${h * 2 + 2}:00: ${v} ${v === 1 ? "order" : "orders"}"></i>`).join("")}`)
+      .join("");
+    let best = [0, 0];
+    grid.forEach((row, d) => row.forEach((v, h) => v > grid[best[0]][best[1]] && (best = [d, h])));
+    return `<div class="an-heat" role="img" aria-label="Orders by day and time; the most on ${DAYS[best[0]]} ${best[1] * 2}:00 to ${best[1] * 2 + 2}:00"><span></span>${Array.from({ length: 12 }, (_, h) => `<span class="an-heat__h">${h * 2}</span>`).join("")}${cells}</div>
+      <div class="an-heat__legend">Fewer ${HEAT.map((c) => `<i style="background:${c}"></i>`).join("")} More orders</div>
+      <p class="an-heat__best">Most orders: <strong>${DAYS[best[0]]}, ${best[1] * 2}:00 to ${best[1] * 2 + 2}:00</strong> (India time).</p>`;
+  }
+
+  function growth(d) {
+    const c = d.customers;
+    const r = d.reminders;
+    const set = r.settings;
+    const remind = (x) => (x.reminderSentAt ? `<small>Reminded ${esc(ago(x.reminderSentAt))}</small>` : x.remindersOff ? "<small>Turned reminders off</small>" : `<button class="btn btn--outline btn--sm" type="button" data-remind="${esc(x.cartId)}">Send reminder</button>`);
+    return `${section("How visitors turn into orders", funnelView(d.funnel), "Where people stop on the way to an order.")}
+      ${section(
+        "Customers",
+        `${cards([
+          card("average-order", "Average order", price(c.averageOrder), { sub: `${num(c.orders)} ${c.orders === 1 ? "order" : "orders"} placed` }),
+          card("again", "Ordered more than once", num(c.orderedMoreThanOnce), { sub: c.customers ? `${Math.round((c.orderedMoreThanOnce / c.customers) * 100)}% of ${num(c.customers)} customers` : "" }),
+          card("new-returning", "New / returning", `${num(c.newCustomers)} / ${num(c.returning)}`, { sub: "first order in this period / had ordered before" }),
+        ])}
+        ${two(
+          panel("Top cities", rank("cities", c.topCities, { name: (x) => x.city, value: (x) => x.orders, show: (v) => `${num(v)} ${v === 1 ? "order" : "orders"}`, sub: (x) => price(x.value), none: "No orders in this period" })),
+          panel("When people order", heatView(c.byDayAndHour), "Darker = more orders. A good time for offers."),
+        )}`,
+      )}
+      ${section(
+        "Carts left without ordering",
+        `${cards([
+          card("left", "Carts left now", num(r.left.carts), { sub: `${price(r.left.value)} untouched for ${r.left.afterHours} hours or more` }),
+          card("sent", "Reminder emails sent", num(r.sent), { sub: "in this period" }),
+          card("back", "Came back and ordered", num(r.cameBack), { sub: `${price(r.cameBackValue)} within 7 days of the email`, tone: r.cameBack ? "an-card--strong" : "" }),
+        ])}
+        ${note(`Automatic reminders: <strong>${set.enabled ? "on" : "off"}</strong> · one email ${set.hours} hours after a cart is left · ${set.coupon ? `coupon <strong>${esc(set.coupon)}</strong>` : "no coupon"} · ${set.fromHour} am to ${set.toHour - 12} pm · up to ${set.dailyLimit} a day. Change these in <a href="#/settings">Settings</a>.`)}
+        ${two(
+          panel("Left now", table("left", ["Customer", "Items", "Value", "Reminder"], r.left.items.map((x) => [`<strong>${esc(x.customer || "Customer")}</strong><br><small>left ${esc(ago(x.leftAt))}</small>`, num(x.items), price(x.value), remind(x)]), "No carts left right now")),
+          panel("Reminders sent", table("sent", ["Customer", "Sent", "Value", "Then"], r.recent.map((x) => [esc(x.customer), esc(ago(x.sentAt)) + (x.how === "ADMIN" ? " (by an admin)" : ""), price(x.value), x.ordered ? '<span class="sd-status sd-status--published">Ordered</span>' : "<small>Not yet</small>"]), "No reminders in this period")),
+        )}`,
+      )}`;
+  }
+
   /* ---------------------------------------------------------------- Overview */
 
   function overview(d, s) {
@@ -167,6 +241,7 @@
     const v = d.visitors;
     const testNote = d.test.orders || d.test.paid ? note(`<strong>Test orders are not counted.</strong> ${num(d.test.orders)} test ${d.test.orders === 1 ? "order" : "orders"} in this period (${price(d.test.paid)} paid with the payment gateway in TEST mode, or marked as a test by an admin). See <a href="${link(s, { tab: "sales" })}">Sales &amp; payments</a>.`) : "";
     return `${period(d.range)}
+      ${d.funnel ? growth(d) : ""}
       ${section(
         "Sales",
         `${cards([
@@ -428,6 +503,22 @@
       return FrameX.templates.showError(out, "This report couldn't be loaded.", () => show(main, parts, params, { head }));
     }
     out.innerHTML = DRAW[s.tab](data, s);
+    // "Send reminder" (Carts left without ordering): one email per cart until the cart changes
+    out.addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-remind]");
+      if (!btn) return;
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      try {
+        await http().post(`/admin/carts/${encodeURIComponent(btn.dataset.remind)}/remind`);
+        FrameX.toast.show("Reminder email sent.");
+        btn.replaceWith(Object.assign(document.createElement("small"), { textContent: "Reminded just now" }));
+      } catch (error) {
+        FrameX.toast.show(error.message || "The reminder couldn't be sent.");
+        btn.disabled = false;
+        btn.textContent = "Send reminder";
+      }
+    });
     // "On the site now" is asked again every half minute while this report is open.
     if (s.tab === "overview" && $("[data-live]", out))
       liveTimer = setInterval(async () => {

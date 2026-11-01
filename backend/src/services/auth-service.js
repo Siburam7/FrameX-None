@@ -24,7 +24,7 @@ const GENERIC_LOGIN_ERROR = "Those details don't match an account. Check them an
 export async function publicUser(userId) {
   const { rows } = await db.query(
     `SELECT u.id, u.name, u.email, u.phone, u.role, u.status, u.created_at, u.last_login_at,
-            (u.password_hash IS NOT NULL) AS has_password, (u.google_sub IS NOT NULL) AS via_google, (u.facebook_id IS NOT NULL) AS via_facebook,
+            (u.password_hash IS NOT NULL) AS has_password, NOT coalesce(u.cart_reminders_off, false) AS cart_reminders, (u.google_sub IS NOT NULL) AS via_google, (u.facebook_id IS NOT NULL) AS via_facebook,
             sh.shop_code, sh.name AS shop_name, sh.city, sh.state, sh.approval_status, sh.active_status,
             ar.artist_code, ar.username AS artist_username, ar.name AS artist_name, ar.status AS artist_status
        FROM users u LEFT JOIN shops sh ON sh.id = u.shop_id LEFT JOIN artists ar ON ar.id = u.artist_id WHERE u.id = $1`,
@@ -43,6 +43,7 @@ export async function publicUser(userId) {
     lastLoginAt: u.last_login_at,
     // A customer who came through Google / Facebook may have no password (the account page offers to set one)
     hasPassword: u.has_password,
+    cartReminders: u.cart_reminders, // cart reminder emails wanted (on unless the customer turned them off)
     linked: { google: u.via_google, facebook: u.via_facebook },
     shop: u.role === "SHOP" ? { shopCode: u.shop_code, name: u.shop_name, city: u.city, state: u.state, status: shopStatus(u) } : null,
     artist: u.role === "ARTIST" ? { artistCode: u.artist_code, username: u.artist_username, name: u.artist_name, status: u.artist_status } : null
@@ -171,6 +172,114 @@ export async function socialLogin(provider, proof, { ip = null } = {}) {
   return result;
 }
 
+/* ---------------------------------------------------------------- Log in / sign up with a code by email (owner, 2026-10-31)
+   1. sendLoginCode(email)            a 6-digit code goes to that address, also when it has no account yet
+   2. verifyLoginCode(email, code)    a customer account: { userId } (logged in); no account: { signupToken }
+   3. completeCodeSignup(token, ...)  a correct code on a new address became a token; with a name it is a new
+                                      customer account, logged in (owner's choice "A": no dead end on the login page)
+   Like Google, only CUSTOMER accounts log in this way. A shop, artist or staff address (or a disabled account) is
+   sent an email that says to log in with the password instead, so the answer here never tells who has an account. */
+
+const loginCodeHash = (email, code) => crypto.createHmac("sha256", config.authSecret).update(`login-code:${email}:${code}`).digest("hex");
+const SIGNUP_TICKET_MINUTES = 30;
+const signupSig = (payload) => crypto.createHmac("sha256", config.authSecret).update("code-signup:" + payload).digest("base64url");
+function makeSignupTicket(email) {
+  const payload = Buffer.from(`${email}|${Date.now() + SIGNUP_TICKET_MINUTES * 60_000}`).toString("base64url");
+  return `${payload}.${signupSig(payload)}`;
+}
+function emailFromSignupTicket(ticket) {
+  const expired = () => errors.badRequest("This sign-up has expired. Please ask for a new code.", "SIGNUP_EXPIRED");
+  const [payload, sig] = String(ticket || "").split(".");
+  if (!payload || !sig || !sameHash(sig, signupSig(payload))) throw expired();
+  const parts = Buffer.from(payload, "base64url").toString().split("|");
+  if (!(Number(parts[1]) > Date.now())) throw expired();
+  return parts[0];
+}
+const accountByEmail = async (q, email) => (await q.query("SELECT * FROM users WHERE lower(email) = $1 AND deleted_at IS NULL", [email])).rows[0];
+
+/** Step 1. Same answer whether or not the address has an account. */
+export async function sendLoginCode(rawEmail) {
+  const email = normalizeEmail(rawEmail);
+  const mail = emailStatus();
+  if (mail.mode === "none") throw new HttpError(503, "EMAIL_NOT_CONFIGURED", "Login codes can't be sent right now. Please log in with your password or with Google.");
+
+  // Resend wait and hourly cap, per address
+  const recent = (await db.query("SELECT created_at FROM login_codes WHERE email = $1 AND created_at > $2 ORDER BY created_at DESC", [email, new Date(Date.now() - 3600_000)])).rows;
+  const wait = recent.length ? Math.ceil((new Date(recent[0].created_at).getTime() + config.otp.resendSeconds * 1000 - Date.now()) / 1000) : 0;
+  if (wait > 0) throw new HttpError(429, "OTP_COOLDOWN", `Please wait ${wait} seconds before asking for another code.`, { retryAfterSeconds: wait });
+  if (recent.length >= config.otp.maxPerHour) throw new HttpError(429, "OTP_LIMIT", "Too many codes requested. Please try again in an hour.", { retryAfterSeconds: 3600 });
+
+  const user = await accountByEmail(db, email);
+  const refused = user && (user.role !== "CUSTOMER" || user.status !== "ACTIVE");
+  const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
+  const codeId = newId();
+  await db.tx(async (q) => {
+    await q.query("DELETE FROM login_codes WHERE created_at < now() - interval '1 day'"); // old codes are of no use to anyone
+    await q.query("UPDATE login_codes SET used_at = now() WHERE email = $1 AND used_at IS NULL", [email]); // a new code replaces an earlier one
+    // A refused address still gets a row (never usable: its hash is not of a code), so the wait and the cap apply to it too
+    await q.query("INSERT INTO login_codes (id, email, code_hash, expires_at, used_at) VALUES ($1, $2, $3, $4, $5)", [codeId, email, refused ? "refused" : loginCodeHash(email, code), new Date(Date.now() + config.otp.minutes * 60_000), refused ? new Date() : null]);
+  });
+  const result = await sendMail({ to: email, ...(refused ? messages.loginCodeRefused(user.status !== "ACTIVE") : messages.loginCode(code, config.otp.minutes)) });
+  if (!result.delivered && result.reason !== "dev") {
+    await db.query("DELETE FROM login_codes WHERE id = $1", [codeId]); // not sent: it must not count, nor stay valid
+    if (result.reason === "not_configured") throw new HttpError(503, "EMAIL_NOT_CONFIGURED", "Login codes can't be sent right now. Please log in with your password or with Google.");
+    throw new HttpError(502, "EMAIL_SEND_FAILED", "We couldn't send the email right now. Please try again in a few minutes.");
+  }
+  return { ok: true, masked: maskEmail(email), expiresInMinutes: config.otp.minutes, resendAfterSeconds: config.otp.resendSeconds, devMode: result.reason === "dev" };
+}
+
+/** Step 2. Wrong tries are counted (as for the reset codes); a correct code is used up. */
+export async function verifyLoginCode(rawEmail, code, { ip = null } = {}) {
+  const email = normalizeEmail(rawEmail);
+  const invalid = () => errors.badRequest("That code is incorrect or has expired. Check it, or ask for a new code.", "OTP_INVALID");
+  const locked = () => errors.badRequest("Too many wrong attempts. Please ask for a new code.", "OTP_LOCKED");
+  const row = (await db.query("SELECT id, code_hash FROM login_codes WHERE email = $1 AND used_at IS NULL AND expires_at > now() ORDER BY created_at DESC LIMIT 1", [email])).rows[0];
+  if (!row) throw invalid();
+  // Count the attempt first, in one statement, so parallel guesses can't go past the limit
+  const counted = await db.query("UPDATE login_codes SET attempts = attempts + 1 WHERE id = $1 AND attempts < $2 RETURNING attempts", [row.id, config.otp.maxAttempts]);
+  if (!counted.rows.length) {
+    await db.query("UPDATE login_codes SET used_at = now() WHERE id = $1", [row.id]);
+    throw locked();
+  }
+  if (!sameHash(loginCodeHash(email, code), row.code_hash)) {
+    const left = config.otp.maxAttempts - counted.rows[0].attempts;
+    if (left <= 0) {
+      await db.query("UPDATE login_codes SET used_at = now() WHERE id = $1", [row.id]);
+      throw locked();
+    }
+    throw errors.badRequest(`That code isn't right. ${left} ${left === 1 ? "try" : "tries"} left.`, "OTP_INVALID");
+  }
+  const used = await db.query("UPDATE login_codes SET used_at = now() WHERE id = $1 AND used_at IS NULL RETURNING id", [row.id]);
+  if (!used.rows.length) throw invalid();
+
+  const user = await accountByEmail(db, email);
+  if (!user) return { signupToken: makeSignupTicket(email), masked: maskEmail(email) };
+  // The person proved the address is theirs, so the account's state can be said now
+  if (user.role !== "CUSTOMER") throw errors.forbidden("This email belongs to a FrameX shop, artist or staff account. Please log in with your password.", "USE_PASSWORD");
+  if (user.status !== "ACTIVE") throw errors.forbidden("This account has been disabled. Please contact FrameX.", "ACCOUNT_DISABLED");
+  await db.query("UPDATE users SET last_login_at = now() WHERE id = $1", [user.id]);
+  await recordAuthEvent({ kind: "LOGIN", userId: user.id, role: user.role, accountType: "customer", ip });
+  return { userId: user.id };
+}
+
+/** Step 3 (a new address only). No password: one can be added later on the account page. */
+export async function completeCodeSignup(ticket, { name, phone = null }, { ip = null } = {}) {
+  const email = emailFromSignupTicket(ticket);
+  const userId = await db.tx(async (q) => {
+    if (await accountByEmail(q, email)) throw errors.conflict("An account with this email already exists. Please log in.", null, "ACCOUNT_EXISTS");
+    if (phone && (await q.query("SELECT 1 FROM users WHERE phone = $1", [phone])).rows.length) throw errors.conflict("That phone number is used by another account.", { phone: "That phone number is used by another account." });
+    const id = newId();
+    await q.query(
+      `INSERT INTO users (id, name, email, phone, password_hash, role, status, last_login_at)
+       VALUES ($1, $2, $3, $4, NULL, 'CUSTOMER', 'ACTIVE', now())`,
+      [id, name, email, phone || null]
+    );
+    return id;
+  });
+  await recordAuthEvent({ kind: "LOGIN", userId, role: "CUSTOMER", accountType: "customer", ip });
+  return userId;
+}
+
 /** A customer without a password (came through Google / Facebook) sets one, to log in with email too. */
 export async function setFirstPassword(userId, password) {
   const { rowCount } = await db.query("UPDATE users SET password_hash = $1, password_changed_at = now(), updated_at = now() WHERE id = $2 AND password_hash IS NULL", [await hashPassword(password), userId]);
@@ -206,7 +315,7 @@ export const tokenUrl = (token) => `${linkBase()}/reset-password.html#token=${to
 const otpHash = (userId, code) => crypto.createHmac("sha256", config.authSecret).update(`${userId}:${code}`).digest("hex");
 const sameHash = (a, b) => a.length === b.length && crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
 
-/** "siburam@gmail.com" -> "s*****@gmail.com" */
+/** "someone@gmail.com" -> "s*****@gmail.com" */
 export const maskEmail = (email) => {
   const [local, domain] = String(email).split("@");
   return `${local.slice(0, 1)}${"*".repeat(Math.max(3, Math.min(8, local.length - 1)))}@${domain}`;

@@ -15,6 +15,7 @@ import { activeCoupons } from "../services/coupon-service.js";
 import { publicStatus as publicCare } from "../services/care-service.js";
 import { socialStatus } from "../lib/social-login.js";
 import { publicList as publicPromotions } from "../services/promotion-service.js";
+import { unsubscribe as stopCartReminders } from "../services/cart-reminder-service.js";
 
 const router = Router();
 
@@ -48,6 +49,12 @@ router.get("/health/client", (req, res) => {
 
 // Settings the website needs (nothing secret).
 // The coupons that can be used now (code, what it gives, the minimum order): for the checkout page and the home page.
+// "Don't send me cart reminders" from the email (no login: the link carries a signed token)
+router.post("/reminders/unsubscribe", rateLimit("reminders-off", { windowMs: 15 * 60_000, max: 30 }), async (req, res) => {
+  const { token } = validate(req.body, { token: v.string({ min: 10, max: 300, label: "Link" }) });
+  res.json(await stopCartReminders(token));
+});
+
 router.get("/coupons", async (req, res) => {
   res.json({ items: await activeCoupons() });
 });

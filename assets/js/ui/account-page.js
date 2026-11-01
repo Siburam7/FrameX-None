@@ -88,6 +88,11 @@
         <button class="btn btn--outline btn--sm" type="button" data-news-read hidden>Mark all as read</button>
       </section>
 
+      ${user.role === "CUSTOMER" ? `<section class="account-card" aria-labelledby="acc-mails">
+        <h2 id="acc-mails">${icon("mail")} Emails from FrameX</h2>
+        <label class="acc-switch"><input type="checkbox" data-cart-reminders${user.cartReminders === false ? "" : " checked"}><span><strong>Cart reminders</strong>One email when you leave something in your cart for a day, sometimes with a coupon.</span></label>
+      </section>` : ""}
+
       <section class="account-card" aria-labelledby="acc-orders">
         <h2 id="acc-orders">${icon("receipt")} Your orders</h2>
         <p class="account-card__lead">See what you ordered, follow its status, pay for an order that is waiting, or cancel one.</p>
@@ -148,6 +153,17 @@
     </div>`;
 
     loadNews(root);
+    const reminders = $("[data-cart-reminders]", root);
+    if (reminders)
+      reminders.addEventListener("change", async () => {
+        try {
+          await auth().setCartReminders(reminders.checked);
+          FrameX.toast.show(reminders.checked ? "Cart reminder emails are on." : "Cart reminder emails are off.");
+        } catch (error) {
+          reminders.checked = !reminders.checked;
+          FrameX.toast.show(error.message || "That didn't work. Please try again.");
+        }
+      });
     // Appearance: saved in this browser and shown at once
     root.querySelectorAll('input[name="theme"]').forEach((input) =>
       input.addEventListener("change", () => {

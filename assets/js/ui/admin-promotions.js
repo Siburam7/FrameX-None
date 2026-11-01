@@ -119,6 +119,8 @@
           <p class="pp-muted" data-prev-note></p>
         </div>
       </div>`;
+    // opened from far down the list: start at the top of the form, not where the list was scrolled to
+    window.scrollTo(0, 0);
 
     const form = $("#promo-form", main);
     const chosen = { laptop: null, phone: null };

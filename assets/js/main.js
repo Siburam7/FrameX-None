@@ -64,6 +64,22 @@
     search: () => call("searchPage"),
   };
 
+  /** "Don't send me cart reminders" in a reminder email opens the home page with ?reminders=off&t=…: no login needed. */
+  async function stopCartReminders() {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get("reminders") !== "off" || !q.get("t") || !FrameX.http || !FrameX.http.enabled()) return;
+    const token = q.get("t");
+    q.delete("reminders");
+    q.delete("t");
+    history.replaceState(history.state, "", window.location.pathname + (q.toString() ? "?" + q : "") + window.location.hash);
+    try {
+      await FrameX.http.post("/reminders/unsubscribe", { token });
+      FrameX.toast.show("Done: you won't get cart reminder emails any more. You can turn them on again in your account.");
+    } catch (error) {
+      FrameX.toast.show("That link didn't work. You can turn cart reminders off on your account page.");
+    }
+  }
+
   async function start() {
     FrameX.chrome.render();
     FrameX.overlay.init();
@@ -78,6 +94,7 @@
     if (FrameX.helpChat) FrameX.helpChat.init();
     // Promotion strips (home, shop, product, Home Decor) from Admin -> Promotions; a strip whose offer is off goes
     if (FrameX.promotions) FrameX.promotions.init();
+    stopCartReminders();
     try {
       await (PAGES[document.body.dataset.page] || PAGES.about)();
     } catch (error) {

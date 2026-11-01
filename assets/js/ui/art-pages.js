@@ -237,9 +237,11 @@
     const ref = qs().param("artist") || qs().param("id") || "";
     let data;
     try {
+      // without a name in the link "/artists/" would answer with the whole list: show "not found" instead
+      if (!ref) throw new Error("no artist in the link");
       data = await http().get(`/artists/${encodeURIComponent(ref)}`);
     } catch (error) {
-      root.innerHTML = `<div class="not-found">${icon("users")}<h1 class="section-title">We couldn't find that artist</h1><p class="section-lead">The profile may have been removed, or the link is incomplete.</p><a class="btn btn--dark" href="art.html">See all artists</a></div>`;
+      root.innerHTML = `<div class="not-found">${icon("users")}<h1 class="section-title">We couldn't find that artist</h1><p class="section-lead">The profile may have been removed, or the link is incomplete.</p><a class="btn btn--dark" href="art.html?view=artists">See all artists</a></div>`;
       return;
     }
     const a = data.artist;
@@ -488,7 +490,10 @@
     if (!http().enabled()) return offline(root);
     let data;
     try {
-      data = await http().get(`/artworks/${encodeURIComponent(qs().param("id") || qs().param("slug") || "")}`);
+      const ref = qs().param("id") || qs().param("slug") || "";
+      // without an id in the link "/artworks/" would answer with the whole list: show "not found" instead
+      if (!ref) throw new Error("no artwork in the link");
+      data = await http().get(`/artworks/${encodeURIComponent(ref)}`);
     } catch (error) {
       root.innerHTML = `<div class="not-found">${icon("image")}<h1 class="section-title">We couldn't find that artwork</h1><p class="section-lead">It may have been sold or withdrawn by the artist.</p><a class="btn btn--dark" href="art.html?view=artworks">See all artworks</a></div>`;
       return;

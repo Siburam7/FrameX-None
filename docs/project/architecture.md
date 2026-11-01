@@ -73,7 +73,7 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   are audited like an admin's.
 - `src/services/` — business logic (cart, checkout, orders, payments, payouts, uploads, analytics, settings…).
 - `src/db/` — `index.js` (PostgreSQL via `pg` when `DATABASE_URL` is set, else embedded PGlite in `backend/.data`),
-  `migrations/001…023` (applied automatically at start, never reset; 013 XUSE10 limits, 014 `users.deleted_at`, 015 `saved_designs`, 016 product approval on, 017 `shops.featured` / `featured_until`, 018 help chat `support_threads` + `support_messages`, one open conversation per customer, 019 CARE role + `users.care_available`, live columns on `support_threads`, SYSTEM messages and `author_name`, 020 HEIC / AVIF:
+  `migrations/001…025` (applied automatically at start, never reset; 013 XUSE10 limits, 014 `users.deleted_at`, 015 `saved_designs`, 016 product approval on, 017 `shops.featured` / `featured_until`, 018 help chat `support_threads` + `support_messages`, one open conversation per customer, 019 CARE role + `users.care_available`, live columns on `support_threads`, SYSTEM messages and `author_name`, 020 HEIC / AVIF:
   `uploads.print_key` + `print_bytes` (the JPEG copy, stored as `<key>-print`), formats heic and avif; 021 `reviews.photo_view_key` (the medium copy of a review photo, `<key>-thumb`); 022 `users.google_sub` + `users.facebook_id` (social login); 023 `promotions` (home banners + promotion strips, Admin → Promotions) — 022-023 local, not deployed), `backup.js`, `ssl.js` (local, not deployed).
 - `src/payments/` — one payment system, gateway adapters `razorpay.js`, `cashfree.js`.
 - `src/lib/` — security (CORS, CSRF, cookies), storage (disk or bucket), sealed (AES-256-GCM for payout details),
@@ -86,7 +86,8 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
 
 ## 4. Data
 
-- 42 tables + `schema_migrations` (018 added 2); sequences for Shop IDs, order numbers, artist codes, painting requests, payouts.
+- 44 tables + `schema_migrations` (018 added 2; 024 `login_codes`: email login codes, kept by address, only a hash; 025
+  `cart_reminders` + `carts.reminded_at` + `users.cart_reminders_off`); sequences for Shop IDs, order numbers, artist codes, painting requests, payouts.
 - Tables refer to each other in circles (users ↔ shops ↔ shop applications, users ↔ artists).
 - Prices, totals and payment state are computed and stored by the server only.
 
@@ -95,6 +96,13 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
 - Session token is random; only its HMAC is stored. httpOnly + Secure + SameSite=Lax cookie on `/api`.
 - Live site and API are different sites, so today the live site uses **bearer mode** (token in `localStorage`,
   `AUTH_ALLOW_BEARER=true`). Plan: API at `api.shopframex.in` → cookie mode automatically (code ready locally).
+- Cart reminder emails (2026-10-31): server.js runs cart-reminder-service runDue() every 10 minutes (waits in quiet times
+  like the other jobs); one email per cart state, 9 am to 9 pm India time, CART_REMINDERS / CART_REMINDER_HOURS /
+  CART_REMINDER_COUPON / CART_REMINDER_DAILY_LIMIT, all changeable in Admin -> Settings. Unsubscribe links carry an
+  HMAC of the user id (AUTH_SECRET).
+- Email-code login (2026-10-31): POST /api/auth/code/send -> /verify -> (a new address) /signup. Codes are HMAC-hashed
+  with AUTH_SECRET in `login_codes`; the sign-up step carries a signed 30-minute token of the checked address. Only
+  CUSTOMER accounts log in by code (like Google); other addresses are emailed "use your password".
 - CSRF: state-changing requests need `X-FrameX-Client` and an allowed Origin. CORS allow-list from `CORS_ORIGINS`.
 - Payout bank / UPI details sealed with `PAYOUT_ENCRYPTION_KEY` (32 bytes). Customer photos only via signed links.
 

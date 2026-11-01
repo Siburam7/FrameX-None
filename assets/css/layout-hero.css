@@ -280,28 +280,52 @@
   --d: 440ms;
 }
 
-/* A frame: the moulding, then a mat with a bevelled edge, then the picture */
+/* A frame (owner, 2026-11-01: "full really 100% frame"): a real moulding (black lacquer, oak, gold leaf: pictures of
+   a whole frame with mitred corners and a rounded, lit profile, used as border-image so they fit every shape), then
+   a mat with a bevelled window, then the picture under a little glass sheen. */
 .home-hero .page-hero__wall > .page-hero__piece--framed {
+  --moulding: clamp(9px, 1.3vw, 19px);
   display: block;
-  padding: 5.5%;
+  padding: 0;
+  border: var(--moulding) solid #1a1a1a;
+  border-image: url("../img/ui/frames/moulding-black.webp") 84 stretch;
+  border-radius: 0;
+  background: #f8f6f1;
   box-shadow:
-    inset 2px 2px 3px rgba(255, 255, 255, 0.4),
-    inset -2px -2px 4px rgba(0, 0, 0, 0.35),
-    0 22px 34px -18px rgba(5, 8, 22, 0.55);
-}
-
-.home-hero .page-hero__wall > .page-hero__piece--framed:nth-child(1) {
-  background: linear-gradient(135deg, #3a3a3d, #0d0d0f 55%, #2a2a2e);
+    0 20px 30px -14px rgba(5, 8, 22, 0.55),
+    0 5px 10px -3px rgba(5, 8, 22, 0.3);
 }
 
 .home-hero .page-hero__wall > .page-hero__piece--framed:nth-child(2) {
-  background:
-    repeating-linear-gradient(92deg, rgba(90, 50, 20, 0.12) 0 2px, transparent 2px 7px),
-    linear-gradient(135deg, #d4a56a, #a8733f 55%, #c08a50);
+  border-image-source: url("../img/ui/frames/moulding-oak.webp");
 }
 
 .home-hero .page-hero__wall > .page-hero__piece--framed:nth-child(3) {
-  background: linear-gradient(135deg, #f3dc95, #c39a45 35%, #f0d48a 55%, #a87c30 80%, #e0bf6c);
+  border-image-source: url("../img/ui/frames/moulding-gold.webp");
+}
+
+/* The nail stays on the wall above the moulding, where it was */
+.home-hero .page-hero__wall > .page-hero__piece--framed::before {
+  bottom: calc(100% + 8px + var(--moulding));
+}
+
+/* The frame's lip casts a little shadow on the mat; the mat's cut window shows a thin white bevel */
+.home-hero .page-hero__piece--framed .page-hero__mat {
+  position: relative;
+  box-shadow: inset 2px 3px 6px rgba(0, 0, 0, 0.3), inset -1px -1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.home-hero .page-hero__piece--framed .page-hero__mat img {
+  box-shadow: 0 0 0 2px #fffdf8, 0 0 0 3px rgba(0, 0, 0, 0.14), inset 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Glass: a soft reflection across the picture */
+.home-hero .page-hero__piece--framed .page-hero__mat::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(125deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 32%, rgba(255, 255, 255, 0) 72%, rgba(255, 255, 255, 0.07) 100%);
+  pointer-events: none;
 }
 
 .home-hero .page-hero__mat {
@@ -634,6 +658,36 @@
   content: "•";
   margin-right: 10px;
   color: var(--amber);
+}
+
+/* Laptop and up: the words show only across the page content's width and fade out at its two edges (owner,
+   2026-10-29). Two overlays in the strip's own colour: solid from the screen edge to the content edge (the same edge
+   as .container), then a 140 px fade inwards; the lines above and below stay whole. Phones keep the plain strip. */
+@media (min-width: 640px) {
+  .ticker {
+    position: relative;
+  }
+
+  .ticker::before,
+  .ticker::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    width: calc(max(var(--gutter), (100% - var(--container)) / 2) + 140px);
+    pointer-events: none;
+  }
+
+  .ticker::before {
+    left: 0;
+    background: linear-gradient(90deg, var(--surface) calc(100% - 140px), transparent);
+  }
+
+  .ticker::after {
+    right: 0;
+    background: linear-gradient(270deg, var(--surface) calc(100% - 140px), transparent);
+  }
 }
 
 /* Showcase (featured frame styles: auto-scroll + arrows + drag, ui/showcase.js) ---- */
@@ -1117,64 +1171,6 @@ body[data-page="home"] main {
   font-size: var(--text-sm);
 }
 
-.how__ways {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 14px;
-}
-
-.how__way {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 16px 12px 12px;
-  border: 2px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  color: var(--on-surface);
-  transition: border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
-}
-
-.how__way img {
-  flex: none;
-  width: 64px;
-  height: 64px;
-  border-radius: var(--radius-md);
-  object-fit: cover;
-}
-
-.how__way span {
-  flex: 1;
-  min-width: 0;
-}
-
-.how__way strong {
-  display: block;
-}
-
-.how__way small {
-  color: var(--text-muted);
-  font-size: var(--text-sm);
-}
-
-.how__way .icon {
-  flex: none;
-  color: var(--amber-strong);
-}
-
-.how__way--main {
-  border-color: var(--amber-strong);
-  background: var(--soft-peach);
-}
-
-@media (hover: hover) {
-  .how__way:hover {
-    border-color: var(--amber-strong);
-    box-shadow: var(--shadow-card);
-  }
-}
-
 /* Banner tiles */
 .promo-tiles {
   display: grid;
@@ -1656,5 +1652,66 @@ body[data-page="home"] main {
     justify-content: center;
     min-height: calc(100vh - var(--ticker-h));
     min-height: calc(100svh - var(--ticker-h));
+  }
+}
+
+/* ---------------------------------------------------------------- Home: "Shop by category" as six square picture
+   tiles (owner, 2026-10-29). Phones: mobile.css. */
+.hm-cats {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.hm-cat {
+  display: block;
+  color: var(--on-surface);
+  text-align: center;
+  text-decoration: none;
+}
+
+.hm-cat img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-lg);
+  background: var(--surface-soft);
+  object-fit: cover;
+  transition: transform var(--dur-slow) var(--ease-out);
+}
+
+.hm-cat:hover img {
+  transform: translateY(-3px);
+}
+
+.hm-cat span {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.how__cats {
+  margin-top: 26px;
+}
+
+.how__cats-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.how__cats-title {
+  margin: 0;
+  color: var(--on-surface);
+  font-size: 1.35rem;
+}
+
+@media (max-width: 999px) {
+  .hm-cats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }

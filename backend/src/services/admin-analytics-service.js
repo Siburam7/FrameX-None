@@ -32,6 +32,8 @@ import { config } from "../config.js";
 import { db } from "../db/index.js";
 import { errors } from "../lib/errors.js";
 import { liveVisitors, LIVE_WINDOW_MS } from "./analytics-service.js";
+import { stockOf } from "./catalog-service.js";
+import { leftCarts, reminderFigures } from "./cart-reminder-service.js";
 
 export const RANGES = ["today", "7d", "30d", "90d", "custom"];
 const DAY = 86_400_000;
@@ -167,6 +169,76 @@ const cartAdditions = async (from, to) => {
   return { additions: n(c.additions), value: n(c.value) };
 };
 
+/* ---------------------------------------------------------------- Growth (owner, 2026-10-31): funnel, customers, cart reminders */
+
+// An order that was really placed: not a test, not waiting for its online payment, not cancelled.
+const PLACED = `${REAL} AND o.status NOT IN ('PENDING_PAYMENT', 'CANCELLED')`;
+
+/** Visits -> opened a frame -> started checkout (visitors who allowed analytics), then orders placed (everyone). */
+async function funnel(from, to) {
+  const w = await one(
+    `SELECT count(DISTINCT e.session_id)::int AS visits,
+            count(DISTINCT e.session_id) FILTER (WHERE e.name IN ('view_item', 'view_template', 'view_artwork'))::int AS viewed,
+            count(DISTINCT e.session_id) FILTER (WHERE e.name = 'begin_checkout')::int AS checkout
+       FROM analytics_events e WHERE ${WEB}`,
+    [from, to]
+  );
+  const o = await one(`SELECT count(*)::int AS placed FROM orders o WHERE o.created_at >= $1 AND o.created_at < $2 AND ${PLACED}`, [from, to]);
+  return {
+    steps: [
+      { key: "visits", label: "Visits", n: n(w.visits) },
+      { key: "viewed", label: "Opened a frame", n: n(w.viewed) },
+      { key: "checkout", label: "Started checkout", n: n(w.checkout) },
+      { key: "ordered", label: "Ordered", n: n(o.placed) },
+    ],
+    note: "The first three steps count only visitors who allowed analytics; orders count everyone, so the last step can be higher than the one before.",
+  };
+}
+
+/** Who ordered in the period: average order, new / returning, more than one order, top cities, and when. */
+async function customers(from, to) {
+  const p = [from, to];
+  const NOT_TEST_PLACED = (a) => `NOT coalesce(${a}.is_test, false) AND ${a}.status NOT IN ('PENDING_PAYMENT', 'CANCELLED')`;
+  const base = await one(
+    `SELECT count(*)::int AS orders, coalesce(avg(o.total), 0)::float8 AS average, count(DISTINCT o.user_id)::int AS customers,
+            count(DISTINCT o.user_id) FILTER (WHERE EXISTS (SELECT 1 FROM orders b WHERE b.user_id = o.user_id AND b.created_at < $1 AND ${NOT_TEST_PLACED("b")}))::int AS returning
+       FROM orders o WHERE o.created_at >= $1 AND o.created_at < $2 AND ${PLACED}`,
+    p
+  );
+  const repeat = await one(
+    `SELECT count(*)::int AS n FROM (
+       SELECT o.user_id FROM orders o WHERE o.created_at < $2 AND ${PLACED}
+          AND o.user_id IN (SELECT x.user_id FROM orders x WHERE x.created_at >= $1 AND x.created_at < $2 AND ${NOT_TEST_PLACED("x")})
+        GROUP BY o.user_id HAVING count(*) > 1) t`,
+    p
+  );
+  const cities = await rows(
+    `SELECT initcap(lower(trim(o.shipping_address->>'city'))) AS city, count(*)::int AS orders, coalesce(sum(o.total), 0)::float8 AS value
+       FROM orders o WHERE o.created_at >= $1 AND o.created_at < $2 AND ${PLACED} AND coalesce(trim(o.shipping_address->>'city'), '') <> ''
+      GROUP BY 1 ORDER BY 2 DESC, 3 DESC LIMIT 5`,
+    p
+  );
+  // Monday = 0 ... Sunday = 6; two-hour slots 0 ... 11, in the reports' time zone
+  const heat = await rows(
+    `SELECT ((extract(isodow FROM ${localSql("o.created_at")})::int + 6) % 7) AS d, (extract(hour FROM ${localSql("o.created_at")})::int / 2) AS h, count(*)::int AS n
+       FROM orders o WHERE o.created_at >= $1 AND o.created_at < $2 AND ${PLACED} GROUP BY 1, 2`,
+    p
+  );
+  const grid = Array.from({ length: 7 }, () => Array(12).fill(0));
+  for (const c of heat) grid[n(c.d)][n(c.h)] = n(c.n);
+  const who = n(base.customers);
+  return {
+    orders: n(base.orders),
+    averageOrder: Math.round(n(base.average)),
+    customers: who,
+    returning: n(base.returning),
+    newCustomers: Math.max(0, who - n(base.returning)),
+    orderedMoreThanOnce: n(repeat.n),
+    topCities: cities.map((c) => ({ city: c.city, orders: n(c.orders), value: n(c.value) })),
+    byDayAndHour: grid,
+  };
+}
+
 /* ---------------------------------------------------------------- Overview */
 
 export async function overview(query) {
@@ -211,7 +283,56 @@ export async function overview(query) {
     orders: { ...now.orders, before: { created: before.orders.created, paid: before.orders.paid } },
     money: { gross: now.gross, refunds: now.refunds.amount, net: now.net, orders: now.orders.gross, paintings: now.paintings.gross, before: { gross: before.gross, net: before.net } },
     test: { orders: n(test.orders), paid: n(test.paid) },
-    series
+    series,
+    funnel: await funnel(...p),
+    customers: await customers(...p),
+    reminders: { ...(await reminderFigures(...p)), left: await leftCarts(20) }
+  };
+}
+
+/* ---------------------------------------------------------------- The admin Overview page (owner, 2026-10-31) */
+
+/** Today, the last 7 days, the latest orders, the carts left, and what is running out. */
+export async function dashboard(now = new Date()) {
+  const todayStart = startOfLocalDay(localDay(now));
+  const yesterdayStart = new Date(todayStart.getTime() - DAY);
+  const weekStart = new Date(todayStart.getTime() - 6 * DAY);
+  const tomorrow = new Date(todayStart.getTime() + DAY);
+  const day = async (a, b) => {
+    const o = await one(`SELECT count(*)::int AS orders, coalesce(sum(o.total), 0)::float8 AS value FROM orders o WHERE o.created_at >= $1 AND o.created_at < $2 AND ${PLACED}`, [a, b]);
+    return { orders: n(o.orders), value: n(o.value) };
+  };
+  const today = await day(todayStart, tomorrow);
+  const yesterday = await day(yesterdayStart, todayStart);
+  const visitsToday = await visitors(todayStart, tomorrow);
+  // "Visits that ordered" over a week (one day is too few to mean much), and the week before
+  const week = async (a, b) => {
+    const v = await visitors(a, b);
+    const o = await day(a, b);
+    return v.visits ? Math.round((o.orders / v.visits) * 1000) / 10 : null;
+  };
+  const conversion = { week: await week(weekStart, tomorrow), weekBefore: await week(new Date(weekStart.getTime() - 7 * DAY), weekStart) };
+  const last7 = [];
+  for (let t = weekStart.getTime(); t < tomorrow.getTime(); t += DAY) last7.push({ date: localDay(new Date(t)), ...(await day(new Date(t), new Date(t + DAY))) });
+  const latest = await rows(`SELECT o.order_number, o.customer_name, o.total, o.status, o.payment_status, o.created_at FROM orders o WHERE ${REAL} ORDER BY o.created_at DESC LIMIT 5`, []);
+  const products = await rows("SELECT p.id, p.name, p.data, p.stock_reserved, p.shop_name FROM catalog_products p WHERE p.status = 'ACTIVE'", []);
+  const lowStock = products
+    .map((p) => {
+      const stock = stockOf(p.data);
+      return { id: p.id, name: p.name, shop: p.shop_name || "", stock: stock === null ? null : Math.max(0, stock - n(p.stock_reserved)) };
+    })
+    .filter((p) => p.stock !== null && p.stock <= 3)
+    .sort((a, b) => a.stock - b.stock)
+    .slice(0, 6);
+  return {
+    today: { ...today, visitors: visitsToday.unique, visits: visitsToday.visits, live: config.analytics.enabled ? liveVisitors() : null },
+    yesterday,
+    conversion,
+    last7,
+    latestOrders: latest.map((o) => ({ orderNumber: o.order_number, customer: o.customer_name, total: n(o.total), status: o.status, paymentStatus: o.payment_status, createdAt: o.created_at })),
+    lowStock,
+    carts: await leftCarts(5),
+    visitorNote: VISITOR_NOTE,
   };
 }
 

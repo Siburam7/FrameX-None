@@ -182,7 +182,7 @@ export function emailLogo() {
   return config.email.logoUrl ? `<img src="${esc(config.email.logoUrl)}" width="160" height="40" alt="FRAMEX" style="display:block;border:0;outline:none;text-decoration:none;width:160px;height:40px;${LOGO_TEXT_STYLE}">` : text;
 }
 
-export function htmlEmail({ preview = "", heading, paragraphs = [], code = "", codeNote = "", button = null, notice = "", tables = [], account = true }) {
+export function htmlEmail({ preview = "", heading, paragraphs = [], code = "", codeNote = "", button = null, notice = "", tables = [], account = true, unsubscribe = null }) {
   const table = (t) => `<tr><td style="padding:10px 28px 4px">${t.title ? `<div style="font-size:13px;font-weight:bold;color:#5b5f6b;padding-bottom:6px">${esc(t.title)}</div>` : ""}
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;line-height:1.5;color:#2b2b2b">${t.rows
         .map(([left, right, bold]) => `<tr><td style="padding:5px 0;border-top:1px solid #f1f2f3;vertical-align:top${bold ? ";font-weight:bold" : ""}">${left}</td><td align="right" style="padding:5px 0 5px 12px;border-top:1px solid #f1f2f3;vertical-align:top;white-space:nowrap${bold ? ";font-weight:bold" : ""}">${right}</td></tr>`)
@@ -201,7 +201,7 @@ export function htmlEmail({ preview = "", heading, paragraphs = [], code = "", c
     ${button ? `<tr><td style="padding:16px 28px 6px"><a href="${esc(button.url)}" style="display:inline-block;background:#ff6a35;color:#ffffff;text-decoration:none;font-size:15px;font-weight:bold;padding:14px 28px;border-radius:999px">${esc(button.label)}</a></td></tr>
     <tr><td style="padding:4px 28px 6px;font-size:12px;line-height:1.5;color:#5b5f6b;word-break:break-all">${esc(button.note || "")} If the button doesn't work, copy this address into your browser:<br>${esc(button.url)}</td></tr>` : ""}
     <tr><td style="padding:18px 28px 26px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="border-top:1px solid #e4e5e7;padding-top:16px;font-size:12px;line-height:1.6;color:#5b5f6b">
-      ${esc(notice || "If you didn't ask for this, you can ignore this email.")}<br>${account ? "FrameX will never ask you for your password or this code by phone, WhatsApp or email." : "FrameX will never ask you for your card number, CVV, UPI PIN or password by phone, WhatsApp or email."}</td></tr></table></td></tr>
+      ${esc(notice || "If you didn't ask for this, you can ignore this email.")}<br>${unsubscribe ? `<a href="${esc(unsubscribe.url)}" style="color:#5b5f6b">${esc(unsubscribe.label)}</a><br>` : ""}${account ? "FrameX will never ask you for your password or this code by phone, WhatsApp or email." : "FrameX will never ask you for your card number, CVV, UPI PIN or password by phone, WhatsApp or email."}</td></tr></table></td></tr>
   </table>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px"><tr><td style="padding:14px 28px;font-size:11px;color:#8f8f8f;text-align:center">FrameX · premium photo frames from local framing shops</td></tr></table>
 </td></tr></table></body></html>`;
@@ -222,6 +222,68 @@ export const messages = {
       notice: "If you didn't request a password reset, ignore this email. Your password stays the same and nobody can change it without this code or link."
     }),
     links: [{ label: "Reset password", url }]
+  }),
+  /**
+   * Cart reminder (owner, 2026-10-31): the customer's cart, untouched for a day. items: [{ name, quantity, lineTotal,
+   * image (an absolute picture address or "") }]; coupon: { code, text } or null; url opens the checkout;
+   * unsubscribeUrl turns these reminders off for this customer.
+   */
+  cartReminder: (name, items, total, coupon, url, unsubscribeUrl) => {
+    const first = String(name || "").split(" ")[0] || "there";
+    const money = (n) => `₹${Number(n).toLocaleString("en-IN")}`;
+    const line = (i) => `${i.name}${i.quantity > 1 ? ` × ${i.quantity}` : ""}`;
+    return {
+      subject: "Your frame is waiting in your FrameX cart",
+      text: `Hi ${first},\n\nYou left ${items.length === 1 ? "this" : "these"} in your FrameX cart:\n\n${items.map((i) => `- ${line(i)}: ${money(i.lineTotal)}`).join("\n")}\n\nTotal: ${money(total)}\n${coupon ? `\n${coupon.text}\nUse the code ${coupon.code} at checkout.\n` : ""}\nComplete your order: ${url}\n\nDon't want these reminders? ${unsubscribeUrl}\n\nFrameX`,
+      html: htmlEmail({
+        preview: coupon ? `Your cart is waiting, and ${coupon.code} saves you more` : "Your cart is waiting for you",
+        heading: "Your frame is waiting in your cart",
+        paragraphs: [`Hi ${esc(first)},`, `You left ${items.length === 1 ? "this" : "these"} in your FrameX cart. ${items.length === 1 ? "It is" : "They are"} still there for you.`],
+        tables: [
+          {
+            rows: [
+              ...items.map((i) => [
+                `${i.image ? `<img src="${esc(i.image)}" alt="" width="48" height="48" style="width:48px;height:48px;object-fit:cover;border-radius:8px;vertical-align:middle;margin-right:10px">` : ""}${esc(line(i))}`,
+                esc(money(i.lineTotal)),
+              ]),
+              ["Total", esc(money(total)), true],
+            ],
+          },
+          ...(coupon ? [{ title: "A little extra for you", rows: [[`${esc(coupon.text)}<br>Use the code <strong style="color:#ff6a35">${esc(coupon.code)}</strong> at checkout.`, ""]] }] : []),
+        ],
+        button: { label: "Complete your order", url, note: "Prices and stock are checked again at checkout." },
+        notice: "You got this because you left items in your FrameX cart. We send only one reminder for a cart.",
+        account: false,
+        unsubscribe: { url: unsubscribeUrl, label: "Don't send me cart reminders" },
+      }),
+    };
+  },
+  loginCode: (code, codeMinutes) => ({
+    subject: `${code} is your FrameX login code`,
+    text: `Hi,\n\nYour FrameX login code: ${code}\n(valid for ${codeMinutes} minutes, works once)\n\nEnter it on the FrameX page where you asked for it.\n\nIf you didn't ask for this code, ignore this email. Nobody can log in without it.\n\nFrameX`,
+    html: htmlEmail({
+      preview: `Your FrameX login code is ${code}`,
+      heading: "Your FrameX login code",
+      paragraphs: ["Hi,", "Enter this code on the FrameX page where you asked for it:"],
+      code,
+      codeNote: `This code expires in ${codeMinutes} minutes and works once.`,
+      notice: "If you didn't ask for this code, ignore this email. Nobody can log in without it."
+    })
+  }),
+  /** Asked for a login code, but the address belongs to a shop / artist / staff login (or a disabled account). */
+  loginCodeRefused: (disabled) => ({
+    subject: "Your FrameX login",
+    text: disabled
+      ? "Hi,\n\nSomeone asked for a FrameX login code for this email address, but this account has been disabled. Please contact FrameX if you need help.\n\nFrameX"
+      : "Hi,\n\nSomeone asked for a FrameX login code for this email address. This is a FrameX shop, artist or staff login, which logs in with its password: open the FrameX login page and choose \"Log in using password\".\n\nIf it wasn't you, ignore this email.\n\nFrameX",
+    html: htmlEmail({
+      preview: "How to log in to FrameX",
+      heading: "Your FrameX login",
+      paragraphs: disabled
+        ? ["Hi,", "Someone asked for a FrameX login code for this email address, but this account has been disabled. Please contact FrameX if you need help."]
+        : ["Hi,", "Someone asked for a FrameX login code for this email address. This is a FrameX shop, artist or staff login, which logs in with its password: open the FrameX login page and choose <strong>Log in using password</strong>."],
+      notice: "If it wasn't you, ignore this email."
+    })
   }),
   shopSetup: (shopName, shopCode, url, hours) => ({
     subject: `Your FrameX shop account (${shopCode})`,
