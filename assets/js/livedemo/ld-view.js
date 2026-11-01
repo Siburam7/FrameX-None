@@ -5,8 +5,13 @@
    the wall, a few large controls, short instructions. It is the same screen
    for both modes; a mode is only asked what it can do (engine.features):
 
-     AR mode      ld-xr.js      real wall detection and real size, where the phone has it
+     AR mode      ld-xr.js      real wall detection and real size, where the phone has it (Android Chrome)
+     Quick Look   ld-usdz.js    iPhone and iPad: a 3D model made on the phone, hung by Apple's own AR (ARKit)
      camera mode  ld-camera.js  live camera + the customer places the piece, everywhere else
+
+   A phone that can do neither AR is told so plainly; inside an app's own browser
+   (Instagram, Facebook, WhatsApp…) the customer is told to open the page in
+   Safari or Chrome, with the simple camera view still there to use.
 
    FrameX.liveDemoView.open(spec, { returnFocus, context }) -> Promise (settles when it is closed)
      spec     what to show (ld-subject.js). It is read once: the page behind is untouched,
@@ -41,6 +46,27 @@
       lost: "Lost track of the room. Move your phone slowly.",
       failed: "Couldn't detect a suitable surface. Try moving your camera slowly toward a clear wall.",
     },
+    quickLook: {
+      intro: (device) => `Your ${device} finds your wall and shows this at its real size. Point it at a wall and move it slowly.`,
+      private: "The 3D model is made on your phone. Your photo is not uploaded or sent to FrameX.",
+      opening: "AR is opening",
+      how: (device) => `Move your ${device} slowly until the frame appears on the wall. Drag it with one finger to slide it along the wall. Close AR to come back here.`,
+      notOpened: (device) => `Nothing opened? Update your ${device}, or open this page in Safari.`,
+    },
+    elsewhere: {
+      app: (app) => (app === "app" ? "This app's browser can't show AR on your wall." : `${app} can't show AR on your wall.`),
+      browser: "This browser can't find walls.",
+      phone: (device) => `Your ${device} can't find walls in AR.`,
+      openIn: { ios: "Open this page in Safari: tap ••• or the share button, then Open in Safari (or Open in browser).", android: "Open this page in Chrome: tap ⋮ at the top, then Open in Chrome (or Open in browser)." },
+      better: { ios: "In Safari your iPhone finds the wall and shows the frame at its real size.", android: "In Chrome your phone finds the wall and shows the frame at its real size." },
+      cannot: {
+        ios: "Finding walls needs an up-to-date iPhone or iPad. Update it, then try again in Safari.",
+        android: "Finding walls needs Google Play Services for AR, which this phone doesn't have. Updating Chrome can help.",
+      },
+      simple: "You can still use the simple camera view: you put the frame on your wall yourself, so its size is an estimate.",
+      again: "Your photo and choices may need to be added again there.",
+      copied: "Link copied. Paste it in",
+    },
     camera: {
       starting: "Starting camera…",
       aim: "Point your camera at a clear wall.",
@@ -67,7 +93,10 @@
 
   function open(spec, { returnFocus = null, context = {} } = {}) {
     if (current) return current.done;
+    const dev = FrameX.liveDemo.device();
+    const canCamera = FrameX.liveDemo.camera();
     const state = {
+      usdz: "", // the Quick Look model's blob: address, made once
       root: null,
       engine: null,
       subject: null,
@@ -410,7 +439,10 @@
       const button = ev.target.closest("[data-act]");
       if (button) return act(button.dataset.act);
       const go = ev.target.closest("[data-go]");
-      if (go) return go.dataset.go === "prepare" ? prepare() : start(go.dataset.go);
+      if (go) {
+        const to = go.dataset.go;
+        return to === "prepare" ? prepare() : to === "quicklook" ? quickLook() : to === "copy" ? copyLink(go) : start(to);
+      }
       if (ev.target.closest("[data-resume]")) return resume();
     });
     // Someone using a keyboard gets a visible outline on the picture while it has focus; touch and mouse don't.
@@ -424,26 +456,120 @@
       if (FrameX.overlay) FrameX.overlay.trapFocus(root, ev);
     });
 
-    /* ---------------------------------------------------------------- start: AR where the phone has it, else the camera */
-    function intro(arAvailable) {
+    /* ---------------------------------------------------------------- start: AR where the phone has it, else the camera
+       kind: "ar" (WebXR), "quicklook" (iPhone, iPad) or "camera" */
+    function intro(kind) {
       const s = state.subject;
       const missing = s && s.missingPhotos ? `<p class="ld__note">${icon("image")}<span>${s.missingPhotos === 1 ? "Your photo isn't added yet, so its place is shown empty." : "Some photos aren't added yet, so their places are shown empty."}</span></p>` : "";
+      const words = {
+        ar: "Your phone can find your wall and show this at its real size. Point the camera at a wall and move the phone slowly.",
+        quicklook: TEXT.quickLook.intro(dev.name),
+        camera: "Your camera opens and this is shown on top of it. You put it on your wall yourself, so its size is an estimate.",
+      };
       panel(`
         <span class="ld__badge">${icon("camera")}</span>
         <h2 id="ld-title">View on My Wall</h2>
         <p class="ld__what">${esc(s.title)}<br><strong>${esc(s.sizeText)}</strong></p>
-        <p>${
-          arAvailable
-            ? "Your phone can find your wall and show this at its real size. Point the camera at a wall and move the phone slowly."
-            : "Your camera opens and this is shown on top of it. You put it on your wall yourself, so its size is an estimate."
-        }</p>
+        <p>${words[kind]}</p>
         ${missing}
-        <p class="ld__private">${icon("lock")}<span>The camera is used only on this screen. Nothing is recorded or sent to FrameX.</span></p>
+        <p class="ld__private">${icon("lock")}<span>${kind === "quicklook" ? TEXT.quickLook.private : "The camera is used only on this screen. Nothing is recorded or sent to FrameX."}</span></p>
         <div class="ld__actions">
-          <button class="btn btn--primary" type="button" data-go="${arAvailable ? "ar" : "camera"}" data-primary>${icon("camera")} Open camera</button>
-          ${arAvailable ? `<button class="btn btn--light" type="button" data-go="camera">Use the simple camera view</button>` : ""}
+          <button class="btn btn--primary" type="button" data-go="${kind}" data-primary>${icon("camera")} Open camera</button>
+          ${kind !== "camera" && canCamera ? `<button class="btn btn--light" type="button" data-go="camera">Use the simple camera view</button>` : ""}
           <button class="btn btn--light" type="button" data-close>Not now</button>
         </div>`);
+    }
+
+    /* ---------------------------------------------------------------- iPhone and iPad: Apple's AR Quick Look */
+    /** The 3D model, made once on the phone (a blob: address only this page can read). false when it can't be made. */
+    async function quickLookReady() {
+      if (state.usdz) return true;
+      try {
+        const blob = await FrameX.ldUSDZ.build(state.subject);
+        if (state.closed) return false;
+        state.usdz = URL.createObjectURL(blob);
+        const url = state.usdz;
+        state.cleanups.push(() => URL.revokeObjectURL(url));
+        return true;
+      } catch (error) {
+        console.error("Live Demo could not make the 3D model", error);
+        return false;
+      }
+    }
+
+    /** Opens Quick Look (straight from the tap, as Safari wants), and says what to do there and if nothing opened. */
+    function quickLook() {
+      if (!state.usdz) return;
+      FrameX.ldUSDZ.open(state.usdz);
+      state.mode = "quicklook";
+      track("live_demo_quick_look", { device: dev.name });
+      panel(`
+        <span class="ld__badge">${icon("frame")}</span>
+        <h2 id="ld-title">${TEXT.quickLook.opening}</h2>
+        <p>${esc(TEXT.quickLook.how(dev.name))}</p>
+        <p class="ld__note">${icon("alert")}<span>${esc(TEXT.quickLook.notOpened(dev.name))}</span></p>
+        <div class="ld__actions">
+          <button class="btn btn--primary" type="button" data-go="quicklook" data-primary>${icon("camera")} Open AR again</button>
+          ${canCamera ? `<button class="btn btn--light" type="button" data-go="camera">Use the simple camera view</button>` : ""}
+          <button class="btn btn--light" type="button" data-close>Close</button>
+        </div>`);
+    }
+
+    /* ---------------------------------------------------------------- no AR here: say so, and where it works
+       reason: "app" (an app's own browser), "browser" (another browser would have it), "phone" (this phone has none) */
+    function elsewhere(reason) {
+      const t = TEXT.elsewhere;
+      const os = dev.ios ? "ios" : "android";
+      const title = reason === "app" ? t.app(dev.inApp) : reason === "browser" ? t.browser : t.phone(dev.name);
+      const body = reason === "phone" ? `${t.cannot[os]} ${t.simple}` : `${t.openIn[os]} ${t.better[os]}`;
+      const link = reason === "phone" ? "" : openInLink();
+      const browser = dev.ios ? "Safari" : "Chrome";
+      panel(`
+        <span class="ld__badge ld__badge--warn">${icon("alert")}</span>
+        <h2 id="ld-title">${esc(title)}</h2>
+        <p>${esc(body)}</p>
+        ${reason === "phone" ? "" : `<p class="ld__note">${icon("image")}<span>${esc(t.again)}</span></p>`}
+        <div class="ld__actions">
+          ${link ? `<a class="btn btn--primary" href="${esc(link)}" data-primary>${icon("arrow-right")} Open in ${browser}</a>` : ""}
+          ${reason === "phone" ? "" : `<button class="btn ${link ? "btn--light" : "btn--primary"}" type="button" data-go="copy"${link ? "" : " data-primary"}>${icon("copy")} <span>Copy link</span></button>`}
+          ${canCamera ? `<button class="btn ${reason === "phone" ? "btn--primary" : "btn--light"}" type="button" data-go="camera"${reason === "phone" ? " data-primary" : ""}>Use the simple camera view</button>` : ""}
+          <button class="btn btn--light" type="button" data-close>Close</button>
+        </div>`);
+      track("live_demo_elsewhere", { reason, app: dev.inApp });
+    }
+
+    /** A link that opens this page in the phone's real browser: Chrome on Android, Safari on iOS 17 and later ("" when there is none) */
+    function openInLink() {
+      const page = `${location.host}${location.pathname}${location.search}`;
+      if (dev.android) return `intent://${page}#Intent;scheme=${location.protocol.replace(":", "")};package=com.android.chrome;end`;
+      if (dev.ios && dev.iosVersion >= 17 && location.protocol === "https:") return `x-safari-https://${page}`;
+      return "";
+    }
+
+    async function copyLink(button) {
+      const url = location.href.split("#")[0];
+      let ok = false;
+      try {
+        await navigator.clipboard.writeText(url);
+        ok = true;
+      } catch (error) {
+        // An app's browser may not allow the clipboard: the old way, from a selected box
+        const box = document.createElement("textarea");
+        box.value = url;
+        box.setAttribute("readonly", "");
+        box.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+        root.appendChild(box);
+        box.select();
+        box.setSelectionRange(0, url.length);
+        try {
+          ok = document.execCommand("copy");
+        } catch (failed) {
+          ok = false;
+        }
+        box.remove();
+      }
+      const label = button && $("span", button);
+      if (label) label.textContent = ok ? `${TEXT.elsewhere.copied} ${dev.ios ? "Safari" : "Chrome"}` : url;
     }
 
     /** Says what went wrong, in plain words. again: what "Try again" does ("camera", "ar" or "prepare"). */
@@ -579,12 +705,23 @@
     /* ---------------------------------------------------------------- prepare, then ask */
     function prepare() {
       panel(`<span class="ld__badge">${icon("camera")}</span><h2 id="ld-title">View on My Wall</h2><p>Getting your design ready…</p>`);
-      return Promise.all([FrameX.ldSubject.build(spec), FrameX.ldXR.supported()])
-        .then(([subject, ar]) => {
+      const quick = dev.quickLook && Boolean(FrameX.ldUSDZ);
+      return Promise.all([FrameX.ldSubject.build(spec), quick || dev.inApp ? false : FrameX.ldXR.supported()])
+        .then(async ([subject, ar]) => {
           if (state.closed) return;
           state.subject = subject;
-          state.arAvailable = ar;
-          intro(ar);
+          if (dev.inApp && dev.phone) return elsewhere("app");
+          // The model is made now, so that the tap on "Open camera" can open Quick Look at once.
+          if (quick) {
+            const made = await quickLookReady();
+            if (state.closed) return;
+            return intro(made ? "quicklook" : "camera");
+          }
+          if (ar) return intro("ar");
+          // A phone without either AR is told plainly: another browser has it (Safari, Chrome), or this phone can't.
+          // The simple camera view is still offered.
+          if (dev.ios || dev.android) return elsewhere((dev.ios ? !window.webkit : dev.chrome) ? "phone" : "browser");
+          intro("camera");
         })
         .catch((error) => {
           if (state.closed) return;

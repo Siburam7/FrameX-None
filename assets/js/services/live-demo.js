@@ -5,7 +5,8 @@
    feature itself (assets/js/livedemo/) only when the customer presses it, so
    a normal product page pays nothing for it.
 
-     FrameX.liveDemo.available()            -> Promise<boolean>  a camera can be opened here
+     FrameX.liveDemo.available()            -> Promise<boolean>  it can be offered here (a camera, Quick Look, or an app's browser to be told where it works)
+     FrameX.liveDemo.device()               -> { ios, android, phone, name, inApp, quickLook, chrome, iosVersion }
      FrameX.liveDemo.supports(product)      -> boolean           the product's own capability (productModel.liveDemoSupport)
      FrameX.liveDemo.mount(host, { getSpec, context, label })    adds the button to `host`; it stays hidden
                                                                  until the device is known to have a camera
@@ -18,20 +19,83 @@
 
    Where it works: a camera needs a secure page (https, or localhost while
    developing) and a browser that offers it. On other pages the button is not shown.
+   An iPhone or iPad uses Apple's AR Quick Look (ld-usdz.js); a phone inside
+   Instagram, Facebook, WhatsApp… is told to open the page in Safari or Chrome.
 
    Analytics. No analytics service is wired in. track() only announces what
    happened, without pictures or positions, as a "framex:analytics" event on
    document and, if a page has one, in window.dataLayer:
      live_demo_opened, camera_permission_granted, camera_permission_denied,
      surface_detected, frame_placed, frame_repositioned, live_demo_closed,
-     live_demo_add_to_cart
+     live_demo_add_to_cart, live_demo_quick_look, live_demo_elsewhere
    ========================================================================== */
 (function (FrameX) {
   const FOLDER = "assets/js/livedemo/";
-  const FILES = ["ld-math.js", "ld-paint.js", "ld-subject.js", "ld-render.js", "ld-camera.js", "ld-xr.js", "ld-view.js"];
+  const FILES = ["ld-math.js", "ld-paint.js", "ld-subject.js", "ld-render.js", "ld-camera.js", "ld-xr.js", "ld-usdz.js", "ld-view.js"];
   let loading = null;
   let known = null;
+  let seen = null;
   let usedHere = null; // the last Live Demo opened on this page: { productId, kind }
+
+  // Apps that open links in their own small browser, which can't show AR (their names, as they put them in the browser's name)
+  const IN_APP = [
+    ["Instagram", /Instagram/i],
+    ["Messenger", /MessengerForiOS|MESSENGER|Orca-Android/],
+    ["Facebook", /FBAN|FBAV|FB_IAB|FBIOS|FB4A/],
+    ["WhatsApp", /WhatsApp/i],
+    ["Snapchat", /Snapchat/i],
+    ["Threads", /Barcelona/],
+    ["LinkedIn", /LinkedInApp/i],
+    ["Pinterest", /Pinterest/i],
+    ["TikTok", /musical_ly|Bytedance|TikTok/i],
+    ["Telegram", /Telegram/i],
+    ["X", /Twitter/i],
+    ["LINE", /\bLine\//],
+  ];
+
+  /**
+   * Where this page is open, for what the Live Demo can do here (read from the browser's name, nothing is asked):
+   *   ios, android, phone      the kind of device ("iPhone" or "iPad" in name)
+   *   inApp                    "" or the app whose own browser this is ("Instagram"…, "app" when unnamed)
+   *   quickLook                Apple's AR Quick Look can open here (iPhone and iPad: Safari, Chrome, Edge, Firefox, Google)
+   *   chrome                   Chrome itself on Android (WebXR AR lives there)
+   *   iosVersion               the main iOS number, 0 when unknown
+   */
+  function device() {
+    if (seen) return seen;
+    const ua = navigator.userAgent || "";
+    const ipad = /iPad/.test(ua) || (/Mac/.test(navigator.platform || "") && navigator.maxTouchPoints > 1);
+    const ios = ipad || /iP(hone|od)/.test(ua);
+    const android = /Android/i.test(ua);
+    // An app's own web view on an iPhone says "webkit" to the page; Safari doesn't, and these browsers can still show Quick Look
+    const webkit = Boolean(window.webkit && window.webkit.messageHandlers);
+    const browserApp = /CriOS\/|EdgiOS\/|FxiOS\/|GSA\/|DuckDuckGo\//.test(ua);
+    const named = (IN_APP.find(([, re]) => re.test(ua)) || [])[0] || "";
+    const unnamed = android ? /; wv\)/.test(ua) : ios && !navigator.standalone && (!/Safari\//.test(ua) || (webkit && !browserApp));
+    const inApp = named || (unnamed ? "app" : "");
+    let arLink = false;
+    try {
+      const a = document.createElement("a");
+      arLink = Boolean(a.relList && a.relList.supports && a.relList.supports("ar"));
+    } catch (error) {
+      /* an old browser: no Quick Look */
+    }
+    const version = /OS (\d+)_/.exec(ua);
+    seen = {
+      ios,
+      android,
+      phone: ios || android || /Mobi/i.test(ua),
+      name: ipad ? "iPad" : ios ? "iPhone" : "phone",
+      inApp,
+      quickLook: ios && !inApp && (webkit ? browserApp : arLink),
+      chrome: android && !inApp && /Chrome\/\d/.test(ua) && !/SamsungBrowser|OPR\/|EdgA\/|UCBrowser|MiuiBrowser|YaBrowser|HeyTap|VivoBrowser|Firefox/i.test(ua),
+      iosVersion: version ? Number(version[1]) : 0,
+    };
+    return seen;
+  }
+
+  /** The camera can be asked for on this page (the simple camera view) */
+  const camera = () => Boolean(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 
   function track(name, detail = {}) {
     const data = Object.assign({ event: name }, detail);
@@ -43,11 +107,13 @@
     }
   }
 
-  /** Is there a camera this page may open? Found out without asking for permission. */
+  /** Can View on My Wall be offered here? Found out without asking for permission. */
   function available() {
     if (known) return known;
-    const api = Boolean(window.isSecureContext && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-    if (!api) return (known = Promise.resolve(false));
+    const d = device();
+    // Quick Look needs no camera permission; a phone in an app's own browser gets the button too, to be told where it works.
+    if (window.isSecureContext && (d.quickLook || (d.phone && d.inApp))) return (known = Promise.resolve(true));
+    if (!camera()) return (known = Promise.resolve(false));
     const touch = navigator.maxTouchPoints > 0 || (window.matchMedia && matchMedia("(pointer: coarse)").matches);
     known = (navigator.mediaDevices.enumerateDevices ? navigator.mediaDevices.enumerateDevices() : Promise.resolve([]))
       // Some phones list nothing until the camera has been allowed once: on a touch device, offer it anyway.
@@ -151,5 +217,5 @@
     usedHere = null;
   });
 
-  FrameX.liveDemo = { available, supports, mount, open, load, track };
+  FrameX.liveDemo = { available, supports, mount, open, load, track, device, camera };
 })((window.FrameX = window.FrameX || {}));
