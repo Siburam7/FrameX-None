@@ -12,6 +12,7 @@ import { messages, sendMail } from "../lib/mailer.js";
 import { newId } from "../lib/tokens.js";
 import { issueToken, revokeSessions } from "./auth-service.js";
 import { notifyUser } from "./notification-service.js";
+import { accountApproved } from "./whatsapp-service.js";
 
 const PUBLIC = "approval_status = 'APPROVED' AND active_status = 'ACTIVE'";
 // A featured shop (an admin's choice, e.g. a paid promotion) whose "until" hasn't passed.
@@ -286,6 +287,9 @@ async function welcomeShop(q, shop) {
 /** firstSetup: the link is for choosing the login's first password (false = it resets a password the shop already has). */
 async function deliverSetup(shop, email, setup, { firstSetup = true } = {}) {
   const mail = await sendMail({ to: email, ...messages.shopSetup(shop.name, shop.shop_code, setup.url, config.tokens.accountSetupHours) });
+  // "Approved, the setup link is in your email" on WhatsApp, only when that email really went (the link itself
+  // never goes on WhatsApp: Meta refuses account-access links in these messages).
+  if (firstSetup && mail.delivered) accountApproved({ code: shop.shop_code, name: shop.owner_name || shop.name, business: shop.name, phone: shop.phone });
   // The link is also handed to the admin once, to pass on (e.g. by WhatsApp) if email isn't set up.
   // The shop's name, owner and phone come along so the admin page can write that message.
   return {

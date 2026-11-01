@@ -246,8 +246,19 @@
 
   /* ---------------------------------------------------------------- Platform settings */
   async function settings(main, params, { head }) {
-    const { items } = await http().get("/admin/settings");
+    const [{ items }, wa] = await Promise.all([http().get("/admin/settings"), http().get("/admin/whatsapp").catch(() => null)]);
     const groups = [...new Set(items.map((s) => s.group))];
+    // Above the WhatsApp switches: is the service set up, what went and what failed lately
+    const KIND = { ORDER_UPDATE: "Order update", SELLER_NEW_ORDER: "New order to a seller", ACCOUNT_APPROVED: "Approved" };
+    const waStatus = () =>
+      wa
+        ? `<div class="set-row"><div><strong>WhatsApp service: ${wa.service.mode === "real" ? "ready" : wa.service.mode === "dev" ? "development mailbox only" : "not set up"}</strong><small>${
+            wa.service.mode === "none" ? `${esc(wa.service.problems.join(" "))} Nothing is sent until it is set up on the server (WHATSAPP_PROVIDER, WHATSAPP_API_KEY).` : `Last 30 days: ${wa.last30Days.sent} sent, ${wa.last30Days.failed} failed.`
+          }${wa.messages
+            .slice(0, 5)
+            .map((m) => `<br>${esc(new Date(m.at).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }))} · ${esc(KIND[m.kind] || m.kind)} · ${esc(m.ref.split(":")[0])} · ${esc(m.phone)} · ${esc(m.status === "SENT" ? "sent" : m.status === "FAILED" ? `FAILED: ${m.detail || ""}` : m.status.toLowerCase().replace("_", " "))}`)
+            .join("")}</small></div><div></div></div>`
+        : "";
     const control = (s) =>
       s.unit === "text"
         ? `<input class="input" type="text" maxlength="30" autocapitalize="characters" data-setting="${esc(s.key)}" data-unit="text" value="${esc(s.value)}" aria-label="${esc(s.label)}">`
@@ -256,7 +267,7 @@
         : `<input class="input" type="number" inputmode="decimal" step="${s.unit === "percent" && s.key !== "customPaintingAdvancePercent" ? "0.01" : "1"}" min="0" data-setting="${esc(s.key)}" data-unit="${esc(s.unit)}" value="${esc(s.value)}" aria-label="${esc(s.label)}">`;
     main.innerHTML = `${head("Platform settings", "Fees and rules FrameX decides. A change applies from the next quote or request; orders and requests already made keep what was agreed. Keys and passwords are not settings: they stay on the server.")}
       <form class="set-list" novalidate>
-        ${groups.map((g) => `<h2 class="adm-subtitle">${esc(g)}</h2>${items.filter((s) => s.group === g).map((s) => `<div class="set-row"><div><strong>${esc(s.label)}</strong> <span class="sd-item__meta">(${esc({ rupees: "₹", percent: "%", hours: "hours", count: "number", text: "code", boolean: "on / off" }[s.unit] || s.unit)})</span><small>${esc(s.hint || "")}${s.changed ? ` Changed by an admin; the server's default is ${esc(String(s.default))}.` : " Using the server's default."}</small></div><div>${control(s)}${s.changed ? `<button class="iu-btn" type="button" data-reset="${esc(s.key)}" style="margin-top:6px">Back to default</button>` : ""}</div></div>`).join("")}`).join("")}
+        ${groups.map((g) => `<h2 class="adm-subtitle">${esc(g)}</h2>${g === "WhatsApp messages" ? waStatus() : ""}${items.filter((s) => s.group === g).map((s) => `<div class="set-row"><div><strong>${esc(s.label)}</strong> <span class="sd-item__meta">(${esc({ rupees: "₹", percent: "%", hours: "hours", count: "number", text: "code", boolean: "on / off" }[s.unit] || s.unit)})</span><small>${esc(s.hint || "")}${s.changed ? ` Changed by an admin; the server's default is ${esc(String(s.default))}.` : " Using the server's default."}</small></div><div>${control(s)}${s.changed ? `<button class="iu-btn" type="button" data-reset="${esc(s.key)}" style="margin-top:6px">Back to default</button>` : ""}</div></div>`).join("")}`).join("")}
         <div class="form-status" role="status" aria-live="polite"></div>
         <div><button class="btn btn--primary" type="submit">Save settings</button></div>
       </form>`;

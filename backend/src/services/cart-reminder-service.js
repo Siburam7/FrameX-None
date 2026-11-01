@@ -113,7 +113,7 @@ async function dueCarts(limit) {
         AND c.updated_at > now() - make_interval(days => $3)
         AND (c.reminded_at IS NULL OR c.reminded_at < c.updated_at)
         AND EXISTS (SELECT 1 FROM cart_items i WHERE i.cart_id = c.id)
-        AND u.role = 'CUSTOMER' AND u.status = 'ACTIVE' AND u.deleted_at IS NULL AND NOT u.cart_reminders_off
+        AND u.role = 'CUSTOMER' AND u.status = 'ACTIVE' AND u.deleted_at IS NULL AND NOT u.cart_reminders_off AND u.email IS NOT NULL
         AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.user_id = c.user_id AND o.created_at > c.updated_at AND o.status <> 'CANCELLED')
       ORDER BY c.updated_at
       LIMIT $2`,
@@ -176,7 +176,7 @@ export async function runDue(now = new Date()) {
 export async function sendNow(cartId) {
   const row = (
     await db.query(
-      `SELECT c.id, c.user_id, u.role, u.status, u.deleted_at, u.cart_reminders_off,
+      `SELECT c.id, c.user_id, u.role, u.status, u.deleted_at, u.cart_reminders_off, u.email,
               EXISTS (SELECT 1 FROM cart_items i WHERE i.cart_id = c.id) AS has_items
          FROM carts c JOIN users u ON u.id = c.user_id WHERE c.id = $1`,
       [cartId]
@@ -184,6 +184,7 @@ export async function sendNow(cartId) {
   ).rows[0];
   if (!row || !row.has_items) throw errors.notFound("That cart is empty or no longer exists.");
   if (row.role !== "CUSTOMER" || row.status !== "ACTIVE" || row.deleted_at) throw errors.badRequest("This account can't get cart reminders.", "NOT_A_CUSTOMER");
+  if (!row.email) throw errors.badRequest("This customer joined with a mobile number and has no email address.", "NO_EMAIL");
   if (row.cart_reminders_off) throw errors.badRequest("This customer turned cart reminders off.", "REMINDERS_OFF");
   if (emailStatus().mode === "none") throw errors.badRequest("Emails can't be sent: no email service is set up.", "EMAIL_NOT_CONFIGURED");
   if ((await sentToday(new Date())) >= R().dailyLimit) throw errors.badRequest("Today's cart reminder limit is reached (Admin → Settings). Try again tomorrow.", "DAILY_LIMIT");

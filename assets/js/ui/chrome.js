@@ -126,7 +126,7 @@
   const digits = (n) => String(n || "").replace(/\D/g, "");
   FrameX.contact = {
     whatsappUrl: (n) => "https://wa.me/" + digits(n),
-    // "919337169824" -> "+91 93371 69824"
+    // "919876543210" -> "+91 98765 43210"
     formatWhatsapp: (n) => {
       const d = digits(n);
       return d.length === 12 && d.startsWith("91")

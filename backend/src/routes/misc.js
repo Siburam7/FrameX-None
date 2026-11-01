@@ -5,6 +5,7 @@ import { db } from "../db/index.js";
 import { geocoderEnabled, searchPlaces } from "../lib/geocoder.js";
 import { devOutbox, emailDelivery } from "../lib/mailer.js";
 import { smsDelivery } from "../lib/sms.js";
+import { whatsappStatus } from "../lib/whatsapp.js";
 import { storageReady } from "../lib/storage.js";
 import { paymentStatus } from "../payments/index.js";
 import { isQuiet } from "../lib/activity.js";
@@ -69,6 +70,8 @@ router.get("/config", (req, res) => {
       // "real" = messages are really sent by a provider; "dev" = development mailbox only; "none" = not configured.
       emailDelivery: emailDelivery(),
       smsDelivery: smsDelivery(),
+      // Checkout offers "order updates on WhatsApp" only while they can really be sent (and the admin has them on).
+      whatsappOrderUpdates: whatsappStatus().mode !== "none" && config.whatsapp.orderUpdates,
       // Whether customers can pay online here, and whether the gateway is in test mode. No key is in this answer.
       payments: (({ ready, provider, mode }) => ({ online: ready, provider: ready ? provider : null, mode: ready ? mode : null, cod: config.checkout.cod.enabled }))(paymentStatus()),
       productModeration: config.catalog.productModeration,

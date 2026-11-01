@@ -335,7 +335,7 @@ export async function createRequest(user, { artist: artistRef, serviceId, upload
         `INSERT INTO painting_requests (id, request_number, user_id, artist_id, service_id, service, price, advance_percent, advance_amount, balance_amount, instructions, status,
                                         shipping_address, customer_name, customer_email, customer_phone, idempotency_key)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'PENDING_ARTIST_RESPONSE', $12, $13, $14, $15, $16)`,
-        [id, number, user.id, artist.id, service.id, JSON.stringify(serviceShape(service)), service.price, percent, advance, balance, note, JSON.stringify(addressSnapshot(address)), user.name, user.email, address.phone || user.phone || null, idempotencyKey]
+        [id, number, user.id, artist.id, service.id, JSON.stringify(serviceShape(service)), service.price, percent, advance, balance, note, JSON.stringify(addressSnapshot(address)), user.name, user.email || "", address.phone || user.phone || null, idempotencyKey]
       );
       let at = 0;
       for (const uploadId of wanted) await q.query("INSERT INTO painting_request_photos (id, request_id, upload_id, position) VALUES ($1, $2, $3, $4)", [newId(), id, uploadId, (at += 1)]);

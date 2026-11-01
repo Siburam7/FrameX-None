@@ -22,7 +22,7 @@
     ]},
     { id: "frames", title: "Frames and sizes", items: [
       { q: "What frame sizes are available?", a: "Available sizes are shown on each product page. Most featured styles come in Small (8 × 10 in), Medium (12 × 16 in), Large (16 × 20 in) and Extra Large (20 × 24 in), with a size comparison to help you picture them. If a product shows a single size, that is the only size the shop currently lists." },
-      { q: "Can I customize the frame?", a: "You can choose the size and, where the shop offers it, the frame colour, and add a note for the shop. The frame design itself belongs to the product, so changing colour or size never swaps it for a different frame. For more (cropping, a printed border, a mat, text), choose \"Customize This Product\" to design it in FrameX Studio. Custom sizes are not available yet; ask us on WhatsApp or by email." }
+      { q: "Can I customize the frame?", a: "You can choose the size and, where the shop offers it, the frame colour, and add a note for the shop. The frame design itself belongs to the product, so changing colour or size never swaps it for a different frame. For more (cropping, a printed border, a mat, text), choose \"Customize This Product\" to design it in FrameX Studio. Custom sizes are not available yet; ask us by email." }
     ]},
     { id: "decor", title: "Home Decor and wall art", items: [
       { q: "What is a multi-panel frame?", a: "One picture printed across two, three, four or five separate frames. You hang them in a row with a small gap between them, so the picture runs across the wall. Each product page shows the set straight on, in a room, and the size of every panel." },

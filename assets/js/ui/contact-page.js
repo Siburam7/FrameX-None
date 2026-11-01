@@ -118,7 +118,7 @@
           form.reset();
           status(form, "success", `Thank you, ${data.name}. Your message has been sent to FrameX. We will reply to ${data.email}.`);
         } else {
-          status(form, "info", "Your message couldn't be sent from this page. Please reach us on WhatsApp or by email using the details on this page.");
+          status(form, "info", "Your message couldn't be sent from this page. Please email us at the address on this page.");
         }
       } catch (error) {
         // The server names the fields it refused; show each under its own box.

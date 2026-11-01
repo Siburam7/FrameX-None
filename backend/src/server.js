@@ -7,6 +7,7 @@ import { describeConnection, pgConnection } from "./db/ssl.js";
 import { unlessQuiet } from "./lib/activity.js";
 import { emailStatus } from "./lib/mailer.js";
 import { smsStatus } from "./lib/sms.js";
+import { whatsappStatus } from "./lib/whatsapp.js";
 import { paymentStatus } from "./payments/index.js";
 import { storageStatus } from "./lib/storage.js";
 import { syncCatalog } from "./services/catalog-service.js";
@@ -91,6 +92,7 @@ async function main() {
       console.log(`${label} ${st.mode === "real" ? `READY (${st.provider})` : st.mode === "dev" ? "DEVELOPMENT MAILBOX ONLY - nothing is really sent" : `NOT CONFIGURED - ${st.problems.join(" ")} ${fix}`}`);
     describe("Email:         ", emailStatus(), "See backend/README.md -> Email.");
     describe("SMS codes:     ", smsStatus(), "See backend/README.md -> SMS.");
+    describe("WhatsApp:      ", whatsappStatus(), "See backend/README.md -> WhatsApp.");
     const pay = paymentStatus();
     console.log(`Online payment: ${pay.ready ? `READY (${pay.provider}, ${pay.mode.toUpperCase()} mode${pay.webhookReady ? "" : ", webhook secret NOT set"})` : `NOT CONFIGURED - ${pay.problems.join(" ")} See backend/README.md -> Payments.`}`);
     console.log(`Cash on Delivery: ${config.checkout.cod.enabled ? "ON" : "OFF"}`);

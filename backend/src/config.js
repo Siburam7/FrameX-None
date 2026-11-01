@@ -88,7 +88,8 @@ export const RAZORPAY_API = "https://api.razorpay.com";
 // Cashfree Payments: the sandbox for PAYMENT_MODE=test, the live API for PAYMENT_MODE=live.
 export const CASHFREE_API = { test: "https://sandbox.cashfree.com/pg", live: "https://api.cashfree.com/pg" };
 const money = (v, fallback) => Math.max(0, Math.round(int(v, fallback)));
-export const SMS_PROVIDERS = ["fast2sms", "2factor", "twilio", "dev", "none"];
+export const SMS_PROVIDERS = ["apitxt", "fast2sms", "2factor", "twilio", "dev", "none"];
+export const WHATSAPP_PROVIDERS = ["fast2sms", "dev", "none"];
 
 /** "10-20" -> { from: 10, to: 20 } (whole hours, India time); anything else -> 10am to 8pm. "0-24" = always. */
 function careHours(value) {
@@ -175,7 +176,31 @@ export const config = {
     key: env.SMS_API_KEY || env.SMS_PROVIDER_KEY || "",
     senderId: env.SMS_SENDER_ID || "",
     templateId: env.SMS_TEMPLATE_ID || "",
-    twilio: { accountSid: env.TWILIO_ACCOUNT_SID || "", authToken: env.TWILIO_AUTH_TOKEN || "", from: env.TWILIO_FROM || "" }
+    twilio: { accountSid: env.TWILIO_ACCOUNT_SID || "", authToken: env.TWILIO_AUTH_TOKEN || "", from: env.TWILIO_FROM || "" },
+    // APITxT's OTP API (owner, 2026-11-01); the address is changed only by the tests' stand-in
+    apitxtBase: (env.SMS_API_BASE || "https://apitxt.com").replace(/\/+$/, "")
+  },
+
+  // WhatsApp messages from the FrameX business number (owner, 2026-11-01): order updates, new-order alerts to shops
+  // and artists, "approved" to new shops and artists. Off unless a provider is configured. Templates are Meta-approved
+  // in the Fast2SMS panel and named here by their template names. Sent with Fast2SMS's Advanced API (the only one
+  // that fills a "Visit website" button's {{1}}, Fast2SMS support 2026-11-01), which needs the number's
+  // phone_number_id.
+  whatsapp: {
+    provider: (env.WHATSAPP_PROVIDER || "none").toLowerCase(),
+    key: env.WHATSAPP_API_KEY || "",
+    phoneNumberId: env.WHATSAPP_PHONE_NUMBER_ID || "",
+    apiBase: (env.WHATSAPP_API_BASE || "https://www.fast2sms.com").replace(/\/+$/, ""),
+    apiVersion: env.WHATSAPP_API_VERSION || "v26.0",
+    language: env.WHATSAPP_TEMPLATE_LANGUAGE || "en",
+    templates: {
+      orderUpdate: env.WHATSAPP_TEMPLATE_ORDER_UPDATE || "framex_order_update",
+      sellerNewOrder: env.WHATSAPP_TEMPLATE_SELLER_NEW_ORDER || "framex_seller_new_order",
+      accountApproved: env.WHATSAPP_TEMPLATE_ACCOUNT_APPROVED || "framex_account_approved"
+    },
+    orderUpdates: bool(env.WHATSAPP_ORDER_UPDATES, true),
+    sellerAlerts: bool(env.WHATSAPP_SELLER_ALERTS, true),
+    accountApproved: bool(env.WHATSAPP_ACCOUNT_APPROVED, true)
   },
 
   // One-time codes: 6 digits, short life, few tries, a wait before re-sending, a cap per hour.
@@ -327,7 +352,7 @@ export const config = {
 };
 
 // The dev mailbox exists only outside production, and only while email or SMS uses the "dev" provider.
-config.devMailbox = !isProd && (config.email.provider === "dev" || config.sms.provider === "dev");
+config.devMailbox = !isProd && (config.email.provider === "dev" || config.sms.provider === "dev" || config.whatsapp.provider === "dev");
 
 /** Stop a production server from starting with unsafe settings. */
 export function assertConfig() {
@@ -347,6 +372,10 @@ export function assertConfig() {
   if (isProd && config.sms.provider === "dev") problems.push('SMS_PROVIDER "dev" is not allowed in production.');
   if (!EMAIL_PROVIDERS.includes(config.email.provider)) problems.push(`EMAIL_PROVIDER must be one of: ${EMAIL_PROVIDERS.join(", ")}.`);
   if (!SMS_PROVIDERS.includes(config.sms.provider)) problems.push(`SMS_PROVIDER must be one of: ${SMS_PROVIDERS.join(", ")}.`);
+  if (isProd && config.sms.apitxtBase !== "https://apitxt.com") problems.push("SMS_API_BASE must not be set in production.");
+  if (isProd && config.whatsapp.provider === "dev") problems.push('WHATSAPP_PROVIDER "dev" is not allowed in production.');
+  if (!WHATSAPP_PROVIDERS.includes(config.whatsapp.provider)) problems.push(`WHATSAPP_PROVIDER must be one of: ${WHATSAPP_PROVIDERS.join(", ")}.`);
+  if (isProd && config.whatsapp.apiBase !== "https://www.fast2sms.com") problems.push("WHATSAPP_API_BASE must not be set in production.");
   if (!PAYMENT_PROVIDERS.includes(config.payments.provider)) problems.push(`PAYMENT_PROVIDER must be one of: ${PAYMENT_PROVIDERS.join(", ")}.`);
   if (!["test", "live"].includes(config.payments.mode)) problems.push(`PAYMENT_MODE must be test or live (it is set to "${config.payments.mode.slice(0, 20)}").`);
   if (isProd && config.payments.razorpay.apiBase !== RAZORPAY_API) problems.push("RAZORPAY_API_BASE must not be set in production.");
@@ -401,7 +430,16 @@ export function paymentProblems() {
 export function smsProblems() {
   const m = config.sms;
   const out = [];
-  if (["fast2sms", "2factor"].includes(m.provider) && !m.key) out.push("SMS_API_KEY is not set.");
+  if (["apitxt", "fast2sms", "2factor"].includes(m.provider) && !m.key) out.push("SMS_API_KEY is not set.");
   if (m.provider === "twilio" && !(m.twilio.accountSid && m.twilio.authToken && m.twilio.from)) out.push("TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN and TWILIO_FROM are not all set.");
+  return out;
+}
+
+/** What is missing before real WhatsApp messages can be sent (empty = ready). */
+export function whatsappProblems() {
+  const w = config.whatsapp;
+  const out = [];
+  if (w.provider === "fast2sms" && !w.key) out.push("WHATSAPP_API_KEY is not set (the Fast2SMS API key).");
+  if (w.provider === "fast2sms" && !w.phoneNumberId) out.push("WHATSAPP_PHONE_NUMBER_ID is not set (the WhatsApp number's Phone Number ID, from Fast2SMS).");
   return out;
 }

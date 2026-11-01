@@ -238,7 +238,7 @@ function orderTypeOf(lines, sellers) {
   return kinds.size === 1 ? [...kinds][0] : "MIXED_ORDER";
 }
 
-async function insertOrder(q, user, { quote, address, paymentMethod, idempotencyKey }) {
+async function insertOrder(q, user, { quote, address, paymentMethod, idempotencyKey, whatsapp = false }) {
   const id = newId();
   const number = "FX-" + (await q.query("SELECT nextval('order_number_seq') AS n")).rows[0].n;
   const cod = paymentMethod === "COD";
@@ -246,16 +246,18 @@ async function insertOrder(q, user, { quote, address, paymentMethod, idempotency
     `INSERT INTO orders (id, order_number, user_id, idempotency_key, status, payment_method, payment_status, currency,
                          subtotal, discount, tax, tax_percent, shipping_fee, cod_fee, total, item_count,
                          address_id, shipping_address, customer_name, customer_email, customer_phone, placed_at, expires_at,
-                         gift_wrap, gift_wrap_fee, is_test, coupon_code, coupon_discount)
+                         gift_wrap, gift_wrap_fee, is_test, coupon_code, coupon_discount, whatsapp_updates)
      VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
              CASE WHEN $21 THEN now() ELSE NULL END,
              CASE WHEN $21 THEN NULL ELSE now() + interval '${config.payments.pendingMinutes} minutes' END,
-             $22, $23, $24, $25, $26)`,
+             $22, $23, $24, $25, $26, $27)`,
     [id, number, user.id, idempotencyKey, cod ? "PLACED" : "PENDING_PAYMENT", paymentMethod, quote.currency, quote.subtotal, quote.discount, quote.tax, quote.taxPercent, quote.shippingFee, quote.codFee, quote.total, quote.itemCount,
-      address.id, JSON.stringify(addressSnapshot(address)), user.name, user.email, address.phone || user.phone || null, cod, quote.giftWrap.selected, quote.giftWrapFee,
+      address.id, JSON.stringify(addressSnapshot(address)), user.name, user.email || "", address.phone || user.phone || null, cod, quote.giftWrap.selected, quote.giftWrapFee,
       // Paid through a gateway that is in TEST mode: not real money, so the reports keep it out of sales.
       !cod && gatewayInTestMode(),
-      quote.couponDiscount ? quote.coupon.code : null, quote.couponDiscount]
+      quote.couponDiscount ? quote.coupon.code : null, quote.couponDiscount,
+      // "Send order updates on WhatsApp": only with a number WhatsApp can use
+      Boolean(whatsapp) && Boolean(address.phone || user.phone)]
   );
   const sellers = await sellersOf(q, quote.lines);
   let position = 0;
@@ -301,8 +303,9 @@ async function insertOrder(q, user, { quote, address, paymentMethod, idempotency
  * giftWrap (optional): the customer asked for gift wrapping; its fee is part of the total they saw.
  * coupon (optional): the coupon code the customer applied; it is checked again here, and an order
  *   whose coupon no longer applies is not placed (the customer sees why first).
+ * whatsapp (optional): the customer said yes to order updates on WhatsApp (services/whatsapp-service.js).
  */
-export async function placeOrder(user, { addressId, paymentMethod, paymentChannel = null, expectedTotal, idempotencyKey, buyNow = null, giftWrap = false, coupon = null }) {
+export async function placeOrder(user, { addressId, paymentMethod, paymentChannel = null, expectedTotal, idempotencyKey, buyNow = null, giftWrap = false, coupon = null, whatsapp = false }) {
   if (!KEY.test(String(idempotencyKey || ""))) throw errors.validation({ idempotencyKey: "The checkout could not be identified. Reload the page and try again." });
   const find = async () => (await db.query("SELECT * FROM orders WHERE user_id = $1 AND idempotency_key = $2", [user.id, idempotencyKey])).rows[0];
   const existing = await find();
@@ -336,7 +339,7 @@ export async function placeOrder(user, { addressId, paymentMethod, paymentChanne
         throw new HttpError(409, "OUT_OF_STOCK", s.available ? `Only ${s.available} of ${s.name} ${s.available === 1 ? "is" : "are"} left. Please change the quantity in your cart.` : `${s.name} has just sold out. Please remove it from your cart.`, { details: { issues: short } });
       }
 
-      const { id, number } = await insertOrder(q, user, { quote, address, paymentMethod, idempotencyKey });
+      const { id, number } = await insertOrder(q, user, { quote, address, paymentMethod, idempotencyKey, whatsapp });
       const actor = { id: user.id, role: "CUSTOMER" };
       if (paymentMethod === "COD") {
         await q.query("INSERT INTO payments (id, order_id, attempt, provider, method_requested, status, amount, currency) VALUES ($1, $2, 1, 'cod', 'cod', 'PENDING', $3, $4)", [newId(), id, quote.total, quote.currency]);

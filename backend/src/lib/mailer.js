@@ -118,6 +118,8 @@ export function explainMailError(error) {
 }
 
 export async function sendMail({ to, subject, text, html, links = [], replyTo = null }) {
+  // A customer who joined with a mobile number only has no email address (owner, 2026-11-01: email optional)
+  if (!String(to || "").trim()) return { delivered: false, reason: "no_address", detail: "This account has no email address." };
   const status = emailStatus();
   if (status.mode === "none") return { delivered: false, reason: "not_configured", detail: status.problems.join(" ") };
   if (status.mode === "dev") {

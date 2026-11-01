@@ -255,7 +255,7 @@
     const confirmed = placed && !pending && o.status !== "CANCELLED";
     const hero = confirmed
       ? `<div class="od-hero od-hero--ok">${icon("check")}<div><h1 class="co-title">Thank you! Your order is placed.</h1>
-          <p>${o.paymentMethod === "COD" ? `Please keep <strong>${formatPrice(o.total)}</strong> ready to pay in cash on delivery.` : `We received your payment of <strong>${formatPrice(o.total)}</strong>.`} A confirmation is on its way to ${esc(o.customer.email)}.</p></div></div>`
+          <p>${o.paymentMethod === "COD" ? `Please keep <strong>${formatPrice(o.total)}</strong> ready to pay in cash on delivery.` : `We received your payment of <strong>${formatPrice(o.total)}</strong>.`}${o.customer.email ? ` A confirmation is on its way to ${esc(o.customer.email)}.` : ""}</p></div></div>`
       : pending
         ? `<div class="od-hero od-hero--wait">${icon("clock")}<div><h1 class="co-title">This order is waiting for its payment</h1>
             <p>${o.paymentStatus === "FAILED" ? "The last payment didn't go through." : o.paymentStatus === "CANCELLED" ? "The payment wasn't completed." : "We haven't received the payment yet."} The order is placed only once the payment is confirmed. ${o.canPay ? "Your items are being held for a short while." : ""}</p></div></div>`

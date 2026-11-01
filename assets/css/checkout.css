@@ -427,6 +427,32 @@ div.co-choice--pay {
   font-weight: 700;
 }
 
+/* "Send order updates to my WhatsApp" above the Place Order button (2026-11-01) */
+.co-wa {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 2px 0 10px;
+  color: var(--text-taupe);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.co-wa input {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  accent-color: var(--amber-deep);
+}
+
+.co-wa b {
+  color: var(--on-surface);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .co-card .form-status a,
 .co-card .form-status .co-link {
   min-height: 0;

@@ -16,6 +16,7 @@ import { linkBase } from "../lib/context.js";
 import { esc, htmlEmail, sendMail } from "../lib/mailer.js";
 import { newId } from "../lib/tokens.js";
 import { isUuid } from "../lib/validate.js";
+import { sellerNewOrder } from "./whatsapp-service.js";
 
 const sending = new Set();
 /** Tests: wait until every notification email that was started has been handed to the mailer. */
@@ -82,20 +83,22 @@ export function alertSellers(orderId) {
       const order = (await db.query("SELECT order_number, payment_method, gift_wrap FROM orders WHERE id = $1 AND status <> 'PENDING_PAYMENT'", [orderId])).rows[0];
       if (!order) return;
       const lines = (await db.query("SELECT shop_ref, seller_type, artist_id, quantity, line_total, name FROM order_items WHERE order_id = $1 ORDER BY position", [orderId])).rows;
-      const sellers = new Map(); // "shop:<id>" | "artist:<id>" -> { kind, link, users, lines }
+      const sellers = new Map(); // "shop:<id>" | "artist:<id>" -> { kind, link, users, lines, name, phone, dashboard }
       for (const ref of new Set(lines.filter((l) => l.seller_type === "SHOP").map((l) => l.shop_ref))) {
-        const shop = (await db.query("SELECT id FROM shops WHERE catalog_ref = $1 OR shop_code = $1 LIMIT 1", [ref])).rows[0];
+        const shop = (await db.query("SELECT id, name, phone FROM shops WHERE catalog_ref = $1 OR shop_code = $1 LIMIT 1", [ref])).rows[0];
         if (!shop) continue; // a catalogue shop that isn't on FrameX: FrameX makes those items itself
         const key = `shop:${shop.id}`;
         if (!sellers.has(key)) {
           const users = (await db.query("SELECT id FROM users WHERE shop_id = $1 AND role = 'SHOP' AND status <> 'DISABLED'", [shop.id])).rows.map((r) => r.id);
-          sellers.set(key, { kind: "SHOP_NEW_ORDER", link: `shop-dashboard.html#/orders/${order.order_number}`, users, lines: [] });
+          sellers.set(key, { kind: "SHOP_NEW_ORDER", link: `shop-dashboard.html#/orders/${order.order_number}`, users, lines: [], name: shop.name, phone: shop.phone, dashboard: "shop-dashboard.html" });
         }
         sellers.get(key).lines.push(...lines.filter((l) => l.seller_type === "SHOP" && l.shop_ref === ref));
       }
-      for (const artistId of new Set(lines.filter((l) => l.seller_type === "ARTIST" && l.artist_id).map((l) => l.artist_id)))
-        sellers.set(`artist:${artistId}`, { kind: "ARTIST_NEW_ORDER", link: `artist-dashboard.html#/orders/${order.order_number}`, users: await artistUserIds(artistId), lines: lines.filter((l) => l.artist_id === artistId) });
-      for (const s of sellers.values()) {
+      for (const artistId of new Set(lines.filter((l) => l.seller_type === "ARTIST" && l.artist_id).map((l) => l.artist_id))) {
+        const artist = (await db.query("SELECT name, phone FROM artists WHERE id = $1", [artistId])).rows[0] || {};
+        sellers.set(`artist:${artistId}`, { kind: "ARTIST_NEW_ORDER", link: `artist-dashboard.html#/orders/${order.order_number}`, users: await artistUserIds(artistId), lines: lines.filter((l) => l.artist_id === artistId), name: artist.name, phone: artist.phone, dashboard: "artist-dashboard.html" });
+      }
+      for (const [key, s] of sellers) {
         const count = s.lines.reduce((n, l) => n + l.quantity, 0);
         const total = s.lines.reduce((n, l) => n + l.line_total, 0);
         const what = s.lines.length === 1 ? s.lines[0].name : `${s.lines[0].name} and ${s.lines.length - 1} more`;
@@ -108,6 +111,13 @@ export function alertSellers(orderId) {
           link: s.link,
           email: true,
           button: "Open the order"
+        });
+        // …and on WhatsApp, on the shop's / artist's own number (owner, 2026-11-01)
+        sellerNewOrder({
+          orderNumber: order.order_number,
+          seller: { key, name: s.name, phone: s.phone, dashboard: s.dashboard },
+          items: `${count} ${count === 1 ? "item" : "items"} (${what})`,
+          payment: `${order.payment_method === "COD" ? "Cash on delivery, collect the cash on handover" : "Paid online"}${order.gift_wrap ? ". The customer asked for gift wrapping" : ""}`
         });
       }
     } catch (error) {

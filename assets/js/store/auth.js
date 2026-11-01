@@ -70,7 +70,10 @@
   // a new address answers { newAccount, signupToken, masked } and becomes an account with codeSignup().
   const sendLoginCode = (email) => http.post("/auth/code/send", { email });
   const verifyLoginCode = (email, code) => http.post("/auth/code/verify", { email, code }).then((r) => (r.newAccount ? r : startSession(r)));
-  const codeSignup = (signupToken, name, phone) => http.post("/auth/code/signup", { signupToken, name, phone }).then(startSession);
+  // The same with a mobile number and a code by SMS (2026-11-01); a new number's email is optional in codeSignup.
+  const sendPhoneCode = (phone) => http.post("/auth/code/send", { phone });
+  const verifyPhoneCode = (phone, code) => http.post("/auth/code/verify", { phone, code }).then((r) => (r.newAccount ? r : startSession(r)));
+  const codeSignup = (signupToken, name, phone, email) => http.post("/auth/code/signup", { signupToken, name, phone, email: email || undefined }).then(startSession);
 
   async function logout() {
     try {
@@ -147,6 +150,8 @@
     socialLogin,
     sendLoginCode,
     verifyLoginCode,
+    sendPhoneCode,
+    verifyPhoneCode,
     codeSignup,
     logout,
     refresh,

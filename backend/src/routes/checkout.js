@@ -44,7 +44,8 @@ router.post("/orders", rateLimit("place-order", { windowMs: 10 * 60_000, max: 30
     paymentChannel: v.enumOf(CHANNELS, { required: false, label: "Payment option" }),
     idempotencyKey: v.string({ min: 16, max: 80, label: "Checkout" }),
     giftWrap: v.boolean(),
-    coupon: v.string({ max: 40 })
+    coupon: v.string({ max: 40 }),
+    whatsapp: v.boolean()
   });
   const expectedTotal = req.body ? req.body.expectedTotal : undefined;
   if (!Number.isInteger(expectedTotal) || expectedTotal < 0) throw errors.validation({ expectedTotal: "Reload the page and try again." });

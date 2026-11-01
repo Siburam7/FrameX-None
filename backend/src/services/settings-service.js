@@ -115,6 +115,33 @@ const SPEC = {
     get: () => config.cartReminders.dailyLimit,
     set: (v) => (config.cartReminders.dailyLimit = v)
   },
+  whatsappOrderUpdates: {
+    label: "WhatsApp: order updates to customers",
+    hint: "On: a customer who ticked \"order updates on WhatsApp\" at checkout gets placed, shipped, out for delivery, delivered, cancelled and refund news there too (about ₹0.25 a message). Needs the WhatsApp service (Fast2SMS) set up.",
+    group: "WhatsApp messages",
+    unit: "boolean",
+    check: flag,
+    get: () => config.whatsapp.orderUpdates,
+    set: (v) => (config.whatsapp.orderUpdates = v)
+  },
+  whatsappSellerAlerts: {
+    label: "WhatsApp: new orders to shops and artists",
+    hint: "On: each shop and artist of a new order also hears about it on WhatsApp, on the number in their profile.",
+    group: "WhatsApp messages",
+    unit: "boolean",
+    check: flag,
+    get: () => config.whatsapp.sellerAlerts,
+    set: (v) => (config.whatsapp.sellerAlerts = v)
+  },
+  whatsappAccountApproved: {
+    label: "WhatsApp: \"approved\" to new shops and artists",
+    hint: "On: a new shop or artist is told on WhatsApp that they are approved and that their setup link is in their email.",
+    group: "WhatsApp messages",
+    unit: "boolean",
+    check: flag,
+    get: () => config.whatsapp.accountApproved,
+    set: (v) => (config.whatsapp.accountApproved = v)
+  },
   productModeration: {
     label: "Shop products need FrameX approval",
     hint: "On: a shop's new product waits in Admin → Shop products until FrameX approves it. Products already on sale stay on sale.",

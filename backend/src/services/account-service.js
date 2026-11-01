@@ -119,6 +119,8 @@ export async function deleteAccount(actor, { password, confirm } = {}, { ip = nu
     );
     await q.query("UPDATE order_items SET note = '', customization = NULL, design_summary = NULL WHERE order_id IN (SELECT id FROM orders WHERE user_id = $1)", [user.id]);
     await q.query("UPDATE order_notifications SET recipient = '' WHERE order_id IN (SELECT id FROM orders WHERE user_id = $1)", [user.id]);
+    // The WhatsApp messages about those orders carried the phone number: they go
+    await q.query("DELETE FROM whatsapp_messages WHERE kind = 'ORDER_UPDATE' AND split_part(ref, ':', 1) IN (SELECT order_number FROM orders WHERE user_id = $1)", [user.id]);
     const paintings = await q.query(
       `UPDATE painting_requests SET customer_name = $2, customer_email = '', customer_phone = NULL, instructions = '',
               shipping_address = jsonb_build_object('state', shipping_address->>'state', 'removed', true), updated_at = now()
@@ -133,7 +135,7 @@ export async function deleteAccount(actor, { password, confirm } = {}, { ip = nu
     // What only made sense for the login
     for (const table of ["addresses", "sessions", "auth_tokens", "otp_codes", "notifications", "saved_designs", "support_threads"]) await q.query(`DELETE FROM ${table} WHERE user_id = $1`, [user.id]);
     await q.query("DELETE FROM carts WHERE user_id = $1", [user.id]);
-    await q.query("DELETE FROM login_codes WHERE email = lower($1)", [user.email]); // login codes are kept by address
+    await q.query("DELETE FROM login_codes WHERE email = lower($1) OR email = $2", [user.email || "", user.phone || ""]); // login codes are kept by address (email or mobile number)
     await q.query("UPDATE auth_events SET user_id = NULL WHERE user_id = $1", [user.id]);
 
     // The account row: emptied, switched off for good, its email freed

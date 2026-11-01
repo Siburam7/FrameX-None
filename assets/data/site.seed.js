@@ -11,7 +11,7 @@
     brand: { name: "FrameX" },
     contact: {
       phone: "",       // e.g. "+91 98765 43210"  -> enables tel: link
-      whatsapp: "919337169824", // country code + number, digits only -> WhatsApp link
+      whatsapp: "",    // country code + number, digits only -> WhatsApp link. Empty: no WhatsApp anywhere (owner, 2026-11-01: it was a personal number)
       email: "support@shopframex.in" // forwarded to the business Gmail (ImprovMX); see docs/project/architecture.md §9
     },
     social: {

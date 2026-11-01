@@ -187,14 +187,44 @@
       .join(" ")
       .slice(0, 80);
 
-  function codeStart(root, { onSuccess, email = "" }) {
+  /* A phone number too (2026-11-01): the code then goes by SMS. Offered only while the server can send SMS (GET
+     /api/config features.smsDelivery); a new number's email is optional (owner: "Email optional"). The owner's layout:
+     a toggle "Phone number | Email" above the box, phone chosen first. */
+  const PHONE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>';
+  /** "98765 43210", "+91 98765 43210": a phone number, not an email. */
+  const looksLikePhone = (value) => /^[+\d\s()-]+$/.test(String(value).trim()) && String(value).replace(/\D/g, "").length >= 10;
+  let smsOn = null; // can the server send SMS? null until GET /api/config has answered
+  const smsLogin = () =>
+    FrameX.http
+      .serverConfig()
+      .then((c) => Boolean(c && c.features && c.features.smsDelivery && c.features.smsDelivery !== "none"))
+      .catch(() => false);
+
+  /** Step 1. how: "phone" | "email" (the toggle; phone first). email: what was typed before (back from step 2). */
+  function codeStart(root, { onSuccess, email = "", how = "phone" }) {
+    const tabs = smsOn === true;
+    const byPhone = tabs && how === "phone";
+    const before = byPhone === looksLikePhone(email) ? email : "";
     shell(
       root,
       "Log in or sign up",
-      "Use your email or Google. New here? Your account is made when you log in.",
-      `${socialBlock("login", "or use your email")}
-      <form id="code-form" class="form-grid" novalidate>
-        ${forms().field("email", "Email", { required: true, type: "email", autocomplete: "email", inputmode: "email", placeholder: "you@gmail.com", value: email, prefix: "cl" })}
+      tabs ? "Use your phone number, email or Google. New here? Your account is made when you log in." : "Use your email or Google. New here? Your account is made when you log in.",
+      `${socialBlock("login", tabs ? "or use your phone number or email" : "or use your email")}
+      ${
+        tabs
+          ? `<div class="auth-tabs" role="tablist" aria-label="Log in with">
+        <button class="auth-tabs__btn" type="button" role="tab" id="tab-phone" aria-controls="code-form" aria-selected="${byPhone}" data-how="phone">${icon("phone")} Phone number</button>
+        <button class="auth-tabs__btn" type="button" role="tab" id="tab-email" aria-controls="code-form" aria-selected="${!byPhone}" data-how="email">${icon("mail")} Email</button>
+      </div>`
+          : ""
+      }
+      <form id="code-form" class="form-grid" novalidate${tabs ? ` role="tabpanel" aria-labelledby="tab-${byPhone ? "phone" : "email"}"` : ""}>
+        ${
+          byPhone
+            ? forms().field("phone", "Phone number", { required: true, type: "tel", autocomplete: "tel-national", inputmode: "numeric", placeholder: "98765 43210", maxlength: 16, value: before, hint: "We'll send a 6-digit code by SMS.", prefix: "cl" })
+            : // the same one-line hint as the phone box, so the box keeps its height when the toggle changes (owner)
+              forms().field("email", "Email", { required: true, type: "email", autocomplete: "email", inputmode: "email", placeholder: "you@gmail.com", value: before, hint: "We'll send a 6-digit code by email.", prefix: "cl" })
+        }
         <div class="form-status" role="status" aria-live="polite"></div>
         <button class="btn btn--primary btn--block" type="submit">Send me a code</button>
       </form>
@@ -203,24 +233,35 @@
       steps(1),
     );
     const form = $("#code-form", root);
+    const input = form.elements.phone || form.elements.email;
+    // The first time, the server's answer decides whether the toggle (phone first) is there
+    if (smsOn === null)
+      smsLogin().then((on) => {
+        smsOn = on;
+        if (on && form.isConnected && !input.value) codeStart(root, { onSuccess, how });
+      });
+    $$("[data-how]", root).forEach((tab) => tab.addEventListener("click", () => tab.getAttribute("aria-selected") !== "true" && codeStart(root, { onSuccess, how: tab.dataset.how })));
     $("[data-use-password]", root).addEventListener("click", () => passwordLogin(root, { onSuccess }));
     forms().handle(form, {
       busyLabel: "Sending…",
-      send: (v) => auth().sendLoginCode(v.email.trim()).then((info) => ({ info, email: v.email.trim() })),
-      onSuccess: ({ info, email: sentTo }) => codeEntry(root, { onSuccess, email: sentTo, info }),
+      send: (v) => {
+        const to = (byPhone ? v.phone : v.email).trim();
+        return (byPhone ? auth().sendPhoneCode(to) : auth().sendLoginCode(to)).then((info) => ({ info, email: to }));
+      },
+      onSuccess: ({ info, email: sentTo }) => codeEntry(root, { onSuccess, email: sentTo, info, byPhone }),
     });
     mountSocial(root, "login", onSuccess);
-    form.elements.email.focus();
+    input.focus();
   }
 
   /** "Enter the code": six boxes (typing moves on, pasting fills them all, the sixth digit sends it). */
-  function codeEntry(root, { onSuccess, email, info }) {
+  function codeEntry(root, { onSuccess, email, info, byPhone = false }) {
     shell(
       root,
       "Enter the code",
       "",
       `${info.devMode ? devBanner() : ""}
-      <p class="auth-mail">${MAIL_ICON}<span>We sent a 6-digit code to <strong>${esc(info.masked)}</strong></span></p>
+      <p class="auth-mail">${byPhone ? PHONE_ICON : MAIL_ICON}<span>We sent a 6-digit code ${byPhone ? "by SMS " : ""}to <strong>${esc(info.masked)}</strong></span></p>
       <form id="code-verify-form" class="form-grid" novalidate>
         <fieldset class="otp-boxes">
           <legend class="visually-hidden">The 6-digit code</legend>
@@ -232,8 +273,8 @@
         <div class="form-status" role="status" aria-live="polite"></div>
         <button class="btn btn--primary btn--block" type="submit">Continue</button>
       </form>
-      <p class="auth-card__alt">Didn't get it? Check your spam folder.<br><button class="auth-link" type="button" data-resend disabled></button></p>`,
-      `${steps(2)}<button class="auth-link auth-back" type="button" data-change>← Change email</button>`,
+      <p class="auth-card__alt">${byPhone ? "Didn't get it? Check the number, or wait a moment." : "Didn't get it? Check your spam folder."}<br><button class="auth-link" type="button" data-resend disabled></button></p>`,
+      `${steps(2)}<button class="auth-link auth-back" type="button" data-change>← Change ${byPhone ? "number" : "email"}</button>`,
     );
     const form = $("#code-verify-form", root);
     const status = $(".form-status", form);
@@ -285,29 +326,32 @@
     resend.addEventListener("click", async () => {
       resend.disabled = true;
       try {
-        codeEntry(root, { onSuccess, email, info: await auth().sendLoginCode(email) });
+        codeEntry(root, { onSuccess, email, byPhone, info: await (byPhone ? auth().sendPhoneCode(email) : auth().sendLoginCode(email)) });
       } catch (error) {
         forms().status(status, "error", esc(error.message));
         left = error.retryAfterSeconds || 0;
         tick();
       }
     });
-    $("[data-change]", root).addEventListener("click", () => codeStart(root, { onSuccess, email }));
+    $("[data-change]", root).addEventListener("click", () => codeStart(root, { onSuccess, email, how: byPhone ? "phone" : "email" }));
 
     forms().handle(form, {
       busyLabel: "Checking…",
       send: (v) => {
-        if (!/^\d{6}$/.test(v.code)) throw new FrameX.http.ApiError("Enter the 6-digit code from the email.");
-        return auth().verifyLoginCode(email, v.code);
+        if (!/^\d{6}$/.test(v.code)) throw new FrameX.http.ApiError(`Enter the 6-digit code from the ${byPhone ? "SMS" : "email"}.`);
+        return byPhone ? auth().verifyPhoneCode(email, v.code) : auth().verifyLoginCode(email, v.code);
       },
       // A new address: its name; an existing customer is in
-      onSuccess: (result) => (result && result.newAccount ? nameStep(root, { onSuccess, ticket: result.signupToken, email }) : onSuccess(result)),
+      onSuccess: (result) => (result && result.newAccount ? nameStep(root, { onSuccess, ticket: result.signupToken, email: byPhone ? "" : email, byPhone }) : onSuccess(result)),
     });
     boxes[0].focus();
   }
 
-  /** "Welcome to FrameX!": a new address, its code checked. The name is filled in from the email and can be changed. */
-  function nameStep(root, { onSuccess, ticket, email }) {
+  /**
+   * "Welcome to FrameX!": a new address, its code checked. The name is filled in from the email and can be changed.
+   * A new mobile number (byPhone): the name, and an email only if they want to give one (it can be left empty).
+   */
+  function nameStep(root, { onSuccess, ticket, email, byPhone = false }) {
     const guess = nameFromEmail(email);
     shell(
       root,
@@ -318,9 +362,10 @@
           ${forms().field("name", "Your name", { required: true, autocomplete: "name", maxlength: 80, value: guess, hint: "This name goes on your orders.", prefix: "cn" })}
           <em class="auth-filled__tag" aria-hidden="true">from email</em>
         </div>
+        ${byPhone ? forms().field("email", "Email", { type: "email", autocomplete: "email", inputmode: "email", placeholder: "you@gmail.com", hint: "For order emails. Leave it empty to skip.", prefix: "cn" }) : ""}
         <div class="form-status" role="status" aria-live="polite"></div>
         <button class="btn btn--primary btn--block" type="submit">Continue</button>
-        <p class="auth-card__fine auth-card__center">You can add a mobile number and a password later in your account.</p>
+        <p class="auth-card__fine auth-card__center">${byPhone ? "You can add a password later in your account." : "You can add a mobile number and a password later in your account."}</p>
       </form>`,
       steps(3),
     );
@@ -331,7 +376,7 @@
     input.addEventListener("input", () => $(".auth-filled", form).classList.remove("is-guess"));
     forms().handle(form, {
       busyLabel: "Creating your account…",
-      send: (v) => auth().codeSignup(ticket, v.name.trim()),
+      send: (v) => auth().codeSignup(ticket, v.name.trim(), undefined, byPhone ? (v.email || "").trim() : undefined),
       onSuccess,
     });
     input.focus();
@@ -575,7 +620,8 @@
 
   /* ---------------------------------------------------------------- Reset password / first-time shop setup */
   async function reset(root) {
-    const token = new URLSearchParams(window.location.hash.slice(1)).get("token") || "";
+    // "#token=" (emails, the admin's copy), or "?token=" (the WhatsApp button: Meta refuses a "#" in a button address)
+    const token = new URLSearchParams(window.location.hash.slice(1)).get("token") || new URLSearchParams(window.location.search).get("token") || "";
     // Take the token out of the address bar and history.
     if (token) history.replaceState(null, "", window.location.pathname);
     let info = { valid: false };

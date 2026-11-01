@@ -28,7 +28,7 @@
   function render(root, user) {
     const rows = [
       ["Name", user.name],
-      ["Email", user.email],
+      ["Email", user.email || "Not added"], // an account made with a mobile number may have none
       ["Phone", user.phone || "Not added"],
       ["Account status", STATUS[user.status] || user.status],
       ["Member since", date(user.createdAt)],

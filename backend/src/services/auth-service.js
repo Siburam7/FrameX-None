@@ -178,47 +178,63 @@ export async function socialLogin(provider, proof, { ip = null } = {}) {
    3. completeCodeSignup(token, ...)  a correct code on a new address became a token; with a name it is a new
                                       customer account, logged in (owner's choice "A": no dead end on the login page)
    Like Google, only CUSTOMER accounts log in this way. A shop, artist or staff address (or a disabled account) is
-   sent an email that says to log in with the password instead, so the answer here never tells who has an account. */
+   sent an email that says to log in with the password instead, so the answer here never tells who has an account.
 
-const loginCodeHash = (email, code) => crypto.createHmac("sha256", config.authSecret).update(`login-code:${email}:${code}`).digest("hex");
+   Since 2026-11-01 the same three steps also work with a mobile number and a code by SMS (sendPhoneCode,
+   verifyPhoneCode): a new number becomes a customer account with a name and, only if they give one, an email
+   address (owner: "Email optional (skip kar sakein)"). login_codes.email then holds the number (+91XXXXXXXXXX). */
+
+const loginCodeHash = (address, code) => crypto.createHmac("sha256", config.authSecret).update(`login-code:${address}:${code}`).digest("hex");
 const SIGNUP_TICKET_MINUTES = 30;
 const signupSig = (payload) => crypto.createHmac("sha256", config.authSecret).update("code-signup:" + payload).digest("base64url");
-function makeSignupTicket(email) {
-  const payload = Buffer.from(`${email}|${Date.now() + SIGNUP_TICKET_MINUTES * 60_000}`).toString("base64url");
+/** A correct code on an address without an account, as a signed ticket for step 3. kind: "email" | "phone". */
+function makeSignupTicket(kind, value) {
+  const payload = Buffer.from(`${kind}:${value}|${Date.now() + SIGNUP_TICKET_MINUTES * 60_000}`).toString("base64url");
   return `${payload}.${signupSig(payload)}`;
 }
-function emailFromSignupTicket(ticket) {
+/** -> { kind: "email" | "phone", value } (a ticket made before 2026-11-01 holds just the email) */
+function fromSignupTicket(ticket) {
   const expired = () => errors.badRequest("This sign-up has expired. Please ask for a new code.", "SIGNUP_EXPIRED");
   const [payload, sig] = String(ticket || "").split(".");
   if (!payload || !sig || !sameHash(sig, signupSig(payload))) throw expired();
-  const parts = Buffer.from(payload, "base64url").toString().split("|");
-  if (!(Number(parts[1]) > Date.now())) throw expired();
-  return parts[0];
+  const text = Buffer.from(payload, "base64url").toString();
+  const cut = text.lastIndexOf("|");
+  if (!(Number(text.slice(cut + 1)) > Date.now())) throw expired();
+  const who = text.slice(0, cut);
+  if (who.startsWith("phone:")) return { kind: "phone", value: who.slice(6) };
+  return { kind: "email", value: who.startsWith("email:") ? who.slice(6) : who };
 }
 const accountByEmail = async (q, email) => (await q.query("SELECT * FROM users WHERE lower(email) = $1 AND deleted_at IS NULL", [email])).rows[0];
+const accountByPhone = async (q, phone) => (await q.query("SELECT * FROM users WHERE phone = $1 AND deleted_at IS NULL", [phone])).rows[0];
+
+/**
+ * A new 6-digit code for an address (an email, or a +91 number), after the resend wait and the hourly cap of that
+ * address. refused: the address belongs to an account that can't log in this way; it still gets a row that can
+ * never be used (its hash is not of a code), so the wait and the cap apply to it too. -> { code, codeId }
+ */
+async function newLoginCode(address, refused) {
+  const recent = (await db.query("SELECT created_at FROM login_codes WHERE email = $1 AND created_at > $2 ORDER BY created_at DESC", [address, new Date(Date.now() - 3600_000)])).rows;
+  const wait = recent.length ? Math.ceil((new Date(recent[0].created_at).getTime() + config.otp.resendSeconds * 1000 - Date.now()) / 1000) : 0;
+  if (wait > 0) throw new HttpError(429, "OTP_COOLDOWN", `Please wait ${wait} seconds before asking for another code.`, { retryAfterSeconds: wait });
+  if (recent.length >= config.otp.maxPerHour) throw new HttpError(429, "OTP_LIMIT", "Too many codes requested. Please try again in an hour.", { retryAfterSeconds: 3600 });
+  const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
+  const codeId = newId();
+  await db.tx(async (q) => {
+    await q.query("DELETE FROM login_codes WHERE created_at < now() - interval '1 day'"); // old codes are of no use to anyone
+    await q.query("UPDATE login_codes SET used_at = now() WHERE email = $1 AND used_at IS NULL", [address]); // a new code replaces an earlier one
+    await q.query("INSERT INTO login_codes (id, email, code_hash, expires_at, used_at) VALUES ($1, $2, $3, $4, $5)", [codeId, address, refused ? "refused" : loginCodeHash(address, code), new Date(Date.now() + config.otp.minutes * 60_000), refused ? new Date() : null]);
+  });
+  return { code, codeId };
+}
 
 /** Step 1. Same answer whether or not the address has an account. */
 export async function sendLoginCode(rawEmail) {
   const email = normalizeEmail(rawEmail);
   const mail = emailStatus();
   if (mail.mode === "none") throw new HttpError(503, "EMAIL_NOT_CONFIGURED", "Login codes can't be sent right now. Please log in with your password or with Google.");
-
-  // Resend wait and hourly cap, per address
-  const recent = (await db.query("SELECT created_at FROM login_codes WHERE email = $1 AND created_at > $2 ORDER BY created_at DESC", [email, new Date(Date.now() - 3600_000)])).rows;
-  const wait = recent.length ? Math.ceil((new Date(recent[0].created_at).getTime() + config.otp.resendSeconds * 1000 - Date.now()) / 1000) : 0;
-  if (wait > 0) throw new HttpError(429, "OTP_COOLDOWN", `Please wait ${wait} seconds before asking for another code.`, { retryAfterSeconds: wait });
-  if (recent.length >= config.otp.maxPerHour) throw new HttpError(429, "OTP_LIMIT", "Too many codes requested. Please try again in an hour.", { retryAfterSeconds: 3600 });
-
   const user = await accountByEmail(db, email);
   const refused = user && (user.role !== "CUSTOMER" || user.status !== "ACTIVE");
-  const code = String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
-  const codeId = newId();
-  await db.tx(async (q) => {
-    await q.query("DELETE FROM login_codes WHERE created_at < now() - interval '1 day'"); // old codes are of no use to anyone
-    await q.query("UPDATE login_codes SET used_at = now() WHERE email = $1 AND used_at IS NULL", [email]); // a new code replaces an earlier one
-    // A refused address still gets a row (never usable: its hash is not of a code), so the wait and the cap apply to it too
-    await q.query("INSERT INTO login_codes (id, email, code_hash, expires_at, used_at) VALUES ($1, $2, $3, $4, $5)", [codeId, email, refused ? "refused" : loginCodeHash(email, code), new Date(Date.now() + config.otp.minutes * 60_000), refused ? new Date() : null]);
-  });
+  const { code, codeId } = await newLoginCode(email, refused);
   const result = await sendMail({ to: email, ...(refused ? messages.loginCodeRefused(user.status !== "ACTIVE") : messages.loginCode(code, config.otp.minutes)) });
   if (!result.delivered && result.reason !== "dev") {
     await db.query("DELETE FROM login_codes WHERE id = $1", [codeId]); // not sent: it must not count, nor stay valid
@@ -228,12 +244,37 @@ export async function sendLoginCode(rawEmail) {
   return { ok: true, masked: maskEmail(email), expiresInMinutes: config.otp.minutes, resendAfterSeconds: config.otp.resendSeconds, devMode: result.reason === "dev" };
 }
 
-/** Step 2. Wrong tries are counted (as for the reset codes); a correct code is used up. */
-export async function verifyLoginCode(rawEmail, code, { ip = null } = {}) {
-  const email = normalizeEmail(rawEmail);
+/** "+91 98765 43210", "9876543210" … -> "+919876543210"; null when it isn't an Indian mobile number. */
+const indianMobile = (raw) => {
+  const phone = normalizePhone(raw);
+  return phone && /^\+91[6-9]\d{9}$/.test(phone) ? phone : null;
+};
+
+/**
+ * Step 1 by SMS. Same answer whether or not the number has an account. A number of a shop, artist or staff account
+ * (or a disabled one) gets no SMS at all (each SMS costs money): its code row can't be used, and step 2 says nothing.
+ */
+export async function sendPhoneCode(rawPhone) {
+  const phone = indianMobile(rawPhone);
+  if (!phone) throw errors.validation({ phone: "Enter a 10-digit Indian mobile number." });
+  if (smsStatus().mode === "none") throw new HttpError(503, "SMS_NOT_CONFIGURED", "Codes by SMS can't be sent right now. Please use your email or Google.");
+  const user = await accountByPhone(db, phone);
+  const refused = user && (user.role !== "CUSTOMER" || user.status !== "ACTIVE");
+  const { code, codeId } = await newLoginCode(phone, refused);
+  const result = refused ? { delivered: true } : await sendOtpSms(phone, code);
+  if (!result.delivered && result.reason !== "dev") {
+    await db.query("DELETE FROM login_codes WHERE id = $1", [codeId]); // not sent: it must not count, nor stay valid
+    if (result.reason === "not_configured") throw new HttpError(503, "SMS_NOT_CONFIGURED", "Codes by SMS can't be sent right now. Please use your email or Google.");
+    throw new HttpError(502, "SMS_SEND_FAILED", "We couldn't send the SMS right now. Please try again in a few minutes, or use your email.");
+  }
+  return { ok: true, masked: maskPhone(phone), expiresInMinutes: config.otp.minutes, resendAfterSeconds: config.otp.resendSeconds, devMode: result.reason === "dev" };
+}
+
+/** Step 2's check, for an email or a number: wrong tries are counted (as for the reset codes); a correct code is used up. */
+async function useLoginCode(address, code) {
   const invalid = () => errors.badRequest("That code is incorrect or has expired. Check it, or ask for a new code.", "OTP_INVALID");
   const locked = () => errors.badRequest("Too many wrong attempts. Please ask for a new code.", "OTP_LOCKED");
-  const row = (await db.query("SELECT id, code_hash FROM login_codes WHERE email = $1 AND used_at IS NULL AND expires_at > now() ORDER BY created_at DESC LIMIT 1", [email])).rows[0];
+  const row = (await db.query("SELECT id, code_hash FROM login_codes WHERE email = $1 AND used_at IS NULL AND expires_at > now() ORDER BY created_at DESC LIMIT 1", [address])).rows[0];
   if (!row) throw invalid();
   // Count the attempt first, in one statement, so parallel guesses can't go past the limit
   const counted = await db.query("UPDATE login_codes SET attempts = attempts + 1 WHERE id = $1 AND attempts < $2 RETURNING attempts", [row.id, config.otp.maxAttempts]);
@@ -241,7 +282,7 @@ export async function verifyLoginCode(rawEmail, code, { ip = null } = {}) {
     await db.query("UPDATE login_codes SET used_at = now() WHERE id = $1", [row.id]);
     throw locked();
   }
-  if (!sameHash(loginCodeHash(email, code), row.code_hash)) {
+  if (!sameHash(loginCodeHash(address, code), row.code_hash)) {
     const left = config.otp.maxAttempts - counted.rows[0].attempts;
     if (left <= 0) {
       await db.query("UPDATE login_codes SET used_at = now() WHERE id = $1", [row.id]);
@@ -251,9 +292,28 @@ export async function verifyLoginCode(rawEmail, code, { ip = null } = {}) {
   }
   const used = await db.query("UPDATE login_codes SET used_at = now() WHERE id = $1 AND used_at IS NULL RETURNING id", [row.id]);
   if (!used.rows.length) throw invalid();
+}
 
+/** Step 2 by SMS: a customer account is logged in; a new number gets a sign-up ticket. */
+export async function verifyPhoneCode(rawPhone, code, { ip = null } = {}) {
+  const phone = indianMobile(rawPhone);
+  if (!phone) throw errors.validation({ phone: "Enter a 10-digit Indian mobile number." });
+  await useLoginCode(phone, code);
+  const user = await accountByPhone(db, phone);
+  if (!user) return { signupToken: makeSignupTicket("phone", phone), masked: maskPhone(phone) };
+  if (user.role !== "CUSTOMER") throw errors.forbidden("This mobile number belongs to a FrameX shop, artist or staff account. Please log in with your password.", "USE_PASSWORD");
+  if (user.status !== "ACTIVE") throw errors.forbidden("This account has been disabled. Please contact FrameX.", "ACCOUNT_DISABLED");
+  await db.query("UPDATE users SET last_login_at = now() WHERE id = $1", [user.id]);
+  await recordAuthEvent({ kind: "LOGIN", userId: user.id, role: user.role, accountType: "customer", ip });
+  return { userId: user.id };
+}
+
+/** Step 2. Wrong tries are counted (as for the reset codes); a correct code is used up. */
+export async function verifyLoginCode(rawEmail, code, { ip = null } = {}) {
+  const email = normalizeEmail(rawEmail);
+  await useLoginCode(email, code);
   const user = await accountByEmail(db, email);
-  if (!user) return { signupToken: makeSignupTicket(email), masked: maskEmail(email) };
+  if (!user) return { signupToken: makeSignupTicket("email", email), masked: maskEmail(email) };
   // The person proved the address is theirs, so the account's state can be said now
   if (user.role !== "CUSTOMER") throw errors.forbidden("This email belongs to a FrameX shop, artist or staff account. Please log in with your password.", "USE_PASSWORD");
   if (user.status !== "ACTIVE") throw errors.forbidden("This account has been disabled. Please contact FrameX.", "ACCOUNT_DISABLED");
@@ -262,17 +322,28 @@ export async function verifyLoginCode(rawEmail, code, { ip = null } = {}) {
   return { userId: user.id };
 }
 
-/** Step 3 (a new address only). No password: one can be added later on the account page. */
-export async function completeCodeSignup(ticket, { name, phone = null }, { ip = null } = {}) {
-  const email = emailFromSignupTicket(ticket);
+/**
+ * Step 3 (a new address only). No password: one can be added later on the account page.
+ * A ticket from an email: phone is optional. A ticket from a mobile number: email is optional (owner, 2026-11-01).
+ */
+export async function completeCodeSignup(ticket, { name, phone = null, email = null }, { ip = null } = {}) {
+  const who = fromSignupTicket(ticket);
+  const byPhone = who.kind === "phone";
+  const account = byPhone ? { email: email ? normalizeEmail(email) : null, phone: who.value } : { email: who.value, phone: phone || null };
   const userId = await db.tx(async (q) => {
-    if (await accountByEmail(q, email)) throw errors.conflict("An account with this email already exists. Please log in.", null, "ACCOUNT_EXISTS");
-    if (phone && (await q.query("SELECT 1 FROM users WHERE phone = $1", [phone])).rows.length) throw errors.conflict("That phone number is used by another account.", { phone: "That phone number is used by another account." });
+    if (account.email && (await accountByEmail(q, account.email)))
+      throw byPhone
+        ? errors.conflict("This email already has a FrameX account. Log in with that email, then add this mobile number on your account page.", { email: "This email already has a FrameX account." }, "EMAIL_TAKEN")
+        : errors.conflict("An account with this email already exists. Please log in.", null, "ACCOUNT_EXISTS");
+    if (account.phone && (await q.query("SELECT 1 FROM users WHERE phone = $1", [account.phone])).rows.length)
+      throw byPhone
+        ? errors.conflict("An account with this mobile number already exists. Please log in.", null, "ACCOUNT_EXISTS")
+        : errors.conflict("That phone number is used by another account.", { phone: "That phone number is used by another account." });
     const id = newId();
     await q.query(
       `INSERT INTO users (id, name, email, phone, password_hash, role, status, last_login_at)
        VALUES ($1, $2, $3, $4, NULL, 'CUSTOMER', 'ACTIVE', now())`,
-      [id, name, email, phone || null]
+      [id, name, account.email, account.phone]
     );
     return id;
   });
@@ -370,7 +441,8 @@ function channelsFor(user) {
   const sms = smsStatus();
   const phone = recoveryPhone(user);
   return [
-    { type: "email", masked: maskEmail(user.email), available: email.mode !== "none", devMode: email.mode === "dev", ...(email.mode === "none" ? { reason: "Email service is not configured." } : {}) },
+    // (an account made with a mobile number only has no email to send to)
+    ...(user.email ? [{ type: "email", masked: maskEmail(user.email), available: email.mode !== "none", devMode: email.mode === "dev", ...(email.mode === "none" ? { reason: "Email service is not configured." } : {}) }] : []),
     ...(phone ? [{ type: "sms", masked: maskPhone(phone), available: sms.mode !== "none", devMode: sms.mode === "dev", ...(sms.mode === "none" ? { reason: "SMS service is not configured." } : {}) }] : [])
   ];
 }

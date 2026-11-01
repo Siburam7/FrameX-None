@@ -20,6 +20,7 @@ import * as storage from "../lib/storage.js";
 import { newId } from "../lib/tokens.js";
 import { isUuid } from "../lib/validate.js";
 import { issueToken } from "./auth-service.js";
+import { accountApproved } from "./whatsapp-service.js";
 
 export const ARTIST_CODE = /^FRX-ART-\d{3,}$/i;
 export const USERNAME = /^[a-z0-9][a-z0-9_.]{2,29}$/;
@@ -248,6 +249,8 @@ async function createAccount(q, artist, { email, name }, actor, ip) {
 
 async function deliverSetup(artist, email, setup) {
   const mail = await sendMail({ to: email, ...applicationMail.setup(artist, setup.url, config.tokens.accountSetupHours) });
+  // "Approved, the setup link is in your email" on WhatsApp, once, only when that email really went.
+  if (mail.delivered) accountApproved({ code: artist.artist_code, name: artist.name, business: "your artist profile", phone: artist.phone });
   // The link is also handed to the admin once, to pass on if email isn't set up.
   return { artistCode: artist.artist_code, accountEmail: email, setupUrl: setup.url, expiresAt: setup.expiresAt, emailed: Boolean(mail.delivered), emailStatus: mail.delivered ? "sent" : mail.reason };
 }

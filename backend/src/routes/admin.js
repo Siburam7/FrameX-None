@@ -26,6 +26,7 @@ import * as edits from "../services/order-edit-service.js";
 import { INDIAN_STATES, readAddress } from "../services/address-service.js";
 import * as promotions from "../services/promotion-service.js";
 import * as reminders from "../services/cart-reminder-service.js";
+import * as whatsapp from "../services/whatsapp-service.js";
 
 const router = Router();
 /* ---- Orders: admins and FrameX Care (owner, 2026-10-24: a care person changes an order when the customer asks in
@@ -140,6 +141,8 @@ router.post("/carts/:id/remind", async (req, res) => {
   if (!isUuid(req.params.id)) throw errors.notFound("That cart doesn't exist.");
   res.json(await reminders.sendNow(req.params.id));
 });
+// WhatsApp messages FrameX sent by itself (owner, 2026-11-01): is the service set up, what went, what failed
+router.get("/whatsapp", async (req, res) => res.json(await whatsapp.recentMessages(30)));
 
 /* ---- Orders ----
    Moving an order forward, cancelling it (a paid online order is refunded) and refunds.

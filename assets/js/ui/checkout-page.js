@@ -51,6 +51,15 @@
   let couponCode = ""; // the coupon the customer applied (sent with every quote and with the order)
   let couponNote = null; // { ok, text }: what happened to the last coupon tried
   let couponList = []; // the coupons that can be used now (GET /api/coupons)
+  let whatsappOffered = false; // "order updates on WhatsApp" can really be sent (GET /api/config)
+  const WA_STORE = "framex.checkout.whatsapp";
+  let whatsapp = (() => {
+    try {
+      return localStorage.getItem(WA_STORE) !== "no"; // ticked unless this customer unticked it before
+    } catch (error) {
+      return true;
+    }
+  })();
   const buyMode = FrameX.qs.param("buy") === "1";
   let buying = null; // "Buy Now": { name, item } — this one item is ordered instead of the cart
 
@@ -346,6 +355,7 @@
       </dl>
       ${waiting ? `<div class="form-status form-status--error is-visible" role="alert">${icon("alert")}<span><strong>Order ${esc(waiting.orderNumber)} is not paid yet.</strong> ${esc(waiting.message)} <a href="${orderUrl(waiting.orderNumber)}">View order</a></span></div>` : ""}
       <div class="form-status" id="co-status" role="status" aria-live="polite"></div>
+      ${waNumber() ? `<label class="co-wa"><input type="checkbox" name="whatsapp"${whatsapp ? " checked" : ""}><span>Send order updates to my WhatsApp <b>${esc(waNumber())}</b></span></label>` : ""}
       <button class="btn btn--primary btn--block co-place" type="button" data-place ${ready ? "" : "disabled"}>${
         cod ? `Place Order • ${formatPrice(q.total)}` : waiting ? `Retry payment • ${formatPrice(q.total)}` : `Pay ${formatPrice(q.total)}`
       }</button>
@@ -367,6 +377,12 @@
     }
     bar.innerHTML = `<div><strong>${formatPrice(q.total)}</strong><span>${!addressId || editing ? "Add a delivery address to continue" : !method ? "Choose a way to pay" : cod ? "Pay in cash on delivery" : "Total · incl. delivery & tax"}</span></div>
       <button class="btn btn--primary" type="button" data-place ${ready ? "" : "disabled"}>${cod ? "Place Order" : waiting ? "Retry payment" : `Pay ${formatPrice(q.total)}`}</button>`;
+  }
+
+  /** The delivery address's phone, when "order updates on WhatsApp" can be offered for it ("" = not offered). */
+  function waNumber() {
+    if (!whatsappOffered || !addressId || editing) return "";
+    return String((addresses.find((a) => a.id === addressId) || {}).phone || "");
   }
 
   /* ---------------------------------------------------------------- Page */
@@ -463,7 +479,7 @@
         // The order already exists: a new payment attempt on the same order.
         settle(await FrameX.payments.retry(waiting.orderNumber, method), waiting.orderNumber);
       } else {
-        const r = await http().post("/checkout/orders", { addressId, paymentMethod: paymentMethod(), paymentChannel: method === "COD" ? undefined : method, expectedTotal: quote.total, idempotencyKey: checkoutKey(), buyNow: buying ? buying.item : undefined, giftWrap: wrapped(), coupon: appliedCoupon() ? appliedCoupon().code : undefined });
+        const r = await http().post("/checkout/orders", { addressId, paymentMethod: paymentMethod(), paymentChannel: method === "COD" ? undefined : method, expectedTotal: quote.total, idempotencyKey: checkoutKey(), buyNow: buying ? buying.item : undefined, giftWrap: wrapped(), coupon: appliedCoupon() ? appliedCoupon().code : undefined, whatsapp: Boolean(waNumber()) && whatsapp });
         const number = r.order.orderNumber;
         if (r.order.paymentMethod === "COD" || r.order.paymentStatus === "PAID") {
           forgetKey();
@@ -508,6 +524,14 @@
         method = e.target.value;
         if (method === "COD") waiting = null; // switching to cash: a new order replaces the unpaid online one
         await refresh();
+      }
+      if (e.target.name === "whatsapp") {
+        whatsapp = e.target.checked;
+        try {
+          localStorage.setItem(WA_STORE, whatsapp ? "yes" : "no");
+        } catch (error) {
+          /* storage blocked: the choice still counts for this order */
+        }
       }
       if (e.target.name === "gift") {
         giftWrap = e.target.value === "yes";
@@ -558,6 +582,7 @@
       const [r, settings, offers] = await Promise.all([http().get("/addresses"), http().serverConfig(), http().get("/coupons").catch(() => ({ items: [] }))]);
       couponList = (offers && offers.items) || [];
       giftWrapOffered = !settings || !settings.giftWrap || settings.giftWrap.enabled !== false;
+      whatsappOffered = Boolean(settings && settings.features && settings.features.whatsappOrderUpdates);
       addresses = r.items;
       states = r.states;
       addressId = (addresses.find((a) => a.isDefault) || addresses[0] || {}).id || null;

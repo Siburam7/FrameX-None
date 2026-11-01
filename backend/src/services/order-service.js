@@ -28,6 +28,7 @@ import { onlinePaymentsReady } from "../payments/index.js";
 import { releaseStock } from "./catalog-service.js";
 import { orderEvent } from "./notification-service.js";
 import { linkTo, publicUpload } from "./upload-service.js";
+import { orderUpdate } from "./whatsapp-service.js";
 
 export const ORDER_STATUSES = ["PENDING_PAYMENT", "PLACED", "CONFIRMED", "PROCESSING", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED", "RETURNED"];
 export const PAYMENT_STATUSES = ["PENDING", "PAID", "FAILED", "CANCELLED", "REFUNDED", "PARTIALLY_REFUNDED"];
@@ -393,8 +394,10 @@ export function notify(orderId, kind, { ref = "", extra = {} } = {}) {
       const id = newId();
       const claimed = await db.query("INSERT INTO order_notifications (id, order_id, kind, ref, recipient) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (order_id, kind, ref) DO NOTHING RETURNING id", [id, orderId, kind, ref, row.customer_email]);
       if (!claimed.rows[0]) return;
-      // The same news, short, in the customer's account (the email below is the full version).
+      // The same news, short, in the customer's account (the email below is the full version), and on WhatsApp
+      // when they said yes to that at checkout.
       await orderEvent(row, kind, ref);
+      orderUpdate(orderId, kind, { ref, extra });
       const result = await sendMail({ to: row.customer_email, ...orderEmail(kind, shape(row, await partsOf(orderId)), extra) });
       await db.query("UPDATE order_notifications SET delivered = $2, detail = $3 WHERE id = $1", [id, result.delivered, result.delivered ? String(result.id || "") : [result.reason, result.detail].filter(Boolean).join(": ")]);
     } catch (error) {
@@ -471,6 +474,7 @@ export async function adminAdvance(orderNumber, status, { note = "", actor, ip =
     return rows[0];
   });
   if (status === "SHIPPED") notify(row.id, "ORDER_SHIPPED");
+  if (status === "OUT_FOR_DELIVERY") orderUpdate(row.id, "ORDER_OUT_FOR_DELIVERY"); // WhatsApp only: no email for it
   if (status === "DELIVERED") notify(row.id, "ORDER_DELIVERED");
   return adminGetOrder(orderNumber);
 }

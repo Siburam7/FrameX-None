@@ -97,6 +97,35 @@ Without `SMS_SENDER_ID` / `SMS_TEMPLATE_ID` the code goes out on Fast2SMS's own 
 
 Other providers: `SMS_PROVIDER=2factor` (2Factor.in, `SMS_API_KEY`, optional `SMS_TEMPLATE_ID` = template name), `twilio` (`TWILIO_*`; India needs DLT registration with Twilio). MSG91 is deliberately not supported: its API answers "success" even for an invalid key, so a failed delivery could not be told from a real one.
 
+Note (2026-11-01): Fast2SMS's own help page now says SMS OTPs in India need DLT like all business SMS, so the no-DLT OTP route above may no longer work. Check with Fast2SMS before relying on it.
+
+**APITxT (FrameX's choice, 2026-11-01).** `SMS_PROVIDER=apitxt`, `SMS_API_KEY=<APITxT API key>`. FrameX makes the 6-digit code and checks it itself; APITxT only delivers it (`POST https://apitxt.com/api/sendOTP` with `authkey`, `mobile`, `otp`) on APITxT's own DLT-approved sender and template, so FrameX needs no DLT registration of its own (about ₹0.30 a code). The sender customers see is APITxT's, not "FRAMEX": that needs FrameX's own DLT registration later. `npm run doctor` can't check an APITxT key without sending; `npm run sms:test -- <number>` sends one real code.
+
+The SMS codes are used for **logging in with a mobile number** (the login box: "Email or mobile number", only while SMS is set up) and for password resets. A new number becomes a customer account with a name and, only if they give one, an email address.
+
+## WhatsApp
+
+FrameX sends these by itself, from its WhatsApp business number (`services/whatsapp-service.js`):
+
+- **Order updates** to a customer who ticked "Send order updates to my WhatsApp" at checkout: placed, payment failed, shipped, out for delivery, delivered, cancelled, refund.
+- **New orders** to each shop and artist of the order, on the number in their profile.
+- **"Approved"** to a new shop or artist, once the email with their setup link has gone. The link itself never goes on WhatsApp.
+
+It uses the WhatsApp Business API through **Fast2SMS**, with templates approved by Meta in the Fast2SMS panel (about ₹0.25 a message, no monthly fee). Messages go through Fast2SMS's **Advanced API** (`POST /dev/whatsapp/v26.0/<phone_number_id>/messages`, Meta's message shape), because only that one fills a "Visit website" button's `{{1}}` (Fast2SMS support, 2026-11-01).
+
+1. In Fast2SMS → WhatsApp, connect the business number and get the templates approved: `framex_order_update`, `framex_seller_new_order` and `framex_account_approved`. Those names are the defaults in `config.js` (override them with `WHATSAPP_TEMPLATE_*`).
+2. Put these in `backend/.env` (and in Render's Environment for the live site):
+
+   ```
+   WHATSAPP_PROVIDER=fast2sms
+   WHATSAPP_API_KEY=<the Fast2SMS API key>
+   WHATSAPP_PHONE_NUMBER_ID=<the business number's Phone Number ID>
+   ```
+
+3. Restart the backend. The start-up banner says `WhatsApp: READY (fast2sms)`.
+
+Admin → Settings → **WhatsApp messages** has a switch for each kind, and shows whether the service is set up and the latest messages (sent or failed, with the reason). Every message is kept in `whatsapp_messages`: the same news never goes twice. `WHATSAPP_PROVIDER=dev` lists the messages at `/dev/mailbox` instead of sending them (never in production).
+
 ## One-time code rules
 
 | Rule | Value | Setting |

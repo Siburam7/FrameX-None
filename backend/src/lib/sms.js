@@ -2,9 +2,14 @@
    Text messages (one-time codes), behind one function: sendOtpSms(to, code).
 
    SMS_PROVIDER
-     fast2sms  Fast2SMS (India). Default choice: its OTP route sends without the
-               business doing its own DLT registration. SMS_API_KEY = API key.
-               With SMS_SENDER_ID + SMS_TEMPLATE_ID set, its DLT route is used.
+     apitxt    APITxT (India; owner's choice 2026-11-01). Its OTP API delivers a
+               code FrameX made (FrameX checks it, as always) on APITxT's own
+               DLT-approved sender and template, so FrameX needs no DLT
+               registration of its own. SMS_API_KEY = APITxT API key;
+               SMS_TEMPLATE_ID = optional APITxT template id.
+     fast2sms  Fast2SMS (India). SMS_API_KEY = API key. Its OTP route used to send
+               without the business's own DLT registration (Fast2SMS now says
+               OTPs need DLT); with SMS_SENDER_ID + SMS_TEMPLATE_ID its DLT route is used.
      2factor   2Factor.in (India). SMS_API_KEY; SMS_TEMPLATE_ID = the approved
                OTP template name in the 2Factor panel (optional).
      twilio    Twilio. TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM.
@@ -63,6 +68,17 @@ async function sendFast2Sms(to, code) {
   return r.data.request_id || "accepted";
 }
 
+/* ---- APITxT: POST /api/sendOTP, form fields authkey, mobile (91XXXXXXXXXX), otp; it only delivers the code ---- */
+async function sendApitxt(to, code) {
+  const number = indian10(to);
+  if (!number) throw new Error("APITxT sends codes to Indian mobile numbers (+91) here.");
+  const form = new URLSearchParams({ authkey: config.sms.key, mobile: "91" + number, otp: code });
+  if (config.sms.templateId) form.set("template_id", config.sms.templateId);
+  const r = await json(`${config.sms.apitxtBase}/api/sendOTP`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" }, body: form });
+  if (!r.ok || String(r.data.status).toLowerCase() !== "success") throw refuse("APITxT", r, r.data.message);
+  return (r.data.data && r.data.data.request_id) || "accepted";
+}
+
 /* ---- 2Factor: GET /API/V1/{key}/SMS/{phone}/{otp}[/{template}] ---- */
 async function sendTwoFactor(to, code) {
   const phone = indian10(to) || to;
@@ -104,7 +120,8 @@ export async function sendOtpSms(to, code) {
   }
   try {
     let id;
-    if (status.provider === "fast2sms") id = await sendFast2Sms(to, code);
+    if (status.provider === "apitxt") id = await sendApitxt(to, code);
+    else if (status.provider === "fast2sms") id = await sendFast2Sms(to, code);
     else if (status.provider === "2factor") id = await sendTwoFactor(to, code);
     else id = await sendTwilio(to, otpText(code));
     if (!config.isTest) console.log(`[sms] ${status.provider} accepted a code for ${to} (id ${id})`);
@@ -120,6 +137,8 @@ export async function sendOtpSms(to, code) {
 export async function checkSmsProvider() {
   const status = smsStatus();
   if (status.mode !== "real") return { ok: false, detail: status.mode === "dev" ? "Development mailbox: nothing is really sent." : status.problems.join(" ") };
+  // APITxT has no balance call that sends nothing: only a real code ("npm run sms:test") proves the key
+  if (status.provider === "apitxt") return { ok: true, detail: "APITxT key is set (not checked: APITxT can only be tried with a real code, npm run sms:test)." };
   try {
     if (status.provider === "fast2sms") {
       const r = await json(`https://www.fast2sms.com/dev/wallet?authorization=${encodeURIComponent(config.sms.key)}`, { headers: { Accept: "application/json" } });
