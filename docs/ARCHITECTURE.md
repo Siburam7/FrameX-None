@@ -464,11 +464,12 @@ design or the order.
 
 | Layer | File | Notes |
 | ----- | ---- | ----- |
-| Entry (on the three pages, 7 KB) | `assets/js/services/live-demo.js` (`FrameX.liveDemo`) | `available()`: secure page + a camera on the device. `mount(host, { getSpec })` adds the button, hidden until a camera is known. `open()` loads everything below on first use. `track()` announces the analytics events |
+| Entry (on the three pages, 7 KB) | `assets/js/services/live-demo.js` (`FrameX.liveDemo`) | `available()`: secure page + a camera on the device, or Quick Look, or a phone inside an app's own browser (to be told where it works). `device()`: iOS / Android / phone, `inApp` (Instagram, Facebook, Messenger, WhatsApp, Snapchat, Threads, LinkedIn, Pinterest, TikTok, Telegram, X, LINE, or "app" for an unnamed web view), `quickLook`, `chrome`, `iosVersion`, read from the browser's name. `mount(host, { getSpec })` adds the button, hidden until known. `open()` loads everything below on first use. `track()` announces the analytics events |
 | What to show | `livedemo/ld-subject.js` | Turns a page's description into a **subject**: real width, height and depth in metres, and one painted picture per piece. Kinds: `studio` (a Studio design), `product` (a product page's size, colour, photo and crop), `decor` (ready-made wall art and panel sets), `panels` (one photo across panels) |
 | The painter | `livedemo/ld-paint.js` | Redraws on a canvas exactly what the Studio preview and the template engine show in HTML: moulding, mats, printed border, the photo with its crop, a template's slots, shapes and words. It reads the same `geometry()` and the same catalogue, so there is one definition of a frame |
 | The 3D picture | `livedemo/ld-render.js` | One small WebGL renderer for both modes: the front, the four sides (frame depth), a soft shadow on the wall. Falls back to a flat 2D drawing if the device has no WebGL |
 | AR mode | `livedemo/ld-xr.js` | WebXR `immersive-ar` with `hit-test` (required), `anchors`, `dom-overlay` and `light-estimation` (used when the phone has them). States: scanning → floor seen → wall detected → placed → tracking lost. Real size, anchored to the wall |
+| Quick Look (iPhone, iPad) | `livedemo/ld-usdz.js` (`FrameX.ldUSDZ`) | Builds a USDZ on the phone from the subject: one mesh (per piece a box: the painted front as a JPEG texture, the frame's colour on the sides and back; a cut-out frame picture is only its front, PNG, see-through by `opacityThreshold`), metres, Y up, `preliminary:anchoring:type = plane` + `planeAnchoring:alignment = vertical`, the content turned −90° about X (`WALL_TURN_X`) because Quick Look lays wall content's floor on the wall. Zip: stored, each file's data on a 64-byte boundary, scene first. Opened from a hidden `<a rel="ar" download><img></a>` on a blob: address with `#allowsContentScaling=0` (real size kept). Revoked on Close. Nothing is uploaded |
 | Camera mode | `livedemo/ld-camera.js` | `getUserMedia` (back camera) under the same renderer. No wall detection. Size on screen is worked out from the real size, an assumed lens angle (60° on the long side) and the distance the customer picks (1 to 4 m; it starts at 2 m, or farther when a wide set would not fit). With the phone's motion sensor ("Stick to wall") the frame stays in place when the phone is turned |
 | The screen | `livedemo/ld-view.js` (`FrameX.liveDemoView`), `css/livedemo.css` | Full-screen dialog: first card (what will happen, privacy line), hints, tools, every error panel. Gestures: drag, pinch, two-finger twist (snaps to straight); mouse drag, wheel, Shift + wheel; arrow keys, + and −, [ and ], R |
 | Maths | `livedemo/ld-math.js` | Matrices, rays, the wall's pose, phone-sensor angles to a camera rotation |
@@ -490,7 +491,14 @@ preview shows it.
 **3D models later.** `liveDemo.model` on a product is reserved for a `.glb` file and already travels in the subject
 (`subject.model`). Today nothing reads it: `ld-render.js` draws the painted box. A model loader goes in
 `ld-render.js` (`setSubject`), and neither the pages, the engines nor the product data have to change. Apple's AR
-Quick Look (USDZ) would be a third engine next to `ld-xr.js` and `ld-camera.js`.
+Quick Look is the third engine (`ld-usdz.js`, since 2026-11-01).
+
+**Which engine.** `ld-view.js` `prepare()`: an app's own browser on a phone → a card saying that app can't show AR,
+how to open the page in Safari (iPhone) or Chrome (Android), "Open in Chrome" (Android intent link) / "Open in Safari"
+(iOS 17+, `x-safari-https:`, https only), Copy link, the simple camera view if the app gives a camera. iPhone / iPad
+with Quick Look → the model is made first, then "Open camera" opens Quick Look. WebXR AR → AR mode. Any other phone →
+an error card: "Your phone can't find walls in AR." (Android Chrome, iPhone Safari) or "This browser can't find walls."
+(+ Open in Chrome), with the simple camera view. A laptop → camera mode, as before.
 
 **Privacy.** The camera is requested only after the customer presses "Open camera" on the first card. The stream is shown
 on the screen and nowhere else: no recording, no upload, no analytics picture. Close, Escape, leaving the page or
@@ -500,7 +508,9 @@ hands it to the device's share sheet or downloads folder.
 **Analytics.** `FrameX.liveDemo.track(name, detail)` dispatches `framex:analytics` on `document` and pushes to
 `window.dataLayer` when a page has one. Events: `live_demo_opened`, `camera_permission_granted`,
 `camera_permission_denied`, `surface_detected`, `frame_placed`, `frame_repositioned`, `live_demo_closed`,
-`live_demo_add_to_cart`. No analytics service is connected: the events are announced and nothing listens yet.
+`live_demo_add_to_cart`, `live_demo_quick_look` (Quick Look opened, `device`), `live_demo_elsewhere` (an "open it
+elsewhere" or no-AR card, `reason` app / browser / phone, `app`). `assets/js/services/analytics.js` forwards the
+`live_demo_*` ones to GA4 (with consent); FrameX's own visitor stats keep only `live_demo_opened`.
 
 **Requirements and limits.**
 

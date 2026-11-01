@@ -1,9 +1,49 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-10-28 (artworks: Before / After in place of View on My Wall, local).
+> Last updated: 2026-11-01 (View on My Wall: iPhone AR Quick Look + clear messages, local).
 
 ## Now
+
+- [x] 2026-11-01 **DEPLOYED** main 3db81de (owner: "abhi push karke live karo"; no migration, so no backup needed): View
+      on My Wall with iPhone AR Quick Look, "open in Safari / Chrome" in app browsers, plain no-AR error. Before: backend
+      504 / 0 (1 skipped), browser suites login 45, cart 47, frame 55, Studio 37, decor 26, shop 50, account 13, artwork
+      36, payout 38, coupon 20, Care 53, art 74, Live Demo iPhone 44, Live Demo products 49, analytics 45 + 54 — all
+      passed. analytics-off: 6 / 7 — the "We use cookies" banner now shows even when the server's analytics is off
+      (owner's own "Cookie" change of 2026-10-16, already live; analytics.js not touched here): decide whether the
+      banner should show when analytics is off, then fix the banner or the test. Still to try: one product on a real
+      iPhone (Safari): upright, facing out of the wall, real size.
+- [x] 2026-11-01 **View on My Wall on iPhone / iPad: Apple's AR Quick Look (ARKit)** (owner: "ek ek phone pe wall detect
+      nahi kar raha… iPhone/iPad: Apple AR Quick Look… ye wala karo; if mobile support na kare error dikhao; Instagram ya
+      WhatsApp support na kare to likho open in Chrome"). LIVE 2026-11-01 (main 3db81de), no migration, no design change
+      (existing card styles only). What it does:
+      - iPhone / iPad (Safari, Chrome, Edge, Firefox, Google app): the 3D model is made ON THE PHONE
+        (`livedemo/ld-usdz.js`: USDZ = USD text + the painted front as JPEG/PNG, zipped stored and 64-byte aligned) at
+        the real size, asks to hang on a wall (vertical plane anchoring), opened by Quick Look from a blob: link
+        (`#allowsContentScaling=0`, so it stays the real size). Nothing is uploaded. "Open camera" opens Quick Look; then
+        a card says what to do in AR and "Nothing opened? Update your iPhone, or open this page in Safari", with "Open AR
+        again" and the simple camera view.
+      - Inside Instagram / Facebook / Messenger / WhatsApp / Snapchat / Threads / LinkedIn / Pinterest / TikTok /
+        Telegram / X / LINE (or any app's own web view): "Instagram can't show AR on your wall." + how to open the page
+        in Safari (iPhone) or Chrome (Android) + "Open in Chrome" (Android, an intent link) / "Open in Safari" (iOS 17+,
+        https only) + Copy link + the simple camera view (if the app gives a camera) + Close. The button now shows in
+        such apps even without a camera.
+      - A phone with no AR: Android Chrome without Google Play Services for AR -> "Your phone can't find walls in AR."
+        (why + the simple camera view); another Android browser (Samsung Internet…) -> "This browser can't find walls."
+        + Open in Chrome. Laptops unchanged.
+      - Files: `livedemo/ld-usdz.js` (new), `services/live-demo.js` (device(), camera(), loads ld-usdz.js),
+        `livedemo/ld-view.js` (intro(kind), quickLook(), elsewhere(), copy link). Analytics: live_demo_quick_look,
+        live_demo_elsewhere.
+      - Tests: new browser suite ld-e2e-ios 44/44 (iPhone Safari + Chrome, Instagram iPhone + Android, Facebook without
+        camera, an unnamed app, Android Chrome without AR, Samsung Internet, laptop; the Quick Look link caught and its
+        model checked with Pixar's USD tools: Apple's ARKit rules, USD validators, zip rules, real size, facing out of
+        the wall, pictures bound); USDZ smoke 24/24 (box, cut-out frame picture, 3 panels). Old Live Demo suites
+        still pass: part 1 38/38, part 2 34/34, part 3 (WebXR) 43/43, part 4 (every product kind + laptop) 49/49.
+        Part 5 (a shop's own product, written 2026-10-09) fails BEFORE View on My Wall: its direct API save of a shop
+        product no longer comes out "on sale" (backend untouched here) — an out-of-date test, to update separately.
+      - **Not verified:** a real iPhone. Which way Quick Look turns wall content is taken from model-viewer / three.js
+        reports (-90° about X, one constant WALL_TURN_X in ld-usdz.js); the owner must try one product on a real iPhone
+        (Safari) after the push: the frame should hang upright, facing out, at its real size.
 
 - [x] 2026-11-01 **DEPLOYED** main 65f41c4 (owner: "backup done abhi push karke live kardoo"; backup taken on Neon by the
       owner; migrations 024 login_codes + 025 cart reminders ran on Render at start): login box, cart reminder emails,
@@ -643,7 +683,7 @@ On branch `phase2a-wip` (pushed 2026-10-20; not live — `main` = `eb23ecf` is w
 | F-23 | No CI | **done locally 2026-10-20**: `.github/workflows/tests.yml` runs `npm test` on GitHub for every push / pull request (tests only, no deploy, no secrets). First real run on GitHub: when the branch is pushed next |
 | F-24 | Outdated test count in README | **done locally 2026-10-20** (391 tests; per-file counts corrected) |
 | F-19, F-22 | Partial-refund payouts by hand, many unminified scripts | open |
-| F-29 | View on My Wall / tilt never tried on a real phone | open — owner tests on Android + iPhone |
+| F-29 | View on My Wall / tilt never tried on a real phone | open — owner tests on Android + iPhone (2026-11-01: owner tried live, one phone found no wall -> iPhone Quick Look + "open in Chrome / Safari" + no-AR error built locally; iPhone Quick Look still to try on a real iPhone) |
 | F-30 | Cashfree only against a stand-in | open — only if Cashfree will be used |
 
 ## Done (recent)

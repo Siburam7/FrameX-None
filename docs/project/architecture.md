@@ -33,7 +33,9 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   `404.html` (GitHub Pages shows it for any wrong address; `<base href="/">` keeps its links working there),
   `robots.txt` and `sitemap.xml` (public pages only; pages with `noindex` are never listed).
 - `assets/js/` — `config.js` (API address, session mode), `api/` (HTTP client), `store/` (auth), `ui/` (page
-  modules; header / footer / overlays from `ui/chrome.js`), `services/`, `livedemo/`.
+  modules; header / footer / overlays from `ui/chrome.js`), `services/`, `livedemo/` (View on My Wall: WebXR on
+  Android Chrome, Apple AR Quick Look on iPhone / iPad via a USDZ made on the phone in `ld-usdz.js`, a camera view
+  elsewhere; details in `docs/ARCHITECTURE.md`).
 - `assets/css/` — `tokens.css` (all colours, fonts, sizes), page and component styles, `mobile.css` (phone-only,
   linked last).
 - `js/edit.js`, `js/decor.js`, `js/templates.js`, `js/studio.js` — catalogue and option data (the backend imports

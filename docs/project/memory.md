@@ -37,6 +37,14 @@
 
 ## Owner decisions (log)
 
+- 2026-11-01 View on My Wall: one phone found no wall live. Owner chose Apple's AR Quick Look (ARKit) for iPhone / iPad
+  (free, built into iOS; the 3D model made on the phone, nothing uploaded), a plain error where a phone can't do AR, and
+  "open in Chrome / Safari" inside Instagram, WhatsApp, Facebook… Android Scene Viewer was offered but not chosen (it
+  needs the model on a public address, i.e. an upload). LIVE the same day (main 3db81de, owner: "abhi push karke live
+  karo"; no migration). My own choices (owner can change): the size is
+  locked to the real one in Quick Look (no pinch), the simple camera view stays offered everywhere it can run, the
+  in-app card warns that photo and choices may need to be added again in the other browser.
+
 - 2026-11-01 Deployed everything of 2026-10-29 to 11-01 (main 65f41c4) after a Neon backup; costs.md kept out of the public repo.
 - 2026-10-31 Cart reminder emails: ONE reminder 24 h after a cart is left, WITH a coupon (XUSE10 by default), only
   9 am to 9 pm; free with Brevo (300 a day shared with login codes and order emails, so at most 100 reminders a
@@ -183,12 +191,18 @@ header button labels per section.
 | Cashfree real sandbox payment | **not verified** |
 | Email received in an inbox | **not verified** (provider accepted) |
 | SMS | not configured |
-| View on My Wall / tilt on a real phone | **not verified** |
+| View on My Wall / tilt on a real phone | **not verified** (owner tried live 2026-11-01: works on good phones, one phone found no wall) |
+| View on My Wall iPhone Quick Look (orientation upright, real size) | **not verified** — checked only with Pixar's USD tools and a simulated iPhone (2026-11-01) |
 | Live load test (browse only) | 100 visitors fast, 200 usable, 300 slow (2026-10-12) |
 | Production backup restorable | verified 2026-10-19 (isolated in-memory PostgreSQL 18.3; not on Neon) |
 | HEIC upload (Chrome, phone screen, local :4100) | verified 2026-10-25 with a public libheif sample; **not yet with a real iPhone photo** |
 
 ## Lessons (for whoever works on this next)
+
+- 2026-11-01 The pages' CSP has no `blob:` in connect-src, so a script can't fetch() a blob: address (the Quick Look
+  test reads the model from the Blob itself). Quick Look opens the blob: link as a navigation, not a fetch. Checking a
+  USDZ: usd-core 26 dropped Pixar's old ARKit checker; the scratchpad uses OpenUSD v24.11 complianceChecker.py with two
+  small patches (Sdf.ZipFile, one rule needing the old Sdr API skipped) plus the new UsdValidation validators.
 
 - The art browser suite (art-e2e) must run with the Cashfree stand-in (PROVIDER=cashfree): with the Razorpay stand-in the
   "closing the payment window pays nothing" check fails because that stand-in pays at once (2026-10-27).
