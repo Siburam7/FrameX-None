@@ -37,6 +37,21 @@
 
 ## Owner decisions (log)
 
+- 2026-11-01 Deploy: "Now all push and live" (main 8af6d15). Then: "jo important hai usko karo only": test in proportion,
+  not the whole suite every time (the full run had also crashed out of memory on this machine).
+- 2026-11-01 Experiment: header search grows on hover on laptops (only the logo stays, the box ~25-30% of the bar,
+  smooth); then on phones too: a tap grows it beside the logo, the X makes it small again. Then: results in a box
+  under the search (no new page) on laptop and phone, and an empty search closes by itself after 10 s.
+- 2026-11-01 Header: transparent at the very top of every page (with the thin line under it kept), today's frosted
+  background after a little scrolling.
+- 2026-11-01 Home: "Highly recommended frames" stays frames only; "Home Decor & Wall Art" and "Art & Artists" each get
+  their own row of what is popular (owner: "Har hisse ki apni line"), option B: the row above the picture tiles, which
+  stay. Laptop "Highly recommended frames": at most 2 lines, at least 8 frames.
+- 2026-11-01 Suggestions: Home "Highly recommended frames" = the frames ordered most in the LAST 30 DAYS first (owner:
+  "last 30 day se hisab karo"), then the frames VIEWED most in the last 30 days (owner chose "Order pehle, phir views";
+  views count once per visitor and only from visitors who allowed analytics), then the chosen frames; automatic. Product page, in the owner's order: Similar products, You
+  may also like, Recently viewed (rows that move sideways by arrows / touchpad on a laptop, swipe on a phone: NOT on
+  their own, owner: "touchpad se"), then More products for you (frames, wall art, artworks mixed, more as you scroll).
 - 2026-11-01 The login SMS arrives as "Team Global Net" (sender CP-GLBLNT-S, APITxT's no-DLT route): owner keeps it for now and
   will change it later (own DLT "FRAMEX" once Udyam / GST exists). No "SMS partner" note on the code screen for now.
 - 2026-11-01 Login OTP by SMS ("masagee par chahiye", not WhatsApp), through APITxT's no-DLT OTP (₹0.30, APITxT's sender, no

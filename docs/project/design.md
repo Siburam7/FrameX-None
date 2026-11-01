@@ -82,6 +82,26 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
   owner, 2026-10-28).
 - Header logo 150px wide on desktop. "Gallery" is in the footer, not the top menu. The orange header button follows
   the section (Shop Frames / Explore Art / Shop Decor / All Templates).
+- Home "Highly recommended frames" (owner, 2026-11-01): at most two lines of cards (laptop 8 = 2 x 4, wide screens
+  10 = 2 x 5, tablet 6); phones keep the swiping row of 10.
+- Header search on laptops (owner's experiment, 2026-11-01): hovering the round search button fades out the menu and
+  buttons (only the logo stays) and grows the button, same 46px height, into a white search pill about 28% of the bar
+  (300-460px), from its own middle, kept inside the buttons' side. Phones / tablets (from 360px): a tap grows it across
+  the room between the logo and the bar's edge, with an X to make it small again (the X is there on laptops too).
+  Results show in a white rounded box under it (laptop: under the pill, right edges in line, min 420px; phone: full
+  width under the header): small grey group labels with totals, 44px pictures, name + grey line, a blue "See all
+  results" link. Left empty for 10 s, the search closes by itself.
+- Header (owner, 2026-11-01): no background or blur while the page is at the very top (the page shows through),
+  the thin 1px line under it stays; today's frosted background once the visitor scrolls past 24 px or opens the
+  phone menu. Every page,
+  light and dark. A page whose top is dark would need its own rule (none today).
+- Home "Home Decor & Wall Art" and "Art & Artists" (owner, 2026-11-01, option B): a one-line sideways row of popular
+  wall art (wall-art cards) / artworks (the Art page's artwork cards) under the title, < > arrows beside the Explore
+  button, the picture tiles below as before.
+- Product page suggestions (owner, 2026-11-01): Similar products, You may also like, Recently viewed as one-line rows
+  of the usual product cards (laptop: 4 cards + a slice of the 5th, < > arrows at the right of the title, touchpad;
+  phone: 2 cards + a slice, swipe), then "More products for you" as the normal 4 / 2-column grid with a small spinner
+  line "More frames appear as you scroll". Artworks there use the product card with a dark "Artwork" badge.
 - Phone breakpoints: `mobile.css` blocks at max-width 639px, 374px and 359px. Target widths 320-430px.
 - Home "Make it yours" tiles (`.promo-tiles--make`) on a phone: the three side by side, a square picture with the
   short name under it; title, sentence and button hidden, the whole tile is the link (owner's pick, 2026-10-20).

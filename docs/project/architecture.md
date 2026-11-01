@@ -44,6 +44,18 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
 - `assets/vendor/libheif/` — libheif-js 1.23.5 (WebAssembly, LGPL-3.0, its LICENSE beside it): loaded only when a HEIC
   photo is chosen in a browser that can't open one, for the on-screen PREVIEW (`services/upload-service.js`). Needs
   'wasm-unsafe-eval' in the CSP.
+- Suggestions (2026-11-01): `services/popular.js` asks `GET /api/catalog/popular` (the product ids ordered most in the
+  last 30 days, then viewed most: analytics view_item, once per visitor; waits 1.5 s, then the list remembered in this
+  browser) for Home "Highly recommended frames" and
+  the product page; `ui/suggestions.js` fills the product page's Similar products / You may also like / Recently viewed
+  (localStorage `framex.recentlyViewed.v1`, max 20) rows and the "More products for you" list that grows as the visitor
+  scrolls (frames, wall art, and artworks from `GET /api/artworks`). Rows that move sideways on a laptop:
+  `.product-grid--slide` (components.css; inside a home shelf `.shelf .product-grid--slide`, layout-hero.css).
+  `ui/home-popular.js` fills Home's popular wall-art and artwork rows; Home therefore loads `js/decor.js` and
+  `ui/decor-page.js` (shop cards' "N frames" ignore wall art, so they match every page).
+- Header search (2026-11-01): `ui/chrome.js` renders `.hdr-search` (link + small form + `.hdr-results`); `ui/nav.js`
+  grows it (hover on laptops, tap on phones), closes it (mouse away / X / Escape / 10 s empty) and fills the results
+  from `GET /api/search` (limit 4 per kind); styles at the end of `chrome.css`.
 - Each page carries a **Content-Security-Policy** `<meta>` (local, not yet deployed; test `backend/test/site-csp.test.js`).
 
 ## 3. Backend (`backend/`)

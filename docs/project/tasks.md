@@ -1,10 +1,106 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-11-01 (View on My Wall: iPhone AR Quick Look + clear messages, local).
+> Last updated: 2026-11-01 (suggestions, popular Home rows, transparent header and header search deployed: main 8af6d15).
 
 ## Now
 
+- [x] 2026-11-01 **DEPLOYED** main 8af6d15 (owner: "Now all push and live"; no migration, so no Neon backup needed):
+      smart suggestions (Home popular frames, Home Decor / Art popular rows, product page Similar / You may also like /
+      Recently viewed / More products for you), transparent header at the top, header search that grows + results box
+      + 10 s close, the "[object Object]" size fix. Tests before the push (owner then asked to keep testing to what
+      matters, so the full run was stopped part-way): browser login 45, phone login 20, cart 47, frame 55, Studio 37,
+      decor 26, shop 50, account 13, artwork 36, payout 38, coupon 20 (care 47/0 when stopped); this work's own suites
+      suggest 35, home-popular 19, hover-search 70, search-results 16; backend popular 12/12. The full backend run
+      crashed OUT OF MEMORY (only ~1.5 GB free on this machine; cart / checkout / decor could not start even alone);
+      the last full backend run today, after the pricing.js change, was 537 pass / 0 fail.
+      Live check after the deploy (read-only, laptop + phone, 14/14): Render /api/catalog/popular 200 with real ids
+      (p-002 first), Pages serves the new files; header transparent with its line; Highly recommended = frames only,
+      8 in 2 lines on a laptop, Classic Square first; Home Decor popular row (10) above its tiles; search grows, shows
+      results for "gold", X closes; product page rows + feed; no script errors.
+- [x] 2026-11-01 **Search that opens on hover BUILT for laptops (local, not pushed; owner's EXPERIMENT)**. Owner:
+      hovering the header's search icon fades out everything but the logo, and the icon grows (same height) into a
+      search box about 25-30% of the navbar, smoothly; laptop first, phone only when the owner says.
+      - chrome.js: the search link sits in `.hdr-search` with a small form (search.html?q=); below 1100 px the plain
+        link as before (below 420 px it is in the menu, as before), the form hidden.
+      - nav.js: on hover (1100 px + a mouse) the header gets `.is-searching`; the box = clamp(300, 28% of the bar, 460) px,
+        grown from its own middle and kept inside the buttons' right edge; closes 0.2 s after the mouse leaves unless
+        the cursor is in it; Escape / clicking away closes; an empty search keeps the page and puts the cursor in.
+      - chrome.css: width/left 450 ms, the rest fades in 200 ms (back in 280 ms); reduced motion = no animation.
+      - Test `hover-search-e2e.js` 32/32 at 1366, 1100 and 1920 px (+ tablet / phone unchanged). Pictures + README:
+        Desktop\FrameX-Search-Hover.
+      - PHONE version, same day (owner: "acha hai, abhi mobile ka banao … X ko click karte hai chota ho jaye"): from
+        360 px the round search button is in the bar (it used to show only from 420 px; below 360 it stays in the menu).
+        A tap grows it across the room between the logo and the bar's edge (max 560 px; tablets too), Log in / cart / menu
+        button fade out, the cursor goes in (keyboard opens); it stays open until its X (closing the keyboard keeps it);
+        the X clears and closes, on laptops too (the browser's own clear button is hidden). 16px text on phones (no
+        iPhone zoom); a box narrower than 300 px says "Search FrameX". hover-search-e2e.js 67/67 (laptop 1366 / 1100 /
+        1920; phone 360 / 375 / 390 / 414; tablet 800; 320 = in the menu) + search-hint-check.js 2/2.
+      - RESULTS UNDER THE BOX + 10 s CLOSE, same day (owner: "serch kare uske niche ek box hoke sabhi result ayega mobile
+        par bhi laptop par bhi … kuch na serch kare 10sec ke bad … firse chota ho jaye"): typing (2+ letters, 250 ms
+        after the last key) shows GET /api/search?limit=4 under the box: Products / Artworks / Artists / Templates /
+        Shops with their totals, picture + name + shop / artist / city, "See all results for …" (search.html?q=);
+        "Type at least two letters", "Searching…", "Nothing matches …", an error line. Enter shows the results instead
+        of opening a new page (a phone's keyboard closes); without the backend Enter still opens search.html. Arrow keys
+        move through the results; Escape / X close and clear. Laptop: the box under the search pill, right edges in
+        line, at least 420 px, max 70vh; phone / tablet: across the screen under the header, scrolls. Searches are
+        counted for the statistics as on the search page. Opened and left EMPTY for 10 s = small again (words typed =
+        it stays); moving the mouse on the button opens it again. search-results-e2e.js 16/16, hover-search-e2e.js
+        70/70 (both in push-check).
+- [x] 2026-11-01 **Navbar transparent at the top BUILT (local, not pushed)**. Owner: no header background before
+      scrolling, today's frosted background once the visitor scrolls a little. (I first made design pictures,
+      Desktop\FrameX-Navbar-Design; the owner had meant "build it directly" and showed localhost unchanged.)
+      Owner, same day: keep the thin line under the header while it is transparent (done; navbar-line.js 2/2).
+      chrome.css: `.site-header:not(.is-scrolled):not(.is-menu-open)` has no background or blur, the thin line stays (stronger than
+      .site-header--solid); nav.js already sets .is-scrolled past 24 px. Every page; the phone menu keeps its background
+      when open; dark mode the same. Checked: the top of 29 pages on laptop and phone (navbar-sweep.js: all
+      transparent at the top, background back after scrolling, all readable: every page top is light), dark mode +
+      phone menu (navbar-dark.js) 2/2.
+- [x] 2026-11-01 **Home: popular wall art + popular artworks rows BUILT (local, not pushed)**. Owner asked whether
+      popular Home Decor / Art & Artists items show in "Highly recommended frames" (no: frames only), chose "Har hisse ki
+      apni line", saw the design (Desktop\FrameX-Home-Popular-Design) and chose option B (row ABOVE the picture tiles,
+      which stay).
+      - `ui/home-popular.js`: "Home Decor & Wall Art" row = 10 wall art, popular first (ordered most, then viewed most,
+        30 days), FrameX's chosen ones (js/decor.js SHOWCASE trending) while nothing is popular; "Art & Artists" row = up
+        to 10 artworks that can be bought (GET /api/artworks), popular first, else newest; no artworks = no row.
+        One sideways line (arrows + touchpad / swipe): `.shelf .product-grid--slide` in layout-hero.css (a home shelf's
+        rail is a grid from 640 px).
+      - Home now loads js/decor.js (~80 KB) + ui/decor-page.js for the wall-art cards. Side effect handled: a shop card's
+        "N frames" no longer counts wall art (seed-provider countByShop), so it is the same on every page.
+      - `/api/catalog/popular` also counts artwork page views (view_artwork) and returns up to 100 + 100 ids.
+      - Tests: backend popular 12/12, site-csp 16/16 (with popular); browser `home-popular-e2e.js` 19/19 (in push-check):
+        rows and their place, chosen / newest order, views move a wall art and an artwork to the front, sold artwork
+        left out, no artworks = no row, frames-only Highly recommended, the same shop count on Home and Shop, phone
+        swipe, no script errors); shop 50, decor 26, suggestions 35 again.
+- [x] 2026-11-01 **Better suggestions BUILT (local, not pushed)** after the owner's design round
+      (Desktop\FrameX-Suggestions-Design: design pictures 00-04 + built-1..4, laptop and phone; owner answered: best sellers =
+      LAST 30 DAYS of orders; the laptop rows move by the < > arrows and the touchpad, not on their own).
+      - Home "Highly recommended frames": same look; the frames ordered most in the last 30 days first, THEN the frames
+        viewed most in the last 30 days (owner, after the build: "jo jada user views karenge wo top main"; chose "Order
+        pehle, phir views"), then the chosen (isRecommended) frames fill the rest, max 10, no repeats; changes with every
+        order and view. Backend `GET /api/catalog/popular` (public, product ids only, no counts; orders: test, unpaid,
+        cancelled, returned, refunded and older ones don't count, a product counts once per order; views: analytics
+        view_item rows, once per visitor, so only visitors who allowed analytics count, bots and FrameX staff never).
+        Site `services/popular.js` (waits 1.5 s, then the list remembered from an earlier page; no backend = no list).
+        Owner, same day: at most 2 lines on a laptop, at least 8 frames: laptop 8 (2 x 4), wide screen 10 (2 x 5),
+        tablet 6 (2 x 3), phone swipes all 10 (layout-hero.css `#recommended-rail`; checked with home-2line-check.js).
+        The row shows FRAMES only: popular wall art (Home Decor) and artworks (Art & Artists) don't appear in it.
+      - Product page, replacing the 4-card "You may also like": `ui/suggestions.js`
+        - Similar products: every product of its category (wall art: its collection), closest first;
+        - You may also like: matching-style wall art + frames from other categories (+ best sellers), max 12, nothing
+          from Similar;
+        - Recently viewed: this browser, newest first, max 20, hidden on a first visit;
+        - More products for you: frames, wall art and artworks (GET /api/artworks, sold ones left out, waits 2.5 s at
+          most) mixed, 12 at a time, more as the visitor scrolls (IntersectionObserver); things already shown above
+          come last.
+        Rows: new `.product-grid--slide` (laptop: 4 cards + a slice of the 5th, arrows via railNav) + the existing phone
+        swipe rail. Wall-art product: "More wall art like this one" (the old "More <collection>" link is gone).
+      - Fixed: a product whose sizes came as records showed "[object Object]" on its card (`pricing.sizeOptions` label;
+        ids and prices unchanged).
+      - Tests: backend `popular.test.js` 11/11 (added to npm test; full backend 537 pass / 0 fail / 1 skipped before the
+        views step); browser `suggest-e2e.js` (scratchpad, now in push-check) 35/35 (home: real COD orders first, then a
+        frame 2 visitors viewed, then the chosen ones; the 4 parts and their order, laptop arrows, phone swipe + 2 columns,
+        recently viewed, scrolling adds more with no repeats, artwork card, wall-art page, no script errors).
 - [x] 2026-11-01 **DEPLOYED** main ec65434 (owner: "push karke live karo"; Neon backup taken by the owner with
       backup-to-pendrive / backup-live-db first; migration 026 runs on Render at start): phone + SMS login with the
       "Phone number | Email" toggle, email optional for new numbers, automatic WhatsApp messages (code only: switched on
@@ -16,6 +112,11 @@
       WHATSAPP_PHONE_NUMBER_ID. AFTER the deploy the owner sets SMS_PROVIDER=apitxt (then the toggle appears live);
       WHATSAPP_PROVIDER=fast2sms only once Meta approves the 3 templates. NOT in this push: docs/project/costs.md and its
       CLAUDE.md line.
+      Live check after the deploy: API health 200; config sms "none" / whatsapp off until set; phone code -> 503
+      SMS_NOT_CONFIGURED (correct then); no old WhatsApp number on the privacy page or the site settings; /api/admin/whatsapp
+      401. Then the owner set SMS_PROVIDER=apitxt on Render (Save, rebuild, deploy): config sms "real"; the live login box
+      (laptop + phone) shows Google, the toggle with Phone number first, the same height on both sides (597 / 596 px), no
+      script errors. Still to do: the owner tries a real phone login on shopframex.in; WHATSAPP_PROVIDER after Meta approval.
 - [x] 2026-11-01 **Log in / sign up with a mobile number + SMS code BUILT** (owner: "otp masagee par chahiye", not
       WhatsApp; SMS company APITxT, no DLT of our own; email for a new number OPTIONAL: owner chose "Email optional
       (skip kar sakein)"). Local, NOT pushed; same migration 026 (now `026_whatsapp_phone_login.sql`).
