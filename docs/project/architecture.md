@@ -61,6 +61,11 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   carry `sellerUnitAmount` → `order_items.seller_unit_amount` (SHOP lines); payouts, shop orders, new-order alerts and
   `sellersOf` use it. `config.checkout.onlineDiscountPercent` → quote `onlineDiscount`, `orders.online_discount`
   (part of `orders_total_adds_up`; size changes keep the order's own rate).
+- Studio custom size (2026-11-02): `js/studio.js` CUSTOM_SIZE (available, units, min / max inches);
+  `services/studio-engine.js` `customInches` / `customModifier` / `customSizeOf` (sizeId "custom" + cfg.customSize
+  {w, h, unit}); `sizeOf` / `printInches` / `normalize` (orientation from the typed size) / `validate` / `summary` use
+  it. `ui/studio-page.js`: the size section is first; `[data-custom]` inputs. Server: `cart-service.cleanDesign` copies
+  customSize, `pricedChoices` includes it.
 - Order tracking (2026-11-02, migration 027): staff type the courier, tracking number and link
   (`POST /api/admin/orders/:n/tracking`); `order.tracking` reaches the customer's order page (`trackingHtml` in
   `ui/orders-page.js`), the shipped email (`lib/order-emails.js`) and the WhatsApp status (`whatsapp-service.js`).

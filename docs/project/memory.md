@@ -37,6 +37,10 @@
 
 ## Owner decisions (log)
 
+- 2026-11-02 FrameX Studio: the size is decided first, then the customer's photo; "Custom size" must work (it said
+  "Coming soon"). My choices (not confirmed by the owner): 4–40 inches per side, inches or cm, price from the standard
+  sizes by area rounded up to ₹10 and never below Small; not offered on a listed shop product. LIVE 2026-11-02
+  (main c270c7a, no migration).
 - 2026-11-02 Deploy: "Abhi push karke live karo, jaldii" → main bb0ca4f (courier + tracking, pricing plan; migrations 027
   + 028) WITHOUT a fresh Neon backup (owner chose "Bina backup push karo"). The pricing rule and the online discount
   stay off live until the owner types the values in Admin → Settings (costs.md §11).
@@ -78,7 +82,8 @@
   SMS; at most 6 SMS sends an hour per network address.
 - 2026-11-01 WhatsApp: the messages the admin sent by hand become automatic ("jitna bhi abhi manual send karna padta hai
   … automatic"), from a FrameX business number (a family member's old keypad-phone number without WhatsApp, owner's
-  choice) through Fast2SMS (no monthly fee, ₹0.25 a utility message). Templates approved by Meta in the Fast2SMS panel.
+  choice) through Fast2SMS (no monthly fee, ₹0.25 a utility message). Templates approved by Meta in the Fast2SMS panel
+  (all 3 APPROVED 2026-11-02; the owner set the 3 WHATSAPP_ values on Render the same day ~17:39: service "ready", ON).
   Login OTP on WhatsApp waits for Meta business verification (Udyam first). My choices (owner can change): the checkout
   box is ticked by default (remembered when unticked) and appears only while WhatsApp is set up; WhatsApp for placed,
   payment failed, shipped, out for delivery (WhatsApp only), delivered, cancelled and refunds, not for confirmed /

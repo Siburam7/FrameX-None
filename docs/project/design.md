@@ -88,6 +88,9 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
   discount field "Your discount (%)", "Customers pay from" in the list; product wizard hint "Customers pay ₹X on FrameX";
   checkout: a small offer line under the payment methods ("Pay online … and get N% off your items") and a green
   "Online payment discount (N%)" row in Price details.
+- FrameX Studio (owner, 2026-11-02): Size is step 1 and open at the start; "Custom size" is one more size card (same
+  card look); choosing it shows the "Your size" box (dashed, existing `.fs-soon` look) with width × height + in / cm and
+  a red message when the size can't be made; the Orientation pills hide for a custom size.
 - Order tracking (owner, 2026-11-02): admin order page "Courier and tracking" card under "Next step" (courier with a
   suggestion list, tracking number, optional link, dark Save button, small grey hint); customer order page "Track your
   parcel" card first in the main column (facts list + dark "Track your parcel" button opening the courier's page).

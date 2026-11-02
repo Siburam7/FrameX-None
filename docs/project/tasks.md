@@ -1,9 +1,38 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-11-02 (courier + tracking and the pricing plan DEPLOYED: main bb0ca4f, migrations 027 + 028, no fresh backup by owner choice).
+> Last updated: 2026-11-02 (Studio custom size + size-first DEPLOYED: main c270c7a, no migration; WhatsApp ON live).
 
 ## Now
+
+- [ ] 2026-11-02 **WhatsApp: Meta APPROVED the 3 templates** (Fast2SMS panel, Utility, EN): `framex_order_update` 41360,
+      `framex_seller_new_order` 41362, `framex_account_approved` 41369. The code is already live (ec65434, migration 026)
+      and stays OFF until Render has WHATSAPP_PROVIDER=fast2sms, WHATSAPP_API_KEY and WHATSAPP_PHONE_NUMBER_ID (owner
+      types them; same values as backend/.env). Next: one real test to the owner's own number (local wa-real-test,
+      needs the owner's OK), then Render, then Admin → Settings → WhatsApp messages shows "ready" and the 3 switches.
+      If Meta says the language doesn't match: WHATSAPP_TEMPLATE_LANGUAGE=en_US. Not sent yet: no real message so far.
+      - 2026-11-02 ~17:39 the owner set the 3 values on Render: Admin → Settings shows "WhatsApp service: ready", the 3
+        switches On; live /api/config whatsappOrderUpdates true (checkout shows the WhatsApp box). Still open: the first
+        real message (owner's own COD order, then cancel) and its result in the Admin list.
+
+- [x] 2026-11-02 **FrameX Studio: custom size works + Size is step 1** — DEPLOYED main c270c7a (no migration).
+      Owner: "abhi push karke sabhi live kar doo". Before push the cart suite was re-run but Node ran out of memory at
+      start (the PC's commit memory was full: 1.3 of 44.7 GB free, the owner's open apps); the same code had passed at
+      13:35-13:37 (cart 28, studio-custom-e2e 14/14, mx-e2e-2-studio 37/37); only the About/Home text changed after. Owner: "frameX
+      studio main Custom size cooming Soon dikha raha hai … isko fix karo … side kitna hoga frame ka … pehele deside
+      hona chahiye uske bad photo chahiye user ka".
+      - Size is the first step (open at the start), Photo the second; the rest as before.
+      - "Custom size" card next to Small / Medium / Large / XL (photo and template Studio; not on a listed shop
+        product, which keeps its shop's sizes): width × height in inches or cm, 4–40 inches per side; the frame's shape
+        (portrait / landscape / square) follows the typed size; a size outside the range shows a red message and can't be
+        ordered. Price: from the standard sizes by area (in proportion between two sizes, the last step's rate above
+        Extra Large, never below Small), rounded up to ₹10 — e.g. 10 × 14 in ₹559, 18 × 24 in ₹1,009 with the default
+        options (Studio prices are still placeholders, js/studio.js).
+      - Server: the cart keeps `customSize` {w, h, unit} with the design, prices it with the same engine and refuses a
+        size it can't make; the order's size line reads "Custom · 10 × 14 in · portrait" (cm also shows inches).
+      - About + Home FAQ no longer say "custom sizes coming soon".
+      - Tests: cart 28 (new custom-size case), designs 7, photos 49, checkout 56; browser studio-custom-e2e 14/14,
+        mx-e2e-2-studio 37/37 (opens the Photo step first now).
 
 - [x] 2026-11-02 **DEPLOYED: courier + tracking (027) and the pricing plan (028)**, main bb0ca4f. Owner: "Abhi push karke
       live karo, jaldii"; chose "Bina backup push karo" (no fresh Neon backup). Live check: website has the new scripts,
