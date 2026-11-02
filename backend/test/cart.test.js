@@ -394,6 +394,22 @@ describe("FrameX Studio designs", () => {
     assert.equal((await asha.del(`/api/cart/items/${line.id}`)).status, 200);
   });
 
+  test("a custom size is priced by the server and kept with the line; one FrameX can't make is refused", async () => {
+    const { ctx, cfg } = templateDesign(template, { sizeId: "custom", customSize: { w: 10, h: 14, unit: "in" } });
+    studio.normalize(cfg, ctx);
+    const r = await asha.post("/api/cart/items", { kind: "studio", design: { id: "d-test0005", config: cfg } });
+    assert.equal(r.status, 201, r.text);
+    const line = lines(r).find((l) => l.id === r.json.itemId);
+    assert.equal(line.unitPrice, studio.price(cfg, ctx).total);
+    assert.match(line.size, /^Custom · 10 × 14 in · portrait$/);
+    const stored = (await itemsInDb(ASHA.email)).find((i) => i.id === line.id);
+    assert.deepEqual({ ...stored.customization.customSize }, { w: 10, h: 14, unit: "in" });
+    assert.equal((await asha.del(`/api/cart/items/${line.id}`)).status, 200);
+    const tooBig = await asha.post("/api/cart/items", { kind: "studio", design: { id: "d-test0005", config: { ...cfg, customSize: { w: 50, h: 14, unit: "in" } } } });
+    assert.equal(tooBig.status, 422, tooBig.text);
+    assert.match(tooBig.json.error.message, /between 4 and 40 inches/);
+  });
+
   test("a design saved in the account (its id is a uuid) goes into the cart too; other ids are refused", async () => {
     const { cfg } = templateDesign(template);
     const id = crypto.randomUUID();

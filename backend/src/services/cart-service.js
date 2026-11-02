@@ -167,6 +167,9 @@ function cleanDesign(input, ctx, studio) {
   copyId(part("border"), out.border, "colorId");
   out.border.width = within(part("border").width, 0, 1000, out.border.width);
   ["sizeId", "orientation", "protection", "printMaterialId"].forEach((k) => copyId(src, out, k));
+  // the customer's own size (sizeId "custom"): numbers and a unit only; the engine decides whether it can be made
+  const own = part("customSize");
+  if (out.sizeId === "custom") out.customSize = { w: Math.round(within(own.w, 0, 1000, 0) * 10) / 10, h: Math.round(within(own.h, 0, 1000, 0) * 10) / 10, unit: own.unit === "cm" ? "cm" : "in" };
 
   for (const slot of ctx.caps.photoSlots) {
     const photoId = safeId(part("photos")[slot]);
@@ -213,7 +216,7 @@ function cleanDesign(input, ctx, studio) {
 
 // The choices that decide what is made and what it costs.
 const pricedChoices = (cfg) =>
-  JSON.stringify([cfg.frame.typeId, cfg.frame.colorId, cfg.frame.finishId, cfg.mat.type, cfg.sizeId, cfg.orientation, cfg.protection, cfg.printMaterialId, Number(cfg.border.width) || 0].map((x) => x ?? null));
+  JSON.stringify([cfg.frame.typeId, cfg.frame.colorId, cfg.frame.finishId, cfg.mat.type, cfg.sizeId, cfg.orientation, cfg.protection, cfg.printMaterialId, Number(cfg.border.width) || 0, cfg.sizeId === "custom" ? cfg.customSize || null : null].map((x) => x ?? null));
 
 /**
  * Check a Studio design against the catalogue and price it.

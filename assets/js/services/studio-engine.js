@@ -19,7 +19,8 @@
      frame:      { typeId, colorId, finishId },
      border:     { width, colorId },
      mat:        { type, colorId, color2Id, widthId },
-     sizeId, orientation, protection
+     sizeId, orientation, protection,
+     customSize: { w, h, unit: "in" | "cm" }   with sizeId "custom" (the customer's own size)
    }
 
    Functions (all pure, no DOM):
@@ -273,10 +274,15 @@
         ? out.frame.finishId
         : finishes[0].id
       : null;
-    if (!byId(caps.sizes, out.sizeId) && caps.sizes.length)
+    const custom = out.sizeId === "custom" && caps.customSize && caps.customSize.available;
+    if (custom && !out.customSize) out.customSize = { w: 12, h: 16, unit: "in" };
+    if (!custom && !byId(caps.sizes, out.sizeId) && caps.sizes.length)
       out.sizeId = (byId(caps.sizes, "m") || caps.sizes[0]).id;
     if (!byId(caps.orientations, out.orientation) && caps.orientations[0])
       out.orientation = caps.orientations[0].id;
+    // A custom size is the width × height the customer typed: its shape decides the orientation.
+    const own = custom ? customInches(out, ctx) : null;
+    if (own) out.orientation = own.w > own.h ? "landscape" : own.w < own.h ? "portrait" : "square";
     if (!byId(caps.matTypes, out.mat.type))
       out.mat.type = caps.matTypes[0] ? caps.matTypes[0].id : "none";
     if (!caps.mat) out.mat.type = "none";
@@ -315,8 +321,45 @@
   /* ---------------------------------------------------------------- Geometry
      All measurements in units where the PRINT AREA is 1000 units wide. */
 
+  /* Custom size (owner, 2026-11-02): the customer's own width × height, in inches or cm, within CUSTOM_SIZE's
+     min / max inches. Its price follows the standard sizes by area (between two sizes: in proportion; beyond the
+     largest: the same rate as the last step), rounded up to ₹10, and never below the smallest size. */
+  const CM = 2.54;
+  /** The custom size in inches (one decimal), or null when it isn't offered here or isn't a size FrameX makes. */
+  function customInches(cfg, ctx) {
+    const cs = ctx && ctx.caps.customSize;
+    const v = cfg.customSize;
+    if (!cs || !cs.available || !v) return null;
+    const per = v.unit === "cm" ? 1 / CM : 1;
+    const w = Math.round(Number(v.w) * per * 10) / 10;
+    const h = Math.round(Number(v.h) * per * 10) / 10;
+    return w >= cs.min && w <= cs.max && h >= cs.min && h <= cs.max ? { w, h } : null;
+  }
+  function customModifier(w, h) {
+    const steps = available(catalog().SIZES)
+      .map((s) => [s.w * s.h, Number(s.priceModifier) || 0])
+      .sort((a, b) => a[0] - b[0]);
+    if (!steps.length) return 0;
+    const area = w * h;
+    if (steps.length === 1 || area <= steps[0][0]) return steps[0][1];
+    let i = 1;
+    while (i < steps.length - 1 && area > steps[i][0]) i++;
+    const [a0, p0] = steps[i - 1];
+    const [a1, p1] = steps[i];
+    return Math.ceil((p0 + ((area - a0) * (p1 - p0)) / (a1 - a0)) / 10) * 10;
+  }
+  /** The custom size as a size: { id: "custom", label, w, h, dims, priceModifier, custom: true } (null: not usable). */
+  function customSizeOf(cfg, ctx) {
+    const inch = customInches(cfg, ctx);
+    if (!inch) return null;
+    const v = cfg.customSize;
+    const typed = v.unit === "cm" ? `${Number(v.w)} × ${Number(v.h)} cm (${inch.w} × ${inch.h} in)` : `${inch.w} × ${inch.h} in`;
+    return { id: "custom", label: "Custom", w: inch.w, h: inch.h, dims: typed, priceModifier: customModifier(inch.w, inch.h), custom: true };
+  }
+
   // A product's own sizes (any width × height a shop entered) come first.
   const sizeOf = (cfg, ctx) =>
+    (cfg.sizeId === "custom" && customSizeOf(cfg, ctx)) ||
     byId(ctx && ctx.caps.sizes, cfg.sizeId) ||
     byId(catalog().SIZES, cfg.sizeId) ||
     catalog().SIZES[1];
@@ -324,6 +367,7 @@
   /** Print area in inches, oriented. */
   function printInches(cfg, ctx) {
     const s = sizeOf(cfg, ctx);
+    if (s.custom) return { w: s.w, h: s.h }; // exactly as the customer typed it
     if (cfg.orientation === "square")
       return { w: Math.min(s.w, s.h), h: Math.min(s.w, s.h) };
     return cfg.orientation === "landscape"
@@ -521,7 +565,11 @@
     missingText.forEach((f) =>
       issues.push({ section: "text", message: `Fill in “${f.label}”` }),
     );
-    if (!byId(ctx.caps.sizes, cfg.sizeId))
+    if (cfg.sizeId === "custom") {
+      const cs = ctx.caps.customSize || {};
+      if (!customInches(cfg, ctx))
+        issues.push({ section: "size", message: `Enter a width and height between ${cs.min} and ${cs.max} inches (${Math.round(cs.min * CM)}–${Math.round(cs.max * CM)} cm)` });
+    } else if (!byId(ctx.caps.sizes, cfg.sizeId))
       issues.push({ section: "size", message: "Choose a size" });
     if (ctx.caps.frame && !byId(ctx.caps.frameTypes, cfg.frame.typeId))
       issues.push({ section: "frame", message: "Choose a frame" });
@@ -573,7 +621,7 @@
       {
         key: "size",
         label: "Size",
-        value:
+        value: size.custom ? `Custom · ${size.dims} · ${cfg.orientation}` :
           [
             size.label,
             size.dims && cfg.orientation !== "landscape"

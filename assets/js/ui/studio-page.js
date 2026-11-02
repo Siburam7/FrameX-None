@@ -23,7 +23,7 @@
   let ctx, cfg, cat, draftKey, uploader, texts;
   let activeSlot = "photo1";
   const photoUrls = {};
-  const openSections = new Set(["photos", "frame"]);
+  const openSections = new Set(["size"]); // the first step (owner, 2026-11-02: size before the photo)
   let step = ""; // the section the step row and Back / Next are on
   const byId = (list, id) => (list || []).find((x) => x.id === id) || null;
   const clone = (v) => JSON.parse(JSON.stringify(v));
@@ -133,6 +133,57 @@
   }
 
   const SECTIONS = {
+    // The size comes first, then the customer's photo (owner, 2026-11-02)
+    size: {
+      title: () => "Size",
+      show: () => true,
+      summary: () =>
+        engine.summary(cfg, ctx).find((l) => l.key === "size").value,
+      dynamic: () => {
+        const cs = ctx.caps.customSize;
+        const custom = cfg.sizeId === "custom";
+        const priceOf = (sizeId) => engine.price(Object.assign(clone(cfg), { sizeId }), ctx).total;
+        const options = ctx.caps.sizes.map((s) => ({
+          id: s.id,
+          name: s.label,
+          description: s.dims || `${s.w} × ${s.h} in`,
+          price: formatPrice(priceOf(s.id)),
+        }));
+        // The customer's own size (owner, 2026-11-02): not on a listed product, which has its shop's sizes only
+        const line = engine.summary(cfg, ctx).find((l) => l.key === "size").value;
+        const typed = custom && /^Custom · /.test(line); // a size FrameX can make
+        if (cs.available)
+          options.push({
+            id: "custom",
+            name: "Custom size",
+            description: typed ? line.replace(/^Custom · | · \w+$/g, "") : "Your own width × height",
+            price: !custom || typed ? formatPrice(priceOf("custom")) : "Enter your size",
+          });
+        const own = cfg.customSize || { w: 12, h: 16, unit: "in" };
+        const problem = custom ? engine.validate(cfg, ctx).issues.find((i) => i.section === "size") : null;
+        return `<div class="fs-field"><span class="fs-label">Frame size</span>${ui.cards("sizeId", options, cfg.sizeId, { label: "Frame size", columns: 2 })}</div>
+          ${
+            custom
+              ? `<div class="fs-soon fs-custom"><strong>Your size</strong><span>Width × height of the photo, ${cs.min}–${cs.max} inches (${Math.round(cs.min * 2.54)}–${Math.round(cs.max * 2.54)} cm). The frame goes around it.</span>
+            <div class="fs-soon__inputs"><input class="input" type="number" inputmode="decimal" min="0" step="0.1" data-custom="w" value="${esc(own.w)}" aria-label="Width"><span>×</span><input class="input" type="number" inputmode="decimal" min="0" step="0.1" data-custom="h" value="${esc(own.h)}" aria-label="Height"><select class="select" data-custom="unit" aria-label="Unit"><option value="in"${own.unit === "cm" ? "" : " selected"}>in</option><option value="cm"${own.unit === "cm" ? " selected" : ""}>cm</option></select></div>
+            ${problem ? `<span class="fs-custom__error" role="alert">${esc(problem.message)}</span>` : ""}</div>`
+              : ""
+          }
+          ${
+            ctx.caps.orientations.length > 1 && !custom
+              ? `<div class="fs-field"><span class="fs-label">Orientation</span>${ui.segmented(
+                  "orientation",
+                  ctx.caps.orientations.map((o) => ({
+                    id: o.id,
+                    name: o.name,
+                  })),
+                  cfg.orientation,
+                  { label: "Orientation" },
+                )}</div>`
+              : ""
+          }`;
+      },
+    },
     photos: {
       title: () => (ctx.caps.photoSlots.length > 1 ? "Photos" : "Photo"),
       show: () => true,
@@ -306,54 +357,6 @@
           }`;
       },
     },
-    size: {
-      title: () => "Size",
-      show: () => true,
-      summary: () =>
-        engine.summary(cfg, ctx).find((l) => l.key === "size").value,
-      dynamic: () => {
-        const base = engine.price(
-          Object.assign(clone(cfg), { sizeId: "m" }),
-          ctx,
-        ).total;
-        return `<div class="fs-field"><span class="fs-label">Frame size</span>${ui.cards(
-          "sizeId",
-          ctx.caps.sizes.map((s) => {
-            const p = engine.price(
-              Object.assign(clone(cfg), { sizeId: s.id }),
-              ctx,
-            ).total;
-            return {
-              id: s.id,
-              name: s.label,
-              description: s.dims || `${s.w} × ${s.h} in`,
-              price: formatPrice(p) + (s.id !== "m" && p !== base ? "" : ""),
-            };
-          }),
-          cfg.sizeId,
-          { label: "Frame size", columns: 2 },
-        )}</div>
-          ${
-            ctx.caps.orientations.length > 1
-              ? `<div class="fs-field"><span class="fs-label">Orientation</span>${ui.segmented(
-                  "orientation",
-                  ctx.caps.orientations.map((o) => ({
-                    id: o.id,
-                    name: o.name,
-                  })),
-                  cfg.orientation,
-                  { label: "Orientation" },
-                )}</div>`
-              : ""
-          }
-          ${
-            ctx.productOptions
-              ? ""
-              : `<div class="fs-soon"><strong>Custom size</strong><span>Enter your own width and height in inches or cm.</span><span class="placeholder-note">Coming soon</span>
-            <div class="fs-soon__inputs" aria-hidden="true"><input class="input" disabled placeholder="Width"><span>×</span><input class="input" disabled placeholder="Height"><select class="select" disabled><option>in</option></select></div></div>`
-          }`;
-      },
-    },
     print: {
       title: () => "Print",
       show: () => ctx.caps.printMaterials.length > 1,
@@ -501,7 +504,7 @@
         cfg.crop[slot] = { fit: "fill", zoom: 1, px: 50, py: 50, rotate: 0 };
         activeSlot = slot;
         // First photo in photo mode: match the frame to the photo's shape.
-        if (ctx.mode === "photo" && !cfg.userChoseOrientation) {
+        if (ctx.mode === "photo" && !cfg.userChoseOrientation && cfg.sizeId !== "custom") {
           const wide = photo.width / photo.height > 1.08;
           const want = wide ? "landscape" : "portrait";
           if (cfg.orientation !== want && byId(ctx.caps.orientations, want)) {
@@ -692,6 +695,15 @@
 
   /* ---------------------------------------------------------------- Events from controls */
   function onInput(e) {
+    // The custom size's width, height and unit
+    const own = e.target.closest("[data-custom]");
+    if (own) {
+      const box = own.closest(".fs-custom");
+      const read = (k) => $(`[data-custom="${k}"]`, box).value;
+      cfg.customSize = { w: Math.round(Number(read("w")) * 10) / 10 || 0, h: Math.round(Number(read("h")) * 10) / 10 || 0, unit: read("unit") === "cm" ? "cm" : "in" };
+      commit();
+      return;
+    }
     const el = e.target.closest("[data-set]");
     if (!el) return;
     const path = el.dataset.set;

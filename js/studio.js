@@ -312,12 +312,14 @@
       available: true,
     },
   ];
+  // The customer's own width × height (owner, 2026-11-02): inches or cm, each side min..max inches. Priced from the
+  // sizes above by area (studio-engine.js → customModifier). Not offered on a listed product (its shop's sizes only).
   const CUSTOM_SIZE = {
-    available: false,
+    available: true,
     units: ["in", "cm"],
     min: 4,
     max: 40,
-  }; // coming soon
+  };
 
   const ORIENTATIONS = [
     { id: "portrait", name: "Portrait" },

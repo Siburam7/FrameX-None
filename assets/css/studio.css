@@ -776,7 +776,7 @@
   accent-color: var(--brown-deep);
 }
 
-/* Custom size (coming soon) */
+/* Custom size (the customer's own width × height; owner, 2026-11-02) */
 .fs-soon {
   display: grid;
   gap: 4px;
@@ -807,6 +807,15 @@
 .fs-soon__inputs .select {
   min-height: 40px;
   min-width: 0;
+}
+
+.fs-custom .fs-soon__inputs {
+  opacity: 1;
+}
+
+.fs-custom__error {
+  color: var(--danger);
+  font-weight: 600;
 }
 
 /* Text style drawer under each text field */

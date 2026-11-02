@@ -143,7 +143,7 @@ contact details and order history. Details: `backend/README.md` → "Analytics".
 
 ## Not connected (labelled as such on the site)
 
-- **Reviews submission, custom sizes** - show "coming soon" / "not connected". (Accounts, the cart, checkout,
+- **Reviews submission** - shows "coming soon" / "not connected". (Custom sizes work in FrameX Studio since 2026-11-02.) (Accounts, the cart, checkout,
   orders and payments are real and need the backend: see above.)
 - **Contact form** - validates, then opens the visitor's email app _only if_ an email is set in
   `site.seed.js`; otherwise says plainly the message was **not** sent. It never fakes success.
