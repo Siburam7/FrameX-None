@@ -37,6 +37,9 @@
 
 ## Owner decisions (log)
 
+- 2026-11-02 Deploy: "Abhi push karke live karo, jaldii" → main bb0ca4f (courier + tracking, pricing plan; migrations 027
+  + 028) WITHOUT a fresh Neon backup (owner chose "Bina backup push karo"). The pricing rule and the online discount
+  stay off live until the owner types the values in Admin → Settings (costs.md §11).
 - 2026-11-02 Pricing plan in code (built locally, migration 028): "Pehle shop price + 3%" (order of work: the shop's
   own price + the listing rule first, then the online discount); "FrameX shop ko uska daam dega" (for COD too: FrameX's
   courier collects the cash, the shop is paid its own price after delivery, no commission); "Haan, discount rahe" (a

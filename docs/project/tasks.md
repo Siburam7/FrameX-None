@@ -1,11 +1,17 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-11-02 (pricing plan built locally: listing price from the shop's price, online discount, approval email; migration 028).
+> Last updated: 2026-11-02 (courier + tracking and the pricing plan DEPLOYED: main bb0ca4f, migrations 027 + 028, no fresh backup by owner choice).
 
 ## Now
 
-- [x] 2026-11-02 **Pricing plan BUILT (local, not pushed; migration 028)**. Owner: "Pehle shop price + 3%", "FrameX shop
+- [x] 2026-11-02 **DEPLOYED: courier + tracking (027) and the pricing plan (028)**, main bb0ca4f. Owner: "Abhi push karke
+      live karo, jaldii"; chose "Bina backup push karo" (no fresh Neon backup). Live check: website has the new scripts,
+      Render answers the new routes (401 without login), health ok with the database, catalog 200. Before push:
+      api 48, shopwelcome 6, whatsapp 14 (+ the suites listed below).
+- [ ] The pricing rule is OFF live until Admin → Settings are typed (next item). Not tried live yet: a real tracking
+      entry, a shop product approved under the rule (the email), a "Pay online" discount on a real payment.
+- [x] 2026-11-02 **Pricing plan BUILT (migration 028)**. Owner: "Pehle shop price + 3%", "FrameX shop
       ko uska daam dega", "Haan, discount rahe", large-box share decided, and "jab ham aproverd karnge tab saf likh na
       chahiye itna price par listing hoga if any isssue then contact care or email".
       - A shop types ITS OWN price per size (+ its own discount); the saved product's price is FrameX's listing price
@@ -27,13 +33,13 @@
         total check constraint now includes it.
       - Tests: backend listing-price 7/7 (in npm test; made-up numbers, not the real ones), payouts 25, checkout 56,
         order-edit 7, cart 27, frames 6, order-tracking 7, art 57, decor 19; browser pricing-e2e 7/7.
-- [ ] At the deploy of 027 + 028 (after a fresh Neon backup and the owner's "push karo"), Admin → Settings: the values in
+- [ ] NOW (deployed 2026-11-02), Admin → Settings: the values in
       costs.md §11 (markup, 3 box shares, online discount), delivery fee 0, COD fee 49, commission shops 0% / artists
       0%, payout charge 0%, "Shop products need FrameX approval" ON; Render COD_ALLOW_CUSTOM_DESIGNS=false. Delivery 0
       only together with the new prices. Products listed before keep their typed price until the shop saves them again.
 - [ ] Later: artwork COD with a 50% advance (refused at the door: advance refunded minus the courier both ways).
 
-- [x] 2026-11-02 **Courier + tracking number on orders BUILT (local, not pushed; migration 027)**. Owner: "admin order page par
+- [x] 2026-11-02 **Courier + tracking number on orders BUILT (migration 027; deployed 2026-11-02, main bb0ca4f)**. Owner: "admin order page par
       Courier + Tracking number banao" (parcels are booked by hand on NimbusPost for now; its API later, when there are
       ~5+ orders a day). Migration `027_order_tracking.sql`: orders.courier / tracking_number / tracking_url /
       tracking_added_at (new empty columns only). `POST /api/admin/orders/:orderNumber/tracking` {courier, number, url}
