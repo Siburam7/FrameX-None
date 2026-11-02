@@ -322,7 +322,7 @@
       const base = Number(draft.pricing.basePrice) || 0;
       const disc = Number(draft.pricing.discountPercent) || 0;
       return `${group("Pricing", `
-        ${field("Base price (₹)", input(draft, "pricing.basePrice", { type: "number", min: 1, step: "1", placeholder: "e.g. 899", rerender: false }), { required: true, hint: "Used for any size without its own price." })}
+        ${field("Your base price (₹)", input(draft, "pricing.basePrice", { type: "number", min: 1, step: "1", placeholder: "e.g. 899", rerender: false }), { required: true, hint: "What you receive for each one sold. Used for any size without its own price. FrameX lists it with free home delivery for the customer; you see the customer's price after saving." })}
         ${field("Discount (%)", input(draft, "pricing.discountPercent", { type: "number", min: 0, max: 90, step: "1", placeholder: "0" }))}`)}
         ${group("Available sizes", `
           <div class="wz-presets"><span>Quick add:</span>${SIZE_PRESETS.map(([w, h]) => `<button class="chip" type="button" data-act="add-size" data-w="${w}" data-h="${h}">${w} × ${h} in</button>`).join("")}<button class="chip" type="button" data-act="add-size">Other size</button></div>
@@ -334,7 +334,7 @@
               ${field("Width", input(draft, `sizes.${i}.width`, { type: "number", min: 0, step: "0.1" }))}
               ${field("Height", input(draft, `sizes.${i}.height`, { type: "number", min: 0, step: "0.1" }))}
               ${field("Unit", select(draft, `sizes.${i}.unit`, [{ id: "in", name: "in" }, { id: "cm", name: "cm" }], { rerender: false }))}
-              ${field("Price (₹)", input(draft, `sizes.${i}.price`, { type: "number", min: 1, step: "1", placeholder: base ? String(base) : "Base price" }))}
+              ${field("Your price (₹)", input(draft, `sizes.${i}.price`, { type: "number", min: 1, step: "1", placeholder: base ? String(base) : "Base price" }))}${draft.listing && (draft.listing.sizes || []).find((x) => x.id === s.id && x.price) ? `<p class="hint">Customers pay ${formatPrice((draft.listing.sizes || []).find((x) => x.id === s.id).price)} on FrameX</p>` : ""}
               <p class="wz-row__note">${price ? `Customer pays ${formatPrice(Math.round((price * (100 - disc)) / 100))}` : ""}</p>
               ${rowTools("sizes", i, sizes.length)}</div>`;
             })

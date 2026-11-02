@@ -63,6 +63,16 @@ staffOrders.post("/:orderNumber/status", async (req, res) => {
   res.json({ order: await orders.adminAdvance(req.params.orderNumber, status, { note, actor, ip: req.ip }) });
 });
 
+// The courier and tracking number (AWB) after the parcel is booked; both empty removes them.
+staffOrders.post("/:orderNumber/tracking", async (req, res) => {
+  const f = validate(req.body, {
+    courier: v.string({ max: 60, label: "Courier" }),
+    number: v.string({ max: 40, label: "Tracking number", pattern: /^[A-Za-z0-9-]*$/, patternMessage: "Use only letters, numbers and dashes." }),
+    url: v.string({ max: 300, label: "Tracking link", pattern: /^(https?:\/\/\S+)?$/, patternMessage: "Paste the full link, starting with https://" })
+  });
+  res.json({ order: await orders.adminSetTracking(req.params.orderNumber, f, { actor: req.auth.user, ip: req.ip }) });
+});
+
 // amount in whole rupees; leave it out to refund everything that is left.
 staffOrders.post("/:orderNumber/refund", async (req, res) => {
   const { amount, reason } = validate(req.body, { amount: v.number({ min: 1, max: 10_000_000, required: false, label: "Amount" }), reason: v.string({ max: 200, label: "Reason" }) });
@@ -188,6 +198,7 @@ const shopOf = (req) => {
   return shopProducts.shopForProducts(req.params.shopId);
 };
 const who = (req) => ({ actor: req.auth.user, ip: req.ip });
+router.post("/shops/:shopId/listing-preview", async (req, res) => res.json(shopProducts.listingPreview(req.body)));
 router.get("/shops/:shopId/products/:id", async (req, res) => res.json({ product: await shopProducts.getOwn(await shopOf(req), req.params.id) }));
 router.put("/shops/:shopId/products/:id", async (req, res) => {
   await shopOf(req);

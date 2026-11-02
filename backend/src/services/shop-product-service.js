@@ -27,9 +27,11 @@ import { siteEngine } from "../catalog/site-engine.js";
 import { config } from "../config.js";
 import { db } from "../db/index.js";
 import { ACTIONS, audit } from "../lib/audit.js";
+import { linkBase } from "../lib/context.js";
 import { HttpError, errors } from "../lib/errors.js";
 import { cutout } from "../lib/frame-cutout.js";
 import { inspectImage } from "../lib/image-info.js";
+import { esc, htmlEmail, sendMail } from "../lib/mailer.js";
 import * as storage from "../lib/storage.js";
 import { newId } from "../lib/tokens.js";
 import { isUuid } from "../lib/validate.js";
@@ -231,7 +233,8 @@ export async function sweepUnusedMedia({ olderThanDays = 7 } = {}) {
 const SHOP_SQL = `SELECT p.*, s.shop_code, s.catalog_ref, s.name AS owner_name, (${LISTED}) AS owner_listed FROM catalog_products p JOIN shops s ON s.id = p.owner_shop_id`;
 
 /** The record as the shop's dashboard edits it (pictures stay as "media:" references). */
-const forOwner = (row) => ({ ...row.data, id: row.id, slug: row.slug, shopId: row.catalog_ref || row.shop_code, status: row.listing_status || "draft", source: "dashboard", onSale: row.status === "ACTIVE" && row.owner_listed });
+// (its own prices in the editable fields, the customer's prices in `listing`, when the listing rule made them)
+const forOwner = (row) => ({ ...siteEngine().model.shopPricesView(row.data), id: row.id, slug: row.slug, shopId: row.catalog_ref || row.shop_code, status: row.listing_status || "draft", source: "dashboard", onSale: row.status === "ACTIVE" && row.owner_listed });
 
 /** The record as customers get it: resolved picture addresses, the seller's name, stock that orders haven't taken. */
 function forCustomers(row) {
@@ -305,8 +308,17 @@ export async function saveOwn(shop, id, input, { actor, ip = null }) {
   p.shopId = shop.ref;
   p.name = String(p.name || "").slice(0, 140);
   p.description = String(p.description || "").slice(0, 4000);
+  // Only FrameX's listing rule sets what the shop receives: anything like it sent by the shop is dropped.
+  for (const s of p.sizes || []) delete s.shopPrice;
+  delete p.pricing.shopBasePrice;
+  delete p.pricing.shopDiscountPercent;
+  delete p.pricing.listingRule;
   checkNumbers(p);
   await checkMedia(p, shop);
+  // The prices the shop typed are its own; the customer's price comes from FrameX's listing rule (when it is on).
+  const priced = model.applyListingRule(p, config.listing);
+  p.sizes = priced.sizes;
+  p.pricing = priced.pricing;
 
   const wanted = STATUSES.includes(body.status) ? body.status : "draft";
   let listing = wanted === "pending_review" ? "draft" : wanted;
@@ -394,6 +406,70 @@ export async function adminSave(shopId, id, input, who) {
   return saved;
 }
 
+/**
+ * The customer's price for sizes a shop is typing (its editor shows it live). Only the results are sent back, not
+ * FrameX's numbers. -> { on, discountPercent, sizes: [{ id, price, box }] }
+ */
+export function listingPreview(input) {
+  const { model } = siteEngine();
+  const body = input && typeof input === "object" ? input : {};
+  const sizes = (Array.isArray(body.sizes) ? body.sizes : []).slice(0, 30).map((x, i) => ({
+    id: String((x && x.id) || i).slice(0, 40),
+    label: "",
+    width: Number(x && x.width) || null,
+    height: Number(x && x.height) || null,
+    unit: x && x.unit === "cm" ? "cm" : "in",
+    price: Math.max(0, Math.round(Number(x && x.price) || 0)) || null
+  }));
+  const shopDiscount = Math.min(90, Math.max(0, Number(body.discountPercent) || 0));
+  const on = Object.values(config.listing.shares).some((v) => v > 0) || config.listing.markupPercent > 0;
+  const lowest = Math.min(...sizes.map((x) => x.price).filter((n) => n > 0));
+  const priced = model.applyListingRule({ pricing: { basePrice: Number.isFinite(lowest) ? lowest : 0, discountPercent: shopDiscount }, sizes }, config.listing);
+  return { on, discountPercent: on ? priced.pricing.discountPercent : shopDiscount, sizes: priced.sizes.map((x) => ({ id: x.id, price: x.price, box: model.boxSize(x) })) };
+}
+
+const rupees = (n) => "₹" + Number(n || 0).toLocaleString("en-IN");
+
+/**
+ * The email a shop gets when FrameX approves its product (owner, 2026-11-02): each size at the price customers see
+ * (free delivery included) and what the shop receives for it, and whom to contact if something is wrong.
+ */
+function tellListed(row, data) {
+  const { model } = siteEngine();
+  const p = model.normalize(data);
+  const view = model.shopPricesView(p);
+  const listed = (p.sizes || []).map((s) => {
+    const shopSize = (view.sizes || []).find((x) => x.id === s.id) || s;
+    const customer = Math.round((Number(s.price) * (100 - (Number(p.pricing.discountPercent) || 0))) / 100);
+    const shopGets = Math.round((Number(shopSize.price) * (100 - (Number(view.pricing.discountPercent) || 0))) / 100);
+    return [esc(s.label || model.sizeDims(s) || "Size"), p.pricing.listingRule ? `${rupees(customer)} (you get ${rupees(shopGets)})` : rupees(customer)];
+  });
+  const help = "If anything is wrong with these prices or the listing, chat with FrameX Care from your dashboard or email support@shopframex.in.";
+  const intro = p.pricing.listingRule ? "Customers see these prices, with free home delivery. You receive your own price for every order, after delivery." : "Customers see these prices.";
+  const url = `${linkBase()}/shop-dashboard.html#/products`;
+  const job = (async () => {
+    try {
+      const to = (await db.query("SELECT DISTINCT u.email FROM users u WHERE u.shop_id = $1 AND u.role = 'SHOP' AND u.status <> 'DISABLED' AND coalesce(u.email, '') <> ''", [row.owner_shop_id])).rows.map((r) => r.email);
+      for (const email of to) {
+        await sendMail({
+          to: email,
+          subject: `Approved: ${p.name} is now listed on FrameX`,
+          text: [`${p.name} is approved and listed on FrameX.`, intro, ...listed.map(([size, price]) => `${size.replace(/&amp;/g, "&")}: ${price}`), help, url].join("\n\n"),
+          html: htmlEmail({ preview: `${p.name} is listed on FrameX`, heading: `${p.name} is now on FrameX`, paragraphs: [esc(intro)], tables: [{ title: "Price customers see", rows: listed }], button: { label: "Open your dashboard", url }, notice: help, account: false }),
+          links: [{ label: "Open your dashboard", url }]
+        });
+      }
+    } catch (error) {
+      console.error(`[shop products] "listed" email for ${row.id} failed: ${error.message}`);
+    }
+  })();
+  listedMail.add(job);
+  job.finally(() => listedMail.delete(job));
+}
+const listedMail = new Set();
+/** For tests: wait until the "listed" emails in progress are sent. */
+export const listedMailSettled = () => Promise.all([...listedMail]);
+
 /** The platform's own switch: approve a product waiting for review, or take a product off sale. */
 export async function adminSetListing(id, listing, { actor, ip = null, note = "" }) {
   if (!["published", "unpublished"].includes(listing)) throw errors.validation({ status: "Choose published or unpublished." });
@@ -409,5 +485,7 @@ export async function adminSetListing(id, listing, { actor, ip = null, note = ""
     await q.query("UPDATE catalog_products SET status = $2, listing_status = $3, data = $4, source_hash = $5, updated_at = now() WHERE id = $1", [id, listing === "published" && row.owner_listed ? "ACTIVE" : "INACTIVE", listing, JSON.stringify(data), hash(data)]);
     await audit(q, { actor, action: ACTIONS.PRODUCT_MODERATED, targetType: "product", targetId: id, metadata: { shop: row.shop_code, to: listing, note }, ip });
   });
+  // Approved now (it wasn't on sale before): the shop is told the prices customers see and what it receives.
+  if (listing === "published" && row.listing_status !== "published") tellListed(row, data);
   return (await adminList()).find((p) => p.id === id);
 }

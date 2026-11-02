@@ -70,6 +70,9 @@ router.post("/:shopCode/orders/:orderNumber/photos/:uploadId/link", requireOwnSh
 
 /* ---- Products ---- */
 
+// The customer's price for the prices being typed (FrameX's listing rule; only the results come back).
+router.post("/:shopCode/listing-preview", requireOwnShop, async (req, res) => res.json(products.listingPreview(req.body)));
+
 router.get("/:shopCode/products", requireOwnShop, async (req, res) => {
   res.json({ items: await products.listOwn(await products.shopForProducts(req.auth.user.shopId)) });
 });

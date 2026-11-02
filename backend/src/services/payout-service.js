@@ -16,6 +16,9 @@
                      taken from the online money, since that cash is with them
      payout charge   a percentage (platform settings) of what is left
      payout          online sales + extras − commission − payout charge
+   Lines under FrameX's listing rule (owner, 2026-11-02; order_items.seller_unit_amount): the shop gets its own
+   price for each unit, online or Cash on Delivery alike (the courier hands the cash to FrameX), with no commission
+   and no share of delivery, gift wrap or tax. Those lines count as money FrameX holds for the shop.
 
    A payout is made by FrameX outside the site (bank transfer or UPI, to the
    account the seller gave) and then recorded here with the bank's reference.
@@ -73,7 +76,7 @@ async function unpaid(owner, q = db) {
   const sellerSql = shop ? `i.seller_type = 'SHOP' AND i.shop_ref IN (${owner.refs.map((_, n) => `$${n + 1}`).join(", ")})` : "i.seller_type = 'ARTIST' AND i.artist_id = $1";
   const params = shop ? owner.refs : [owner.id];
   const { rows } = await q.query(
-    `SELECT i.id, i.line_total, i.quantity, o.order_number, o.payment_method, o.delivered_at,
+    `SELECT i.id, i.line_total, i.quantity, i.seller_unit_amount, o.order_number, o.payment_method, o.delivered_at,
             (o.subtotal - o.discount) AS items_total, (o.tax + o.shipping_fee + o.gift_wrap_fee) AS order_extras
        FROM order_items i
        JOIN orders o ON o.id = i.order_id
@@ -86,13 +89,18 @@ async function unpaid(owner, q = db) {
   const byOrder = new Map();
   for (const r of rows) {
     if (!byOrder.has(r.order_number))
-      byOrder.set(r.order_number, { ref: r.order_number, kind: "ORDER", date: r.delivered_at, online: r.payment_method === "ONLINE", itemsTotal: r.items_total, orderExtras: r.order_extras, sales: 0, items: 0, lines: [] });
+      byOrder.set(r.order_number, { ref: r.order_number, kind: "ORDER", date: r.delivered_at, online: r.payment_method === "ONLINE", itemsTotal: r.items_total, orderExtras: r.order_extras, sales: 0, ruleSales: 0, items: 0, lines: [] });
     const e = byOrder.get(r.order_number);
-    e.sales += r.line_total;
+    // a line under the listing rule: the shop's own price; any other line: its total, as before
+    const ruled = r.seller_unit_amount !== null && r.seller_unit_amount !== undefined;
+    const amount = ruled ? r.seller_unit_amount * r.quantity : r.line_total;
+    if (ruled) e.ruleSales += amount;
+    e.sales += amount;
     e.items += r.quantity;
-    e.lines.push({ orderItemId: r.id, amount: r.line_total });
+    e.lines.push({ orderItemId: r.id, amount });
   }
-  const entries = [...byOrder.values()].map((e) => ({ ...e, extras: e.online && e.itemsTotal > 0 ? Math.round((e.orderExtras * e.sales) / e.itemsTotal) : 0 }));
+  // delivery, gift wrap and tax are shared out only over the lines outside the rule, of orders paid online
+  const entries = [...byOrder.values()].map((e) => ({ ...e, extras: e.online && e.itemsTotal > 0 ? Math.round((e.orderExtras * (e.sales - e.ruleSales)) / e.itemsTotal) : 0 }));
   if (owner.type === "artist") {
     const paintings = (await q.query(
       `SELECT r.id, r.request_number, r.price, r.delivered_at FROM painting_requests r
@@ -112,9 +120,11 @@ const rateFor = (owner) => (owner.type === "shop" ? config.platform.commissionPe
 /** The sums for a set of entries, at the rates of today. */
 export function workOut(entries, { commissionPercent, feePercent }) {
   const sales = entries.reduce((n, e) => n + e.sales, 0);
-  const onlineSales = entries.reduce((n, e) => n + (e.online ? e.sales : 0), 0);
+  // lines under the listing rule (ruleSales): FrameX holds that money whatever the payment, and takes no commission
+  const rule = (e) => e.ruleSales || 0;
+  const onlineSales = entries.reduce((n, e) => n + (e.online ? e.sales - rule(e) : 0) + rule(e), 0);
   const extras = entries.reduce((n, e) => n + e.extras, 0);
-  const commission = Math.round((sales * commissionPercent) / 100);
+  const commission = Math.round((entries.reduce((n, e) => n + e.sales - rule(e), 0) * commissionPercent) / 100);
   const beforeFee = onlineSales + extras - commission;
   const fee = beforeFee > 0 ? Math.round((beforeFee * feePercent) / 100) : 0;
   const amount = beforeFee - fee;

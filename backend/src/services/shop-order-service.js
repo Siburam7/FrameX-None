@@ -37,18 +37,24 @@ export async function shopContext(shopId) {
 
 const refMarks = (shop, from) => orders.marks(shop.refs, from);
 
+/** What the shop receives for a line: its own price under FrameX's listing rule, else the line total. */
+const shopAmount = (i) => (i.seller_unit_amount !== null && i.seller_unit_amount !== undefined ? i.seller_unit_amount * i.quantity : i.line_total);
+
 function summary(row, mine) {
+  // Lines under the listing rule are sent by FrameX's courier: the courier collects any cash, not the shop.
+  const viaCourier = mine.some((i) => i.seller_unit_amount !== null && i.seller_unit_amount !== undefined);
   return {
     orderNumber: row.order_number,
     status: row.status,
     placedAt: row.placed_at || row.created_at,
     // What the shop needs to know about the money: nothing about cards or gateways.
-    payment: row.payment_method === "COD" ? (row.payment_status === "PAID" ? "Cash collected" : "Cash on Delivery: collect on handover") : row.payment_status === "PAID" ? "Paid online" : "Online payment",
-    cashToCollect: row.payment_method === "COD" && row.payment_status !== "PAID",
+    payment: row.payment_method === "COD" ? (row.payment_status === "PAID" ? "Cash collected" : viaCourier ? "Cash on Delivery: the courier collects it" : "Cash on Delivery: collect on handover") : row.payment_status === "PAID" ? "Paid online" : "Online payment",
+    cashToCollect: row.payment_method === "COD" && row.payment_status !== "PAID" && !viaCourier,
     giftWrap: Boolean(row.gift_wrap),
     customerName: row.customer_name,
     itemCount: mine.reduce((sum, i) => sum + i.quantity, 0),
-    itemsTotal: mine.reduce((sum, i) => sum + i.line_total, 0),
+    // what the shop receives for its items (its own prices under the listing rule)
+    itemsTotal: mine.reduce((sum, i) => sum + shopAmount(i), 0),
     photoCount: mine.reduce((sum, i) => sum + (i.photo_count || 0), 0),
     needsAction: mine.some((i) => i.fulfilment_status === "NEW") && orders.ACTIVE_FOR_FULFILMENT.includes(row.status) && row.status !== "DELIVERED",
     firstItem: mine[0] ? { name: mine[0].name, image: mine[0].image } : null
@@ -114,7 +120,8 @@ export async function getOrder(shop, orderNumber) {
     cancelReason: row.status === "CANCELLED" ? row.cancel_reason : null,
     // Who the order goes to. No email address, no payment references.
     deliverTo: { name: a.fullName || row.customer_name, phone: a.phone || row.customer_phone || null, line1: a.line1, line2: a.line2, landmark: a.landmark, city: a.city, state: a.state, postalCode: a.postalCode },
-    items: lines.map((l) => orders.item(l, photos.get(l.id) || [])),
+    // (lineTotal = what the shop receives for the line)
+    items: lines.map((l) => ({ ...orders.item(l, photos.get(l.id) || []), lineTotal: shopAmount(l) })),
     otherShopsItems: others, // how many lines of this order other sellers make (nothing else about them)
     // Photos can be downloaded, and lines worked on, only while the order is live.
     canDownloadPhotos: active,

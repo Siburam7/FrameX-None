@@ -53,6 +53,27 @@ const SPEC = {
     get: () => config.checkout.taxPercent,
     set: (v) => (config.checkout.taxPercent = v)
   },
+  onlineDiscountPercent: {
+    label: "Online payment discount",
+    hint: "Taken off the items when the customer pays online (UPI, card, net banking). Not on Cash on Delivery. 0 = none.",
+    group: "Delivery and tax",
+    unit: "percent",
+    check: percent(0, 20),
+    get: () => config.checkout.onlineDiscountPercent,
+    set: (v) => (config.checkout.onlineDiscountPercent = v)
+  },
+  listingMarkupPercent: {
+    label: "Listing price: markup on the shop's price",
+    hint: "A shop's product is listed at the shop's own price + this % + the delivery share for its box, rounded up to a price ending in 9. The shop always gets its own price. Everything 0 = off (the shop's price is the customer's price). Applies when a shop saves a product.",
+    group: "Listing price of shops' products",
+    unit: "percent",
+    check: percent(0, 200),
+    get: () => config.listing.markupPercent,
+    set: (v) => (config.listing.markupPercent = v)
+  },
+  listingShareSmall: { label: "Delivery share: small box (longer side up to 12 inches)", group: "Listing price of shops' products", unit: "rupees", check: whole(0, 10000), get: () => config.listing.shares.small, set: (v) => (config.listing.shares.small = v) },
+  listingShareMedium: { label: "Delivery share: medium box (up to 18 inches)", group: "Listing price of shops' products", unit: "rupees", check: whole(0, 10000), get: () => config.listing.shares.medium, set: (v) => (config.listing.shares.medium = v) },
+  listingShareLarge: { label: "Delivery share: large box (over 18 inches)", group: "Listing price of shops' products", unit: "rupees", check: whole(0, 10000), get: () => config.listing.shares.large, set: (v) => (config.listing.shares.large = v) },
   commissionPercent: {
     label: "FrameX commission: shops",
     hint: "FrameX's share of each item a shop sells (not of delivery, gift wrap or tax). Taken from the shop's payout.",

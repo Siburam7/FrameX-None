@@ -58,6 +58,8 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
 | Analytics | Consent-based visitor stats + admin reports; GA4 optional | Built; GA4 ID not set |
 | View on My Wall | Camera / AR preview of a frame at its real size: Android Chrome = WebXR (finds the wall); iPhone / iPad = Apple's AR Quick Look (3D model made on the phone, nothing uploaded); elsewhere the simple camera view (size estimated). Inside Instagram / Facebook / WhatsApp… it says to open the page in Safari / Chrome; a phone without AR gets a plain error | Android tried live by the owner (one phone found no wall); iPhone Quick Look live 2026-11-01 (main 3db81de), not yet tried on a real iPhone |
 | Suggestions | Home "Highly recommended frames": most ordered in the last 30 days first, then most viewed (30 days), then the chosen frames; frames only, at most 2 lines on a laptop. Home Decor and Art & Artists: their own row of popular wall art / artworks above their tiles. Product page: Similar products, You may also like, Recently viewed (sideways rows), More products for you (frames, wall art, artworks; more as you scroll). Header: transparent at the top; search grows (hover / tap) with results under it, closes after 10 s empty | Live 2026-11-01 (main 8af6d15) |
+| Listing price from the shop's price | A shop types its own price per size; customers see FrameX's listing price (markup + a delivery share for the box size, ending in 9; free delivery); the shop's editor shows "Customer pays" live; approval emails the shop both prices + how to reach FrameX Care; payouts pay the shop its own price (COD too, no commission); "Pay online" takes a % off the items | Built locally 2026-11-02 (migration 028), not pushed; numbers set in Admin → Settings at deploy |
+| Order tracking | Staff add the courier + tracking number (and link) on the admin order page; the customer sees "Track your parcel" on the order page, in the shipped email and WhatsApp | Built locally 2026-11-02 (migration 027), not pushed |
 | My data | Account → Your data: download everything as one JSON file; customers delete their own account (password + DELETE, not while an order is under way; bills kept for tax without the person) | Built, live since 2026-10-20 |
 | Dark mode | Light (default) / Dark / Device, chosen on the account page | Built |
 | Backups | `npm run db:backup` / `db:restore`; manual `pg_dump` of production | A production `pg_dump` was taken and restore-tested on 2026-10-19; `backup-live-db.bat` ran against Neon on 2026-10-20 (before the deploy) |
@@ -84,6 +86,10 @@ Status words: **Built** = code + automated tests; **Live-proven** = seen working
 - **Banners and offers must be factual.**
 - **Order photos** are deleted 15 days after the order is finished (2026-10-20).
 - **Shop products need FrameX approval** before they go on sale (admin setting, 2026-10-20).
+- **Listing price** (owner, 2026-11-02): the shop names its own price and receives it in full; FrameX lists the product
+  at that price + a markup + a delivery share for the box size (free delivery for the customer), rounded up to end in 9.
+  The numbers are Admin settings, written only in the private costs.md (never in the public repository). Paying online
+  gives a small % off the items; Cash on Delivery has its fee. At approval the shop is told the customer prices.
 
 ## 5. Open decisions (owner has not decided)
 

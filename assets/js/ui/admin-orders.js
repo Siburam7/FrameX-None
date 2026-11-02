@@ -112,12 +112,29 @@
   const dashLink = (s, o) => `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, "")}${s.type === "ARTIST" ? "artist-dashboard.html" : "shop-dashboard.html"}#/orders/${encodeURIComponent(o.orderNumber)}`;
   function sellerText(s, o) {
     const lines = [`Hello ${s.name}, this is FrameX.`, "", `New order ${o.orderNumber} for you: ${s.items} ${s.items === 1 ? "item" : "items"} (${s.firstItem}${s.items > 1 ? " and more" : ""}), ${formatPrice(s.itemsTotal)}.`];
-    lines.push(o.paymentMethod === "COD" ? "Cash on Delivery: collect the cash on handover." : "Paid online.");
+    lines.push(o.paymentMethod === "COD" ? (s.viaCourier ? "Cash on Delivery: the courier collects it." : "Cash on Delivery: collect the cash on handover.") : "Paid online.");
     if (o.giftWrap) lines.push("The customer asked for gift wrapping.");
     lines.push("", `Please accept it in your dashboard: ${dashLink(s, o)}`, "", "Thank you.");
     return lines.join("\n");
   }
   const sellerWa = (s, o) => (waNumber(s.phone) ? `https://wa.me/${waNumber(s.phone)}?text=${encodeURIComponent(sellerText(s, o))}` : "");
+
+  /* Courier and tracking (owner, 2026-11-02): typed after booking the parcel (NimbusPost's dashboard today). Before
+     "Mark as shipped" it goes into the shipped email and WhatsApp; the customer always sees it on the order page. */
+  const COURIERS = ["Delhivery", "Shadowfax", "Xpressbees", "Ekart", "Blue Dart", "DTDC", "Amazon Shipping", "India Post"];
+  function trackingCard(o) {
+    if (["PENDING_PAYMENT", "CANCELLED"].includes(o.status)) return "";
+    const t = o.tracking || {};
+    return `<section class="co-card" data-tracking-card><h2 class="co-card__title">${icon("truck")} Courier and tracking</h2>
+      <form class="ao-form" data-tracking-form novalidate>
+        <div class="form-field"><label for="ao-courier">Courier</label><input id="ao-courier" name="courier" maxlength="60" list="ao-couriers" value="${esc(t.courier || "")}" placeholder="Shadowfax"><datalist id="ao-couriers">${COURIERS.map((c) => `<option value="${esc(c)}">`).join("")}</datalist></div>
+        <div class="form-field"><label for="ao-awb">Tracking number (AWB)</label><input id="ao-awb" name="number" maxlength="40" value="${esc(t.number || "")}" autocomplete="off"></div>
+        <div class="form-field"><label for="ao-track-url">Tracking link <span class="hint">(optional)</span></label><input id="ao-track-url" name="url" type="url" maxlength="300" value="${esc(t.url || "")}" placeholder="https://"></div>
+        <div><button class="btn btn--dark btn--sm" type="submit">${o.tracking ? "Save changes" : "Save tracking"}</button></div>
+        <p class="co-fine">${icon("alert")}<span>Add it before "Mark as shipped": the shipped email and WhatsApp then carry it. The customer sees it on the order page. Empty the courier and the number, then save, to remove it.</span></p>
+      </form></section>`;
+  }
+
   function sellersCard(o) {
     const list = o.sellers || [];
     const body =
@@ -298,6 +315,7 @@
                 : `<p class="co-lead">This order is finished: there is no next step.</p>`
             }
           </section>
+          ${trackingCard(o)}
           ${
             o.refundable > 0
               ? `<section class="co-card"><h2 class="co-card__title">Refund</h2>
@@ -388,6 +406,22 @@
         apply(http().post(`/admin/orders/${encodeURIComponent(o.orderNumber)}/test`, { test: false }));
       });
     wireChanges(main, o, { head, apply });
+    const trackingForm = $("[data-tracking-form]", main);
+    if (trackingForm)
+      trackingForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const f = trackingForm.elements;
+        e.submitter.disabled = true;
+        apply(
+          http()
+            .post(`/admin/orders/${encodeURIComponent(o.orderNumber)}/tracking`, { courier: f.courier.value.trim(), number: f.number.value.trim().replace(/\s+/g, ""), url: f.url.value.trim() })
+            .catch((error) => {
+              // say what is wrong with which box (not just "check the highlighted fields")
+              if (error.fields) error.message = Object.values(error.fields).join(" ");
+              throw error;
+            }),
+        );
+      });
     const refundForm = $("[data-refund-form]", main);
     if (refundForm)
       refundForm.addEventListener("submit", (e) => {

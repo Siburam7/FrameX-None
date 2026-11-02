@@ -258,6 +258,8 @@ export const config = {
     freeShippingAbove: money(env.SHIPPING_FREE_ABOVE, 0), // 0 = the shipping fee always applies
     // A customer's first order (no order of theirs placed before, cancelled ones not counted) has free delivery.
     firstOrderFreeDelivery: bool(env.FIRST_ORDER_FREE_DELIVERY, true),
+    // Taken off the items when the customer pays online instead of Cash on Delivery (owner, 2026-11-02). 0 = none.
+    onlineDiscountPercent: Math.min(20, Math.max(0, Number(env.ONLINE_DISCOUNT_PERCENT) || 0)),
     cod: {
       enabled: bool(env.COD_ENABLED, true),
       fee: money(env.COD_FEE, 0),
@@ -314,6 +316,15 @@ export const config = {
 
   // true = a shop's "Publish" becomes "Submit for review" until a FrameX admin approves the product.
   catalog: { productModeration: bool(env.PRODUCT_MODERATION, false) },
+
+  // The listing price of a shop's product, from the shop's own price (owner, 2026-11-02; product-model.js
+  // applyListingRule): shop price + markupPercent + a delivery share by box size, rounded up to a price ending in 9.
+  // The shop always receives its own price. All 0 = off (a shop's price is the customer's price, as before).
+  // FrameX's numbers are set in Admin -> Settings (or these variables), never written in the code.
+  listing: {
+    markupPercent: Math.min(200, Math.max(0, Number(env.LISTING_MARKUP_PERCENT) || 0)),
+    shares: { small: money(env.LISTING_SHARE_SMALL, 0), medium: money(env.LISTING_SHARE_MEDIUM, 0), large: money(env.LISTING_SHARE_LARGE, 0) }
+  },
 
   // Cart limits. The quantity one line may hold also depends on the product's stock.
   cart: { maxLines: 50, noteMaxLength: 300 },

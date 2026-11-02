@@ -53,6 +53,18 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   `.product-grid--slide` (components.css; inside a home shelf `.shelf .product-grid--slide`, layout-hero.css).
   `ui/home-popular.js` fills Home's popular wall-art and artwork rows; Home therefore loads `js/decor.js` and
   `ui/decor-page.js` (shop cards' "N frames" ignore wall art, so they match every page).
+- Listing price (2026-11-02, migration 028): `product-model.js` `boxSize` / `listingPrice` / `applyListingRule` /
+  `shopPricesView` / `sellerUnit` (shared by the site and the backend; the rule = `config.listing` {markupPercent,
+  shares}, off when all 0). `shop-product-service.saveOwn` applies it (shop prices kept as `sizes[].shopPrice`,
+  `pricing.shopBasePrice`, `pricing.shopDiscountPercent`, `pricing.listingRule`); the owner's views get
+  `shopPricesView` (+ `listing`); `listingPreview` answers the editor; `adminSetListing` → `tellListed` email. Cart lines
+  carry `sellerUnitAmount` → `order_items.seller_unit_amount` (SHOP lines); payouts, shop orders, new-order alerts and
+  `sellersOf` use it. `config.checkout.onlineDiscountPercent` → quote `onlineDiscount`, `orders.online_discount`
+  (part of `orders_total_adds_up`; size changes keep the order's own rate).
+- Order tracking (2026-11-02, migration 027): staff type the courier, tracking number and link
+  (`POST /api/admin/orders/:n/tracking`); `order.tracking` reaches the customer's order page (`trackingHtml` in
+  `ui/orders-page.js`), the shipped email (`lib/order-emails.js`) and the WhatsApp status (`whatsapp-service.js`).
+  No courier API yet (parcels are booked on NimbusPost by hand).
 - Header search (2026-11-01): `ui/chrome.js` renders `.hdr-search` (link + small form + `.hdr-results`); `ui/nav.js`
   grows it (hover on laptops, tap on phones), closes it (mouse away / X / Escape / 10 s empty) and fills the results
   from `GET /api/search` (limit 4 per kind); styles at the end of `chrome.css`.
@@ -102,7 +114,8 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
 ## 4. Data
 
 - 44 tables + `schema_migrations` (018 added 2; 024 `login_codes`: email login codes, kept by address, only a hash; 025
-  `cart_reminders` + `carts.reminded_at` + `users.cart_reminders_off`); sequences for Shop IDs, order numbers, artist codes, painting requests, payouts.
+  `cart_reminders` + `carts.reminded_at` + `users.cart_reminders_off`; 027 orders' courier / tracking columns; 028
+  `order_items.seller_unit_amount` + `orders.online_discount`); sequences for Shop IDs, order numbers, artist codes, painting requests, payouts.
 - Tables refer to each other in circles (users ↔ shops ↔ shop applications, users ↔ artists).
 - Prices, totals and payment state are computed and stored by the server only.
 

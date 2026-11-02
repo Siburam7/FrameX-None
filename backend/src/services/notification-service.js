@@ -82,7 +82,7 @@ export function alertSellers(orderId) {
     try {
       const order = (await db.query("SELECT order_number, payment_method, gift_wrap FROM orders WHERE id = $1 AND status <> 'PENDING_PAYMENT'", [orderId])).rows[0];
       if (!order) return;
-      const lines = (await db.query("SELECT shop_ref, seller_type, artist_id, quantity, line_total, name FROM order_items WHERE order_id = $1 ORDER BY position", [orderId])).rows;
+      const lines = (await db.query("SELECT shop_ref, seller_type, artist_id, quantity, line_total, seller_unit_amount, name FROM order_items WHERE order_id = $1 ORDER BY position", [orderId])).rows;
       const sellers = new Map(); // "shop:<id>" | "artist:<id>" -> { kind, link, users, lines, name, phone, dashboard }
       for (const ref of new Set(lines.filter((l) => l.seller_type === "SHOP").map((l) => l.shop_ref))) {
         const shop = (await db.query("SELECT id, name, phone FROM shops WHERE catalog_ref = $1 OR shop_code = $1 LIMIT 1", [ref])).rows[0];
@@ -100,9 +100,11 @@ export function alertSellers(orderId) {
       }
       for (const [key, s] of sellers) {
         const count = s.lines.reduce((n, l) => n + l.quantity, 0);
-        const total = s.lines.reduce((n, l) => n + l.line_total, 0);
+        // under FrameX's listing rule the seller is told its own amount, and FrameX's courier collects the cash
+        const ruled = s.lines.some((l) => l.seller_unit_amount !== null && l.seller_unit_amount !== undefined);
+        const total = s.lines.reduce((n, l) => n + (l.seller_unit_amount !== null && l.seller_unit_amount !== undefined ? l.seller_unit_amount * l.quantity : l.line_total), 0);
         const what = s.lines.length === 1 ? s.lines[0].name : `${s.lines[0].name} and ${s.lines.length - 1} more`;
-        const pay = order.payment_method === "COD" ? "Cash on Delivery: collect the cash on handover." : "Paid online.";
+        const pay = order.payment_method === "COD" ? (ruled ? "Cash on Delivery: the courier collects it." : "Cash on Delivery: collect the cash on handover.") : "Paid online.";
         await notifyUsers(s.users, {
           kind: s.kind,
           ref: order.order_number,
@@ -117,7 +119,7 @@ export function alertSellers(orderId) {
           orderNumber: order.order_number,
           seller: { key, name: s.name, phone: s.phone, dashboard: s.dashboard },
           items: `${count} ${count === 1 ? "item" : "items"} (${what})`,
-          payment: `${order.payment_method === "COD" ? "Cash on delivery, collect the cash on handover" : "Paid online"}${order.gift_wrap ? ". The customer asked for gift wrapping" : ""}`
+          payment: `${order.payment_method === "COD" ? (ruled ? "Cash on delivery, the courier collects it" : "Cash on delivery, collect the cash on handover") : "Paid online"}${order.gift_wrap ? ". The customer asked for gift wrapping" : ""}`
         });
       }
     } catch (error) {

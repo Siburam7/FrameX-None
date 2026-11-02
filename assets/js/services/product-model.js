@@ -1141,6 +1141,92 @@
     };
   }
 
+  /* ---------------------------------------------------------------- Listing price from a shop's own price
+     (owner, 2026-11-02) A shop names its own price for each size; that is what the shop receives. FrameX lists
+     the size at that price + a markup % + a delivery share for the size's box (the customer pays no separate
+     delivery), rounded up to a price ending in 9. The numbers are FrameX's settings (`rule`), never in this file:
+       rule = { markupPercent, shares: { small, medium, large } }   (off when everything is 0)
+     A shop's discount comes off its own price first, then the rule; the customer sees the listing's own
+     "% off". The shop's figures stay in the product as sizes[].shopPrice, pricing.shopBasePrice and
+     pricing.shopDiscountPercent (pricing.listingRule says the rule was applied). */
+  const BOX_LIMITS = { small: 12, medium: 18 }; // the longer side in inches: up to 12 = small, up to 18 = medium
+
+  const ruleOn = (rule) => Boolean(rule && ((num(rule.markupPercent) || 0) > 0 || Object.values(rule.shares || {}).some((v) => (num(v) || 0) > 0)));
+
+  /** "small" | "medium" | "large": the box a size is sent in, by its longer side (no measurements: medium). */
+  function boxSize(size) {
+    const s = sizeInches(size);
+    if (!s) return "medium";
+    const longer = Math.max(s.w, s.h);
+    return longer <= BOX_LIMITS.small ? "small" : longer <= BOX_LIMITS.medium ? "medium" : "large";
+  }
+
+  /** The customer's price for one size whose shop price is `shopPrice` (rounded up to a price ending in 9). */
+  function listingPrice(shopPrice, size, rule) {
+    const base = num(shopPrice) || 0;
+    if (!(base > 0)) return null;
+    const share = num((rule.shares || {})[boxSize(size)]) || 0;
+    const raw = base * (1 + (num(rule.markupPercent) || 0) / 100) + share;
+    return Math.ceil((raw + 1) / 10) * 10 - 1;
+  }
+
+  /**
+   * A product whose editable prices are the shop's own (sizes[].price, pricing.basePrice, pricing.discountPercent),
+   * turned into the listed product. No rule (or the rule is off): returned as it is.
+   */
+  function applyListingRule(p, rule) {
+    if (!ruleOn(rule)) return p;
+    const out = clone(p);
+    const shopDiscount = Math.min(90, Math.max(0, num(out.pricing.discountPercent) || 0));
+    const shopBase = num(out.pricing.basePrice) || 0;
+    out.sizes = (out.sizes || []).map((s) => {
+      const shopPrice = num(s.price) !== null ? num(s.price) : shopBase || null;
+      return Object.assign({}, s, { shopPrice, price: listingPrice(shopPrice, s, rule) });
+    });
+    // the base (smallest) size decides the listing's own "% off" so that it lands on the rule's price for the
+    // shop's discounted price
+    const sized = out.sizes.filter((s) => num(s.shopPrice) > 0);
+    const first = sized.length ? sized.reduce((a, b) => (num(b.shopPrice) < num(a.shopPrice) ? b : a)) : null;
+    const baseList = first ? first.price : listingPrice(shopBase, null, rule);
+    let listDiscount = 0;
+    if (shopDiscount && baseList) {
+      const sale = listingPrice(((first ? first.shopPrice : shopBase) * (100 - shopDiscount)) / 100, first, rule);
+      listDiscount = Math.min(90, Math.max(0, Math.round(100 * (1 - sale / baseList))));
+    }
+    out.pricing = Object.assign({}, out.pricing, {
+      basePrice: baseList || out.pricing.basePrice,
+      discountPercent: listDiscount,
+      shopBasePrice: first ? first.shopPrice : shopBase,
+      shopDiscountPercent: shopDiscount,
+      listingRule: true,
+    });
+    return out;
+  }
+
+  /** The product as its shop edits it: its own prices back in the editable fields. */
+  function shopPricesView(p) {
+    if (!p || !p.pricing || !p.pricing.listingRule) return p;
+    const out = clone(p);
+    out.listing = {
+      discountPercent: num(out.pricing.discountPercent) || 0,
+      sizes: (out.sizes || []).map((s) => ({ id: s.id, price: s.price, box: boxSize(s) })),
+    };
+    out.sizes = (out.sizes || []).map((s) => Object.assign({}, s, { price: num(s.shopPrice) !== null ? num(s.shopPrice) : s.price }));
+    out.pricing = Object.assign({}, out.pricing, { basePrice: num(out.pricing.shopBasePrice) || out.pricing.basePrice, discountPercent: num(out.pricing.shopDiscountPercent) || 0 });
+    return out;
+  }
+
+  /** What the shop receives for one unit of this selection (null: the product is not under the rule). */
+  function sellerUnit(p, sel = {}) {
+    if (!p || !p.pricing || !p.pricing.listingRule) return null;
+    const size = byId(p.sizes || [], sel.sizeId) || byId(p.sizes || [], defaultSizeId(p));
+    const shop = size && num(size.shopPrice) !== null ? num(size.shopPrice) : num(p.pricing.shopBasePrice) || 0;
+    const discount = Math.min(90, Math.max(0, num(p.pricing.shopDiscountPercent) || 0));
+    // the print and front-cover extras the shop priced go to the shop as they are
+    const extras = quote(p, sel).lines.filter((l) => l.key !== "base").reduce((sum, l) => sum + l.amount, 0);
+    return Math.round((shop * (100 - discount)) / 100) + extras;
+  }
+
   /* ---------------------------------------------------------------- Components + specifications */
   const listNames = (ids, list) =>
     (ids || []).map((id) => (byId(list, id) || { name: id }).name).join(", ");
@@ -1683,6 +1769,11 @@
     protectionOptions,
     defaultSelection,
     quote,
+    boxSize,
+    listingPrice,
+    applyListingRule,
+    shopPricesView,
+    sellerUnit,
     MAX_CART_QTY,
     orderLimits,
     cartLine,

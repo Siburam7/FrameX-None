@@ -62,10 +62,13 @@ async function totalsFor(q, order, items) {
       couponDiscount = Math.min(couponDiscount, itemsTotal);
     } else couponDiscount = Math.min(order.coupon_discount, itemsTotal);
   }
-  const afterCoupon = itemsTotal - couponDiscount;
+  // the online payment discount at the order's own rate (what it took off the items when it was placed)
+  const placedBase = order.subtotal - order.discount - order.coupon_discount;
+  const onlineDiscount = order.online_discount > 0 && placedBase > 0 ? Math.round(((itemsTotal - couponDiscount) * order.online_discount) / placedBase) : 0;
+  const afterCoupon = itemsTotal - couponDiscount - onlineDiscount;
   const tax = Math.round((afterCoupon * Number(order.tax_percent || 0)) / 100);
   const total = afterCoupon + tax + order.shipping_fee + (order.gift_wrap_fee || 0) + order.cod_fee;
-  return { subtotal, discount, couponDiscount, tax, total };
+  return { subtotal, discount, couponDiscount, onlineDiscount, tax, total };
 }
 
 const lockOrder = async (q, orderNumber) => {
@@ -138,10 +141,12 @@ export async function changeSize(orderNumber, itemId, sizeId, { actor, ip = null
     const online = order.payment_method === "ONLINE";
     if (online && difference > 0) throw conflict("NEEDS_PAYMENT", `This size costs ${rupees(difference)} more, and the order was paid online: the customer would have to pay the difference. That isn't possible yet.`);
     await q.query(
-      `UPDATE order_items SET size = $2, selection = $3, options = $4, unit_list_price = $5, unit_discount = $6, unit_price = $7, line_total = $8 WHERE id = $1`,
-      [item.id, priced.line.size, JSON.stringify(priced.line.selection), JSON.stringify(priced.line.options || []), priced.unitListPrice, priced.unitDiscount, priced.unitPrice, priced.unitPrice * item.quantity]
+      `UPDATE order_items SET size = $2, selection = $3, options = $4, unit_list_price = $5, unit_discount = $6, unit_price = $7, line_total = $8, seller_unit_amount = $9 WHERE id = $1`,
+      [item.id, priced.line.size, JSON.stringify(priced.line.selection), JSON.stringify(priced.line.options || []), priced.unitListPrice, priced.unitDiscount, priced.unitPrice, priced.unitPrice * item.quantity,
+        // what the shop receives for the new size (FrameX's listing rule), when the line had it
+        item.seller_unit_amount === null || item.seller_unit_amount === undefined ? null : siteEngine().model.sellerUnit(priced.p, priced.line.selection)]
     );
-    await q.query("UPDATE orders SET subtotal = $2, discount = $3, coupon_discount = $4, tax = $5, total = $6, updated_at = now() WHERE id = $1", [order.id, t.subtotal, t.discount, t.couponDiscount, t.tax, t.total]);
+    await q.query("UPDATE orders SET subtotal = $2, discount = $3, coupon_discount = $4, tax = $5, total = $6, online_discount = $7, updated_at = now() WHERE id = $1", [order.id, t.subtotal, t.discount, t.couponDiscount, t.tax, t.total, t.onlineDiscount]);
     // A COD order's payment record carries what is to be collected
     if (!online) await q.query("UPDATE payments SET amount = $2, updated_at = now() WHERE order_id = $1 AND provider = 'cod' AND status = 'PENDING'", [order.id, t.total]);
     const detail = `Size changed by ${byWhom(actor)}: ${item.name} — ${item.size || "—"} → ${priced.line.size}. Total ${rupees(order.total)} → ${rupees(t.total)}.`;

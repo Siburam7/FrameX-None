@@ -125,6 +125,7 @@ function summary(row) {
     discount: row.discount,
     couponCode: row.coupon_code || null,
     couponDiscount: row.coupon_discount || 0,
+    onlineDiscount: row.online_discount || 0, // taken off for paying online
     tax: row.tax,
     taxPercent: Number(row.tax_percent),
     shippingFee: row.shipping_fee,
@@ -141,6 +142,8 @@ function summary(row) {
     deliveredAt: row.delivered_at,
     expiresAt: row.status === "PENDING_PAYMENT" ? row.expires_at : null,
     cancelReason: row.cancel_reason,
+    // the courier and tracking number FrameX typed after booking the parcel (adminSetTracking)
+    tracking: row.tracking_number ? { courier: row.courier || "", number: row.tracking_number, url: row.tracking_url || null, addedAt: row.tracking_added_at } : null,
     canPay: stillPayable(row) && onlinePaymentsReady(),
     canCancel: CUSTOMER_CAN_CANCEL.includes(row.status)
   };
@@ -319,7 +322,7 @@ export const adminGetOrder = async (orderNumber) => {
  * on FrameX are FrameX's own to make and are not listed.
  */
 async function sellersOf(orderId) {
-  const lines = (await db.query("SELECT shop_ref, seller_type, artist_id, quantity, line_total, name FROM order_items WHERE order_id = $1 ORDER BY position", [orderId])).rows;
+  const lines = (await db.query("SELECT shop_ref, seller_type, artist_id, quantity, line_total, seller_unit_amount, name FROM order_items WHERE order_id = $1 ORDER BY position", [orderId])).rows;
   const out = new Map();
   for (const l of lines) {
     let key = null;
@@ -339,7 +342,11 @@ async function sellersOf(orderId) {
     if (!key) continue;
     const e = out.get(key);
     e.items += l.quantity;
-    e.itemsTotal += l.line_total;
+    // what the seller receives: its own price under FrameX's listing rule, else the line total
+    const ruled = l.seller_unit_amount !== null && l.seller_unit_amount !== undefined;
+    e.itemsTotal += ruled ? l.seller_unit_amount * l.quantity : l.line_total;
+    // FrameX's courier collects Cash on Delivery for these, not the seller
+    if (ruled) e.viaCourier = true;
   }
   return [...out.values()];
 }
@@ -451,6 +458,30 @@ export async function markCancelled(q, orderId, { from, reason, actor = SYSTEM }
  * Cash on Delivery is paid when the order is delivered.
  * Cancelling is not done here: it may need a refund (payment-service -> cancelOrder).
  */
+/**
+ * The courier and tracking number of an order, typed by FrameX staff after booking the parcel. Both empty = removed.
+ * Not for an unpaid or cancelled order. Added before "shipped", they go into the shipped email / WhatsApp; the
+ * customer always sees them on the order page.
+ */
+export async function adminSetTracking(orderNumber, { courier = "", number = "", url = "" }, { actor, ip = null }) {
+  const clear = !courier && !number;
+  if (!clear && (!courier || !number)) throw errors.validation({ ...(courier ? {} : { courier: "Write the courier's name." }), ...(number ? {} : { number: "Write the tracking number." }) });
+  await db.tx(async (q) => {
+    const current = (await q.query("SELECT * FROM orders WHERE order_number = $1 FOR UPDATE", [orderNumber])).rows[0];
+    if (!current) throw notFound();
+    if (["PENDING_PAYMENT", "CANCELLED"].includes(current.status)) throw errors.conflict("Tracking can be added only to a placed order that isn't cancelled.", null, "ORDER_TRACKING_NOT_ALLOWED");
+    await q.query(
+      `UPDATE orders SET courier = $2, tracking_number = $3, tracking_url = $4,
+              tracking_added_at = CASE WHEN $3::text IS NULL THEN NULL ELSE now() END, updated_at = now()
+        WHERE id = $1`,
+      [current.id, clear ? null : courier, clear ? null : number, clear || !url ? null : url]
+    );
+    await addEvent(q, current.id, { kind: "NOTE", detail: clear ? "Tracking number removed." : `Sent with ${courier}. Tracking number ${number}.`, actor });
+    await audit(q, { actor, action: ACTIONS.ORDER_TRACKING_SET, targetType: "order", targetId: current.order_number, metadata: clear ? { removed: true } : { courier, number }, ip });
+  });
+  return adminGetOrder(orderNumber);
+}
+
 export async function adminAdvance(orderNumber, status, { note = "", actor, ip = null }) {
   const row = await db.tx(async (q) => {
     const current = (await q.query("SELECT * FROM orders WHERE order_number = $1 FOR UPDATE", [orderNumber])).rows[0];

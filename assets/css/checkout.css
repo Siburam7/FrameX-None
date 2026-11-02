@@ -1305,3 +1305,9 @@ div.co-choice--pay {
 .ao-seller:last-of-type {
   border-bottom: 0;
 }
+
+/* "Pay online and get N% off" under the payment methods (owner, 2026-11-02) */
+.co-offer {
+  margin: 12px 0 0;
+  color: var(--on-surface);
+}

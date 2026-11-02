@@ -13,7 +13,9 @@
                              and a customer's first order has free delivery
                              (FIRST_ORDER_FREE_DELIVERY, on unless switched off)
      gift wrapping           optional; the server's fee, shown before paying
-     total                   subtotal - discount - coupon + tax + shipping + gift wrapping + COD fee
+     online discount         a percentage of the items after the coupon, when the customer pays online
+                             (config.checkout.onlineDiscountPercent; owner, 2026-11-02); tax is on what is left
+     total                   subtotal - discount - coupon - online discount + tax + shipping + gift wrapping + COD fee
    The total the browser sent is only compared with the server's: if they
    differ (a price changed meanwhile), nothing is charged and the customer is
    shown the new total first.
@@ -110,8 +112,11 @@ function compute({ cart, lines, address, paymentMethod, direct = false, giftWrap
   // A coupon code, if one was given: what it takes off the items (0 when it doesn't apply, with the reason).
   const couponResult = coupons.apply(coupon, itemsTotal);
   const couponDiscount = couponResult && couponResult.applied ? couponResult.discount : 0;
-  const afterCoupon = itemsTotal - couponDiscount;
   const k = config.checkout;
+  // Paying online takes a little off the items (not Cash on Delivery); the COD fee etc. are worked out after it.
+  const onlinePercent = paymentMethod === "ONLINE" ? k.onlineDiscountPercent : 0;
+  const onlineDiscount = Math.round(((itemsTotal - couponDiscount) * onlinePercent) / 100);
+  const afterCoupon = itemsTotal - couponDiscount - onlineDiscount;
   const tax = Math.round((afterCoupon * k.taxPercent) / 100);
   // Why delivery is free, if it is: the customer's first order, or items above the free-delivery amount.
   const freeDelivery = !(itemsTotal > 0 && k.shippingFee > 0) ? null : firstOrder ? "FIRST_ORDER" : k.freeShippingAbove && itemsTotal >= k.freeShippingAbove ? "ABOVE_LIMIT" : null;
@@ -137,6 +142,8 @@ function compute({ cart, lines, address, paymentMethod, direct = false, giftWrap
     // The coupon: { code, title, percentOff, minOrder, applied, discount, reason }, or null when none was given.
     coupon: couponResult,
     couponDiscount,
+    // Paying online: { percent, amount } (amount 0 when the customer chose Cash on Delivery); percent shows the offer.
+    onlineDiscount: { percent: k.onlineDiscountPercent, amount: onlineDiscount },
     tax,
     taxPercent: k.taxPercent,
     shippingFee,
@@ -246,18 +253,19 @@ async function insertOrder(q, user, { quote, address, paymentMethod, idempotency
     `INSERT INTO orders (id, order_number, user_id, idempotency_key, status, payment_method, payment_status, currency,
                          subtotal, discount, tax, tax_percent, shipping_fee, cod_fee, total, item_count,
                          address_id, shipping_address, customer_name, customer_email, customer_phone, placed_at, expires_at,
-                         gift_wrap, gift_wrap_fee, is_test, coupon_code, coupon_discount, whatsapp_updates)
+                         gift_wrap, gift_wrap_fee, is_test, coupon_code, coupon_discount, whatsapp_updates, online_discount)
      VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
              CASE WHEN $21 THEN now() ELSE NULL END,
              CASE WHEN $21 THEN NULL ELSE now() + interval '${config.payments.pendingMinutes} minutes' END,
-             $22, $23, $24, $25, $26, $27)`,
+             $22, $23, $24, $25, $26, $27, $28)`,
     [id, number, user.id, idempotencyKey, cod ? "PLACED" : "PENDING_PAYMENT", paymentMethod, quote.currency, quote.subtotal, quote.discount, quote.tax, quote.taxPercent, quote.shippingFee, quote.codFee, quote.total, quote.itemCount,
       address.id, JSON.stringify(addressSnapshot(address)), user.name, user.email || "", address.phone || user.phone || null, cod, quote.giftWrap.selected, quote.giftWrapFee,
       // Paid through a gateway that is in TEST mode: not real money, so the reports keep it out of sales.
       !cod && gatewayInTestMode(),
       quote.couponDiscount ? quote.coupon.code : null, quote.couponDiscount,
       // "Send order updates on WhatsApp": only with a number WhatsApp can use
-      Boolean(whatsapp) && Boolean(address.phone || user.phone)]
+      Boolean(whatsapp) && Boolean(address.phone || user.phone),
+      quote.onlineDiscount ? quote.onlineDiscount.amount : 0]
   );
   const sellers = await sellersOf(q, quote.lines);
   let position = 0;
@@ -270,11 +278,13 @@ async function insertOrder(q, user, { quote, address, paymentMethod, idempotency
     await q.query(
       `INSERT INTO order_items (id, order_id, position, kind, product_id, template_id, shop_ref, shop_name, name, image, size, color, options, selection,
                                 customization, design_ref, design_summary, note, quantity, unit_list_price, unit_discount, unit_price, line_total, cart_item_id,
-                                product_type, photos_required, seller_type, artist_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28)`,
+                                product_type, photos_required, seller_type, artist_id, seller_unit_amount)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29)`,
       [itemId, id, (position += 1), line.kind, i.productId || null, i.templateId || null, i.shopId, i.shopName, i.name, i.image, i.size, i.color, JSON.stringify(i.options || []), JSON.stringify(line.selection || {}),
         line.customization ? JSON.stringify(line.customization) : null, line.designRef, i.design ? JSON.stringify(i.design) : null, i.note || "", i.quantity, i.unitListPrice, i.unitDiscount, i.unitPrice, i.lineTotal, line.cartItemId,
-        line.productType || null, line.photosRequired || 0, seller.type, seller.artistId]
+        line.productType || null, line.photosRequired || 0, seller.type, seller.artistId,
+        // what a shop receives for one unit (FrameX's listing rule); only for a shop's own line
+        seller.type === "SHOP" && Number.isInteger(line.sellerUnitAmount) ? line.sellerUnitAmount : null]
     );
     // The originals this line is printed from stay tied to it: this is what the shop (or FrameX) later downloads.
     let at = 0;

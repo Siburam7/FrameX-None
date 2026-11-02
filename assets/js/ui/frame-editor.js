@@ -76,6 +76,39 @@
     const views = () => (d.views || []).filter((v) => v && v.url);
     const prices = () => (d.sizes || []).map((s) => Number(s.price) || 0).filter((n) => n > 0);
 
+    /* The customer's price for each size (FrameX's listing rule, worked out by the server: owner, 2026-11-02).
+       Starts from what the server sent with the product, then follows what is typed. */
+    let customer = d.listing ? { on: true, discountPercent: d.listing.discountPercent || 0, sizes: d.listing.sizes || [] } : null;
+    function customerText(i) {
+      const s = (d.sizes || [])[i];
+      const c = customer && s && (customer.sizes || []).find((x) => x.id === s.id);
+      if (!customer || !c || !c.price) return Number(s && s.price) > 0 && customer && !customer.on ? money(s.price) : "—";
+      const sale = Math.round((c.price * (100 - (customer.discountPercent || 0))) / 100);
+      return customer.discountPercent ? `${money(sale)} <small>(${customer.discountPercent}% off ${money(c.price)})</small>` : money(c.price);
+    }
+    let previewTimer = 0;
+    function refreshCustomer() {
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(async () => {
+        try {
+          customer = await http().post(`${base}/listing-preview`, { sizes: (d.sizes || []).map((s) => ({ id: s.id, width: s.width, height: s.height, unit: s.unit, price: s.price })), discountPercent: d.pricing.discountPercent || 0 });
+          (d.sizes || []).forEach((_, i) => {
+            const cell = $(`[data-cust="${i}"]`, root);
+            if (cell) cell.innerHTML = customerText(i);
+          });
+        } catch (error) {
+          /* the prices are checked again on saving */
+        }
+      }, 350);
+    }
+    /** "8×10: ₹649 · 12×18: ₹999" for the message after sending. */
+    const customerList = () =>
+      customer && customer.on
+        ? (d.sizes || [])
+            .map((s, i) => `${s.width || "?"}×${s.height || "?"}: ${customerText(i).replace(/<[^>]+>/g, "")}`)
+            .join(" · ")
+        : "";
+
     /* ---------------------------------------------------------------- the page */
     function frameNote(kind) {
       const n = note[kind];
@@ -139,12 +172,12 @@
             ${photosNeeded > 3 || d._morePhotos ? `<input class="af-in" type="number" min="4" max="12" data-f="personalization.photos" value="${photosNeeded > 3 ? photosNeeded : 4}" style="width:110px;margin-top:8px">` : ""}</div>
           <div class="af-f af-span"><label for="af-desc">Short description</label><textarea class="af-in" id="af-desc" rows="3" data-f="description" maxlength="2000" placeholder="What makes this frame nice, in a sentence or two.">${esc(d.description)}</textarea></div>
         </div></div>
-      <div class="af-card"><h3>Sizes and prices</h3><p>One line per size. Width × height in inches.</p>
-        <table class="af-tbl"><thead><tr><th>Width (in)</th><th>Height (in)</th><th>Price (₹)</th><th></th></tr></thead><tbody>
-        ${(d.sizes || []).map((s, i) => `<tr><td><input class="af-in" type="number" min="1" step="0.01" data-f="sizes.${i}.width" value="${esc(s.width ?? "")}"></td><td><input class="af-in" type="number" min="1" step="0.01" data-f="sizes.${i}.height" value="${esc(s.height ?? "")}"></td><td><input class="af-in" type="number" min="1" step="1" data-f="sizes.${i}.price" value="${esc(s.price ?? "")}" placeholder="e.g. 699"></td><td><button class="af-ic" type="button" data-act="drop-size" data-i="${i}" aria-label="Remove size">✕</button></td></tr>`).join("")}
+      <div class="af-card"><h3>Sizes and prices</h3><p>One line per size. Width × height in inches. <strong>Your price</strong> is what you receive for each one sold; <strong>Customer pays</strong> is its price on FrameX, with free home delivery.</p>
+        <table class="af-tbl"><thead><tr><th>Width (in)</th><th>Height (in)</th><th>Your price (₹)</th><th>Customer pays</th><th></th></tr></thead><tbody>
+        ${(d.sizes || []).map((s, i) => `<tr><td><input class="af-in" type="number" min="1" step="0.01" data-f="sizes.${i}.width" value="${esc(s.width ?? "")}"></td><td><input class="af-in" type="number" min="1" step="0.01" data-f="sizes.${i}.height" value="${esc(s.height ?? "")}"></td><td><input class="af-in" type="number" min="1" step="1" data-f="sizes.${i}.price" value="${esc(s.price ?? "")}" placeholder="e.g. 500"></td><td class="af-cust" data-cust="${i}">${customerText(i)}</td><td><button class="af-ic" type="button" data-act="drop-size" data-i="${i}" aria-label="Remove size">✕</button></td></tr>`).join("")}
         </tbody></table>
         <div class="af-row" style="margin-top:10px"><button class="af-btn" type="button" data-act="add-size">＋ Add size</button><span class="af-quick">Quick: ${QUICK.map(([w, h, n]) => `<button type="button" data-act="quick-size" data-w="${w}" data-h="${h}">${n || `${w}×${h}`}</button>`).join(" · ")}</span></div>
-        <div class="af-two" style="margin-top:14px"><div class="af-f"><label for="af-disc">Discount (%)</label><input class="af-in" id="af-disc" type="number" min="0" max="90" data-f="pricing.discountPercent" value="${esc(d.pricing.discountPercent || 0)}"></div>
+        <div class="af-two" style="margin-top:14px"><div class="af-f"><label for="af-disc">Your discount (%)</label><input class="af-in" id="af-disc" type="number" min="0" max="90" data-f="pricing.discountPercent" value="${esc(d.pricing.discountPercent || 0)}"></div>
           <div class="af-f"><label for="af-stock">Stock</label><input class="af-in" id="af-stock" type="number" min="0" data-f="availability.stock" value="${esc(d.availability.stock ?? "")}" placeholder="Empty = made to order"></div></div></div>`;
     }
 
@@ -196,6 +229,7 @@
       $$("img[data-ref]", root).forEach(async (img) => (img.src = await show(img.dataset.ref, /:thumb$/.test(img.dataset.ref))));
       paintSamples();
       wireBox();
+      if ($("[data-cust]", root)) refreshCustomer(); // sizes added or removed: their customer prices
     }
 
     /* ---------------------------------------------------------------- previews with a sample photo */
@@ -302,7 +336,16 @@
         const saved = (await http().put(`${base}/products/${encodeURIComponent(d.id)}`, body)).product;
         d = Object.assign(M().normalize(saved), { frameArt: M().cleanFrameArt(saved.frameArt) });
         dirty = false;
-        FrameX.toast.show(status === "published" ? (d.status === "pending_review" ? "Sent. FrameX will check it before it goes live." : "Published. Customers can now find it.") : "Saved as a draft.");
+        customer = d.listing ? { on: true, discountPercent: d.listing.discountPercent || 0, sizes: d.listing.sizes || [] } : customer;
+        const prices = customerList();
+        FrameX.toast.show(
+          status === "published"
+            ? d.status === "pending_review"
+              ? `Sent. FrameX will check it before it goes live.${prices ? ` Customers will pay ${prices}.` : ""}`
+              : `Published. Customers can now find it.${prices ? ` They pay ${prices}.` : ""}`
+            : "Saved as a draft.",
+          { duration: prices ? 9000 : undefined },
+        );
         render({ keepScroll: true });
         return true;
       } catch (error) {
@@ -417,6 +460,7 @@
       if (!el || el.type === "checkbox") return;
       setPath(el.dataset.f, fieldValue(el));
       dirty = true;
+      if (/^sizes\.|^pricing\.discountPercent$/.test(el.dataset.f)) refreshCustomer();
     };
     root.onchange = async (e) => {
       const el = e.target;
@@ -501,7 +545,7 @@
           const [label, tone] = status[x.status] || [x.status, "draft"];
           const priceText = x.priceFrom ? (x.priceTo && x.priceTo !== x.priceFrom ? `${money(x.priceFrom)}–${money(x.priceTo).replace("₹", "")}` : money(x.priceFrom)) : "—";
           return `<tr data-frame="${esc(x.id)}" data-shop="${esc(x.shopId || "")}"><td>${x.image ? `<img src="${esc(FrameX.http.asset(x.image))}" alt="" loading="lazy">` : ""}</td><td><b>${esc(x.name || "Untitled")}</b></td>${admin ? `<td>${esc(x.shopName || "")}<br><small>${esc(x.shopCode || "")}</small></td>` : ""}
-            <td>${x.sizes || 0} size${x.sizes === 1 ? "" : "s"} · ${priceText}</td><td class="${x.hasFront ? "af-good" : "af-miss"}">${x.hasFront ? "✓ Front" : x.modelOnly ? "Model photos only" : "Front missing"}</td>
+            <td>${x.sizes || 0} size${x.sizes === 1 ? "" : "s"} · ${priceText}${x.customerFrom ? `<br><small>Customers pay from ${money(x.customerFrom)}</small>` : ""}</td><td class="${x.hasFront ? "af-good" : "af-miss"}">${x.hasFront ? "✓ Front" : x.modelOnly ? "Model photos only" : "Front missing"}</td>
             <td><span class="af-pill af-pill--${tone}">${esc(label)}</span></td>
             <td><span class="af-row af-nowrap"><button class="af-btn af-btn--sm" type="button" data-row="edit">Edit</button><button class="af-btn af-btn--sm" type="button" data-row="duplicate">⧉ Duplicate</button>${admin && x.status === "pending_review" ? `<button class="af-btn af-btn--sm af-btn--dark" type="button" data-row="approve">Approve</button>` : ""}${admin && x.status === "published" ? `<button class="af-btn af-btn--sm" type="button" data-row="hide">Hide</button>` : ""}${admin && x.status === "unpublished" ? `<button class="af-btn af-btn--sm" type="button" data-row="approve">Show again</button>` : ""}</span></td></tr>`;
         })
@@ -512,7 +556,9 @@
   function summary(r) {
     const p = (r.sizes || []).map((s) => Number(s.price) || 0).filter((n) => n > 0);
     const a = r.frameArt || {};
-    return { id: r.id, name: r.name, status: r.status, image: r.listingImage || "", sizes: (r.sizes || []).length, priceFrom: p.length ? Math.min(...p) : Number((r.pricing || {}).basePrice) || null, priceTo: p.length ? Math.max(...p) : null, hasFront: Boolean(a.front && a.opening), modelOnly: Boolean(a.modelOnly) };
+    // the customer's lowest price on FrameX, when the listing rule made it (the prices above are the shop's own)
+    const listed = ((r.listing && r.listing.sizes) || []).map((s) => Number(s.price) || 0).filter((n) => n > 0);
+    return { id: r.id, name: r.name, status: r.status, image: r.listingImage || "", sizes: (r.sizes || []).length, customerFrom: listed.length ? Math.min(...listed) : null, priceFrom: p.length ? Math.min(...p) : Number((r.pricing || {}).basePrice) || null, priceTo: p.length ? Math.max(...p) : null, hasFront: Boolean(a.front && a.opening), modelOnly: Boolean(a.modelOnly) };
   }
 
   /** "Duplicate": a copy of the record as a new draft (same pictures, " (copy)" in the name). */

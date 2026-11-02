@@ -138,6 +138,7 @@
       ${row(`Subtotal (${o.itemCount} ${o.itemCount === 1 ? "item" : "items"})`, formatPrice(o.subtotal))}
       ${row("Discount", o.discount ? "− " + formatPrice(o.discount) : formatPrice(0), o.discount ? "co-row--good" : "")}
       ${o.couponDiscount ? row(`Coupon (${esc(o.couponCode)})`, "− " + formatPrice(o.couponDiscount), "co-row--good") : ""}
+      ${o.onlineDiscount ? row("Online payment discount", "− " + formatPrice(o.onlineDiscount), "co-row--good") : ""}
       ${row("Delivery", formatPrice(o.shippingFee))}
       ${row(o.tax ? `Tax (${o.taxPercent}%)` : "Tax", formatPrice(o.tax))}
       ${o.giftWrap ? row("Gift wrapping", o.giftWrapFee ? formatPrice(o.giftWrapFee) : "Free", "co-row--gift") : ""}
@@ -158,7 +159,19 @@
     return `<ol class="od-timeline">${o.events.map((e) => `<li><span class="od-timeline__dot od-timeline__dot--${e.kind.toLowerCase()}"></span><div><strong>${esc(text(e))}</strong>${e.detail ? `<span>${esc(e.detail)}</span>` : ""}<time datetime="${esc(e.at)}">${esc(when(e.at))}</time></div></li>`).join("")}</ol>`;
   }
 
-  FrameX.orderView = { ORDER_STATUS, PAYMENT_STATUS, INSTRUMENT, FULFILMENT, badge, paymentBadge, paymentLabel, methodLabel, itemsHtml, photosHtml, photoFacts, wirePhotos, totalsHtml, addressHtml, timelineHtml, when };
+  /** The courier and tracking number FrameX added after booking the parcel ("" when there are none yet). */
+  function trackingHtml(o) {
+    const t = o.tracking;
+    if (!t) return "";
+    return `<dl class="ao-facts"><div><dt>Courier</dt><dd>${esc(t.courier)}</dd></div><div><dt>Tracking number</dt><dd><code>${esc(t.number)}</code></dd></div></dl>
+      ${
+        t.url
+          ? `<div class="co-actions"><a class="btn btn--dark btn--sm" href="${esc(t.url)}" target="_blank" rel="noopener noreferrer">${icon("truck")} Track your parcel</a></div>`
+          : `<p class="co-fine">${icon("alert")}<span>Track it on ${esc(t.courier)}'s website with this number.</span></p>`
+      }`;
+  }
+
+  FrameX.orderView = { ORDER_STATUS, PAYMENT_STATUS, INSTRUMENT, FULFILMENT, badge, paymentBadge, paymentLabel, methodLabel, itemsHtml, photosHtml, photoFacts, wirePhotos, totalsHtml, addressHtml, timelineHtml, trackingHtml, when };
 
   /* ---------------------------------------------------------------- orders.html */
   async function list(root, page = 1) {
@@ -271,7 +284,7 @@
         <div><span>Payment method</span><strong>${esc(methodLabel(o))}</strong></div>
         <div><span>Payment status</span>${paymentBadge(o)}</div>
         <div><span>${o.placedAt ? "Placed" : "Created"}</span><strong>${esc(when(o.placedAt || o.createdAt))}</strong></div>
-        <div><span>Delivery</span><strong>${o.status === "DELIVERED" ? `Delivered ${esc(when(o.deliveredAt, false))}` : o.status === "CANCELLED" ? "—" : "The shop will confirm the delivery time"}</strong></div>
+        <div><span>Delivery</span><strong>${o.status === "DELIVERED" ? `Delivered ${esc(when(o.deliveredAt, false))}` : o.status === "CANCELLED" ? "—" : o.tracking && ["SHIPPED", "OUT_FOR_DELIVERY"].includes(o.status) ? `On its way with ${esc(o.tracking.courier)}` : "The shop will confirm the delivery time"}</strong></div>
         ${o.giftWrap ? `<div><span>Gift wrapping</span><strong><span aria-hidden="true">🎁</span> Yes${o.giftWrapFee ? ` · ${formatPrice(o.giftWrapFee)}` : ""}</strong></div>` : ""}
       </div>
       ${progressHtml(o)}
@@ -287,6 +300,7 @@
       ${photosNote(o)}
       <div class="co-grid">
         <div class="co-main">
+          ${o.tracking ? `<section class="co-card" data-tracking><h2 class="co-card__title">${icon("truck")} Track your parcel</h2>${trackingHtml(o)}</section>` : ""}
           <section class="co-card"><h2 class="co-card__title">${icon("package")} Items</h2>${itemsHtml(o, { photoActions: ownPhotoActions, progress: true })}</section>
           ${confirmed ? "" : `<section class="co-card"><h2 class="co-card__title">${icon("clock")} Order history</h2>${timelineHtml(o)}</section>`}
         </div>

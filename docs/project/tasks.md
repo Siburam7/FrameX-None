@@ -1,10 +1,61 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-11-01 (suggestions, popular Home rows, transparent header and header search deployed: main 8af6d15).
+> Last updated: 2026-11-02 (pricing plan built locally: listing price from the shop's price, online discount, approval email; migration 028).
 
 ## Now
 
+- [x] 2026-11-02 **Pricing plan BUILT (local, not pushed; migration 028)**. Owner: "Pehle shop price + 3%", "FrameX shop
+      ko uska daam dega", "Haan, discount rahe", large-box share decided, and "jab ham aproverd karnge tab saf likh na
+      chahiye itna price par listing hoga if any isssue then contact care or email".
+      - A shop types ITS OWN price per size (+ its own discount); the saved product's price is FrameX's listing price
+        (shop price + markup % + a delivery share for the box size, rounded up to end in 9). Box size by the longer side:
+        up to 12 in small, up to 18 in medium, else large. Numbers only in Admin → Settings ("Listing price of shops'
+        products", env LISTING_MARKUP_PERCENT / LISTING_SHARE_SMALL|MEDIUM|LARGE, default 0 = off) and costs.md §11.
+      - The shop's editor shows "Your price (₹)" and a live "Customer pays" column (`POST /api/shops/:code/listing-preview`,
+        admin `/api/admin/shops/:id/listing-preview`: results only, never the numbers). The shop always edits its own
+        prices (`shopPricesView`); anything like "what the shop receives" sent by the shop is dropped.
+      - Admin approval emails the shop: each size "₹customer (you get ₹shop)", free delivery, "chat with FrameX Care
+        from your dashboard or email support@shopframex.in", dashboard button. Once per approval.
+      - Every order line keeps `seller_unit_amount` (what the shop gets). Payouts pay it for those lines, COD or online
+        (FrameX's courier collects the cash), with no commission; the shop's order list / detail / new-order email /
+        WhatsApp and the admin's seller list show the shop's amount and "the courier collects it". Size changes
+        update it.
+      - Online payment discount (Admin → Settings / env ONLINE_DISCOUNT_PERCENT): taken off the items when "Pay online"
+        is chosen (the method is picked inside Razorpay after the amount is fixed, so UPI-only is not possible);
+        checkout offer line + "Online payment discount (N%)" row; order page, emails; `orders.online_discount`; the
+        total check constraint now includes it.
+      - Tests: backend listing-price 7/7 (in npm test; made-up numbers, not the real ones), payouts 25, checkout 56,
+        order-edit 7, cart 27, frames 6, order-tracking 7, art 57, decor 19; browser pricing-e2e 7/7.
+- [ ] At the deploy of 027 + 028 (after a fresh Neon backup and the owner's "push karo"), Admin → Settings: the values in
+      costs.md §11 (markup, 3 box shares, online discount), delivery fee 0, COD fee 49, commission shops 0% / artists
+      0%, payout charge 0%, "Shop products need FrameX approval" ON; Render COD_ALLOW_CUSTOM_DESIGNS=false. Delivery 0
+      only together with the new prices. Products listed before keep their typed price until the shop saves them again.
+- [ ] Later: artwork COD with a 50% advance (refused at the door: advance refunded minus the courier both ways).
+
+- [x] 2026-11-02 **Courier + tracking number on orders BUILT (local, not pushed; migration 027)**. Owner: "admin order page par
+      Courier + Tracking number banao" (parcels are booked by hand on NimbusPost for now; its API later, when there are
+      ~5+ orders a day). Migration `027_order_tracking.sql`: orders.courier / tracking_number / tracking_url /
+      tracking_added_at (new empty columns only). `POST /api/admin/orders/:orderNumber/tracking` {courier, number, url}
+      (ADMIN or CARE; both needed, or both empty = removed; number letters / digits / dashes; link http(s) only; not on
+      an unpaid or cancelled order; order history NOTE "Sent with X. Tracking number Y."; audit ORDER_TRACKING_SET).
+      Order shape `tracking: {courier, number, url, addedAt} | null`. Admin order page: "Courier and tracking" card
+      (courier list Delhivery / Shadowfax / Xpressbees / Ekart / Blue Dart / DTDC / Amazon Shipping / India Post).
+      Customer order page: "Track your parcel" card at the top of the main column (courier, number, "Track your
+      parcel" link in a new tab) and the summary "On its way with <courier>". The shipped email and the WhatsApp
+      status carry it when it was added before "Mark as shipped". Tests: backend order-tracking 7/7 (in npm test),
+      whatsapp 14, order-edit 7, checkout 56; browser tracking-e2e 10/10 (in push-check). Pictures:
+      Desktop\FrameX-Courier-Tracking. Local backend restarted with migration 027 after a copy of `.data`
+      (`.data.backup-2026-11-02-before-order-tracking`). Before the deploy: a fresh Neon backup (new migration).
+- [x] 2026-11-02 Owner registered **Udyam** (free, udyamregistration.gov.in; Proprietary, enterprise "FrameX", NIC 63122 web
+      portal + 47912 retail via e-commerce, investment / turnover 0). Number kept by the owner; certificate PDF awaited by
+      email. Unlocks: Meta business verification (upload the certificate; name / address exactly as on it), DLT for an
+      SMS sender "FRAMEX", proof for Razorpay.
+- [x] 2026-11-02 **Invite messages for shop owners and artists**: Desktop\FrameX-Invite-Messages, ENGLISH ONLY, two files
+      (owner found the first 8-file version in three languages confusing and asked to delete it):
+      Shop-Owner-Messages.txt and Artist-Messages.txt, each = WhatsApp message, email, one reminder, 3 answers. Before
+      sending: shop commission + payout charge 0% (they promise the full price), clean up the sample shops. The formula is
+      never told.
 - [x] 2026-11-01 **DEPLOYED** main 8af6d15 (owner: "Now all push and live"; no migration, so no Neon backup needed):
       smart suggestions (Home popular frames, Home Decor / Art popular rows, product page Similar / You may also like /
       Recently viewed / More products for you), transparent header at the top, header search that grows + results box
@@ -391,7 +442,14 @@
       account, fresh backup, full test of orders / payments. Marketing must stay factual (prd.md §4: no fake numbers).
 - [x] 2026-10-30 "FrameX Launching Plan.pdf" on the Desktop for the co-founder (English, 2 pages: timeline to scale,
       4 phases, budget ₹5–15k, launch checklist).
-- [ ] Owner: small orders (₹100–250) lose money on delivery (costs.md §9). Choose: minimum order value, COD minimum,
+- [ ] Owner: small orders (₹100–250) lose money on delivery (costs.md §9). 2026-11-01: a suggested delivery plan (minimum
+      order, two delivery steps, COD minimum + fee, no COD on photo frames) is in costs.md §10 (private); waiting for the owner.
+      2026-11-02: the owner's own model (shop gets its full price, free delivery inside the price, UPI discount, COD +₹49,
+      no COD on photo frames, artworks COD with 50% advance) worked out in costs.md §11 with a price formula; NOT built:
+      UPI discount, 50% advance for artwork COD, automatic listing price. 2026-11-02 the owner DECIDED the formula
+      ("isko save karo, sabhi iske bad use karenge"): costs.md §11 (private). Still to build when the owner says: UPI
+      discount, artwork COD advance, auto listing price (optional), settings change (delivery 0, COD fee 49, commission and
+      payout charge 0%, no COD on photo frames). Choose: minimum order value, COD minimum,
       combos, add-on items (minimum order + COD minimum are NOT built; small features).
 - [ ] Owner: choose the plan; decide who pays the shop for a returned COD photo frame; ask a CA about GST / TCS; real
       courier rates. Still open from before: real numbers for making cost, courier / COD / RTO charges, packing, who pays the
@@ -750,7 +808,9 @@
       35/35 (new suite); before/after pictures on the Desktop (FrameX-shops-laptop-v2.png, FrameX-shops-phone-v2.png)
 - [x] 2026-10-21 Header menu: FAQ → "Studio" (FrameX Studio); FAQ stays in the footer (Support) — LIVE (1aa4aa8). Fits on one line
       at 1280 / 1366 / 1920 px, phone menu checked, Studio marked current on FrameX Studio
-- [ ] UPI apps show "Siburam7" and a VPA like (the owner’s personal UPI ID) when paying (owner: hurts trust). Cause: Razorpay
+- [x] 2026-11-02 RESOLVED: UPI apps now show "FrameX" as the payee (owner's screenshot; Razorpay changed the brand name). The
+      round picture stays the letter "F": UPI apps decide it, not FrameX; a logo can go on Razorpay's own checkout window
+      (Dashboard -> Branding). Old note: UPI apps show "Siburam7" and a VPA like (the owner’s personal UPI ID) when paying (owner: hurts trust). Cause: Razorpay
       Brand name = account / primary website name. "FrameX" refused: must match the business name (SIBURAM NAYAK) or the
       PRIMARY website (still https://siburam7.github.io/FrameX-None/; shopframex.in is an additional, verified site).
       Razorpay ticket #21472429 (2026-10-21): remove the additional shopframex.in, then edit the primary website to

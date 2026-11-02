@@ -27,6 +27,7 @@ function tables(order) {
         ["Subtotal", rupees(order.subtotal)],
         order.discount ? ["Discount", "−" + rupees(order.discount)] : null,
         order.couponDiscount ? [`Coupon ${order.couponCode}`, "−" + rupees(order.couponDiscount)] : null,
+        order.onlineDiscount ? ["Online payment discount", "−" + rupees(order.onlineDiscount)] : null,
         ["Delivery", rupees(order.shippingFee)],
         order.tax ? [`Tax (${order.taxPercent}%)`, rupees(order.tax)] : null,
         order.giftWrap ? ["Gift wrapping", rupees(order.giftWrapFee)] : null,
@@ -50,6 +51,7 @@ function plainSummary(order) {
     `Subtotal: ${rupees(order.subtotal)}`,
     order.discount ? `Discount: -${rupees(order.discount)}` : "",
     order.couponDiscount ? `Coupon ${order.couponCode}: -${rupees(order.couponDiscount)}` : "",
+    order.onlineDiscount ? `Online payment discount: -${rupees(order.onlineDiscount)}` : "",
     `Delivery: ${rupees(order.shippingFee)}`,
     order.tax ? `Tax: ${rupees(order.tax)}` : "",
     order.giftWrap ? `Gift wrapping: ${rupees(order.giftWrapFee)}` : "",
@@ -97,7 +99,11 @@ const COPY = {
   ORDER_SHIPPED: (o) => ({
     subject: `Order ${o.orderNumber} has been shipped`,
     heading: "Your order is on its way",
-    lines: [`Order ${o.orderNumber} has been shipped.`, o.paymentMethod === "COD" && o.paymentStatus !== "PAID" ? `Please keep ${rupees(o.total)} ready to pay on delivery.` : ""],
+    lines: [
+      `Order ${o.orderNumber} has been shipped.`,
+      o.tracking ? `Courier: ${o.tracking.courier}. Tracking number: ${o.tracking.number}.${o.tracking.url ? ` Track it here: ${o.tracking.url}` : ""}` : "",
+      o.paymentMethod === "COD" && o.paymentStatus !== "PAID" ? `Please keep ${rupees(o.total)} ready to pay on delivery.` : ""
+    ],
     button: "View order"
   }),
   ORDER_DELIVERED: (o) => ({

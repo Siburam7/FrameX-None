@@ -37,6 +37,20 @@
 
 ## Owner decisions (log)
 
+- 2026-11-02 Pricing plan in code (built locally, migration 028): "Pehle shop price + 3%" (order of work: the shop's
+  own price + the listing rule first, then the online discount); "FrameX shop ko uska daam dega" (for COD too: FrameX's
+  courier collects the cash, the shop is paid its own price after delivery, no commission); "Haan, discount rahe" (a
+  shop's own discount stays: off its price first, then the rule); the large-box delivery share was raised (value in
+  costs.md §11); the shop must be told clearly at approval at what price the product is listed, and to contact FrameX
+  Care or email for any issue (approval email built). The online discount works for "Pay online" (any method): the
+  method is chosen inside Razorpay after the amount is fixed. Art COD with 50% advance: LATER.
+- 2026-11-02 Couriers: book parcels by hand on NimbusPost (cheapest in the owner's checks; mixed seller reviews about
+  support / COD remittance / weight disputes, so small wallet top-ups, photos of weighed parcels, little COD,
+  Shiprocket kept as backup); FrameX types the courier + tracking number on the admin order page (built); the
+  NimbusPost API (automatic shipments / labels / tracking) later, at about 5+ orders a day.
+- 2026-11-02 Pricing: the owner DECIDED one listing-price formula for every product from now on (shop / artist gets its
+  full price; delivery free for the customer; UPI discount; COD fee; no COD on photo frames; artwork COD with a 50%
+  advance). The numbers live ONLY in costs.md (private, never pushed) with a ready answer for shop owners (§13).
 - 2026-11-01 Deploy: "Now all push and live" (main 8af6d15). Then: "jo important hai usko karo only": test in proportion,
   not the whole suite every time (the full run had also crashed out of memory on this machine).
 - 2026-11-01 Experiment: header search grows on hover on laptops (only the logo stays, the box ~25-30% of the bar,

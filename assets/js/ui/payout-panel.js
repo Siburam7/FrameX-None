@@ -28,7 +28,8 @@
     const pct = (n) => `${Number(n).toLocaleString("en-IN")}%`;
     return [
       ["Your sales (delivered, not paid out yet)", rs(d.sales)],
-      ["   of which paid online (FrameX holds this)", rs(d.onlineSales), "sub"],
+      // (FrameX also holds the cash its courier collects for items at FrameX's listing price)
+      ["   of which FrameX holds (paid online, or cash its courier collected)", rs(d.onlineSales), "sub"],
       ["   Cash on Delivery (the cash is with you)", rs(d.codSales), "sub"],
       ["+ Your part of delivery, gift wrap and tax (online orders)", rs(d.extras)],
       [`− FrameX commission (${pct(d.commissionPercent)} of all your sales)`, rs(-d.commission)],

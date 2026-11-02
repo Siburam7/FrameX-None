@@ -261,10 +261,15 @@ function evaluateDesign(input, lookups, sentPhotos = null) {
   const summary = studio.summary(cfg, ctx);
   // A customised product keeps the shop's own discount on the frame.
   const frame = normalized ? model.quote(normalized, { sizeId: cfg.sizeId, printMaterialId: cfg.printMaterialId, protection: cfg.protection }) : null;
+  // A shop's frame under FrameX's listing rule: the shop gets the part of the design's price that its own price is of
+  // the frame's listed price (the print and the rest of the design are FrameX's).
+  const shopFrame = frame ? model.sellerUnit(normalized, { sizeId: cfg.sizeId, printMaterialId: cfg.printMaterialId, protection: cfg.protection }) : null;
+  const sellerUnit = shopFrame !== null && frame.unit > 0 ? Math.round((price.total * shopFrame) / frame.unit) : null;
   return {
     ...base,
     price,
     summary,
+    sellerUnit,
     unitDiscount: frame && frame.discountPercent ? Math.max(0, frame.listPrice - frame.lines[0].amount) : 0,
     name: template ? template.data.title : product ? product.name : "Framed photo",
     maxQty: normalized ? model.orderLimits(normalized).maxQty : model.MAX_CART_QTY
@@ -329,6 +334,8 @@ function describe(row, lookups) {
     base[INTERNAL] = {
       cartItemId: row.id,
       kind: "PRODUCT",
+      // what the shop receives for one unit (FrameX's listing rule), or null
+      sellerUnitAmount: ev.p ? siteEngine().model.sellerUnit(ev.p, (ev.line && ev.line.selection) || row.selection || {}) : null,
       selection: ev.line ? ev.line.selection : row.selection || {},
       customization: ev.customization || null,
       designRef: null,
@@ -360,6 +367,7 @@ function describe(row, lookups) {
     base[INTERNAL] = {
       cartItemId: row.id,
       kind: "STUDIO",
+      sellerUnitAmount: ev.sellerUnit ?? null,
       selection: {},
       customization: cfg,
       designRef: row.design_ref,

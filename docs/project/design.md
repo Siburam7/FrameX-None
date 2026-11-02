@@ -84,6 +84,13 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
   the section (Shop Frames / Explore Art / Shop Decor / All Templates).
 - Home "Highly recommended frames" (owner, 2026-11-01): at most two lines of cards (laptop 8 = 2 x 4, wide screens
   10 = 2 x 5, tablet 6); phones keep the swiping row of 10.
+- Pricing (2026-11-02, existing look): frame editor sizes table "Your price (₹)" + a grey "Customer pays" column, the
+  discount field "Your discount (%)", "Customers pay from" in the list; product wizard hint "Customers pay ₹X on FrameX";
+  checkout: a small offer line under the payment methods ("Pay online … and get N% off your items") and a green
+  "Online payment discount (N%)" row in Price details.
+- Order tracking (owner, 2026-11-02): admin order page "Courier and tracking" card under "Next step" (courier with a
+  suggestion list, tracking number, optional link, dark Save button, small grey hint); customer order page "Track your
+  parcel" card first in the main column (facts list + dark "Track your parcel" button opening the courier's page).
 - Header search on laptops (owner's experiment, 2026-11-01): hovering the round search button fades out the menu and
   buttons (only the logo stays) and grows the button, same 46px height, into a white search pill about 28% of the bar
   (300-460px), from its own middle, kept inside the buttons' side. Phones / tablets (from 360px): a tap grows it across

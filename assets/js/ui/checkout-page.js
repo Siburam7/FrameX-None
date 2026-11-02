@@ -277,6 +277,7 @@
         }
         ${methodRow({ id: "COD", label: "Cash on Delivery", hint: codHint, disabled: !cod.available })}
       </div>
+      ${online.available && quote.onlineDiscount && quote.onlineDiscount.percent ? `<p class="co-fine co-offer" data-online-offer><span aria-hidden="true">💸</span><span>Pay online (UPI, card or net banking) and get <strong>${quote.onlineDiscount.percent}% off</strong> your items.</span></p>` : ""}
       ${!online.available && !cod.available ? `<div class="form-status form-status--error is-visible" role="alert">${icon("alert")}<span>No way to pay is available for this order right now. Please <a href="contact.html">contact FrameX</a>.</span></div>` : ""}`;
   }
 
@@ -347,6 +348,7 @@
         ${row(`Subtotal (${q.itemCount} ${q.itemCount === 1 ? "item" : "items"})`, formatPrice(q.subtotal))}
         ${q.discount ? row("Discount", "− " + formatPrice(q.discount), "co-row--good") : ""}
         ${q.couponDiscount ? row(`Coupon (${esc(q.coupon.code)})`, "− " + formatPrice(q.couponDiscount), "co-row--good") : ""}
+        ${q.onlineDiscount && q.onlineDiscount.amount ? row(`Online payment discount (${q.onlineDiscount.percent}%)`, "− " + formatPrice(q.onlineDiscount.amount), "co-row--good") : ""}
         ${row(q.freeDelivery === "FIRST_ORDER" ? "Delivery (first order)" : "Delivery", q.freeDelivery ? "Free" : formatPrice(q.shippingFee), q.freeDelivery ? "co-row--good" : "")}
         ${q.tax ? row(`Tax (${q.taxPercent}%)`, formatPrice(q.tax)) : ""}
         ${wrapped() ? row("Gift wrapping", q.giftWrapFee ? formatPrice(q.giftWrapFee) : "Free", "co-row--gift") : ""}

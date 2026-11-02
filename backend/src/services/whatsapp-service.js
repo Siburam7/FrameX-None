@@ -39,7 +39,7 @@ const STATUS = {
   ORDER_PLACED_COD: (o) => `Placed. Please pay ${rupees(o.total)} in cash on delivery`,
   ORDER_PLACED_PAID: (o) => `Placed. Payment of ${rupees(o.total)} received`,
   PAYMENT_FAILED: () => "Payment did not go through. You can try again from your order page",
-  ORDER_SHIPPED: () => "Shipped and on its way",
+  ORDER_SHIPPED: (o) => (o.tracking_number ? `Shipped with ${o.courier}. Tracking number ${o.tracking_number}` : "Shipped and on its way"),
   ORDER_OUT_FOR_DELIVERY: (o) => (o.payment_method === "COD" && o.payment_status !== "PAID" ? `Out for delivery today. Please keep ${rupees(o.total)} ready (cash on delivery)` : "Out for delivery today"),
   ORDER_DELIVERED: () => "Delivered. We hope you love it",
   ORDER_CANCELLED: () => "Cancelled",
@@ -88,7 +88,7 @@ const quietly = (label, work) =>
 export function orderUpdate(orderId, kind, { ref = "", extra = {} } = {}) {
   return quietly(`${kind} for order ${orderId}`, async () => {
     if (!config.whatsapp.orderUpdates || !STATUS[kind]) return "off";
-    const o = (await db.query("SELECT order_number, customer_name, customer_phone, whatsapp_updates, total, payment_method, payment_status FROM orders WHERE id = $1", [orderId])).rows[0];
+    const o = (await db.query("SELECT order_number, customer_name, customer_phone, whatsapp_updates, total, payment_method, payment_status, courier, tracking_number FROM orders WHERE id = $1", [orderId])).rows[0];
     if (!o || !o.whatsapp_updates) return "off";
     const values = [firstName(o.customer_name), o.order_number, STATUS[kind](o, extra)];
     return sendOnce({ kind: "ORDER_UPDATE", ref: `${o.order_number}:${kind}:${ref}`, phone: o.customer_phone, template: config.whatsapp.templates.orderUpdate, values, button: o.order_number, preview: PREVIEW.orderUpdate(values, o.order_number) });
