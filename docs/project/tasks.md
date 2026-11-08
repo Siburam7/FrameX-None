@@ -1,11 +1,12 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-11-02 (Studio custom size + size-first DEPLOYED: main c270c7a, no migration; WhatsApp ON live).
+> Last updated: 2026-11-09 (WhatsApp login codes DEPLOYED: main fdb719a, no migration; the Admin switch is still OFF).
 
 ## Now
 
-- [x] 2026-11-07 **Phone login codes on WhatsApp first, SMS as the backup** (local, not pushed; no migration). Owner:
+- [x] 2026-11-07 **Phone login codes on WhatsApp first, SMS as the backup** (DEPLOYED 2026-11-09, main fdb719a, no migration;
+      live /api/config whatsappLoginCodes false = the switch is OFF; the site has the new login box). Owner:
       "WhatsApp OTP login", chose "WhatsApp pehle, SMS backup" from a two-option preview.
       - Backend: `sendPhoneCode(phone, { via })` sends the "framex_login_code" Authentication template (code in the
         body and the Copy code button) when `whatsappLoginReady()`; `via: "sms"` = the customer asked for SMS; WhatsApp
@@ -25,7 +26,7 @@
         "*{{1}}* is your verification code. For your security, do not share this code." The button is stored as a URL
         button ending code=otp{{1}}: the url-type button parameter FrameX sends is the right shape (also Fast2SMS's
         "send authentication template" doc). No message was sent.
-      - Owner, next: push (approval) → Admin → Settings → "WhatsApp: login codes" ON → try with own number.
+      - Owner, next: Admin → Settings → "WhatsApp: login codes" ON → try a login with own number (first real proof).
 
 - [ ] 2026-11-07 **Udyam certificate received** (Micro, Trading, NIC 47912 retail via e-commerce; registered 02/11/2026;
       the certificate itself stays with the owner: personal address / phone, never in the repo). Next, in this order:

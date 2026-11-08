@@ -94,6 +94,7 @@
   (each message costs money); off by default behind an Admin switch until Meta approves the template.
   Template framex_login_code created by me through Fast2SMS's API on the owner's request, APPROVED by Meta at once
   (2026-11-07). Templates can be made with the API from now on (the Fast2SMS key in backend/.env, never printed).
+  Deployed 2026-11-09 (main fdb719a, owner: "Push karoo"); the switch stays OFF live until the owner turns it on.
   Login OTP on WhatsApp waits for Meta business verification (Udyam first). My choices (owner can change): the checkout
   box is ticked by default (remembered when unticked) and appears only while WhatsApp is set up; WhatsApp for placed,
   payment failed, shipped, out for delivery (WhatsApp only), delivered, cancelled and refunds, not for confirmed /
