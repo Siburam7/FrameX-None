@@ -99,7 +99,7 @@
       try {
         await loadSdk(FACEBOOK_SDK);
         if (facebookFor !== ids.facebook) {
-          window.FB.init({ appId: ids.facebook, cookie: false, xfbml: false, version: "v19.0" });
+          window.FB.init({ appId: ids.facebook, cookie: false, xfbml: false, version: "v26.0" }); // v19.0 has expired (2026-11-09)
           facebookFor = ids.facebook;
         }
         buttons.insertAdjacentHTML("beforeend", `<button class="soc__facebook" type="button">${FACEBOOK_ICON}<span>${mode === "signup" ? "Sign up with Facebook" : "Continue with Facebook"}</span></button>`);

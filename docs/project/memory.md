@@ -94,7 +94,11 @@
   (each message costs money); off by default behind an Admin switch until Meta approves the template.
   Template framex_login_code created by me through Fast2SMS's API on the owner's request, APPROVED by Meta at once
   (2026-11-07). Templates can be made with the API from now on (the Fast2SMS key in backend/.env, never printed).
-  Deployed 2026-11-09 (main fdb719a, owner: "Push karoo"); the switch stays OFF live until the owner turns it on.
+  Deployed 2026-11-09 (main fdb719a, owner: "Push karoo"); the owner turned the switch ON the same day and a real
+  WhatsApp-code login worked ("kam kar raha hai"): the Copy code button format is proven.
+- 2026-11-09 Facebook login: owner "Facebook login karoo". The code was built 2026-10-26; only Meta Publish + the 2
+  Render values were missing. Graph API v19.0 had expired, so the website and server now use v26.0. Rule kept: set
+  FACEBOOK_APP_ID / FACEBOOK_APP_SECRET on Render only after the app is Live.
   Login OTP on WhatsApp waits for Meta business verification (Udyam first). My choices (owner can change): the checkout
   box is ticked by default (remembered when unticked) and appears only while WhatsApp is set up; WhatsApp for placed,
   payment failed, shipped, out for delivery (WhatsApp only), delivered, cancelled and refunds, not for confirmed /

@@ -1,7 +1,7 @@
 # FrameX — Tasks
 
 > Update this file after every piece of work: move items, add new ones, record dates.
-> Last updated: 2026-11-09 (WhatsApp login codes DEPLOYED: main fdb719a, no migration; the Admin switch is still OFF).
+> Last updated: 2026-11-09 (WhatsApp login codes LIVE and ON: main fdb719a; Facebook login set-up started, v26.0 local).
 
 ## Now
 
@@ -26,7 +26,8 @@
         "*{{1}}* is your verification code. For your security, do not share this code." The button is stored as a URL
         button ending code=otp{{1}}: the url-type button parameter FrameX sends is the right shape (also Fast2SMS's
         "send authentication template" doc). No message was sent.
-      - Owner, next: Admin → Settings → "WhatsApp: login codes" ON → try a login with own number (first real proof).
+      - DONE 2026-11-09: the owner turned "WhatsApp: login codes" ON (live /api/config whatsappLoginCodes true) and a
+        real login with the WhatsApp code worked (owner: "kam kar raha hai").
 
 - [ ] 2026-11-07 **Udyam certificate received** (Micro, Trading, NIC 47912 retail via e-commerce; registered 02/11/2026;
       the certificate itself stays with the owner: personal address / phone, never in the repo). Next, in this order:
@@ -111,7 +112,8 @@
       only together with the new prices. Products listed before keep their typed price until the shop saves them again.
       2026-11-02 owner: "Pricing ki settings kar diya hai". Live /api/config still shows delivery fee ₹49 (free above
       ₹499) — told the owner; the other values aren't in the public config, so not checked from here.
-      2026-11-07 still ₹49 (free above ₹499) on live /api/config — reminded the owner.
+      2026-11-07 still ₹49 (free above ₹499) on live /api/config — reminded the owner. 2026-11-09 still ₹49 (COD fee
+      ₹49 too) — reminded again.
 - [ ] Later: artwork COD with a 50% advance (refused at the door: advance refunded minus the courier both ways).
 
 - [x] 2026-11-02 **Courier + tracking number on orders BUILT (migration 027; deployed 2026-11-02, main bb0ca4f)**. Owner: "admin order page par
@@ -683,6 +685,15 @@
       Publish needs a verified Meta Business portfolio = business documents (Udyam / GST / bank statement in the business
       name). Owner has none yet → do Udyam first, then verify, publish, and only then set FACEBOOK_APP_ID + FACEBOOK_APP_SECRET
       on Render (the secret only there, never in chat). Until then the Facebook button stays hidden; Google login is live.
+      2026-11-09 owner: "Facebook login karoo" (Meta business VERIFIED 2026-11-07). Code: Graph API v19.0 had expired
+      (Meta moves old calls to the oldest version still available) → website FB.init and server FACEBOOK_GRAPH_URL
+      default now v26.0; social-login 10/10 (local, not pushed). Owner next: developers.facebook.com → app FrameX →
+      connect it to the verified business portfolio if asked → Publish (Live) → push (approval) → Render:
+      FACEBOOK_APP_ID + FACEBOOK_APP_SECRET (the secret only on Render) → real login with a Facebook account.
+      2026-11-09 02:15 DONE by the owner: Facebook Login settings (JS SDK Yes, Allowed Domains + Valid OAuth redirect
+      URI https://shopframex.in/, strict mode on; email + public_profile only), app connected to the verified business
+      portfolio FrameX (Business settings → Apps → Connect an app ID, auto-approved), app PUBLISHED (no required
+      actions). Left: push the v26.0 fix (approval) → the 2 Render values → real Facebook login.
 - [x] 2026-10-26 **DEPLOYED** main bfcb26f (owner: "Promotions karlete hai fir direct sabhi push karenge"; production backup taken
       first by the owner: pen drive `framex-db-live-20261026-2109.fxdb`). Live: migrations 022 + 023 ran; API lists 11
       promotions; GOOGLE_CLIENT_ID set on Render by the owner (full id, checked via /api/config); Facebook off. Live check

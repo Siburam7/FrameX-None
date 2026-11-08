@@ -126,7 +126,7 @@ export const config = {
     googleJwksUrl: env.GOOGLE_JWKS_URL || "https://www.googleapis.com/oauth2/v3/certs",
     facebookAppId: (env.FACEBOOK_APP_ID || "").trim(),
     facebookAppSecret: (env.FACEBOOK_APP_SECRET || "").trim(),
-    facebookGraphUrl: (env.FACEBOOK_GRAPH_URL || "https://graph.facebook.com/v19.0").replace(/\/$/, "")
+    facebookGraphUrl: (env.FACEBOOK_GRAPH_URL || "https://graph.facebook.com/v26.0").replace(/\/$/, "")
   },
 
   frontendUrl: (env.FRONTEND_URL || `http://localhost:${port}`).replace(/\/+$/, ""),
