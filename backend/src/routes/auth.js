@@ -62,14 +62,15 @@ router.post("/facebook", rateLimit("social-login", { windowMs: 15 * MINUTE, max:
    send   -> a 6-digit code goes to the address (the same answer whether or not it has an account)
    verify -> a customer account is logged in; a new address gets { newAccount, signupToken }
    signup -> the new address's name (and, if given, mobile number): a new customer account, logged in */
-// { email } = a code by email; { phone } = a code by SMS to an Indian mobile number (since 2026-11-01).
-// Each SMS costs money: by SMS, fewer per network address than by email.
+// { email } = a code by email; { phone } = a code to an Indian mobile number (since 2026-11-01): on WhatsApp when it
+// is on, else by SMS (2026-11-07); { phone, via: "sms" } = the customer asked for an SMS.
+// Each message costs money: by phone, fewer per network address than by email.
 const byPhone = (req) => Boolean(req.body && req.body.phone !== undefined && req.body.email === undefined);
 const smsSendLimit = rateLimit("code-send-sms", { windowMs: 60 * MINUTE, max: 6 });
 router.post("/code/send", rateLimit("code-send", { windowMs: 15 * MINUTE, max: 12 }), (req, res, next) => (byPhone(req) ? smsSendLimit(req, res, next) : next()), async (req, res) => {
   if (byPhone(req)) {
-    const { phone } = validate(req.body, { phone: v.phone({ required: true }) });
-    return res.json(await auth.sendPhoneCode(phone));
+    const { phone, via } = validate(req.body, { phone: v.phone({ required: true }), via: v.enumOf(["whatsapp", "sms"], { required: false, label: "via" }) });
+    return res.json(await auth.sendPhoneCode(phone, { via: via || "auto" }));
   }
   const { email } = validate(req.body, { email: v.email() });
   res.json(await auth.sendLoginCode(email));

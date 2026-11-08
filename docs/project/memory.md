@@ -41,6 +41,10 @@
   "Coming soon"). My choices (not confirmed by the owner): 4–40 inches per side, inches or cm, price from the standard
   sizes by area rounded up to ₹10 and never below Small; not offered on a listed shop product. LIVE 2026-11-02
   (main c270c7a, no migration).
+- 2026-11-02 GST: owner wants no GST registration now ("after 1 year"). My answer (general rules, CA to confirm):
+  goods to other states and a marketplace selling shops' goods need registration from the first sale; without GST no
+  "Tax" line may be charged → advised Tax 0 in Admin → Settings now and registering before the launch. The owner set
+  Tax 0 the same day; registration not decided.
 - 2026-11-02 Deploy: "Abhi push karke live karo, jaldii" → main bb0ca4f (courier + tracking, pricing plan; migrations 027
   + 028) WITHOUT a fresh Neon backup (owner chose "Bina backup push karo"). The pricing rule and the online discount
   stay off live until the owner types the values in Admin → Settings (costs.md §11).
@@ -84,6 +88,12 @@
   … automatic"), from a FrameX business number (a family member's old keypad-phone number without WhatsApp, owner's
   choice) through Fast2SMS (no monthly fee, ₹0.25 a utility message). Templates approved by Meta in the Fast2SMS panel
   (all 3 APPROVED 2026-11-02; the owner set the 3 WHATSAPP_ values on Render the same day ~17:39: service "ready", ON).
+  2026-11-07 Meta business VERIFIED (Udyam record); WhatsApp limit 2,000 conversations / 24 h; first real message sent.
+- 2026-11-07 WhatsApp OTP login: the owner chose "WhatsApp pehle, SMS backup" (code on WhatsApp first, "Send it by SMS
+  instead" on the code screen, automatic SMS if WhatsApp refuses). My choices: the SMS link waits like "Send a new code"
+  (each message costs money); off by default behind an Admin switch until Meta approves the template.
+  Template framex_login_code created by me through Fast2SMS's API on the owner's request, APPROVED by Meta at once
+  (2026-11-07). Templates can be made with the API from now on (the Fast2SMS key in backend/.env, never printed).
   Login OTP on WhatsApp waits for Meta business verification (Udyam first). My choices (owner can change): the checkout
   box is ticked by default (remembered when unticked) and appears only while WhatsApp is set up; WhatsApp for placed,
   payment failed, shipped, out for delivery (WhatsApp only), delivered, cancelled and refunds, not for confirmed /

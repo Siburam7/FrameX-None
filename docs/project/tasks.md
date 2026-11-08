@@ -5,6 +5,48 @@
 
 ## Now
 
+- [x] 2026-11-07 **Phone login codes on WhatsApp first, SMS as the backup** (local, not pushed; no migration). Owner:
+      "WhatsApp OTP login", chose "WhatsApp pehle, SMS backup" from a two-option preview.
+      - Backend: `sendPhoneCode(phone, { via })` sends the "framex_login_code" Authentication template (code in the
+        body and the Copy code button) when `whatsappLoginReady()`; `via: "sms"` = the customer asked for SMS; WhatsApp
+        refused → the SMS goes at once (both off → 503; WhatsApp refused and no SMS → 502 WHATSAPP_SEND_FAILED, code row
+        removed). Shop / staff numbers get nothing, same answer. `/api/config features.whatsappLoginCodes`.
+      - Config / Admin: WHATSAPP_TEMPLATE_LOGIN_CODE (default framex_login_code), WHATSAPP_LOGIN_CODES (default off) =
+        Admin → Settings → WhatsApp messages → "WhatsApp: login codes".
+      - Login box: hint "…on WhatsApp.", step 2 "…on WhatsApp to …" + "Didn't get it? Send it by SMS instead" (waits like
+        "Send a new code"); a new code goes the same way as the last one.
+      - Tests: backend whatsapp-login 7/7 (new, in npm test), whatsapp 14 (now 4 switches), phone-login 11, login-code
+        8; browser wa-login-e2e 12/12 (laptop + phone), phone-login-e2e 20/20 (with OTP_RESEND_SECONDS=3; with the
+        default 30 s it now runs faster than the wait and stops at its second send: the wait, not this change).
+      - Template DONE 2026-11-07 (owner asked me to do it): created through Fast2SMS's API (POST
+        /dev/whatsapp/v26.0/<waba_id>/message_templates; WABA id from GET /dev/dlt_manager/whatsapp?type=template),
+        name framex_login_code, language "en" (like the 3 others), category AUTHENTICATION, security line, footer
+        "Expires in 10 minutes.", Copy code button. Meta answered APPROVED at once (template id …4054). Meta's text:
+        "*{{1}}* is your verification code. For your security, do not share this code." The button is stored as a URL
+        button ending code=otp{{1}}: the url-type button parameter FrameX sends is the right shape (also Fast2SMS's
+        "send authentication template" doc). No message was sent.
+      - Owner, next: push (approval) → Admin → Settings → "WhatsApp: login codes" ON → try with own number.
+
+- [ ] 2026-11-07 **Udyam certificate received** (Micro, Trading, NIC 47912 retail via e-commerce; registered 02/11/2026;
+      the certificate itself stays with the owner: personal address / phone, never in the repo). Next, in this order:
+      0. The owner confirmed a typo in the premises-name line of the address: fix it first (Udyam portal → Update
+         Details, OTP on the registered mobile; same Udyam number), then download the new certificate.
+         DONE 2026-11-07 16:31: the new certificate shows the corrected name.
+      1. Meta Business Verification (business.facebook.com → Security Centre): name and address exactly as on the
+         certificate, website shopframex.in; unlocks the WhatsApp OTP (Authentication) template and Facebook login.
+         If Meta asks for domain verification by meta-tag, the owner sends the tag and it goes into index.html (a push).
+         SUBMITTED 2026-11-07 ~16:55: Sole proprietorship, Registered, Udyam number → Meta found the public record
+         "FrameX" (Dhenkanal address, phone, Udyam) and the owner chose it (not "THE FRAMEX", Greater Noida). Status:
+         "We'll update your verification status shortly". After it: the WhatsApp Authentication (OTP) template in
+         Fast2SMS, then Facebook login.
+         2026-11-07 ~17:00 VERIFIED (Security Centre: "Your business is verified"). WhatsApp Manager: messaging limit
+         2,000 business-initiated conversations / 24 h; "1 conversation with unique customers in the last seven days" = the
+         first real WhatsApp message went out. The "needs more information" note is only the next tier (10,000 needs
+         1,000 customers in 7 days): nothing to do.
+      2. GST registration on gst.gov.in before the launch (free).
+      3. A current account in FrameX's name (Udyam as proof) for Razorpay settlements and GST.
+      4. Later / optional: DLT (own SMS sender name instead of the provider's).
+
 - [ ] 2026-11-02 **WhatsApp: Meta APPROVED the 3 templates** (Fast2SMS panel, Utility, EN): `framex_order_update` 41360,
       `framex_seller_new_order` 41362, `framex_account_approved` 41369. The code is already live (ec65434, migration 026)
       and stays OFF until Render has WHATSAPP_PROVIDER=fast2sms, WHATSAPP_API_KEY and WHATSAPP_PHONE_NUMBER_ID (owner
@@ -66,6 +108,9 @@
       costs.md §11 (markup, 3 box shares, online discount), delivery fee 0, COD fee 49, commission shops 0% / artists
       0%, payout charge 0%, "Shop products need FrameX approval" ON; Render COD_ALLOW_CUSTOM_DESIGNS=false. Delivery 0
       only together with the new prices. Products listed before keep their typed price until the shop saves them again.
+      2026-11-02 owner: "Pricing ki settings kar diya hai". Live /api/config still shows delivery fee ₹49 (free above
+      ₹499) — told the owner; the other values aren't in the public config, so not checked from here.
+      2026-11-07 still ₹49 (free above ₹499) on live /api/config — reminded the owner.
 - [ ] Later: artwork COD with a 50% advance (refused at the door: advance refunded minus the courier both ways).
 
 - [x] 2026-11-02 **Courier + tracking number on orders BUILT (migration 027; deployed 2026-11-02, main bb0ca4f)**. Owner: "admin order page par
@@ -864,6 +909,17 @@
           VPA, named at account creation). Ask Razorpay (ticket #21478745) to rename the VPA / QR payee to FrameX — they may
           ask for a business document (Udyam / GST)
 - [ ] Tax shown at checkout is 2% (Admin → Settings), not the 18% in older notes — confirm with a CA (F-18)
+      2026-11-02 owner: no GST registration now, "after 1 year". Told the owner (general rules, not a CA's advice):
+      registration is needed from the first sale, whatever the turnover, for goods sent to another state and for an
+      e-commerce operator that sells other sellers' goods (TCS); a business without GST must not charge a "Tax" line →
+      set Tax to 0 in Admin → Settings until registered (or put it into the price). Shops without GST may sell through
+      an e-commerce site only inside their own state. Recommended: register before the launch; CA to confirm.
+      2026-11-02 owner set Tax to 0 in Admin → Settings. Asked if registration is mandatory before launch: told yes for
+      the all-India + shops model (no CA needed to apply: gst.gov.in, free); the only no-GST way is FrameX's own
+      products inside Odisha only (would need delivery limited to Odisha + shop products off). Not decided.
+- [ ] 2026-11-02 Owner worried a shop frame costs much more online (with GST + COD) than in the shop, so buyers go to the
+      shop. Options worked out in the private costs.md §15 (one delivered price with GST inside, lower markup, or a shop's
+      lower "online price"). Owner to decide.
 - [x] 2026-10-21 Cart drawer: a line's picture and name now open its page (owner: they weren't clickable) — product →
       product page, template → template page, Studio design kept here → Studio — local. Browser 10/10 (laptop + phone), frame 55
 - [ ] Optional (owner asked how): reply FROM support@shopframex.in — Gmail "Send mail as" through Brevo SMTP (free,

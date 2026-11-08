@@ -19,6 +19,9 @@
   underlined "Log in using password", the Terms line. Step 2 "Enter the code": soft-blue box with the masked address,
   six square boxes (orange ring on the active one). Step 3 "Welcome to FrameX!": the name filled in from the email
   with a small green "from email" tag. Forgot / reset pages stay pages, at least 100vh tall.
+  Phone codes on WhatsApp (owner, 2026-11-07, chose "WhatsApp pehle, SMS backup" from a two-option preview): the
+  phone hint reads "We'll send a 6-digit code on WhatsApp.", step 2 "We sent a 6-digit code on WhatsApp to …" and
+  "Didn't get it? Send it by SMS instead" (an existing auth-link, waiting like "Send a new code"). Nothing else moves.
 - Home hero frames (owner, 2026-11-01): real mouldings (black lacquer, oak, gold leaf pictures as border-image), a cream
   mat with a white bevel, a soft glass sheen; they still drop onto their nails and swing.
 - Home ticker under the hero: words show only across the content width and fade at its edges on laptop and up (owner, 2026-10-29); plain on phones.

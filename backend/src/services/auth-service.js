@@ -10,6 +10,7 @@ import { errors, HttpError } from "../lib/errors.js";
 import { linkBase } from "../lib/context.js";
 import { emailStatus, messages, sendMail } from "../lib/mailer.js";
 import { sendOtpSms, smsStatus } from "../lib/sms.js";
+import { sendWhatsAppTemplate, whatsappLoginReady } from "../lib/whatsapp.js";
 import { hashPassword, needsRehash, verifyAgainstDummy, verifyPassword } from "../lib/passwords.js";
 import { hashToken, newId, newToken } from "../lib/tokens.js";
 import { normalizeEmail, normalizePhone } from "../lib/validate.js";
@@ -250,24 +251,42 @@ const indianMobile = (raw) => {
   return phone && /^\+91[6-9]\d{9}$/.test(phone) ? phone : null;
 };
 
+/** The login code on WhatsApp as the customer reads it: Meta's own words for an "Authentication" template. */
+// The approved template's own words (Meta fixes them for an Authentication template; checked 2026-11-07, id …4054)
+const whatsappCodeText = (code) => `${code} is your verification code. For your security, do not share this code.\nExpires in ${config.otp.minutes} minutes.\n[Copy code]`;
+
 /**
- * Step 1 by SMS. Same answer whether or not the number has an account. A number of a shop, artist or staff account
- * (or a disabled one) gets no SMS at all (each SMS costs money): its code row can't be used, and step 2 says nothing.
+ * Step 1 by phone. Same answer whether or not the number has an account. The code goes on WhatsApp when it can
+ * (owner, 2026-11-07: "WhatsApp pehle, SMS backup"), else by SMS; via "sms" = the customer asked for an SMS. If
+ * WhatsApp refuses it, an SMS is sent at once. A number of a shop, artist or staff account (or a disabled one) gets
+ * nothing at all (each message costs money): its code row can't be used, and step 2 says nothing.
+ * -> { …, channel: "whatsapp" | "sms", smsAvailable }
  */
-export async function sendPhoneCode(rawPhone) {
+export async function sendPhoneCode(rawPhone, { via = "auto" } = {}) {
   const phone = indianMobile(rawPhone);
   if (!phone) throw errors.validation({ phone: "Enter a 10-digit Indian mobile number." });
-  if (smsStatus().mode === "none") throw new HttpError(503, "SMS_NOT_CONFIGURED", "Codes by SMS can't be sent right now. Please use your email or Google.");
+  const smsAvailable = smsStatus().mode !== "none";
+  const onWhatsApp = via !== "sms" && whatsappLoginReady();
+  if (!onWhatsApp && !smsAvailable) throw new HttpError(503, "SMS_NOT_CONFIGURED", "Codes by SMS can't be sent right now. Please use your email or Google.");
   const user = await accountByPhone(db, phone);
   const refused = user && (user.role !== "CUSTOMER" || user.status !== "ACTIVE");
   const { code, codeId } = await newLoginCode(phone, refused);
-  const result = refused ? { delivered: true } : await sendOtpSms(phone, code);
+  let channel = onWhatsApp ? "whatsapp" : "sms";
+  let result = { delivered: true };
+  if (!refused && onWhatsApp) {
+    result = await sendWhatsAppTemplate({ to: phone, template: config.whatsapp.templates.loginCode, values: [code], button: code, preview: whatsappCodeText(code) });
+    if (!result.delivered && result.reason === "provider_error" && smsAvailable) {
+      channel = "sms";
+      result = await sendOtpSms(phone, code);
+    }
+  } else if (!refused) result = await sendOtpSms(phone, code);
   if (!result.delivered && result.reason !== "dev") {
     await db.query("DELETE FROM login_codes WHERE id = $1", [codeId]); // not sent: it must not count, nor stay valid
     if (result.reason === "not_configured") throw new HttpError(503, "SMS_NOT_CONFIGURED", "Codes by SMS can't be sent right now. Please use your email or Google.");
+    if (channel === "whatsapp") throw new HttpError(502, "WHATSAPP_SEND_FAILED", "We couldn't send the code on WhatsApp right now. Please try again in a few minutes, or use your email.");
     throw new HttpError(502, "SMS_SEND_FAILED", "We couldn't send the SMS right now. Please try again in a few minutes, or use your email.");
   }
-  return { ok: true, masked: maskPhone(phone), expiresInMinutes: config.otp.minutes, resendAfterSeconds: config.otp.resendSeconds, devMode: result.reason === "dev" };
+  return { ok: true, masked: maskPhone(phone), expiresInMinutes: config.otp.minutes, resendAfterSeconds: config.otp.resendSeconds, devMode: result.reason === "dev", channel, smsAvailable };
 }
 
 /** Step 2's check, for an email or a number: wrong tries are counted (as for the reset codes); a correct code is used up. */

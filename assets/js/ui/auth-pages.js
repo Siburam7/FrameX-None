@@ -187,17 +187,23 @@
       .join(" ")
       .slice(0, 80);
 
-  /* A phone number too (2026-11-01): the code then goes by SMS. Offered only while the server can send SMS (GET
-     /api/config features.smsDelivery); a new number's email is optional (owner: "Email optional"). The owner's layout:
-     a toggle "Phone number | Email" above the box, phone chosen first. */
+  /* A phone number too (2026-11-01): the code then goes by SMS, or on WhatsApp first when the server has that on
+     (2026-11-07, owner: "WhatsApp pehle, SMS backup"). Offered only while the server can send one of them (GET
+     /api/config features.smsDelivery / whatsappLoginCodes); a new number's email is optional (owner: "Email
+     optional"). The owner's layout: a toggle "Phone number | Email" above the box, phone chosen first. */
   const PHONE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg>';
   /** "98765 43210", "+91 98765 43210": a phone number, not an email. */
   const looksLikePhone = (value) => /^[+\d\s()-]+$/.test(String(value).trim()) && String(value).replace(/\D/g, "").length >= 10;
-  let smsOn = null; // can the server send SMS? null until GET /api/config has answered
+  let smsOn = null; // can the server send a code to a phone? null until GET /api/config has answered
+  let waOn = false; // … and does it go on WhatsApp first?
   const smsLogin = () =>
     FrameX.http
       .serverConfig()
-      .then((c) => Boolean(c && c.features && c.features.smsDelivery && c.features.smsDelivery !== "none"))
+      .then((c) => {
+        const f = (c && c.features) || {};
+        waOn = Boolean(f.whatsappLoginCodes);
+        return waOn || Boolean(f.smsDelivery && f.smsDelivery !== "none");
+      })
       .catch(() => false);
 
   /** Step 1. how: "phone" | "email" (the toggle; phone first). email: what was typed before (back from step 2). */
@@ -221,7 +227,7 @@
       <form id="code-form" class="form-grid" novalidate${tabs ? ` role="tabpanel" aria-labelledby="tab-${byPhone ? "phone" : "email"}"` : ""}>
         ${
           byPhone
-            ? forms().field("phone", "Phone number", { required: true, type: "tel", autocomplete: "tel-national", inputmode: "numeric", placeholder: "98765 43210", maxlength: 16, value: before, hint: "We'll send a 6-digit code by SMS.", prefix: "cl" })
+            ? forms().field("phone", "Phone number", { required: true, type: "tel", autocomplete: "tel-national", inputmode: "numeric", placeholder: "98765 43210", maxlength: 16, value: before, hint: `We'll send a 6-digit code ${waOn ? "on WhatsApp" : "by SMS"}.`, prefix: "cl" })
             : // the same one-line hint as the phone box, so the box keeps its height when the toggle changes (owner)
               forms().field("email", "Email", { required: true, type: "email", autocomplete: "email", inputmode: "email", placeholder: "you@gmail.com", value: before, hint: "We'll send a 6-digit code by email.", prefix: "cl" })
         }
@@ -254,14 +260,27 @@
     input.focus();
   }
 
-  /** "Enter the code": six boxes (typing moves on, pasting fills them all, the sixth digit sends it). */
+  /**
+   * "Enter the code": six boxes (typing moves on, pasting fills them all, the sixth digit sends it).
+   * A code on WhatsApp (info.channel) offers "Send it by SMS instead" for a number without WhatsApp; it waits like
+   * "Send a new code" (each message costs money).
+   */
   function codeEntry(root, { onSuccess, email, info, byPhone = false }) {
+    const onWa = byPhone && info.channel === "whatsapp";
+    const from = onWa ? "WhatsApp" : byPhone ? "the SMS" : "the email";
+    const help = onWa
+      ? info.smsAvailable
+        ? 'Didn\'t get it? <button class="auth-link" type="button" data-by-sms disabled>Send it by SMS instead</button>'
+        : "Didn't get it? Check WhatsApp on this number, or wait a moment."
+      : byPhone
+        ? "Didn't get it? Check the number, or wait a moment."
+        : "Didn't get it? Check your spam folder.";
     shell(
       root,
       "Enter the code",
       "",
       `${info.devMode ? devBanner() : ""}
-      <p class="auth-mail">${byPhone ? PHONE_ICON : MAIL_ICON}<span>We sent a 6-digit code ${byPhone ? "by SMS " : ""}to <strong>${esc(info.masked)}</strong></span></p>
+      <p class="auth-mail">${byPhone ? PHONE_ICON : MAIL_ICON}<span>We sent a 6-digit code ${onWa ? "on WhatsApp " : byPhone ? "by SMS " : ""}to <strong>${esc(info.masked)}</strong></span></p>
       <form id="code-verify-form" class="form-grid" novalidate>
         <fieldset class="otp-boxes">
           <legend class="visually-hidden">The 6-digit code</legend>
@@ -273,7 +292,7 @@
         <div class="form-status" role="status" aria-live="polite"></div>
         <button class="btn btn--primary btn--block" type="submit">Continue</button>
       </form>
-      <p class="auth-card__alt">${byPhone ? "Didn't get it? Check the number, or wait a moment." : "Didn't get it? Check your spam folder."}<br><button class="auth-link" type="button" data-resend disabled></button></p>`,
+      <p class="auth-card__alt">${help}<br><button class="auth-link" type="button" data-resend disabled></button></p>`,
       `${steps(2)}<button class="auth-link auth-back" type="button" data-change>← Change ${byPhone ? "number" : "email"}</button>`,
     );
     const form = $("#code-verify-form", root);
@@ -313,32 +332,38 @@
       });
     });
 
-    // "Send a new code" unlocks after the backend's wait time
+    // "Send a new code" (and "Send it by SMS instead") unlock after the backend's wait time
     const resend = $("[data-resend]", root);
+    const bySms = $("[data-by-sms]", root);
     let left = info.resendAfterSeconds || 30;
     const tick = () => {
       if (!resend.isConnected) return;
       resend.disabled = left > 0;
+      if (bySms) bySms.disabled = left > 0;
       resend.textContent = left > 0 ? `You can ask for a new code in 0:${String(left).padStart(2, "0")}` : "Send a new code";
       if (left-- > 0) setTimeout(tick, 1000);
     };
     tick();
-    resend.addEventListener("click", async () => {
+    // A new code goes the same way as this one (a number that got its code by SMS keeps getting SMS)
+    const again = (via) => async () => {
       resend.disabled = true;
+      if (bySms) bySms.disabled = true;
       try {
-        codeEntry(root, { onSuccess, email, byPhone, info: await (byPhone ? auth().sendPhoneCode(email) : auth().sendLoginCode(email)) });
+        codeEntry(root, { onSuccess, email, byPhone, info: await (byPhone ? auth().sendPhoneCode(email, via) : auth().sendLoginCode(email)) });
       } catch (error) {
         forms().status(status, "error", esc(error.message));
         left = error.retryAfterSeconds || 0;
         tick();
       }
-    });
+    };
+    resend.addEventListener("click", again(byPhone ? info.channel : undefined));
+    if (bySms) bySms.addEventListener("click", again("sms"));
     $("[data-change]", root).addEventListener("click", () => codeStart(root, { onSuccess, email, how: byPhone ? "phone" : "email" }));
 
     forms().handle(form, {
       busyLabel: "Checking…",
       send: (v) => {
-        if (!/^\d{6}$/.test(v.code)) throw new FrameX.http.ApiError(`Enter the 6-digit code from the ${byPhone ? "SMS" : "email"}.`);
+        if (!/^\d{6}$/.test(v.code)) throw new FrameX.http.ApiError(`Enter the 6-digit code from ${from}.`);
         return byPhone ? auth().verifyPhoneCode(email, v.code) : auth().verifyLoginCode(email, v.code);
       },
       // A new address: its name; an existing customer is in

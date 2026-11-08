@@ -279,8 +279,9 @@ describe("WhatsApp: the admin's view", () => {
     assert.equal((await S.asha.get("/api/admin/whatsapp")).status, 403);
   });
 
-  test("Admin → Settings lists the three WhatsApp switches", async () => {
+  test("Admin → Settings lists the WhatsApp switches (login codes since 2026-11-07, off by default)", async () => {
     const items = (await S.admin.get("/api/admin/settings")).json.items.filter((s) => s.group === "WhatsApp messages");
-    assert.deepEqual(items.map((s) => s.key), ["whatsappOrderUpdates", "whatsappSellerAlerts", "whatsappAccountApproved"]);
+    assert.deepEqual(items.map((s) => s.key), ["whatsappOrderUpdates", "whatsappSellerAlerts", "whatsappAccountApproved", "whatsappLoginCodes"]);
+    assert.equal(items.find((s) => s.key === "whatsappLoginCodes").value, false);
   });
 });

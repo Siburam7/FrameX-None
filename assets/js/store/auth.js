@@ -71,7 +71,8 @@
   const sendLoginCode = (email) => http.post("/auth/code/send", { email });
   const verifyLoginCode = (email, code) => http.post("/auth/code/verify", { email, code }).then((r) => (r.newAccount ? r : startSession(r)));
   // The same with a mobile number and a code by SMS (2026-11-01); a new number's email is optional in codeSignup.
-  const sendPhoneCode = (phone) => http.post("/auth/code/send", { phone });
+  // The code goes on WhatsApp first when the server has that on (2026-11-07); via "sms" = the customer asked for an SMS.
+  const sendPhoneCode = (phone, via) => http.post("/auth/code/send", { phone, via: via || undefined });
   const verifyPhoneCode = (phone, code) => http.post("/auth/code/verify", { phone, code }).then((r) => (r.newAccount ? r : startSession(r)));
   const codeSignup = (signupToken, name, phone, email) => http.post("/auth/code/signup", { signupToken, name, phone, email: email || undefined }).then(startSession);
 

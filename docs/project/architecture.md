@@ -16,8 +16,10 @@ FrameX API  framex-api.onrender.com  (Render web service, free plan, Node.js / E
    ├── File storage Backblaze B2 bucket (private, S3-compatible) — customer photos, product / review pictures
    ├── Payments     Razorpay (live keys) · Cashfree adapter (not configured live)
    ├── Email        Brevo, sender FrameX <support@shopframex.in> (see §9)
-   ├── SMS          Fast2SMS (not configured)
-   └── WhatsApp     Fast2SMS WhatsApp Business API, FrameX business number (built 2026-11-01, local; key not on Render yet)
+   ├── SMS          APITxT (login codes; the provider's own DLT sender)
+   └── WhatsApp     Fast2SMS WhatsApp Business API, FrameX business number (live, ON since 2026-11-02); login codes
+                    on WhatsApp first, SMS as the backup (built 2026-11-07; Admin switch, off until Meta approves
+                    the "framex_login_code" Authentication template)
 ```
 
 Free plan: the API sleeps after ~15 idle minutes and needs ~50 s to wake. The pages show the catalogue without the

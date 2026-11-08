@@ -163,6 +163,15 @@ const SPEC = {
     get: () => config.whatsapp.accountApproved,
     set: (v) => (config.whatsapp.accountApproved = v)
   },
+  whatsappLoginCodes: {
+    label: "WhatsApp: login codes",
+    hint: "On: a phone login code goes on WhatsApp first (template framex_login_code, \"Authentication\"); the customer can still ask for it by SMS. Turn it on only after Meta has approved the template.",
+    group: "WhatsApp messages",
+    unit: "boolean",
+    check: flag,
+    get: () => config.whatsapp.loginCodes,
+    set: (v) => (config.whatsapp.loginCodes = v)
+  },
   productModeration: {
     label: "Shop products need FrameX approval",
     hint: "On: a shop's new product waits in Admin → Shop products until FrameX approves it. Products already on sale stay on sale.",

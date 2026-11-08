@@ -16,8 +16,10 @@
 
    A business can only start a WhatsApp conversation with an approved template:
    `values` fill its {{1}}, {{2}}…, `button` fills the {{1}} of a "Visit website"
-   button with a dynamic link. `preview` is the message as the customer reads it
-   (for the development mailbox and the tests; the real text is Meta's copy).
+   button with a dynamic link (or, for the login code's "Authentication" template,
+   its "Copy code" button: Meta sends that the same way, the code as the value).
+   `preview` is the message as the customer reads it (for the development mailbox
+   and the tests; the real text is Meta's copy).
 
    sendWhatsAppTemplate() never pretends. It returns
      { delivered: true,  id }   Fast2SMS accepted it (WhatsApp delivers it a moment later)
@@ -34,6 +36,9 @@ export function whatsappStatus() {
   const problems = whatsappProblems();
   return { provider, mode: problems.length ? "none" : "real", problems };
 }
+
+/** Can a phone login code go on WhatsApp now? The service set up, the admin's switch on and a template named. */
+export const whatsappLoginReady = () => whatsappStatus().mode !== "none" && config.whatsapp.loginCodes && Boolean(config.whatsapp.templates.loginCode);
 
 /** "+91 98765 43210", "09876543210", "919876543210" -> "9876543210"; null when it can't be an Indian mobile number. */
 export function indianMobile(phone) {

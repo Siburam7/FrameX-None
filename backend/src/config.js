@@ -196,11 +196,15 @@ export const config = {
     templates: {
       orderUpdate: env.WHATSAPP_TEMPLATE_ORDER_UPDATE || "framex_order_update",
       sellerNewOrder: env.WHATSAPP_TEMPLATE_SELLER_NEW_ORDER || "framex_seller_new_order",
-      accountApproved: env.WHATSAPP_TEMPLATE_ACCOUNT_APPROVED || "framex_account_approved"
+      accountApproved: env.WHATSAPP_TEMPLATE_ACCOUNT_APPROVED || "framex_account_approved",
+      // An "Authentication" template with a "Copy code" button (owner, 2026-11-07); Meta allows it after business verification
+      loginCode: env.WHATSAPP_TEMPLATE_LOGIN_CODE || "framex_login_code"
     },
     orderUpdates: bool(env.WHATSAPP_ORDER_UPDATES, true),
     sellerAlerts: bool(env.WHATSAPP_SELLER_ALERTS, true),
-    accountApproved: bool(env.WHATSAPP_ACCOUNT_APPROVED, true)
+    accountApproved: bool(env.WHATSAPP_ACCOUNT_APPROVED, true),
+    // Phone login codes go on WhatsApp first (SMS stays as the backup). Off until Meta has approved the template.
+    loginCodes: bool(env.WHATSAPP_LOGIN_CODES, false)
   },
 
   // One-time codes: 6 digits, short life, few tries, a wait before re-sending, a cap per hour.
