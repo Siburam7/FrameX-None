@@ -22,6 +22,10 @@
   Phone codes on WhatsApp (owner, 2026-11-07, chose "WhatsApp pehle, SMS backup" from a two-option preview): the
   phone hint reads "We'll send a 6-digit code on WhatsApp.", step 2 "We sent a 6-digit code on WhatsApp to …" and
   "Didn't get it? Send it by SMS instead" (an existing auth-link, waiting like "Send a new code"). Nothing else moves.
+  Social buttons UNDER the form (owner, 2026-11-09: "google or facebook login ko niche shift kar do mobile verification
+  ko uper rakho, nehi tooh user confuse ho jayega"): step 1 = lead "Use your phone number or email. …", Phone | Email
+  toggle, the box, orange "Send me a code", "Log in using password", a divider "or continue with", Google's button,
+  the blue Facebook button, the Terms line. Pictures: Desktop\FrameX-Login-Design-2026-11-09 (laptop + phone).
 - Home hero frames (owner, 2026-11-01): real mouldings (black lacquer, oak, gold leaf pictures as border-image), a cream
   mat with a white bevel, a soft glass sheen; they still drop onto their nails and swing.
 - Home ticker under the hero: words show only across the content width and fade at its edges on laptop and up (owner, 2026-10-29); plain on phones.

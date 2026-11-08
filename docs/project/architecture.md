@@ -75,7 +75,8 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
 - Header search (2026-11-01): `ui/chrome.js` renders `.hdr-search` (link + small form + `.hdr-results`); `ui/nav.js`
   grows it (hover on laptops, tap on phones), closes it (mouse away / X / Escape / 10 s empty) and fills the results
   from `GET /api/search` (limit 4 per kind); styles at the end of `chrome.css`.
-- Each page carries a **Content-Security-Policy** `<meta>` (local, not yet deployed; test `backend/test/site-csp.test.js`).
+- Each page carries a **Content-Security-Policy** `<meta>` (live; test `backend/test/site-csp.test.js`). connect-src also allows
+  https://connect.facebook.net (2026-11-09: Facebook's SDK fetches its app_config there).
 
 ## 3. Backend (`backend/`)
 

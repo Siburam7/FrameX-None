@@ -694,6 +694,19 @@
       URI https://shopframex.in/, strict mode on; email + public_profile only), app connected to the verified business
       portfolio FrameX (Business settings → Apps → Connect an app ID, auto-approved), app PUBLISHED (no required
       actions). Left: push the v26.0 fix (approval) → the 2 Render values → real Facebook login.
+      v26.0 pushed 2026-11-09 (main 083d52c, owner: "v26.0 wala fix live karo"); the owner set the 2 Render values →
+      live /api/config facebook = the App ID; a read-only headless look at shopframex.in shows "Continue with Facebook"
+      (phone). It also showed the CSP blocking the SDK's https://connect.facebook.net/app_config/json/<app id>/ fetch →
+      connect-src + https://connect.facebook.net on all 39 pages (site-csp 4/4; index.html: only that line staged,
+      the owner's editor formatting left out). Local, push needs approval. Then: real login with a Facebook account.
+      The owner's first try on live showed "Facebook login was cancelled": the owner cancelled it on purpose (not an
+      error). The CSP fix still goes out (it removes the blocked app_config fetch from the console).
+- [x] 2026-11-09 **Login box: phone / email on top, Google + Facebook under it** (owner: "google or facebook login ko
+      niche shift kar do mobile verification ko uper rakho"). auth-pages.js: socialBlock(…, below) puts the "or
+      continue with" line first; codeStart: toggle → box → Send me a code → Log in using password → or continue with →
+      Google → Facebook → Terms; lead "Use your phone number or email. …". Pictures (laptop + phone):
+      Desktop\FrameX-Login-Design-2026-11-09. Browser: social-e2e 17/17 (new check: form first, divider first in the
+      social block), wa-login-e2e 12/12. Local, not pushed (with the CSP fix; needs the owner's "haan").
 - [x] 2026-10-26 **DEPLOYED** main bfcb26f (owner: "Promotions karlete hai fir direct sabhi push karenge"; production backup taken
       first by the owner: pen drive `framex-db-live-20261026-2109.fxdb`). Live: migrations 022 + 023 ran; API lists 11
       promotions; GOOGLE_CLIENT_ID set on Render by the owner (full id, checked via /api/config); Facebook off. Live check

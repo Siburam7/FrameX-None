@@ -47,7 +47,15 @@
   let facebookFor = "";
 
   /** The (still empty) place for the buttons; mountSocial() fills it, or removes it when neither is switched on. */
-  const socialBlock = (mode, or = mode === "signup" ? "or sign up with email" : "or log in with email / phone") => `<div class="soc" data-social data-for="customer">
+  // below = under the phone / email form, its "or" line first (owner, 2026-11-09: phone on top, Google / Facebook under it)
+  const socialBlock = (mode, or = mode === "signup" ? "or sign up with email" : "or log in with email / phone", below = false) =>
+    below
+      ? `<div class="soc soc--below" data-social data-for="customer">
+        <p class="soc__or"><span>${or}</span></p>
+        <div class="soc__buttons"></div>
+        <div class="form-status" role="status" aria-live="polite"></div>
+      </div>`
+      : `<div class="soc" data-social data-for="customer">
         <div class="soc__buttons"></div>
         <div class="form-status" role="status" aria-live="polite"></div>
         <p class="soc__or"><span>${or}</span></p>
@@ -214,9 +222,8 @@
     shell(
       root,
       "Log in or sign up",
-      tabs ? "Use your phone number, email or Google. New here? Your account is made when you log in." : "Use your email or Google. New here? Your account is made when you log in.",
-      `${socialBlock("login", tabs ? "or use your phone number or email" : "or use your email")}
-      ${
+      tabs ? "Use your phone number or email. New here? Your account is made when you log in." : "Use your email. New here? Your account is made when you log in.",
+      `${
         tabs
           ? `<div class="auth-tabs" role="tablist" aria-label="Log in with">
         <button class="auth-tabs__btn" type="button" role="tab" id="tab-phone" aria-controls="code-form" aria-selected="${byPhone}" data-how="phone">${icon("phone")} Phone number</button>
@@ -235,6 +242,7 @@
         <button class="btn btn--primary btn--block" type="submit">Send me a code</button>
       </form>
       <p class="auth-card__alt"><button class="auth-link auth-link--strong" type="button" data-use-password>Log in using password</button></p>
+      ${socialBlock("login", "or continue with", true)}
       <p class="auth-card__fine auth-card__center">By continuing you agree to the <a href="terms-of-use.html">Terms of Use</a> and <a href="privacy-notice.html">Privacy Notice</a>.</p>`,
       steps(1),
     );

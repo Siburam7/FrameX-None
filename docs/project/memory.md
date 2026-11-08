@@ -99,6 +99,9 @@
 - 2026-11-09 Facebook login: owner "Facebook login karoo". The code was built 2026-10-26; only Meta Publish + the 2
   Render values were missing. Graph API v19.0 had expired, so the website and server now use v26.0. Rule kept: set
   FACEBOOK_APP_ID / FACEBOOK_APP_SECRET on Render only after the app is Live.
+- 2026-11-09 Login box order changed by the owner: phone / email first, then "or continue with" Google + Facebook
+  (so users aren't confused). My choices: "Log in using password" stays right under "Send me a code" (it belongs to
+  the form); divider text "or continue with"; the lead no longer names Google.
   Login OTP on WhatsApp waits for Meta business verification (Udyam first). My choices (owner can change): the checkout
   box is ticked by default (remembered when unticked) and appears only while WhatsApp is set up; WhatsApp for placed,
   payment failed, shipped, out for delivery (WhatsApp only), delivered, cancelled and refunds, not for confirmed /
