@@ -26,6 +26,9 @@
   ko uper rakho, nehi tooh user confuse ho jayega"): step 1 = lead "Use your phone number or email. …", Phone | Email
   toggle, the box, orange "Send me a code", "Log in using password", a divider "or continue with", Google's button,
   the blue Facebook button, the Terms line. Pictures: Desktop\FrameX-Login-Design-2026-11-09 (laptop + phone).
+  Shorter (owner, same day, pictures login-v2-*.png first): lead "New here? We'll create your account."; Google
+  (Google's own "Sign in with Google") and the blue "Facebook" button side by side in one row; Google's column at
+  least 186 px (phones 186 / 158, laptops half and half). Only one of them switched on = one full-width button.
 - Home hero frames (owner, 2026-11-01): real mouldings (black lacquer, oak, gold leaf pictures as border-image), a cream
   mat with a white bevel, a soft glass sheen; they still drop onto their nails and swing.
 - Home ticker under the hero: words show only across the content width and fade at its edges on laptop and up (owner, 2026-10-29); plain on phones.

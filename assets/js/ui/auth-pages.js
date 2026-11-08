@@ -47,10 +47,11 @@
   let facebookFor = "";
 
   /** The (still empty) place for the buttons; mountSocial() fills it, or removes it when neither is switched on. */
-  // below = under the phone / email form, its "or" line first (owner, 2026-11-09: phone on top, Google / Facebook under it)
+  // below = under the phone / email form, its "or" line first (owner, 2026-11-09: phone on top, Google / Facebook under it),
+  // Google and Facebook side by side in one row (owner, 2026-11-09: "ek side google or ek side facebook")
   const socialBlock = (mode, or = mode === "signup" ? "or sign up with email" : "or log in with email / phone", below = false) =>
     below
-      ? `<div class="soc soc--below" data-social data-for="customer">
+      ? `<div class="soc soc--below soc--row" data-social data-for="customer">
         <p class="soc__or"><span>${or}</span></p>
         <div class="soc__buttons"></div>
         <div class="form-status" role="status" aria-live="polite"></div>
@@ -82,6 +83,9 @@
         forms().status(status, "error", esc(error.message || "That didn't work. Please try again."));
       }
     };
+    // Both on: one row, Google left and Facebook right (short labels); Google's button is as wide as its column
+    const pair = Boolean(box.classList.contains("soc--row") && ids.google && ids.facebook);
+    if (pair) buttons.classList.add("is-pair");
     const width = () => Math.min(400, Math.max(220, Math.round(buttons.clientWidth || box.clientWidth || 320)));
 
     if (ids.google) {
@@ -97,7 +101,7 @@
         }
         googleAnswer = (answer) => answer && answer.credential && finish("google", { credential: answer.credential });
         box.classList.add("is-ready");
-        google.renderButton(holder, { type: "standard", theme: "outline", size: "large", shape: "pill", text: mode === "signup" ? "signup_with" : "continue_with", logo_alignment: "center", width: width() });
+        google.renderButton(holder, { type: "standard", theme: "outline", size: "large", shape: "pill", text: pair ? "signin_with" : mode === "signup" ? "signup_with" : "continue_with", logo_alignment: "center", width: pair ? Math.round(holder.getBoundingClientRect().width) : width() });
       } catch (error) {
         holder.remove(); // Google can't be reached from here (blocked, offline): the email form still works
       }
@@ -110,7 +114,7 @@
           window.FB.init({ appId: ids.facebook, cookie: false, xfbml: false, version: "v26.0" }); // v19.0 has expired (2026-11-09)
           facebookFor = ids.facebook;
         }
-        buttons.insertAdjacentHTML("beforeend", `<button class="soc__facebook" type="button">${FACEBOOK_ICON}<span>${mode === "signup" ? "Sign up with Facebook" : "Continue with Facebook"}</span></button>`);
+        buttons.insertAdjacentHTML("beforeend", `<button class="soc__facebook" type="button">${FACEBOOK_ICON}<span>${pair ? "Facebook" : mode === "signup" ? "Sign up with Facebook" : "Continue with Facebook"}</span></button>`);
         box.classList.add("is-ready");
         $(".soc__facebook", buttons).addEventListener("click", () =>
           // FB.login straight from the click, so the browser lets its window open
@@ -222,7 +226,7 @@
     shell(
       root,
       "Log in or sign up",
-      tabs ? "Use your phone number or email. New here? Your account is made when you log in." : "Use your email. New here? Your account is made when you log in.",
+      "New here? We'll create your account.", // short (owner, 2026-11-09: "login page ko chota karoo")
       `${
         tabs
           ? `<div class="auth-tabs" role="tablist" aria-label="Log in with">

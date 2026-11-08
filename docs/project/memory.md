@@ -102,6 +102,9 @@
 - 2026-11-09 Login box order changed by the owner: phone / email first, then "or continue with" Google + Facebook
   (so users aren't confused). My choices: "Log in using password" stays right under "Send me a code" (it belongs to
   the form); divider text "or continue with"; the lead no longer names Google.
+  Same day, the owner: shorter box, Google and Facebook in one row; design pictures first ("pehele design desktop par
+  karo"), then "baneke pussh karke live kar doo". My choices: lead "New here? We'll create your account.", Google's
+  "Sign in with Google" text in the pair, the Facebook label just "Facebook", Google's column ≥ 186 px.
   Login OTP on WhatsApp waits for Meta business verification (Udyam first). My choices (owner can change): the checkout
   box is ticked by default (remembered when unticked) and appears only while WhatsApp is set up; WhatsApp for placed,
   payment failed, shipped, out for delivery (WhatsApp only), delivered, cancelled and refunds, not for confirmed /

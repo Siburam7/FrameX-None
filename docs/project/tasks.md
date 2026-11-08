@@ -701,12 +701,24 @@
       the owner's editor formatting left out). Local, push needs approval. Then: real login with a Facebook account.
       The owner's first try on live showed "Facebook login was cancelled": the owner cancelled it on purpose (not an
       error). The CSP fix still goes out (it removes the blocked app_config fetch from the console).
+- [x] 2026-11-09 **Login box shorter + Google and Facebook in one row** (owner: "login page ko chota karoo … facebook or
+      google ko ek line main rakho", then "pehele design desktop par karo"). Design pictures only (repo code untouched):
+      Desktop\FrameX-Login-Design-2026-11-09\login-v2-phone.png / login-v2-laptop.png, taken on the live site with the
+      preview script + styles given to the test browser alone. Lead "New here? We'll create your account."; Google
+      (Google's own "Sign in with Google") left, blue "Facebook" right; Google's column at least 186 px (Google draws
+      its button no narrower), so on phones Google 186 / Facebook 158, on laptops 191 / 191. Box ~90 px shorter.
+      Owner: "hm bhai abhi baneke pussh karke live kar doo" → built: auth-pages.js (soc--row; pair = both on →
+      .is-pair, Google text signin_with, Google width = its column, Facebook label "Facebook"; lead for every login
+      box), auth.css (.soc--row .soc__buttons.is-pair grid minmax(186px, 1fr) 1fr). Browser: social-e2e 19/19 (new: one
+      row, Google left, inside the box, Google ≥ 186 px; the short line), wa-login-e2e 12/12.
 - [x] 2026-11-09 **Login box: phone / email on top, Google + Facebook under it** (owner: "google or facebook login ko
       niche shift kar do mobile verification ko uper rakho"). auth-pages.js: socialBlock(…, below) puts the "or
       continue with" line first; codeStart: toggle → box → Send me a code → Log in using password → or continue with →
       Google → Facebook → Terms; lead "Use your phone number or email. …". Pictures (laptop + phone):
       Desktop\FrameX-Login-Design-2026-11-09. Browser: social-e2e 17/17 (new check: form first, divider first in the
-      social block), wa-login-e2e 12/12. Local, not pushed (with the CSP fix; needs the owner's "haan").
+      social block), wa-login-e2e 12/12. DEPLOYED 2026-11-09 with the CSP fix (main 223f18e, owner: "push kar abhi");
+      read-only headless look at live shopframex.in (phone): new order, Google's real button, Facebook button, WhatsApp
+      hint, no console errors (the app_config CSP error is gone). Left: one real Facebook login by the owner.
 - [x] 2026-10-26 **DEPLOYED** main bfcb26f (owner: "Promotions karlete hai fir direct sabhi push karenge"; production backup taken
       first by the owner: pen drive `framex-db-live-20261026-2109.fxdb`). Live: migrations 022 + 023 ran; API lists 11
       promotions; GOOGLE_CLIENT_ID set on Render by the owner (full id, checked via /api/config); Facebook off. Live check

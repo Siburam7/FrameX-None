@@ -967,6 +967,18 @@ code {
   display: none;
 }
 
+/* Google and Facebook side by side under the login form (owner, 2026-11-09). Google draws its button no narrower than
+   about 186 px, so its column never goes below that (phones: Google 186 / Facebook the rest; laptops: half and half). */
+.soc--row .soc__buttons.is-pair {
+  grid-template-columns: minmax(186px, 1fr) 1fr;
+  align-items: center;
+}
+
+.soc--row .soc__buttons.is-pair > * {
+  min-width: 0;
+  width: 100%;
+}
+
 /* ---------------------------------------------------------------- Simple login / sign-up (owner, 2026-10-31)
    The login pages are at least one screen tall on every device, so the footer never rises into view under a short
    card. The code step has six boxes; the "using password" links sit under the email box. */
