@@ -11,6 +11,10 @@
       FrameX.http.stream). Nobody free, or outside the hours: they leave a
       message instead, answered here and by email (the help chat from 2026-10-23).
    3. The care person or the customer ends it; the customer can rate it.
+   4. Feels real (owner, 2026-11-09): the quick answers come after "FrameX Care is
+      typing…" for 1–2.6 s; a message from FrameX Care while the customer isn't
+      reading the chat plays a soft chime, shows a pop-up above the FrameX Care
+      button (tap = open the chat) and puts "(1) New message" in the tab's title.
 
    Visitors who aren't logged in get the quick answers too; talking to a person
    needs an account (so FrameX can answer by email and see their orders).
@@ -61,6 +65,12 @@
   let lastTypingSent = 0;
   let countdown = 0;
   let isOpen = false;
+  let botBusy = false; // the quick-answer bot is "typing" (one answer at a time)
+  let audio = null; // the chime (Web Audio; made on the first tap / key, as browsers require)
+  let popTimer = 0;
+  let unseen = 0; // FrameX Care messages that came while this tab was in the background
+  let plainTitle = "";
+  const POPPED = "framex.care.popped"; // the last message shown in a pop-up (this tab), so it pops once
 
   const http = () => FrameX.http;
   const time = (iso) => new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
@@ -69,6 +79,11 @@
   const waitMs = () => ((cfg && cfg.care && cfg.care.waitSeconds) || 120) * 1000;
   const liveState = () => (thread && thread.live ? thread.live.state : "");
   const emailNote = () => (user && user.email ? ` (${esc(user.email)})` : "");
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+  /** How long the bot "types" before an answer (owner: 1 to 3 seconds, so it doesn't feel instant / fake). */
+  const think = (min = 1000, max = 2600) => wait(min + Math.random() * (max - min));
+  const botTyping = () => `<div class="hc-typing"><span><b></b><b></b><b></b></span> FrameX Care is typing…</div>`;
+  const fromCare = (m) => m && m.from !== "you" && m.from !== "system";
 
   function setBadge(n) {
     const b = $("[data-chat-badge]", button);
@@ -93,18 +108,120 @@
   const orderRow = (o) =>
     `<div class="hc-order">${o.firstItem && o.firstItem.image ? `<img src="${esc(http().asset(o.firstItem.image))}" alt="" width="40" height="40">` : icon("package")}<span><strong>${esc(o.orderNumber)}${o.firstItem ? ` · ${esc(o.firstItem.name)}` : ""}</strong><span class="hc-pill">${esc(ORDER_STATUS[o.status] || o.status)}</span></span></div>`;
 
+  /* ---------------------------------------------------------------- A message from FrameX Care (owner, 2026-11-09) */
+  // A soft two-note chime made in the browser (no sound file). Browsers play sound only after the visitor has tapped
+  // or typed on the page; before that it stays silent and the pop-up alone tells them.
+  function unlockSound() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      audio = audio || new Ctx();
+      if (audio.state === "suspended") audio.resume().catch(() => {});
+    } catch (error) {
+      audio = null;
+    }
+  }
+
+  function chime() {
+    if (!audio || audio.state !== "running") return;
+    const t = audio.currentTime;
+    [
+      [880, 0],
+      [1318.5, 0.14],
+    ].forEach(([hz, at]) => {
+      const tone = audio.createOscillator();
+      const gain = audio.createGain();
+      tone.type = "sine";
+      tone.frequency.value = hz;
+      gain.gain.setValueAtTime(0.0001, t + at);
+      gain.gain.exponentialRampToValueAtTime(0.14, t + at + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + at + 0.45);
+      tone.connect(gain).connect(audio.destination);
+      tone.start(t + at);
+      tone.stop(t + at + 0.5);
+    });
+  }
+
+  const remembered = () => {
+    try {
+      return sessionStorage.getItem(POPPED) || "";
+    } catch (error) {
+      return "";
+    }
+  };
+  const remember = (id) => {
+    try {
+      sessionStorage.setItem(POPPED, String(id));
+    } catch (error) {
+      /* private window: it may pop again on the next page */
+    }
+  };
+
+  /** The pop-up above the FrameX Care button: who wrote, the start of the message; tap = open the chat. */
+  function pop(m) {
+    if (!root || isOpen) return;
+    remember(m.id);
+    let el = $(".hc-pop", root);
+    if (!el) {
+      el = document.createElement("div");
+      el.className = "hc-pop";
+      el.setAttribute("role", "status");
+      root.appendChild(el);
+      el.addEventListener("click", (e) => {
+        hidePop();
+        if (e.target.closest("[data-pop-open]")) open();
+      });
+    }
+    const name = m.name && m.name !== "FrameX Care" && m.name !== "FrameX" ? m.name : "";
+    const text = String(m.body || "").replace(/\s+/g, " ").trim();
+    el.innerHTML = `<button type="button" class="hc-pop__open" data-pop-open><img src="assets/img/brand/framex-care.png" alt="" width="36" height="36">
+      <span><strong>${name ? `${esc(name)} <small>· FrameX Care</small>` : "FrameX Care"}</strong><span class="hc-pop__text">${esc(text.length > 160 ? `${text.slice(0, 159)}…` : text)}</span><em>Tap to reply</em></span></button>
+      <button type="button" class="hc-pop__x" data-pop-close aria-label="Close">${icon("close")}</button>`;
+    el.hidden = false;
+    el.classList.remove("is-in");
+    void el.offsetWidth; // start the slide-in again for a second message
+    el.classList.add("is-in");
+    clearTimeout(popTimer);
+    popTimer = setTimeout(hidePop, 10000);
+  }
+
+  function hidePop() {
+    clearTimeout(popTimer);
+    const el = root && $(".hc-pop", root);
+    if (el) el.hidden = true;
+  }
+
+  /** "(2) New message · FrameX Care" in the tab's title while the customer is in another tab or app. */
+  function flagTitle(what = "New message") {
+    if (!document.hidden) return;
+    if (!unseen) plainTitle = document.title;
+    unseen += 1;
+    document.title = `(${unseen}) ${what} · FrameX Care`;
+  }
+
+  /** A message from FrameX Care arrived: chime + pop-up + title, unless the customer is reading this chat right now. */
+  function notify(m) {
+    if (isOpen && !document.hidden && (view === "live" || view === "thread")) return;
+    chime();
+    pop(m);
+    flagTitle();
+  }
+
   /* ---------------------------------------------------------------- Quick answers */
   async function answer(id) {
+    if (botBusy) return;
+    botBusy = true;
     const q = QUESTIONS.find((x) => x[0] === id);
     asked = { question: q[2], topic: TOPIC_OF[id] || "other", orderNumber: "" };
     log.push(bubble("me", esc(q[2])));
-    log.push(card(`<p class="hc-muted">One moment…</p>`));
+    log.push(botTyping());
     view = "answers";
     render();
-    const html = await answerHtml(id).catch(() => `<p>Sorry, this answer couldn't be loaded. Please try again, or connect with FrameX Care.</p>`);
+    const [html] = await Promise.all([answerHtml(id).catch(() => `<p>Sorry, this answer couldn't be loaded. Please try again, or connect with FrameX Care.</p>`), think()]);
     log[log.length - 1] = card(html);
     if (id === "stock") stockAt = log.length - 1;
     else log.push(helped());
+    botBusy = false;
     render();
     if (id === "stock") $("[data-stock-q]", panel).focus();
   }
@@ -159,8 +276,12 @@
 
   async function stockSearch(q) {
     const term = q.trim();
-    if (term.length < 2 || stockAt < 0) return;
+    if (term.length < 2 || stockAt < 0 || botBusy) return;
+    botBusy = true;
+    log[stockAt] = card(`${stockForm(term)}<div data-stock-out>${botTyping()}</div>`);
+    render();
     let results;
+    const typed = think(800, 1600);
     try {
       const r = await http().get("/search", { q: term, kinds: "products", limit: 5 });
       const items = (r.results && r.results.products && r.results.products.items) || [];
@@ -170,6 +291,8 @@
     } catch (error) {
       results = `<p>${esc(error.message)}</p>`;
     }
+    await typed;
+    botBusy = false;
     asked.question = `Is it in stock? (${term})`;
     log[stockAt] = card(`${stockForm(term)}<div data-stock-out>${results}</div>`);
     if (stockAt === log.length - 1) log.push(helped());
@@ -344,6 +467,11 @@
     const reading = isOpen && (view === "live" || view === "thread" || view === "ended");
     if (reading && thread && thread.unread) http().post("/support/read").catch(() => {});
     setBadge(reading ? 0 : (thread && thread.unread) || 0);
+    // An answer not read yet (e.g. written while the customer was away): the pop-up once, on the next page they open
+    if (!isOpen && thread && thread.unread) {
+      const last = [...thread.messages].reverse().find(fromCare);
+      if (last && String(last.id) !== remembered()) pop(last);
+    }
     wantLive();
     if (isOpen || view === "live") render();
   }
@@ -361,8 +489,10 @@
   function onEvent(type, data) {
     if (type === "message") {
       if (!thread || thread.id !== data.threadId) return load();
-      if (!thread.messages.some((m) => m.id === data.message.id)) thread.messages.push(data.message);
+      const fresh = !thread.messages.some((m) => m.id === data.message.id);
+      if (fresh) thread.messages.push(data.message);
       typingUntil = 0;
+      if (fresh && fromCare(data.message)) notify(data.message);
       if (isOpen && (view === "live" || view === "thread")) http().post("/support/read").catch(() => {});
       else {
         thread.unread = (thread.unread || 0) + 1;
@@ -375,6 +505,11 @@
       typingTimer = setTimeout(() => view === "live" && render(), 4100);
       if (view === "live") render();
     } else if (type === "live") {
+      // Someone from FrameX Care joined: the chime (and the tab title) too, the customer may have looked away
+      if (data.state === "LIVE" && liveState() !== "LIVE") {
+        chime();
+        flagTitle("Connected");
+      }
       if (data.state === "LIVE" && !isOpen) open();
       load();
     }
@@ -444,8 +579,14 @@
       if (q) return answer(q.dataset.q);
       if (t.closest("[data-connect]")) return connect();
       if (t.closest("[data-helped]")) {
-        log.push(bubble("them", "Glad we could help! 😊", "FrameX Care"));
+        if (botBusy) return;
+        botBusy = true;
         view = "answers";
+        log.push(botTyping());
+        render();
+        await think(700, 1400);
+        log[log.length - 1] = bubble("them", "Glad we could help! 😊", "FrameX Care");
+        botBusy = false;
         return render();
       }
       if (t.closest("[data-home]")) {
@@ -460,6 +601,13 @@
         return render();
       }
       if (t.closest("[data-more-orders]")) {
+        if (botBusy) return;
+        botBusy = true;
+        log.push(botTyping());
+        render();
+        await think(800, 1500);
+        botBusy = false;
+        log.pop();
         log.push(card(`<h4>Your recent orders</h4>${orders.map((o) => `<a class="hc-order-link" href="order.html?id=${encodeURIComponent(o.orderNumber)}">${orderRow(o)}</a>`).join("")}`));
         log.push(helped());
         return render();
@@ -555,6 +703,7 @@
   /* ---------------------------------------------------------------- Open / close */
   async function open() {
     isOpen = true;
+    hidePop();
     panel.hidden = false;
     root.classList.add("is-open");
     button.setAttribute("aria-expanded", "true");
@@ -580,6 +729,13 @@
     user = s && s.user ? s.user : null;
     if (user && user.role !== "CUSTOMER") return; // shops, artists, care and admins have their own pages
     build();
+    // Sound is allowed after a tap or a key on the page (browsers' rule); the tab title comes back when it is seen
+    ["pointerdown", "keydown"].forEach((name) => document.addEventListener(name, unlockSound, { capture: true, passive: true }));
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden || !unseen) return;
+      unseen = 0;
+      document.title = plainTitle;
+    });
     cfg = await http().serverConfig();
     if (user) await load();
     if (FrameX.qs.param("chat")) open();

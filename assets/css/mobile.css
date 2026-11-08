@@ -1183,6 +1183,24 @@
   .hc.is-open .hc-btn {
     display: none;
   }
+
+  /* The pop-up for a message from FrameX Care: across the screen, just above the round button */
+  .hc-pop {
+    right: 14px;
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    left: 14px;
+    width: auto;
+  }
+
+  body.has-tabbar .hc-pop {
+    bottom: calc(134px + env(safe-area-inset-bottom, 0px));
+  }
+
+  body.pp-has-buybar .hc-pop,
+  body.co-has-paybar .hc-pop,
+  body[data-page="studio"] .hc-pop {
+    bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* Cart drawer footer on a phone (owner, 2026-10-25): one line — Subtotal, "Details", Checkout — so the items get the

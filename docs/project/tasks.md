@@ -701,6 +701,22 @@
       the owner's editor formatting left out). Local, push needs approval. Then: real login with a Facebook account.
       The owner's first try on live showed "Facebook login was cancelled": the owner cancelled it on purpose (not an
       error). The CSP fix still goes out (it removes the blocked app_config fetch from the console).
+- [x] 2026-11-09 **FrameX Care chat feels real** (owner: "jab care massage karta hai tab ek notification ana cahiye
+      like sound nehi tooh screen par kuch pop up … bot … 1 to 3 sec type main ayega then replay karega"). Design first
+      (pictures + a sound sample, repo untouched): Desktop/FrameX-Care-Chat-Design-2026-11-09 (1-bot-typing, 2-bot-answer,
+      3-care-popup, phone + laptop; care-message-sound.wav), taken on the live site with preview files in the test
+      browser alone (the pop-up drawn with a sample message, name "Riya" only an example). Plan (help-chat.js,
+      overlays.css, mobile.css; patch script in the scratchpad): quick answers / "Glad we could help" / more orders /
+      stock check come after "FrameX Care is typing…" for 1–2.6 s (one at a time); a message from FrameX Care while the
+      customer isn't reading the chat = soft two-note chime (Web Audio, no file; silent until the visitor has tapped the
+      page, browsers' rule) + a pop-up above the FrameX Care button (name, 2 lines, "Tap to reply", ×, 10 s) +
+      "(1) New message · FrameX Care" in the tab title while the tab is hidden; a care person joining = chime too; an
+      unread answer pops once on the next page. Owner: "okey push karke live kar doo" → built with the same patch
+      (help-chat.js +161, overlays.css .hc-pop +113, mobile.css phone place +18). Browser: care-e2e 59/59 (new: typing
+      first, answer after ~1–3 s; chat closed → Priya's message pops up with name + text + "Tap to reply", above the
+      round button, tap opens the chat and the pop-up goes; the stock check waits for its form). The old chat-e2e
+      (2026-10-23 "Help & chat" labels) is out of date and not in the push check. Chime and tab title not testable
+      headless (no sound / always visible): to try on a real phone.
 - [x] 2026-11-09 **Login box shorter + Google and Facebook in one row** (owner: "login page ko chota karoo … facebook or
       google ko ek line main rakho", then "pehele design desktop par karo"). Design pictures only (repo code untouched):
       Desktop\FrameX-Login-Design-2026-11-09\login-v2-phone.png / login-v2-laptop.png, taken on the live site with the
@@ -711,6 +727,8 @@
       .is-pair, Google text signin_with, Google width = its column, Facebook label "Facebook"; lead for every login
       box), auth.css (.soc--row .soc__buttons.is-pair grid minmax(186px, 1fr) 1fr). Browser: social-e2e 19/19 (new: one
       row, Google left, inside the box, Google ≥ 186 px; the short line), wa-login-e2e 12/12.
+      DEPLOYED 2026-11-09 (main a78cb20). Read-only headless look at live shopframex.in (phone): the short line, Google
+      186 px left and "Facebook" 158 px right on one line, WhatsApp hint, no console errors.
 - [x] 2026-11-09 **Login box: phone / email on top, Google + Facebook under it** (owner: "google or facebook login ko
       niche shift kar do mobile verification ko uper rakho"). auth-pages.js: socialBlock(…, below) puts the "or
       continue with" line first; codeStart: toggle → box → Send me a code → Log in using password → or continue with →

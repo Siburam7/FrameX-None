@@ -193,6 +193,12 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
   "Need a person?" peach card (`.hc-person`). Answers are white cards (`.hc-card`) with pill buttons (`.hc-b`, `--on`
   orange, `--dark` navy). Connecting: `.hc-film` — the FrameX film's logo part (the same as on page load, 0–1.72 s at 1.7×) plays again and again in a small white tile (96 px, logo about 60 px; owner, 2026-10-24), with a thin orange line for the time left. Live: green bar
   "Live · You're chatting with <b>Priya</b>" + End chat. Ended: centred rating card.
+  Feels real (owner, 2026-11-09, pictures Desktop/FrameX-Care-Chat-Design-2026-11-09 first): quick answers come after
+  the existing typing dots "FrameX Care is typing…" (1–2.6 s). A message from FrameX Care while the chat is closed:
+  `.hc-pop`, a white card (16 px corners, soft shadow) just above the FrameX Care button — the round F. CARE picture
+  (36 px), "<b>Priya</b> · FrameX Care", two lines of the message, orange "Tap to reply", a round ×; slides in, goes
+  after 10 s; phones: across the screen (14 px sides) above the round button. Plus a soft two-note chime (880 →
+  1318.5 Hz) and "(1) New message · FrameX Care" in the tab title while the tab is hidden.
 - Care desk (Admin → Live chats, `css/care.css`): a status bar (Available green / Away, connection) over the lists with
   tabs, the chat (same bubbles, staff on the right) and the customer (under the lists next to the admin menu). Phone:
   one panel at a time. A CARE login's admin menu shows the round F. CARE picture, their name, Live chats and Orders.

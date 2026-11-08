@@ -105,6 +105,12 @@
   Same day, the owner: shorter box, Google and Facebook in one row; design pictures first ("pehele design desktop par
   karo"), then "baneke pussh karke live kar doo". My choices: lead "New here? We'll create your account.", Google's
   "Sign in with Google" text in the pair, the Facebook label just "Facebook", Google's column ≥ 186 px.
+- 2026-11-09 FrameX Care chat feels real (owner): the bot "types" before answering; a care message makes a sound /
+  pop-up. Design pictures + a sound sample first, then "okey push karke live kar doo". My choices (owner can change):
+  1–2.6 s (owner said 1 to 3), one bot answer at a time; sound + pop-up only when the customer isn't reading the chat
+  (chat closed, another view, or tab hidden); the pop-up stays 10 s; a chime also when a care person joins; an unread
+  answer pops once per tab on the next page; the chime is made in the browser (no file) and stays silent until the
+  visitor has tapped the page (browsers' rule); no browser (system) notifications — they need a permission prompt.
   Login OTP on WhatsApp waits for Meta business verification (Udyam first). My choices (owner can change): the checkout
   box is ticked by default (remembered when unticked) and appears only while WhatsApp is set up; WhatsApp for placed,
   payment failed, shipped, out for delivery (WhatsApp only), delivered, cancelled and refunds, not for confirmed /
