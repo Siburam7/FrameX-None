@@ -98,8 +98,40 @@ export function setAvailable(userId, on) {
 export const staffOnline = () => [...staff.values()].filter((s) => s.available).length;
 export const customerOnline = (userId) => customers.has(userId);
 
+/* ---------------------------------------------------------------- The admin panel, live (owner, 2026-11-09)
+   "pura Admin page ko live kar doo": an open admin panel keeps one connection; after any change that went through
+   (a write answered below 400: an order, a payment webhook, an application, a review, an admin's own action in
+   another tab…) it is told which area changed — only the area's name, no data — and loads its screen again.
+   Busy, repetitive or private writes (visitor statistics, the cart, photo uploads, "typing…", logins) say nothing. */
+const admins = new Set(); // res
+
+export function addAdmin(res) {
+  admins.add(res);
+  return () => admins.delete(res);
+}
+
+export function toAdmins(type, data) {
+  for (const res of admins) send(res, type, data);
+}
+
+const QUIET =
+  /^\/api\/(analytics|uploads|files|cart|notifications|designs|ping)(\/|$)|^\/api\/support\/typing|^\/api\/care\/(typing|presence|threads\/[^/]+\/typing)|^\/api\/auth\/(login|logout|code\/send|recovery|token-info|reset-password|set-password|change-password)/;
+
+/** Express middleware: after a successful write, tell the open admin panels which area changed. */
+export function adminLiveSignal(req, res, next) {
+  if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") return next();
+  res.on("finish", () => {
+    if (res.statusCode >= 400 || !admins.size) return;
+    const path = String(req.originalUrl || "").split("?")[0];
+    if (!path.startsWith("/api/") || QUIET.test(path)) return;
+    toAdmins("changed", { area: path.split("/")[2] || "" });
+  });
+  next();
+}
+
 /** Tests: forget every connection. */
 export function resetLiveBus() {
   customers.clear();
   staff.clear();
+  admins.clear();
 }

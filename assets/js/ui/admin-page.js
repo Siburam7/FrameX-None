@@ -109,22 +109,83 @@
      the admin had scrolled to. The time under the button is when this screen's data was last loaded. */
   let refreshing = false;
   let typed = false; // something was typed on this screen and not saved yet
+  let touched = false; // a button on this screen was used (a form may be open): live reloads wait for "Refresh"
+  let quiet = false; // a reload of the same screen: it stays on screen until the new one is ready
   async function refresh() {
     if (refreshing) return;
     if (typed && !window.confirm("You have typed something on this screen that isn't saved. Refresh anyway?")) return;
+    await reload();
+  }
+
+  async function reload() {
     const y = window.scrollY;
     refreshing = true;
+    quiet = true;
     try {
       await route();
     } finally {
       refreshing = false;
+      quiet = false;
       const button = $("[data-refresh]", root);
       if (button) {
         button.disabled = false;
+        button.classList.remove("btn--primary");
+        button.classList.add("btn--outline");
         button.innerHTML = `${icon("refresh")} Refresh`;
       }
       window.scrollTo(0, y);
     }
+  }
+
+  /* Live (owner, 2026-11-09: "pura Admin page ko live kar doo … refresh ki koi need nehi"): the server says which
+     area changed (GET /api/admin/stream; any order, payment, application, review, message, or another tab's change)
+     and the open screen loads itself again, quietly, keeping its scroll. Never while the admin is typing, has a field
+     in focus or has used a button on the screen (a form may be open), and never on an editor: then "Refresh" turns
+     orange ("New updates") instead. Live chats and Chats keep their own live connection. */
+  const OWN_LIVE = ["live", "chats"];
+  const editor = (section, parts) =>
+    ["settings", "care"].includes(section) || (section === "products" && parts[1]) || (section === "promotions" && parts[1]) || (section === "shops" && parts[1] === "new");
+  let liveTimer = 0;
+  let livePending = false;
+  let liveStarted = false;
+
+  function startLive() {
+    if (liveStarted || admin.role !== "ADMIN") return;
+    liveStarted = true;
+    let first = true;
+    http().stream("/admin/stream", {
+      onEvent: (type) => type === "changed" && liveSoon(),
+      onOpen: () => (first ? (first = false) : liveSoon()), // connected again: catch up on what came meanwhile
+    });
+    document.addEventListener("visibilitychange", () => !document.hidden && livePending && liveSoon());
+  }
+
+  function liveSoon() {
+    clearTimeout(liveTimer);
+    liveTimer = setTimeout(liveReload, 700); // several changes at once: one reload
+  }
+
+  async function liveReload() {
+    const { parts } = parse();
+    const section = NAV.some(([id]) => id === parts[0]) ? parts[0] : NAV[0][0];
+    if (OWN_LIVE.includes(section)) return;
+    if (document.hidden || refreshing) return (livePending = true);
+    livePending = false;
+    const own = Date.now() - http().lastWriteAt() < 4000; // this tab's own change: its screen is already up to date
+    const main = $("[data-main]", root);
+    const focus = document.activeElement;
+    const busy = typed || touched || Boolean(main && focus && main.contains(focus) && /^(INPUT|TEXTAREA|SELECT)$/.test(focus.tagName)) || Boolean(document.querySelector("dialog[open]"));
+    if (editor(section, parts) || busy) {
+      if (own) return;
+      const button = $("[data-refresh]", root);
+      if (button && !button.disabled) {
+        button.classList.remove("btn--outline");
+        button.classList.add("btn--primary");
+        button.innerHTML = `${icon("refresh")} New updates`;
+      }
+      return;
+    }
+    await reload();
   }
 
   function layout(section) {
@@ -737,12 +798,20 @@
       leave();
       leave = null;
     }
-    const main = layout(section);
+    const old = $("[data-main]", root);
+    const same = quiet && old && root.getAttribute("data-section") === section;
+    let main;
+    if (same) {
+      main = old.cloneNode(true); // the same picture without the old screen's handlers, until the new one is drawn
+      old.replaceWith(main);
+    } else main = layout(section);
+    root.setAttribute("data-section", section);
     main.onclick = null;
     main.onsubmit = null;
     typed = false;
+    touched = false;
     main.oninput = () => (typed = true);
-    main.innerHTML = FrameX.templates.skeletonPage("dash");
+    if (!same) main.innerHTML = FrameX.templates.skeletonPage("dash");
     const loaded = (ok) => {
       const stamp = $("[data-refreshed]", root);
       if (stamp) stamp.textContent = ok ? `Updated ${new Date().toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : "Couldn't be updated";
@@ -769,7 +838,7 @@
       if (section === "paintings") await (parts[1] ? art.painting(main, parts[1], { head }) : art.paintings(main, params, { head }));
       if (section === "reviews") await art.reviews(main, params, { head });
       if (section === "care") await FrameX.adminSupport.team(main, { head });
-      if (section === "chats") await (parts[1] ? FrameX.adminSupport.thread(main, parts[1], { head }) : FrameX.adminSupport.list(main, params, { head }));
+      if (section === "chats") leave = await (parts[1] ? FrameX.adminSupport.thread(main, parts[1], { head }) : FrameX.adminSupport.list(main, params, { head })); // live while shown
       if (section === "messages") await FrameX.adminMessages.list(main, params, { head });
       if (section === "users") await (parts[1] ? FrameX.adminAnalytics.customer(main, parts[1], params, { head }) : art.users(main, params, { head }));
       if (section === "settings") await art.settings(main, params, { head });
@@ -806,8 +875,13 @@
       const copy = e.target.closest("[data-copy]");
       if (copy) copyLink(copy);
     });
+    // A button used on the screen (it may have opened a form): live reloads wait (see liveReload)
+    root.addEventListener("click", (e) => {
+      if (e.target.closest("[data-main] button")) touched = true;
+    });
     window.addEventListener("hashchange", route);
     route();
+    startLive();
   }
 
   FrameX.adminPage = { init };

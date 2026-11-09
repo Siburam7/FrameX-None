@@ -102,7 +102,8 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   shown again after 30 s of silence, and when the device is back online). A customer's message reaches the desks as
   a "message" event: a live chat only its care person, a written conversation every open desk. The customer's
   connection stays open while the chat is open, while waiting / live, and while their open conversation has a
-  message of theirs from the last 3 days (an answer may come). CARE_HOURS (default "10-20", India time) and CARE_WAIT_SECONDS (120).
+  message of theirs from the last 3 days (an answer may come). Admin → Chats (list and an open conversation) also
+  listens on /care/stream while shown (2026-11-09). CARE_HOURS (default "10-20", India time) and CARE_WAIT_SECONDS (120).
   A waiting request runs out by a timer and on any read (`expireWaiting`). Care people log in on the customer tab with
   their email and land on `admin.html#/live` (the admin panel shows a CARE login only Live chats + Orders).
   Orders for admins and FrameX Care: `/api/admin/orders` is its own router (`staffOrders`, ADMIN or CARE) mounted
@@ -122,6 +123,17 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   one at a time, max 60 MP).
 - Tests: `node --test` (`npm test`), in-memory database, stand-in gateways and bucket (`test/support/`).
   GitHub runs them for every push and pull request (`.github/workflows/tests.yml`, Node 24, no secrets, never deploys).
+
+- **Admin panel live** (owner, 2026-11-09: "pura Admin page ko live kar doo"): `GET /api/admin/stream` (ADMIN only,
+  the same server-sent events). Middleware `adminLiveSignal` (lib/live-bus.js, in app.js before the routes, so
+  payment webhooks count) sends `changed { area }` — the first path part, no data — after every write answered below
+  400, except busy / private ones (analytics, uploads, files, cart, notifications, designs, typing, presence, logins,
+  password and recovery); the unpaid-orders timer sends `orders` when it cancels any. admin-page.js: one stream per
+  page; a change → after 0.7 s the open screen loads again quietly (route() with `quiet`: the screen's copy stays until
+  the new one is drawn, no skeleton, same scroll); not on Live chats / Chats (own streams), editors (settings, care,
+  products/…, promotions/…, shops/new), or while typed / a field focused / a button on the screen was used: then
+  "Refresh" turns orange "New updates". The tab's own change (FrameX.http.lastWriteAt within 4 s) doesn't light it.
+  A hidden tab reloads when shown again. Tests: backend admin-live 3/3; browser admin-live-e2e 9/9.
 
 ## 4. Data
 

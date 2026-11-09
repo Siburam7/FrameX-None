@@ -30,6 +30,7 @@ import { handleWebhook } from "./services/payment-service.js";
 import { sendReviewPhoto } from "./services/review-service.js";
 import { sendMedia } from "./services/shop-product-service.js";
 import { noteVisits } from "./lib/activity.js";
+import { adminLiveSignal } from "./lib/live-bus.js";
 import { sendPicture as sendPromotionPicture } from "./services/promotion-service.js";
 
 export function createApp() {
@@ -38,6 +39,7 @@ export function createApp() {
   app.set("trust proxy", config.trustProxy);
   app.use(securityHeaders);
   app.use(noteVisits); // when the last visitor came: background jobs that use the database wait during quiet times
+  app.use(adminLiveSignal); // open admin panels hear which area changed (lib/live-bus.js), payment webhooks included
 
   // For the pinger that keeps the free host awake: answers without the database, so the database can sleep.
   app.get("/api/ping", (req, res) => res.set("Cache-Control", "no-store").json({ ok: true }));

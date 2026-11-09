@@ -5,6 +5,7 @@ import { db, initDb } from "./db/index.js";
 import { migrate } from "./db/migrate.js";
 import { describeConnection, pgConnection } from "./db/ssl.js";
 import { unlessQuiet } from "./lib/activity.js";
+import { toAdmins } from "./lib/live-bus.js";
 import { emailStatus } from "./lib/mailer.js";
 import { smsStatus } from "./lib/sms.js";
 import { whatsappStatus } from "./lib/whatsapp.js";
@@ -63,7 +64,11 @@ async function main() {
   const known = files.ready ? await checkKnownFiles().catch((error) => ({ error: error.message })) : null;
 
   // Online orders that were never paid: cancelled after PAYMENT_PENDING_MINUTES, and their stock is given back.
-  const expire = () => expireUnpaidOrders().catch((error) => console.error("[payments] expiring unpaid orders failed:", error.message));
+  // An order that ran out unpaid is a change the open admin panels should see too (not made by a request)
+  const expire = () =>
+    expireUnpaidOrders()
+      .then((n) => n && toAdmins("changed", { area: "orders" }))
+      .catch((error) => console.error("[payments] expiring unpaid orders failed:", error.message));
   setInterval(unlessQuiet("unpaid orders", expire), 60 * 1000).unref();
   expire();
   // Accepted custom paintings whose advance was never paid are closed after CUSTOM_PAINTING_ADVANCE_DAYS.

@@ -7,6 +7,10 @@
    when it is done. Only an ADMIN can read these: the backend checks every
    request.
 
+   Live (owner, 2026-11-09: a customer's message showed only after a refresh): an open conversation and the list
+   keep the care desk's live connection (/care/stream) while they are on screen; a new message is added at once
+   (the answer being typed stays) and the list updates itself.
+
    Live chats (FrameX Care, 2026-10-24) are answered on the care desk
    (Live chats, #/live, ui/care-desk.js); "Care team" (#/care) makes the care logins for it.
    ========================================================================== */
@@ -26,7 +30,29 @@
       </div>
       <div class="sd-item__actions"><a class="iu-btn iu-btn--go" href="#/chats/${esc(t.id)}">${icon("mail")} ${t.unread ? "Answer" : "Open"}</a></div></li>`;
 
+  /** The care desk's live connection while this page is shown; returns the function that ends it. */
+  function liveFor(onChange) {
+    let soon = 0;
+    const later = (data) => {
+      clearTimeout(soon);
+      soon = setTimeout(() => onChange(data), 250); // several events at once: one reload
+    };
+    const live = http().stream("/care/stream", {
+      onEvent: (type, data) => (type === "message" || type === "queue") && later(data),
+      onOpen: () => later(null), // (re)connected: catch up on what came meanwhile
+    });
+    return () => {
+      clearTimeout(soon);
+      live.close();
+    };
+  }
+
   async function list(main, params, { head }) {
+    await drawList(main, params, { head });
+    return liveFor(() => main.isConnected && drawList(main, params, { head }).catch(() => {}));
+  }
+
+  async function drawList(main, params, { head }) {
     const status = ["OPEN", "CLOSED"].includes(params.get("status")) ? params.get("status") : "";
     const r = await http().get("/admin/support", { status });
     main.innerHTML = `${head("Chats", "Customers write from the chat button on every page. Your answer appears in their chat and is emailed to their account address. Live chats are answered under Live chats.", `<a class="btn btn--primary btn--sm" href="#/live">${icon("mail")} Open Live chats</a>`)}
@@ -37,12 +63,13 @@
 
   async function thread(main, id, { head }) {
     const t = (await http().get(`/admin/support/${encodeURIComponent(id)}`)).thread;
+    const msg = (t, m) => `<div class="hc-msg hc-msg--${m.from === "framex" ? "me" : "them"}">${m.orderNumber ? `<span class="hc-msg__order">${icon("package")} ${esc(m.orderNumber)}</span>` : ""}${esc(m.body).replace(/\n/g, "<br>")}<small>${m.from === "framex" ? "FrameX · " : `${esc(t.customer.name)} · `}${esc(when(m.at))}</small></div>`;
     const draw = (t) => {
       main.innerHTML = `<a class="wz-back" href="#/chats">${icon("chev-left")} All chats</a>
         ${head(t.customer.name, `${esc(t.customer.email || "")}${t.customer.phone ? ` · ${esc(t.customer.phone)}` : ""}${t.topicName ? ` · ${esc(t.topicName)}` : ""}`, `<span class="sd-status sd-status--${t.status === "OPEN" ? "published" : "draft"}">${t.status === "OPEN" ? "Open" : "Closed"}</span>`)}
         <div class="adm-chat">
           <div class="adm-chat__main">
-            <div class="adm-chat__log" data-log>${t.messages.map((m) => `<div class="hc-msg hc-msg--${m.from === "framex" ? "me" : "them"}">${m.orderNumber ? `<span class="hc-msg__order">${icon("package")} ${esc(m.orderNumber)}</span>` : ""}${esc(m.body).replace(/\n/g, "<br>")}<small>${m.from === "framex" ? "FrameX · " : `${esc(t.customer.name)} · `}${esc(when(m.at))}</small></div>`).join("")}</div>
+            <div class="adm-chat__log" data-log>${t.messages.map((m) => msg(t, m)).join("")}</div>
             <form class="adm-chat__form" data-reply novalidate>
               <label class="visually-hidden" for="adm-reply">Your answer</label>
               <textarea class="input" id="adm-reply" name="body" rows="3" maxlength="2000" placeholder="Write your answer…"></textarea>
@@ -60,6 +87,17 @@
     };
     draw(t);
     badge();
+    // Live: a new message from the customer appears at once; only the messages are drawn again, so an answer being
+    // typed stays in its box (reading it here also marks it read)
+    const stop = liveFor(async (data) => {
+      if (!main.isConnected || (data && data.threadId !== id)) return;
+      const fresh = ((await http().get(`/admin/support/${encodeURIComponent(id)}`).catch(() => null)) || {}).thread;
+      const log = fresh && $("[data-log]", main);
+      if (!log) return;
+      const atEnd = log.scrollHeight - log.scrollTop - log.clientHeight < 80;
+      log.innerHTML = fresh.messages.map((m) => msg(fresh, m)).join("");
+      if (atEnd || (data && data.message && data.message.from === "customer")) log.scrollTop = log.scrollHeight;
+    });
     main.onsubmit = async (e) => {
       if (!e.target.matches("[data-reply]")) return;
       e.preventDefault();
@@ -86,6 +124,7 @@
         FrameX.toast.show(error.message);
       }
     };
+    return stop;
   }
 
   /* ---------------------------------------------------------------- Care team (#/care) */

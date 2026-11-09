@@ -113,7 +113,13 @@
   visitor has tapped the page (browsers' rule); no browser (system) notifications — they need a permission prompt.
   Lesson (owner's real-phone test, same night): test the chat OUTSIDE the care hours too — then it is a written
   conversation, which wasn't live both ways; and on touch screens unlock sound on pointerup / touchend / click,
-  never pointerdown. Fixed the same day (see tasks.md).
+  never pointerdown. Fixed the same day (see tasks.md). Also: the owner answers from Admin → Chats (the older inbox),
+  not the Live chats desk — every page where staff read chats must be live (both are now).
+- 2026-11-09 Whole admin panel live (owner). My choices: the server says only WHICH area changed (no data), the screen
+  reloads itself (no polling, so the database can still sleep when nothing happens); never over typing / a focused
+  field / a used button / an editor — then the Refresh button turns orange "New updates"; the tab's own change is
+  ignored for 4 s; visitor stats, cart, uploads, typing and logins don't count. Browser tests must not wait for
+  networkidle0 on admin pages any more (the live connection keeps the network busy).
   Login OTP on WhatsApp waits for Meta business verification (Udyam first). My choices (owner can change): the checkout
   box is ticked by default (remembered when unticked) and appears only while WhatsApp is set up; WhatsApp for placed,
   payment failed, shipped, out for delivery (WhatsApp only), delivered, cancelled and refunds, not for confirmed /

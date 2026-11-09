@@ -6,6 +6,7 @@ import { Router } from "express";
 import { errors } from "../lib/errors.js";
 import { isUuid, v, validate } from "../lib/validate.js";
 import { requireRole } from "../middleware/auth.js";
+import { addAdmin, openStream } from "../lib/live-bus.js";
 import * as analytics from "../services/admin-analytics-service.js";
 import * as artists from "../services/artist-service.js";
 import * as artworks from "../services/artwork-service.js";
@@ -93,6 +94,9 @@ staffOrders.post("/:orderNumber/address", async (req, res) => res.json(await edi
 router.use("/orders", staffOrders);
 
 router.use(requireRole("ADMIN"));
+
+// The admin panel, live (2026-11-09): which area changed, pushed at once (lib/live-bus.js adminLiveSignal)
+router.get("/stream", (req, res) => openStream(req, res, (r) => addAdmin(r)));
 
 const idParam = (req) => {
   if (!isUuid(req.params.id)) throw errors.notFound();

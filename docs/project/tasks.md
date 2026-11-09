@@ -731,8 +731,24 @@
       keydown (+ a silent sound for iPhone); a pop-up on reconnect also chimes; client.js stream reconnects after 70 s
       without a ping, on coming back to the page after 30 s of silence, and when back online. Tests: backend care
       12/12 (new: a message left reaches both desks at once), support 8/8; browser care-e2e 62/62 cookie mode and
-      62/62 bearer (live) mode (new: written conversation both ways live, pop-up with the chat closed). Local, push
-      needs the owner's OK. iPhone silent switch mutes web sounds (Apple's rule).
+      62/62 bearer (live) mode (new: written conversation both ways live, pop-up with the chat closed). DEPLOYED
+      2026-11-09 (main 98f4e45, owner: "live & push all this"); live site serves the new files, chat check clean.
+      Owner to retry on a real phone. iPhone silent switch mutes web sounds (Apple's rule).
+      Owner retried: "user send kiya tooh care ko nehi jata hai". Cause: the owner answers in Admin → Chats
+      (#/chats/<id>, the older inbox the staff email and the dashboard tile link to), which had NO live connection.
+      Fixed: admin-support.js list() and thread() keep /care/stream while shown (thread: only the messages are drawn
+      again, so a half-written answer stays; reading also marks it read; list: redrawn); admin-page.js keeps their
+      stop function as `leave`. New browser test admin-chats-live-e2e 9/9 cookie + 9/9 bearer (customer → Admin
+      Chats ~0.3 s). Local, push needs the owner's OK.
+- [x] 2026-11-09 **The whole admin panel live** (owner: "bhai pura Admin page ko live kar doo jese refrace ke koi need
+      nehi hoha"). Server: lib/live-bus.js addAdmin / toAdmins / adminLiveSignal (middleware in app.js), GET
+      /api/admin/stream, server.js unpaid-orders timer → `orders`. Website: client.js lastWriteAt; admin-page.js startLive /
+      liveReload / quiet route (see architecture.md). Tests: backend admin-live 3/3 (new, in npm test), care 12, support
+      8, api 48, checkout 56; browser admin-live-e2e 9/9 cookie + 9/9 bearer (a new order on the Orders list by itself,
+      quietly, same scroll; Overview too; an open form → "New updates", tapping it reloads; the admin's own change
+      doesn't light it), admin-chats-live-e2e 9/9, care-e2e 62/62 (its admin reload now waits for networkidle2: the
+      panel keeps a live connection, so networkidle0 never comes), tracking-e2e 10/10, payout-e2e 38/38. Local, push
+      needs the owner's OK (together with the Admin → Chats live fix above).
 - [x] 2026-11-09 **Login box shorter + Google and Facebook in one row** (owner: "login page ko chota karoo … facebook or
       google ko ek line main rakho", then "pehele design desktop par karo"). Design pictures only (repo code untouched):
       Desktop\FrameX-Login-Design-2026-11-09\login-v2-phone.png / login-v2-laptop.png, taken on the live site with the

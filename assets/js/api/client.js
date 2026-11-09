@@ -97,7 +97,10 @@
     });
   }
 
+  let lastWrite = 0; // when this page last changed something (the admin panel tells its own changes from others')
+
   async function request(method, path, body, params) {
+    if (method !== "GET") lastWrite = Date.now();
     if (!enabled())
       throw new ApiError("FrameX accounts aren't available here yet.", {
         code: "BACKEND_NOT_CONFIGURED",
@@ -321,6 +324,7 @@
     patch: (path, body) => request("PATCH", path, body || {}),
     upload,
     stream,
+    lastWriteAt: () => lastWrite,
     origin,
     asset,
     fileUrl,
