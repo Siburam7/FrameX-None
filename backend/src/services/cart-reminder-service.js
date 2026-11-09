@@ -20,7 +20,9 @@ import { errors } from "../lib/errors.js";
 import { linkBase } from "../lib/context.js";
 import { emailStatus, messages, sendMail } from "../lib/mailer.js";
 import { newId } from "../lib/tokens.js";
+import { indianMobile, whatsappStatus } from "../lib/whatsapp.js";
 import { getCart } from "./cart-service.js";
+import { cartReminder as whatsappCartReminder } from "./whatsapp-service.js";
 import { productsById, templatesById } from "./catalog-service.js";
 import * as coupons from "./coupon-service.js";
 
@@ -122,7 +124,9 @@ async function dueCarts(limit) {
   return rows;
 }
 
-const sentToday = async (now) => Number((await db.query("SELECT count(*)::int AS n FROM cart_reminders WHERE sent_at >= $1", [startOfLocalDay(now)])).rows[0].n);
+/** Reminders sent today (India time) on one channel: the email and the WhatsApp limits are counted apart. */
+const sentToday = async (now, channel = "EMAIL") =>
+  Number((await db.query("SELECT count(*)::int AS n FROM cart_reminders WHERE sent_at >= $1 AND channel = $2", [startOfLocalDay(now), channel])).rows[0].n);
 
 /**
  * One cart's email. Claims the cart first (so two runs can't both send it); gives the claim back when the email
@@ -170,6 +174,96 @@ export async function runDue(now = new Date()) {
     else skipped += 1;
   }
   return { sent, skipped };
+}
+
+/* ---------------------------------------------------------------- On WhatsApp (owner, 2026-11-09)
+   "WhatsApp 3 ghante, email 24 ghante": a customer who said yes to offers and reminders on WhatsApp (users.whatsapp_offers:
+   the account page or the checkout tick) gets ONE WhatsApp per cart state after config.cartReminders.whatsappHours,
+   9 am to 9 pm, at most whatsappDailyLimit a day (each is a paid "Marketing" message). The email still comes later. */
+const WHATSAPP_MAX_AGE_DAYS = 3; // switched on after a while: old carts are not messaged
+const itemsText = (items) => {
+  const first = String(items[0].name || "your frame").slice(0, 60);
+  return items.length > 1 ? `${first} and ${items.length - 1} more` : first;
+};
+
+async function dueOnWhatsApp(limit) {
+  const { rows } = await db.query(
+    `SELECT c.id AS cart_id, c.user_id
+       FROM carts c JOIN users u ON u.id = c.user_id
+      WHERE c.updated_at <= now() - make_interval(hours => $1)
+        AND c.updated_at > now() - make_interval(days => $3)
+        AND (c.wa_reminded_at IS NULL OR c.wa_reminded_at < c.updated_at)
+        AND EXISTS (SELECT 1 FROM cart_items i WHERE i.cart_id = c.id)
+        AND u.role = 'CUSTOMER' AND u.status = 'ACTIVE' AND u.deleted_at IS NULL AND u.whatsapp_offers AND u.whatsapp_offers_phone IS NOT NULL
+        AND NOT EXISTS (SELECT 1 FROM orders o WHERE o.user_id = c.user_id AND o.created_at > c.updated_at AND o.status <> 'CANCELLED')
+      ORDER BY c.updated_at
+      LIMIT $2`,
+    [R().whatsappHours, limit, WHATSAPP_MAX_AGE_DAYS]
+  );
+  return rows;
+}
+
+/** One cart's WhatsApp. Claimed first (two runs can't both send it); a failed message isn't tried again for this cart state. */
+async function remindOnWhatsApp(cartId, userId) {
+  const claim = await db.query("UPDATE carts SET wa_reminded_at = now() WHERE id = $1 AND (wa_reminded_at IS NULL OR wa_reminded_at < updated_at) RETURNING updated_at", [cartId]);
+  if (!claim.rows.length) return { sent: false, reason: "ALREADY_REMINDED" };
+  const user = (await db.query("SELECT name, whatsapp_offers, whatsapp_offers_phone FROM users WHERE id = $1", [userId])).rows[0];
+  if (!user || !user.whatsapp_offers || !user.whatsapp_offers_phone) return { sent: false, reason: "NO_CONSENT" };
+  const items = (await getCart(userId)).items.filter((i) => i.available);
+  if (!items.length) return { sent: false, reason: "NOTHING_TO_BUY" };
+  const ref = `${cartId}:${new Date(claim.rows[0].updated_at).toISOString()}`;
+  const result = await whatsappCartReminder({ ref, name: user.name, phone: user.whatsapp_offers_phone, items: itemsText(items) });
+  if (result !== "sent" && result !== "dev") return { sent: false, reason: result };
+  const total = items.reduce((sum, i) => sum + i.lineTotal, 0);
+  await db.query("INSERT INTO cart_reminders (id, user_id, cart_id, items, value, coupon_code, how, channel) VALUES ($1, $2, $3, $4, $5, NULL, 'AUTO', 'WHATSAPP')", [
+    newId(),
+    userId,
+    cartId,
+    items.reduce((n, i) => n + i.quantity, 0),
+    total
+  ]);
+  return { sent: true };
+}
+
+/** The server's timer (with runDue): every cart due on WhatsApp, within the hours and the WhatsApp daily limit. */
+export async function runDueWhatsApp(now = new Date()) {
+  const s = R();
+  if (!config.whatsapp.cartReminders) return { sent: 0, why: "off" };
+  if (whatsappStatus().mode === "none") return { sent: 0, why: "no WhatsApp service" };
+  const hour = localHour(now);
+  if (hour < s.fromHour || hour >= s.toHour) return { sent: 0, why: "outside sending hours" };
+  const room = s.whatsappDailyLimit - (await sentToday(now, "WHATSAPP"));
+  if (room <= 0) return { sent: 0, why: "daily limit reached" };
+  let sent = 0;
+  let skipped = 0;
+  for (const c of await dueOnWhatsApp(room)) {
+    const r = await remindOnWhatsApp(c.cart_id, c.user_id);
+    if (r.sent) sent += 1;
+    else skipped += 1;
+  }
+  return { sent, skipped };
+}
+
+/* ---------------------------------------------------------------- A customer's yes / no to WhatsApp offers */
+/** The account page's switch. On needs a mobile number: the one given, or the account's, or the newest address's. */
+export async function setWhatsAppOffers(userId, wanted, phone = "") {
+  if (!wanted) {
+    await db.query("UPDATE users SET whatsapp_offers = false, updated_at = now() WHERE id = $1", [userId]);
+    return { whatsappOffers: false, whatsappOffersPhone: null };
+  }
+  const u = (await db.query("SELECT phone FROM users WHERE id = $1", [userId])).rows[0];
+  const address = (await db.query("SELECT phone FROM addresses WHERE user_id = $1 ORDER BY is_default DESC, updated_at DESC LIMIT 1", [userId])).rows[0];
+  const number = indianMobile(phone) || indianMobile(u && u.phone) || indianMobile(address && address.phone);
+  if (!number) throw errors.validation({ phone: "Add your 10-digit mobile number first." });
+  await db.query("UPDATE users SET whatsapp_offers = true, whatsapp_offers_phone = $2, whatsapp_offers_at = now(), updated_at = now() WHERE id = $1", [userId, "+91" + number]);
+  return { whatsappOffers: true, whatsappOffersPhone: "+91" + number };
+}
+
+/** The checkout tick "Send order updates and reminders to my WhatsApp" said yes for this number. */
+export async function whatsappOffersFromCheckout(userId, phone) {
+  const number = indianMobile(phone);
+  if (!userId || !number) return;
+  await db.query("UPDATE users SET whatsapp_offers = true, whatsapp_offers_phone = $2, whatsapp_offers_at = now() WHERE id = $1", [userId, "+91" + number]);
 }
 
 /** An admin presses "Send reminder" (no waiting time, no sending hours; the daily limit still applies). */

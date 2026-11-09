@@ -139,7 +139,9 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
 
 - 44 tables + `schema_migrations` (018 added 2; 024 `login_codes`: email login codes, kept by address, only a hash; 025
   `cart_reminders` + `carts.reminded_at` + `users.cart_reminders_off`; 027 orders' courier / tracking columns; 028
-  `order_items.seller_unit_amount` + `orders.online_discount`); sequences for Shop IDs, order numbers, artist codes, painting requests, payouts.
+  `order_items.seller_unit_amount` + `orders.online_discount`; 029 (2026-11-09) `users.whatsapp_offers` / `_phone` / `_at`,
+  `carts.wa_reminded_at`, `cart_reminders.channel` (EMAIL | WHATSAPP), whatsapp_messages kind CART_REMINDER,
+  `orders.payment_reminded_at`); sequences for Shop IDs, order numbers, artist codes, painting requests, payouts.
 - Tables refer to each other in circles (users ↔ shops ↔ shop applications, users ↔ artists).
 - Prices, totals and payment state are computed and stored by the server only.
 

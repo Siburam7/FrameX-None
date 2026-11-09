@@ -120,6 +120,13 @@
   field / a used button / an editor — then the Refresh button turns orange "New updates"; the tab's own change is
   ignored for 4 s; visitor stats, cart, uploads, typing and logins don't count. Browser tests must not wait for
   networkidle0 on admin pages any more (the live connection keeps the network busy).
+- 2026-11-09 WhatsApp cart reminder + payment reminder (owner's three choices: only to those who said yes — account
+  switch or the checkout tick, whose words now include "reminders"; WhatsApp at 3 h, email at 24 h; payment reminder
+  15 min in, held 30). My choices (owner can change): the payment reminder reuses the approved framex_order_update
+  (Utility, cheaper, no new approval); no coupon in the WhatsApp (the email keeps it); 50 WhatsApp cart reminders a
+  day (~₹0.95 each, Marketing); carts older than 3 days are not messaged; no payment reminder after a "payment
+  failed" message; a failed WhatsApp isn't retried for that cart state; the checkout tick (ticked by default) counts
+  as the yes.
   Login OTP on WhatsApp waits for Meta business verification (Udyam first). My choices (owner can change): the checkout
   box is ticked by default (remembered when unticked) and appears only while WhatsApp is set up; WhatsApp for placed,
   payment failed, shipped, out for delivery (WhatsApp only), delivered, cancelled and refunds, not for confirmed /

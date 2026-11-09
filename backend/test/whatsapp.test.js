@@ -281,7 +281,8 @@ describe("WhatsApp: the admin's view", () => {
 
   test("Admin → Settings lists the WhatsApp switches (login codes since 2026-11-07, off by default)", async () => {
     const items = (await S.admin.get("/api/admin/settings")).json.items.filter((s) => s.group === "WhatsApp messages");
-    assert.deepEqual(items.map((s) => s.key), ["whatsappOrderUpdates", "whatsappSellerAlerts", "whatsappAccountApproved", "whatsappLoginCodes"]);
+    assert.deepEqual(items.map((s) => s.key), ["whatsappOrderUpdates", "whatsappSellerAlerts", "whatsappAccountApproved", "whatsappLoginCodes", "whatsappCartReminders"]);
     assert.equal(items.find((s) => s.key === "whatsappLoginCodes").value, false);
+    assert.equal(items.find((s) => s.key === "whatsappCartReminders").value, false, "off until Meta approves the template");
   });
 });

@@ -198,13 +198,17 @@ export const config = {
       sellerNewOrder: env.WHATSAPP_TEMPLATE_SELLER_NEW_ORDER || "framex_seller_new_order",
       accountApproved: env.WHATSAPP_TEMPLATE_ACCOUNT_APPROVED || "framex_account_approved",
       // An "Authentication" template with a "Copy code" button (owner, 2026-11-07); Meta allows it after business verification
-      loginCode: env.WHATSAPP_TEMPLATE_LOGIN_CODE || "framex_login_code"
+      loginCode: env.WHATSAPP_TEMPLATE_LOGIN_CODE || "framex_login_code",
+      // A "Marketing" template (owner, 2026-11-09): the cart reminder, only to customers who said yes to WhatsApp offers
+      cartReminder: env.WHATSAPP_TEMPLATE_CART_REMINDER || "framex_cart_reminder"
     },
     orderUpdates: bool(env.WHATSAPP_ORDER_UPDATES, true),
     sellerAlerts: bool(env.WHATSAPP_SELLER_ALERTS, true),
     accountApproved: bool(env.WHATSAPP_ACCOUNT_APPROVED, true),
     // Phone login codes go on WhatsApp first (SMS stays as the backup). Off until Meta has approved the template.
-    loginCodes: bool(env.WHATSAPP_LOGIN_CODES, false)
+    loginCodes: bool(env.WHATSAPP_LOGIN_CODES, false),
+    // Cart reminders on WhatsApp. Off until Meta has approved the template.
+    cartReminders: bool(env.WHATSAPP_CART_REMINDERS, false)
   },
 
   // One-time codes: 6 digits, short life, few tries, a wait before re-sending, a cap per hour.
@@ -252,6 +256,9 @@ export const config = {
     },
     // An order waiting for an online payment keeps its stock this long, then is cancelled.
     pendingMinutes: Math.max(5, int(env.PAYMENT_PENDING_MINUTES, 30)),
+    // "Payment not finished" (owner, 2026-11-09): this many minutes after an online payment started and is still
+    // unpaid, one reminder (email, account, WhatsApp if said yes) while the order is still held.
+    reminderMinutes: Math.max(1, int(env.PAYMENT_REMINDER_MINUTES, 15)),
     brandName: env.PAYMENT_BRAND_NAME || "FrameX"
   },
 
@@ -358,6 +365,9 @@ export const config = {
     hours: Math.min(168, Math.max(1, int(env.CART_REMINDER_HOURS, 24))),
     coupon: String(env.CART_REMINDER_COUPON ?? "XUSE10").trim().toUpperCase(),
     dailyLimit: Math.min(290, Math.max(0, int(env.CART_REMINDER_DAILY_LIMIT, 100))),
+    // On WhatsApp (owner, 2026-11-09): sooner than the email, to those who said yes; each one is a paid message
+    whatsappHours: Math.min(72, Math.max(1, int(env.CART_REMINDER_WHATSAPP_HOURS, 3))),
+    whatsappDailyLimit: Math.min(1000, Math.max(0, int(env.CART_REMINDER_WHATSAPP_DAILY_LIMIT, 50))),
     fromHour: 9,
     toHour: 21
   },

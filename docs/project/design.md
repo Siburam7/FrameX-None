@@ -201,6 +201,11 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
   1318.5 Hz) and "(1) New message · FrameX Care" in the tab title while the tab is hidden. Since 2026-11-09 (later)
   the chime plays for every FrameX Care message, also with the chat open; staff pages (Live chats, Chats and its
   list) ding (784 → 1046 Hz) for every customer message.
+- Account page "Messages from FrameX" (was "Emails from FrameX", 2026-11-09): the email "Cart reminders" switch and a
+  second one, "Offers and cart reminders on WhatsApp" ("…To +91 98765 43210." when on), same .acc-switch look.
+  Checkout's WhatsApp tick: "Send order updates and reminders to my WhatsApp <number>". Pictures:
+  Desktop/FrameX-Reminders-Design-2026-11-09 (account phone + laptop, checkout tick, the two WhatsApp messages, the
+  "Finish your payment" email).
 - Dashboards' left menu (admin, shop, artist; owner, 2026-11-09): on a laptop it stays in view and, when longer than
   the screen (the admin's), scrolls on its own with a thin scrollbar; the page doesn't move with it.
 - Care desk (Admin → Live chats, `css/care.css`): a status bar (Available green / Away, connection) over the lists with

@@ -357,7 +357,7 @@
       </dl>
       ${waiting ? `<div class="form-status form-status--error is-visible" role="alert">${icon("alert")}<span><strong>Order ${esc(waiting.orderNumber)} is not paid yet.</strong> ${esc(waiting.message)} <a href="${orderUrl(waiting.orderNumber)}">View order</a></span></div>` : ""}
       <div class="form-status" id="co-status" role="status" aria-live="polite"></div>
-      ${waNumber() ? `<label class="co-wa"><input type="checkbox" name="whatsapp"${whatsapp ? " checked" : ""}><span>Send order updates to my WhatsApp <b>${esc(waNumber())}</b></span></label>` : ""}
+      ${waNumber() ? `<label class="co-wa"><input type="checkbox" name="whatsapp"${whatsapp ? " checked" : ""}><span>Send order updates and reminders to my WhatsApp <b>${esc(waNumber())}</b></span></label>` : ""}
       <button class="btn btn--primary btn--block co-place" type="button" data-place ${ready ? "" : "disabled"}>${
         cod ? `Place Order • ${formatPrice(q.total)}` : waiting ? `Retry payment • ${formatPrice(q.total)}` : `Pay ${formatPrice(q.total)}`
       }</button>

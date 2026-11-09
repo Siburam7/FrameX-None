@@ -25,7 +25,7 @@ const GENERIC_LOGIN_ERROR = "Those details don't match an account. Check them an
 export async function publicUser(userId) {
   const { rows } = await db.query(
     `SELECT u.id, u.name, u.email, u.phone, u.role, u.status, u.created_at, u.last_login_at,
-            (u.password_hash IS NOT NULL) AS has_password, NOT coalesce(u.cart_reminders_off, false) AS cart_reminders, (u.google_sub IS NOT NULL) AS via_google, (u.facebook_id IS NOT NULL) AS via_facebook,
+            (u.password_hash IS NOT NULL) AS has_password, NOT coalesce(u.cart_reminders_off, false) AS cart_reminders, u.whatsapp_offers, u.whatsapp_offers_phone, (u.google_sub IS NOT NULL) AS via_google, (u.facebook_id IS NOT NULL) AS via_facebook,
             sh.shop_code, sh.name AS shop_name, sh.city, sh.state, sh.approval_status, sh.active_status,
             ar.artist_code, ar.username AS artist_username, ar.name AS artist_name, ar.status AS artist_status
        FROM users u LEFT JOIN shops sh ON sh.id = u.shop_id LEFT JOIN artists ar ON ar.id = u.artist_id WHERE u.id = $1`,
@@ -45,6 +45,9 @@ export async function publicUser(userId) {
     // A customer who came through Google / Facebook may have no password (the account page offers to set one)
     hasPassword: u.has_password,
     cartReminders: u.cart_reminders, // cart reminder emails wanted (on unless the customer turned them off)
+    // Offers and cart reminders on WhatsApp: only after a yes (account page or the checkout tick), to this number
+    whatsappOffers: Boolean(u.whatsapp_offers),
+    whatsappOffersPhone: u.whatsapp_offers ? u.whatsapp_offers_phone : null,
     linked: { google: u.via_google, facebook: u.via_facebook },
     shop: u.role === "SHOP" ? { shopCode: u.shop_code, name: u.shop_name, city: u.city, state: u.state, status: shopStatus(u) } : null,
     artist: u.role === "ARTIST" ? { artistCode: u.artist_code, username: u.artist_username, name: u.artist_name, status: u.artist_status } : null

@@ -30,6 +30,7 @@ import { config } from "../config.js";
 import { db } from "../db/index.js";
 import { HttpError, errors } from "../lib/errors.js";
 import { newId } from "../lib/tokens.js";
+import { indianMobile } from "../lib/whatsapp.js";
 import { gateway, paymentStatus } from "../payments/index.js";
 import { addressSnapshot, ownAddress, publicAddress } from "./address-service.js";
 import { gatewayInTestMode } from "./analytics-service.js";
@@ -267,6 +268,10 @@ async function insertOrder(q, user, { quote, address, paymentMethod, idempotency
       Boolean(whatsapp) && Boolean(address.phone || user.phone),
       quote.onlineDiscount ? quote.onlineDiscount.amount : 0]
   );
+  // The tick reads "Send order updates and reminders to my WhatsApp": it is also a yes to offers and cart reminders
+  // on WhatsApp, for this number (owner, 2026-11-09; turned off again on the account page)
+  const waNumber = whatsapp ? indianMobile(address.phone || user.phone) : null;
+  if (waNumber) await q.query("UPDATE users SET whatsapp_offers = true, whatsapp_offers_phone = $2, whatsapp_offers_at = now() WHERE id = $1", [user.id, "+91" + waNumber]);
   const sellers = await sellersOf(q, quote.lines);
   let position = 0;
   const used = [];

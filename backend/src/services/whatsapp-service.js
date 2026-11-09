@@ -7,6 +7,8 @@
                                   delivery, delivered, cancelled, refund. Only when they said yes at checkout.
      sellerNewOrder(…)            each shop and artist of a new order (the same news as their email).
      accountApproved(…)           a new shop or artist, once their login's setup link has been emailed.
+     cartReminder(…)              a customer who said yes to WhatsApp offers, about a cart left a few hours
+                                  (owner, 2026-11-09; a "Marketing" template).
 
    Each message is one Meta-approved template (lib/whatsapp.js). PREVIEW holds
    the same words as the templates in the Fast2SMS panel: change both together.
@@ -39,6 +41,8 @@ const STATUS = {
   ORDER_PLACED_COD: (o) => `Placed. Please pay ${rupees(o.total)} in cash on delivery`,
   ORDER_PLACED_PAID: (o) => `Placed. Payment of ${rupees(o.total)} received`,
   PAYMENT_FAILED: () => "Payment did not go through. You can try again from your order page",
+  // "Payment not finished" (owner, 2026-11-09): sent once, some minutes after an online payment started
+  PAYMENT_PENDING: (o, x) => `Payment not finished yet. We are holding your order for about ${x.minutesLeft || 15} more minutes: tap below and choose Retry payment`,
   ORDER_SHIPPED: (o) => (o.tracking_number ? `Shipped with ${o.courier}. Tracking number ${o.tracking_number}` : "Shipped and on its way"),
   ORDER_OUT_FOR_DELIVERY: (o) => (o.payment_method === "COD" && o.payment_status !== "PAID" ? `Out for delivery today. Please keep ${rupees(o.total)} ready (cash on delivery)` : "Out for delivery today"),
   ORDER_DELIVERED: () => "Delivered. We hope you love it",
@@ -52,6 +56,7 @@ export const ORDER_KINDS = Object.keys(STATUS);
 const PREVIEW = {
   orderUpdate: ([name, number, status], button) => `Hello ${name}, there is an update on your FrameX order ${number}.\n\nStatus: ${status}\n\nTap the button below to see your order. Thank you for shopping with FrameX.\n[View order: ${config.frontendUrl || ""}/order.html?id=${button}]`,
   sellerNewOrder: ([name, number, items, payment], button) => `Hello ${name}, you have a new FrameX order ${number}: ${items}.\n\nPayment: ${payment}\n\nPlease accept it in your FrameX dashboard.\n[Open dashboard: ${config.frontendUrl || ""}/${button}]`,
+  cartReminder: ([name, items], button) => `Hi ${name}, you left ${items} in your FrameX cart. Your order is just a few taps away.\nTurn these messages off in your FrameX account.\n[View my cart: ${config.frontendUrl}/${button}]`,
   accountApproved: ([name, business, code]) => `Hello ${name}, good news: ${business} is approved on FrameX. Your FrameX ID is ${code}.\n\nWe have emailed you the link to set up your login. Please check your inbox and spam folder.\n\nThank you for joining FrameX.\n[Open FrameX]`
 };
 
@@ -113,6 +118,19 @@ export function accountApproved({ code, name, business, phone }) {
     if (!config.whatsapp.accountApproved) return "off";
     const values = [firstName(name), business, code];
     return sendOnce({ kind: "ACCOUNT_APPROVED", ref: code, phone, template: config.whatsapp.templates.accountApproved, values, preview: PREVIEW.accountApproved(values) });
+  });
+}
+
+/**
+ * A cart left a few hours, to a customer who said yes to WhatsApp offers (cart-reminder-service decides who and when).
+ * ref: the cart and its state, so a cart is reminded once until it changes. -> "sent" | "dev" | "failed" | "repeat" | "off" | "bad_number"
+ */
+export function cartReminder({ ref, name, phone, items }) {
+  return quietly(`cart reminder ${ref}`, async () => {
+    if (!config.whatsapp.cartReminders) return "off";
+    const values = [firstName(name), items];
+    const button = "index.html?cart=1";
+    return sendOnce({ kind: "CART_REMINDER", ref, phone, template: config.whatsapp.templates.cartReminder, values, button, preview: PREVIEW.cartReminder(values, button) });
   });
 }
 

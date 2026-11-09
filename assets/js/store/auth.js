@@ -174,5 +174,7 @@
     updateProfile: (data) => http.patch("/users/me", data).then((r) => (set(r.user), r.user)),
     // Cart reminder emails on / off for this account (owner, 2026-10-31)
     setCartReminders: (on) => http.put("/users/me/cart-reminders", { on }).then((r) => (set(r.user), r.user)),
+    // Offers and cart reminders on WhatsApp (owner, 2026-11-09): yes needs a mobile number on the account or an address
+    setWhatsAppOffers: (on) => http.put("/users/me/whatsapp-offers", { on }).then((r) => (set(r.user), r.user)),
   };
 })((window.FrameX = window.FrameX || {}));

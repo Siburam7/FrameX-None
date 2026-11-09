@@ -15,13 +15,13 @@ import { syncCatalog } from "./services/catalog-service.js";
 import { labelOlderOrders, sweepAnalytics } from "./services/analytics-service.js";
 import { sweepUnusedArtistMedia } from "./services/artist-service.js";
 import { expireUnpaidAdvances } from "./services/painting-payment-service.js";
-import { expireUnpaidOrders } from "./services/payment-service.js";
+import { expireUnpaidOrders, remindUnpaidOrders } from "./services/payment-service.js";
 import { payoutsStatusLine } from "./services/payout-service.js";
 import { checkKnownFiles, describeLost } from "./services/storage-check.js";
 import { loadSettings } from "./services/settings-service.js";
 import { sweepUnusedMedia } from "./services/shop-product-service.js";
 import { sweepFinishedOrderPhotos, sweepUnusedUploads } from "./services/upload-service.js";
-import { runDue as remindCarts } from "./services/cart-reminder-service.js";
+import { runDue as remindCarts, runDueWhatsApp as remindCartsOnWhatsApp } from "./services/cart-reminder-service.js";
 
 async function main() {
   assertConfig();
@@ -68,7 +68,10 @@ async function main() {
   const expire = () =>
     expireUnpaidOrders()
       .then((n) => n && toAdmins("changed", { area: "orders" }))
-      .catch((error) => console.error("[payments] expiring unpaid orders failed:", error.message));
+      // …and "payment not finished": one reminder while the order is still held (owner, 2026-11-09)
+      .then(() => remindUnpaidOrders())
+      .then((n) => n && console.log(`[payments] ${n} "payment not finished" reminder(s) sent`))
+      .catch((error) => console.error("[payments] unpaid orders (expire / remind) failed:", error.message));
   setInterval(unlessQuiet("unpaid orders", expire), 60 * 1000).unref();
   expire();
   // Accepted custom paintings whose advance was never paid are closed after CUSTOM_PAINTING_ADVANCE_DAYS.
@@ -79,6 +82,9 @@ async function main() {
   const reminders = () =>
     remindCarts()
       .then((r) => r.sent && console.log(`[reminders] ${r.sent} cart reminder email(s) sent`))
+      // …and on WhatsApp, sooner, to those who said yes (owner, 2026-11-09; its own switch and daily limit)
+      .then(() => remindCartsOnWhatsApp())
+      .then((r) => r.sent && console.log(`[reminders] ${r.sent} cart reminder WhatsApp message(s) sent`))
       .catch((error) => console.error("[reminders] cart reminders failed:", error.message));
   setInterval(unlessQuiet("cart reminders", reminders), 10 * 60 * 1000).unref();
 

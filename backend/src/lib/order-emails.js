@@ -96,6 +96,17 @@ const COPY = {
     ],
     button: "Retry payment"
   }),
+  // "Payment not finished" (owner, 2026-11-09): once, some minutes after an online payment started and is still unpaid
+  PAYMENT_PENDING: (o, x) => ({
+    subject: `Finish your payment: order ${o.orderNumber}`,
+    heading: "Your payment isn't finished yet",
+    lines: [
+      `Your order ${o.orderNumber} for ${rupees(o.total)} is waiting for its payment. It is not placed yet.`,
+      `We are holding your items for about ${x.minutesLeft || 15} more minutes. Press "Retry payment" to pay with UPI, a card or net banking.`,
+      "If the money already left your account, there is nothing more to do: the order is placed as soon as the payment reaches us."
+    ],
+    button: "Retry payment"
+  }),
   ORDER_SHIPPED: (o) => ({
     subject: `Order ${o.orderNumber} has been shipped`,
     heading: "Your order is on its way",

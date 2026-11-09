@@ -136,6 +136,24 @@ const SPEC = {
     get: () => config.cartReminders.dailyLimit,
     set: (v) => (config.cartReminders.dailyLimit = v)
   },
+  cartReminderWhatsappHours: {
+    label: "On WhatsApp after the cart is left for",
+    hint: "Only to customers who said yes to offers and reminders on WhatsApp (account page or the checkout tick). Switch: WhatsApp messages → \"WhatsApp: cart reminders\".",
+    group: "Cart reminders",
+    unit: "hours",
+    check: whole(1, 72),
+    get: () => config.cartReminders.whatsappHours,
+    set: (v) => (config.cartReminders.whatsappHours = v)
+  },
+  cartReminderWhatsappDailyLimit: {
+    label: "Most WhatsApp cart reminders a day",
+    hint: "Each one is a paid WhatsApp marketing message.",
+    group: "Cart reminders",
+    unit: "count",
+    check: whole(0, 1000),
+    get: () => config.cartReminders.whatsappDailyLimit,
+    set: (v) => (config.cartReminders.whatsappDailyLimit = v)
+  },
   whatsappOrderUpdates: {
     label: "WhatsApp: order updates to customers",
     hint: "On: a customer who ticked \"order updates on WhatsApp\" at checkout gets placed, shipped, out for delivery, delivered, cancelled and refund news there too (about ₹0.25 a message). Needs the WhatsApp service (Fast2SMS) set up.",
@@ -171,6 +189,15 @@ const SPEC = {
     check: flag,
     get: () => config.whatsapp.loginCodes,
     set: (v) => (config.whatsapp.loginCodes = v)
+  },
+  whatsappCartReminders: {
+    label: "WhatsApp: cart reminders",
+    hint: "On: a customer who said yes to WhatsApp offers gets one WhatsApp about a cart left for the time in Cart reminders (9 am to 9 pm). Template framex_cart_reminder (\"Marketing\"): turn it on only after Meta has approved it.",
+    group: "WhatsApp messages",
+    unit: "boolean",
+    check: flag,
+    get: () => config.whatsapp.cartReminders,
+    set: (v) => (config.whatsapp.cartReminders = v)
   },
   productModeration: {
     label: "Shop products need FrameX approval",

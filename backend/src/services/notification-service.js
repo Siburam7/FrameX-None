@@ -134,6 +134,7 @@ const ORDER_COPY = {
   ORDER_PLACED_COD: (o) => ({ title: `Order ${o.order_number} placed`, body: `Your order is placed. Pay ${rupees(o.total)} in cash on delivery.` }),
   ORDER_PLACED_PAID: (o) => ({ title: `Payment received for order ${o.order_number}`, body: `We received ${rupees(o.total)}. Your order is placed.` }),
   PAYMENT_FAILED: (o) => ({ title: `Payment failed for order ${o.order_number}`, body: "The payment didn't go through. Your order is saved: you can try the payment again." }),
+  PAYMENT_PENDING: (o) => ({ title: `Finish your payment for order ${o.order_number}`, body: "Your items are held for a few more minutes. Open the order and press Retry payment." }),
   ORDER_CONFIRMED: (o) => ({ title: `Order ${o.order_number} confirmed`, body: "Your order has been confirmed." }),
   ORDER_PROCESSING: (o) => ({ title: `Order ${o.order_number} is being prepared`, body: "Your order is being prepared." }),
   ORDER_SHIPPED: (o) => ({ title: `Order ${o.order_number} shipped`, body: "Your order is on its way." }),

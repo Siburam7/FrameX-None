@@ -680,7 +680,7 @@
       inside). Pet model photos use the cat poster until the owner gives a real pet photo. Waiting for "haan".
       Old folders FrameX-Real-Frame-Preview-Design (wrong idea) and FrameX-New-Frames-Design (first 6) are superseded.
       Udyam: owner, 2026-10-28.
-- [ ] **Facebook login: waiting for Meta business verification** (2026-10-26). Meta app "FrameX" made (App ID 2610632082716960,
+- [ ] **Facebook login: ON live since 2026-11-09 (app published, Render values set); the owner's first real login still to try** (2026-10-26). Meta app "FrameX" made (App ID 2610632082716960,
       public; email + public_profile added; App domains, privacy / terms / data-deletion URLs, icon, category Shopping filled).
       Publish needs a verified Meta Business portfolio = business documents (Udyam / GST / bank statement in the business
       name). Owner has none yet → do Udyam first, then verify, publish, and only then set FACEBOOK_APP_ID + FACEBOOK_APP_SECRET
@@ -756,7 +756,7 @@
       bottom (below the banner at first, under the header once sticky), on layout / scroll / resize. Shop and artist
       dashboards: the same CSS, their shorter menus look as before. Browser admin-menu-scroll-e2e 8/8 (1366×768 and
       1920×1080: the menu fits, the wheel over it scrolls only the menu, Log out reachable with the page still at the
-      top, the wheel over the page scrolls the page), admin-live-e2e re-run. Local, push needs the owner's OK.
+      top, the wheel over the page scrolls the page), admin-live-e2e re-run. DEPLOYED 2026-11-09 (main 9cb5c3d).
 - [x] 2026-11-09 **Message sound on both sides** (owner: "notification massage ka sound nehi aa raha hai kyuu").
       Causes: the customer's chime played only when they were NOT reading the chat (the owner tested with it open);
       Admin → Chats had no sound at all; the care desk dinged only for other conversations. Fixed: help-chat notify()
@@ -764,8 +764,37 @@
       phone paused; admin-support.js dings (784 → 1046 Hz, as the desk) for every customer message on Chats and its
       list, sound switched on by the first click / key; care-desk dings for the open conversation's customer messages
       too. Browser admin-chats-live-e2e 13/13 (new: ding on the admin side, chime with the customer's chat open, no
-      pop-up then, the list dings; sound counted by a spy on createOscillator), care-e2e 62/62 bearer. Local, push
-      needs the owner's OK (with the menu scroll fix above).
+      pop-up then, the list dings; sound counted by a spy on createOscillator), care-e2e 62/62 bearer. DEPLOYED
+      2026-11-09 (main 9cb5c3d, owner: "push karke live kardoo"); the live site serves the new files.
+- [ ] 2026-11-09 **WhatsApp cart reminder + "payment baaki hai" reminder** (owner chose from three questions: only to
+      customers who said yes; WhatsApp after 3 h, email after 24 h; payment reminder 15 min in, order held 30 min).
+      Built, local, migration 029 (see architecture.md).
+      - Payment: payment-service remindUnpaidOrders() every minute with expireUnpaidOrders: ONLINE + PENDING_PAYMENT,
+        not reminded, 2-15 min left, no PAYMENT_FAILED notification → orders.notify(PAYMENT_PENDING): email "Finish
+        your payment" (Retry payment), the account's notification, WhatsApp through the APPROVED framex_order_update
+        (status "Payment not finished yet. We are holding your order for about N more minutes…", only when the checkout
+        tick was on). No new template needed.
+      - Cart on WhatsApp: cart-reminder-service runDueWhatsApp() with the email timer (10 min): carts left ≥ 3 h (max 3
+        days old), users.whatsapp_offers, 9 am-9 pm, 50 a day, once per cart state (carts.wa_reminded_at) → template
+        framex_cart_reminder (Marketing; {{1}} first name, {{2}} "<first item> and N more", footer "Turn these messages
+        off in your FrameX account.", URL button "View my cart" → index.html?cart=1 which opens the cart, after a login
+        if needed). Recorded in cart_reminders (channel WHATSAPP) for "came back and ordered". Admin → Settings:
+        "WhatsApp: cart reminders" (OFF until Meta approves), "On WhatsApp after … hours" (3), "Most WhatsApp cart
+        reminders a day" (50).
+      - Consent: account page "Messages from FrameX" → "Offers and cart reminders on WhatsApp" (PUT
+        /api/users/me/whatsapp-offers; the account's or the default address's mobile, else "Add your 10-digit mobile
+        number first."); the checkout tick now reads "Send order updates and reminders to my WhatsApp <number>" and
+        saves the yes for that number. Account deletion clears it.
+      - Tests: backend whatsapp-reminders 7/7 (new, in npm test), whatsapp 14 (5 switches), whatsapp-login 7,
+        cart-reminders 10, checkout 56, account 7, admin-live 3, api 48, analytics 26; browser whatsapp-e2e 10/10 (new
+        tick words), account-e2e 13/13, cart-link-e2e 4/4 (new: ?cart=1 opens the cart; login first when needed),
+        reminders-design-shots 10/10. Pictures: Desktop/FrameX-Reminders-Design-2026-11-09.
+      - Owner OK'd ("hm bana doo"): framex_cart_reminder CREATED 2026-11-09 through Fast2SMS's API (MARKETING, "en",
+        body + example, footer, URL button "View my cart" https://shopframex.in/{{1}}), Meta status PENDING (id …7268);
+        APPROVED the same evening (owner's Fast2SMS screenshot, 22:50; the API still said PENDING then — it lags).
+        Fast2SMS wallet ₹47 at that time: told the owner to top up (Marketing ~₹0.95, Utility ~₹0.25 each).
+      - Owner: fresh backup taken 2026-11-09 ("backup done, next push karo") → pushed with migration 029. Next: Admin →
+        Settings → "WhatsApp: cart reminders" ON. The payment reminder works as soon as it is live (approved template).
 - [x] 2026-11-09 **Login box shorter + Google and Facebook in one row** (owner: "login page ko chota karoo … facebook or
       google ko ek line main rakho", then "pehele design desktop par karo"). Design pictures only (repo code untouched):
       Desktop\FrameX-Login-Design-2026-11-09\login-v2-phone.png / login-v2-laptop.png, taken on the live site with the
@@ -1034,7 +1063,7 @@
 - [ ] Gmail DP not showing yet (checked 2026-10-21). Gmail shows a sender's Google photo mostly to people who have the
       address in their contacts or have written to it; showing a logo to everyone needs BIMI (DMARC is ready; needs a
       paid VMC/CMC certificate + trademark — not now). Owner test: add support@shopframex.in to a Gmail's contacts
-- [ ] F-15 SMS / WhatsApp OTP: owner put it aside 2026-10-20 (WhatsApp idea explained: ~₹0.12-0.35 a message,
+- [x] F-15 SMS / WhatsApp OTP — DONE: SMS login live 2026-11-01, WhatsApp codes live + ON 2026-11-09 (owner's real login worked). Was: owner put it aside 2026-10-20 (WhatsApp idea explained: ~₹0.12-0.35 a message,
       needs Meta business verification, a new number and a payment method; the grey SMS button stays for now)
       2026-11-01 owner asked again (mobile OTP: cost + DLT days). Found: an OTP by SMS in India needs the business's
       OWN DLT registration. Fast2SMS's own OTP page now says "SMS OTPs in India need DLT like all business SMS"; its

@@ -13,6 +13,8 @@
   const STATUS = { ACTIVE: "Active", PENDING_SETUP: "Waiting for password setup", DISABLED: "Disabled" };
   const SHOP_STATUS = { ACTIVE: "Approved · Active", INACTIVE: "Approved · Not listed (inactive)", PENDING: "Waiting for approval", REJECTED: "Not approved" };
   const date = (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" }) : "");
+  // "+919876543210" -> "+91 98765 43210"
+  const waShown = (p) => String(p || "").replace(/^\+91(\d{5})(\d{5})$/, "+91 $1 $2");
 
   // The theme chosen on this browser (the script in each page's head draws the page with it). Light if none.
   const THEME_KEY = "framex.theme.v1";
@@ -89,8 +91,9 @@
       </section>
 
       ${user.role === "CUSTOMER" ? `<section class="account-card" aria-labelledby="acc-mails">
-        <h2 id="acc-mails">${icon("mail")} Emails from FrameX</h2>
+        <h2 id="acc-mails">${icon("mail")} Messages from FrameX</h2>
         <label class="acc-switch"><input type="checkbox" data-cart-reminders${user.cartReminders === false ? "" : " checked"}><span><strong>Cart reminders</strong>One email when you leave something in your cart for a day, sometimes with a coupon.</span></label>
+        <label class="acc-switch"><input type="checkbox" data-wa-offers${user.whatsappOffers ? " checked" : ""}><span><strong>Offers and cart reminders on WhatsApp</strong>A WhatsApp when you leave something in your cart, and offers now and then. <span data-wa-to>${user.whatsappOffers && user.whatsappOffersPhone ? `To ${esc(waShown(user.whatsappOffersPhone))}.` : ""}</span></span></label>
       </section>` : ""}
 
       <section class="account-card" aria-labelledby="acc-orders">
@@ -162,6 +165,19 @@
         } catch (error) {
           reminders.checked = !reminders.checked;
           FrameX.toast.show(error.message || "That didn't work. Please try again.");
+        }
+      });
+    // Offers and cart reminders on WhatsApp (owner, 2026-11-09): yes goes to the account's / address's mobile number
+    const waOffers = $("[data-wa-offers]", root);
+    if (waOffers)
+      waOffers.addEventListener("change", async () => {
+        try {
+          const u = await auth().setWhatsAppOffers(waOffers.checked);
+          $("[data-wa-to]", root).textContent = u.whatsappOffers && u.whatsappOffersPhone ? `To ${waShown(u.whatsappOffersPhone)}.` : "";
+          FrameX.toast.show(u.whatsappOffers ? "WhatsApp offers and cart reminders are on." : "WhatsApp offers and cart reminders are off.");
+        } catch (error) {
+          waOffers.checked = !waOffers.checked;
+          FrameX.toast.show((error.fields && Object.values(error.fields)[0]) || error.message || "That didn't work. Please try again.");
         }
       });
     // Appearance: saved in this browser and shown at once

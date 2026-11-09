@@ -140,7 +140,7 @@ export async function deleteAccount(actor, { password, confirm } = {}, { ip = nu
 
     // The account row: emptied, switched off for good, its email freed
     await q.query(
-      `UPDATE users SET name = $2, email = $3, phone = NULL, password_hash = NULL, google_sub = NULL, facebook_id = NULL, status = 'DISABLED', deleted_at = now(), updated_at = now() WHERE id = $1`,
+      `UPDATE users SET name = $2, email = $3, phone = NULL, password_hash = NULL, google_sub = NULL, facebook_id = NULL, whatsapp_offers = false, whatsapp_offers_phone = NULL, status = 'DISABLED', deleted_at = now(), updated_at = now() WHERE id = $1`,
       [user.id, DELETED_NAME, `deleted-${user.id}@deleted.invalid`]
     );
     await audit(q, { actor: { id: user.id, role: user.role }, action: ACTIONS.ACCOUNT_DELETED, targetType: "user", targetId: user.id, metadata: { orders: orders.rowCount, paintings: paintings.rowCount, photos: files.length }, ip });

@@ -6,7 +6,7 @@ import { v, validate } from "../lib/validate.js";
 import { requireAuth } from "../middleware/auth.js";
 import { blockers, deleteAccount, exportData } from "../services/account-service.js";
 import { publicUser, updateProfile } from "../services/auth-service.js";
-import { setOwnChoice } from "../services/cart-reminder-service.js";
+import { setOwnChoice, setWhatsAppOffers } from "../services/cart-reminder-service.js";
 
 const router = Router();
 router.use(requireAuth);
@@ -25,6 +25,14 @@ router.patch("/me", async (req, res) => {
 router.put("/me/cart-reminders", async (req, res) => {
   const { on } = validate(req.body, { on: v.boolean() });
   await setOwnChoice(req.auth.user.id, on);
+  res.json({ user: await publicUser(req.auth.user.id) });
+});
+
+// Offers and cart reminders on WhatsApp (owner, 2026-11-09): yes needs a mobile number (given, or the account's /
+// newest address's); no stops them.
+router.put("/me/whatsapp-offers", async (req, res) => {
+  const { on, phone } = validate(req.body, { on: v.boolean(), phone: v.phone({ required: false }) });
+  await setWhatsAppOffers(req.auth.user.id, on, phone || "");
   res.json({ user: await publicUser(req.auth.user.id) });
 });
 

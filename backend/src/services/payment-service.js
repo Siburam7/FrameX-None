@@ -442,6 +442,35 @@ export async function expireUnpaidOrders() {
   return cancelled;
 }
 
+/**
+ * "Payment not finished" (owner, 2026-11-09): an online order still unpaid PAYMENT_REMINDER_MINUTES after its payment
+ * started, while it is still held, gets ONE reminder: email, the account's notifications and WhatsApp (when the
+ * customer said yes at checkout). Not after a "payment failed" message (that one already says how to retry).
+ * Run every minute with expireUnpaidOrders. -> how many were reminded
+ */
+export async function remindUnpaidOrders() {
+  const left = config.payments.pendingMinutes - config.payments.reminderMinutes; // minutes still held at the reminder
+  if (left < 3) return 0;
+  const { rows } = await db.query(
+    `UPDATE orders o SET payment_reminded_at = now()
+      WHERE o.id IN (SELECT x.id FROM orders x
+                      WHERE x.status = 'PENDING_PAYMENT' AND x.payment_method = 'ONLINE' AND x.payment_reminded_at IS NULL
+                        AND x.expires_at IS NOT NULL AND x.expires_at > now() + interval '2 minutes'
+                        AND x.expires_at <= now() + make_interval(mins => $1)
+                        AND NOT EXISTS (SELECT 1 FROM order_notifications n WHERE n.order_id = x.id AND n.kind = 'PAYMENT_FAILED')
+                      ORDER BY x.expires_at
+                      LIMIT 50)
+        AND o.payment_reminded_at IS NULL
+      RETURNING o.id, o.expires_at`,
+    [left]
+  );
+  for (const r of rows) {
+    const minutesLeft = Math.max(1, Math.round((new Date(r.expires_at).getTime() - Date.now()) / 60000));
+    orders.notify(r.id, "PAYMENT_PENDING", { extra: { minutesLeft } });
+  }
+  return rows.length;
+}
+
 /* ---------------------------------------------------------------- Webhooks */
 
 /**

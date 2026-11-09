@@ -373,6 +373,8 @@
       }
     });
     render();
+    // "View my cart" in the WhatsApp cart reminder opens a page with ?cart=1: the cart opens (after a login if needed)
+    if (FrameX.qs && FrameX.qs.param("cart") === "1") setTimeout(() => open(), 400);
   }
 
   FrameX.cartDrawer = { init, open, close };
