@@ -188,6 +188,22 @@
     await reload();
   }
 
+  /* The left menu fits the screen from where it is (below the banner at first, under the header once it sticks) to
+     16 px above the bottom, and scrolls on its own (shop-admin.css; owner, 2026-11-09). */
+  let fitQueued = false;
+  function fitSide() {
+    fitQueued = false;
+    const side = root && $(".sd-side", root);
+    if (!side) return;
+    const top = Math.max(0, side.getBoundingClientRect().top);
+    side.style.setProperty("--sd-side-max", `${Math.max(240, Math.round(window.innerHeight - top - 16))}px`);
+  }
+  const fitSoon = () => {
+    if (fitQueued) return;
+    fitQueued = true;
+    requestAnimationFrame(fitSide);
+  };
+
   function layout(section) {
     root.innerHTML = `<div class="sd">
       <aside class="sd-side">
@@ -202,6 +218,7 @@
       <section class="sd-main" data-main></section>
     </div>`;
     $("[data-refresh]", root).addEventListener("click", refresh);
+    fitSoon();
     $("[data-logout]", root).addEventListener("click", async () => {
       await FrameX.auth.logout();
       window.location.href = "login.html";
@@ -880,6 +897,8 @@
       if (e.target.closest("[data-main] button")) touched = true;
     });
     window.addEventListener("hashchange", route);
+    window.addEventListener("scroll", fitSoon, { passive: true });
+    window.addEventListener("resize", fitSoon, { passive: true });
     route();
     startLive();
   }

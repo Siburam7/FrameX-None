@@ -198,7 +198,11 @@ White text on the orange button: 2.85:1 (hover 3.58:1). The owner chose the logo
   `.hc-pop`, a white card (16 px corners, soft shadow) just above the FrameX Care button — the round F. CARE picture
   (36 px), "<b>Priya</b> · FrameX Care", two lines of the message, orange "Tap to reply", a round ×; slides in, goes
   after 10 s; phones: across the screen (14 px sides) above the round button. Plus a soft two-note chime (880 →
-  1318.5 Hz) and "(1) New message · FrameX Care" in the tab title while the tab is hidden.
+  1318.5 Hz) and "(1) New message · FrameX Care" in the tab title while the tab is hidden. Since 2026-11-09 (later)
+  the chime plays for every FrameX Care message, also with the chat open; staff pages (Live chats, Chats and its
+  list) ding (784 → 1046 Hz) for every customer message.
+- Dashboards' left menu (admin, shop, artist; owner, 2026-11-09): on a laptop it stays in view and, when longer than
+  the screen (the admin's), scrolls on its own with a thin scrollbar; the page doesn't move with it.
 - Care desk (Admin → Live chats, `css/care.css`): a status bar (Available green / Away, connection) over the lists with
   tabs, the chat (same bubbles, staff on the right) and the customer (under the lists next to the admin menu). Phone:
   one panel at a time. A CARE login's admin menu shows the round F. CARE picture, their name, Live chats and Orders.

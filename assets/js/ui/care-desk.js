@@ -241,7 +241,9 @@
       if (current && current.id === data.threadId && data.state) openThread(current.id).catch(() => {});
     } else if (type === "message") {
       if (current && current.id === data.threadId) {
-        if (!current.messages.some((m) => m.id === data.message.id)) current.messages.push(data.message);
+        const fresh = !current.messages.some((m) => m.id === data.message.id);
+        if (fresh) current.messages.push(data.message);
+        if (fresh && data.message.from === "customer") ding(); // the open conversation too (owner, 2026-11-09)
         typingUntil = 0;
         drawConv();
         // marks it read, then the lists (so it doesn't show as new)

@@ -747,8 +747,25 @@
       8, api 48, checkout 56; browser admin-live-e2e 9/9 cookie + 9/9 bearer (a new order on the Orders list by itself,
       quietly, same scroll; Overview too; an open form → "New updates", tapping it reloads; the admin's own change
       doesn't light it), admin-chats-live-e2e 9/9, care-e2e 62/62 (its admin reload now waits for networkidle2: the
-      panel keeps a live connection, so networkidle0 never comes), tracking-e2e 10/10, payout-e2e 38/38. Local, push
-      needs the owner's OK (together with the Admin → Chats live fix above).
+      panel keeps a live connection, so networkidle0 never comes), tracking-e2e 10/10, payout-e2e 38/38. DEPLOYED
+      2026-11-09 with the Admin → Chats live fix (main 60c7c67, owner: "push karoo"); the live site serves the new
+      files. Owner to try: Admin open on the laptop, an order / message from the phone.
+- [x] 2026-11-09 **Admin's left menu scrolls on its own** (owner: the last menu items were reachable only after
+      scrolling the whole page). shop-admin.css (≥960 px): .sd-side max-height + overflow-y auto + overscroll-behavior
+      contain; admin-page.js fitSide sets --sd-side-max = the room left from the menu's top to 16 px above the screen's
+      bottom (below the banner at first, under the header once sticky), on layout / scroll / resize. Shop and artist
+      dashboards: the same CSS, their shorter menus look as before. Browser admin-menu-scroll-e2e 8/8 (1366×768 and
+      1920×1080: the menu fits, the wheel over it scrolls only the menu, Log out reachable with the page still at the
+      top, the wheel over the page scrolls the page), admin-live-e2e re-run. Local, push needs the owner's OK.
+- [x] 2026-11-09 **Message sound on both sides** (owner: "notification massage ka sound nehi aa raha hai kyuu").
+      Causes: the customer's chime played only when they were NOT reading the chat (the owner tested with it open);
+      Admin → Chats had no sound at all; the care desk dinged only for other conversations. Fixed: help-chat notify()
+      chimes for every FrameX Care message (pop-up / title still only when not reading); chime() resumes a sound the
+      phone paused; admin-support.js dings (784 → 1046 Hz, as the desk) for every customer message on Chats and its
+      list, sound switched on by the first click / key; care-desk dings for the open conversation's customer messages
+      too. Browser admin-chats-live-e2e 13/13 (new: ding on the admin side, chime with the customer's chat open, no
+      pop-up then, the list dings; sound counted by a spy on createOscillator), care-e2e 62/62 bearer. Local, push
+      needs the owner's OK (with the menu scroll fix above).
 - [x] 2026-11-09 **Login box shorter + Google and Facebook in one row** (owner: "login page ko chota karoo … facebook or
       google ko ek line main rakho", then "pehele design desktop par karo"). Design pictures only (repo code untouched):
       Desktop\FrameX-Login-Design-2026-11-09\login-v2-phone.png / login-v2-laptop.png, taken on the live site with the

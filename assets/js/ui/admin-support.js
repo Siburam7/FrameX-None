@@ -30,6 +30,39 @@
       </div>
       <div class="sd-item__actions"><a class="iu-btn iu-btn--go" href="#/chats/${esc(t.id)}">${icon("mail")} ${t.unread ? "Answer" : "Open"}</a></div></li>`;
 
+  /* A "ding" when a customer writes (owner, 2026-11-09: "notification massage ka sound nehi aa raha"); the same two
+     notes as the care desk. Browsers allow sound after a click or a key on the page, so the first one switches it on. */
+  let audio = null;
+  const unlock = () => {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state !== "running") audio.resume().catch(() => {});
+    } catch (error) {
+      audio = null;
+    }
+  };
+  ["pointerup", "click", "keydown"].forEach((name) => document.addEventListener(name, unlock, { capture: true, passive: true }));
+  function ding() {
+    if (!audio) return;
+    const play = () =>
+      [0, 0.22].forEach((at, i) => {
+        const o = audio.createOscillator();
+        const g = audio.createGain();
+        o.frequency.value = i ? 1046 : 784;
+        g.gain.setValueAtTime(0.0001, audio.currentTime + at);
+        g.gain.exponentialRampToValueAtTime(0.25, audio.currentTime + at + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + at + 0.2);
+        o.connect(g).connect(audio.destination);
+        o.start(audio.currentTime + at);
+        o.stop(audio.currentTime + at + 0.22);
+      });
+    if (audio.state === "running") return play();
+    audio
+      .resume()
+      .then(() => audio.state === "running" && play())
+      .catch(() => {});
+  }
+
   /** The care desk's live connection while this page is shown; returns the function that ends it. */
   function liveFor(onChange) {
     let soon = 0;
@@ -38,7 +71,10 @@
       soon = setTimeout(() => onChange(data), 250); // several events at once: one reload
     };
     const live = http().stream("/care/stream", {
-      onEvent: (type, data) => (type === "message" || type === "queue") && later(data),
+      onEvent: (type, data) => {
+        if (type === "message" && data && data.message && data.message.from === "customer") ding();
+        if (type === "message" || type === "queue") later(data);
+      },
       onOpen: () => later(null), // (re)connected: catch up on what came meanwhile
     });
     return () => {

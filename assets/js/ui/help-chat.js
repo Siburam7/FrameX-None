@@ -131,23 +131,31 @@
   }
 
   function chime() {
-    if (!audio || audio.state !== "running") return;
-    const t = audio.currentTime;
-    [
-      [880, 0],
-      [1318.5, 0.14],
-    ].forEach(([hz, at]) => {
-      const tone = audio.createOscillator();
-      const gain = audio.createGain();
-      tone.type = "sine";
-      tone.frequency.value = hz;
-      gain.gain.setValueAtTime(0.0001, t + at);
-      gain.gain.exponentialRampToValueAtTime(0.14, t + at + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + at + 0.45);
-      tone.connect(gain).connect(audio.destination);
-      tone.start(t + at);
-      tone.stop(t + at + 0.5);
-    });
+    if (!audio) return; // no tap on this page yet: browsers allow no sound
+    const play = () => {
+      const t = audio.currentTime;
+      [
+        [880, 0],
+        [1318.5, 0.14],
+      ].forEach(([hz, at]) => {
+        const tone = audio.createOscillator();
+        const gain = audio.createGain();
+        tone.type = "sine";
+        tone.frequency.value = hz;
+        gain.gain.setValueAtTime(0.0001, t + at);
+        gain.gain.exponentialRampToValueAtTime(0.14, t + at + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + at + 0.45);
+        tone.connect(gain).connect(audio.destination);
+        tone.start(t + at);
+        tone.stop(t + at + 0.5);
+      });
+    };
+    if (audio.state === "running") return play();
+    // Paused by the phone (screen off, another app): once the page has had a tap, it may start again by itself
+    audio
+      .resume()
+      .then(() => audio.state === "running" && play())
+      .catch(() => {});
   }
 
   const remembered = () => {
@@ -209,8 +217,8 @@
 
   /** A message from FrameX Care arrived: chime + pop-up + title, unless the customer is reading this chat right now. */
   function notify(m) {
-    if (isOpen && !document.hidden && (view === "live" || view === "thread")) return;
-    chime();
+    chime(); // every message from FrameX Care, the chat open or not (owner, 2026-11-09: "sound nehi aa raha")
+    if (isOpen && !document.hidden && (view === "live" || view === "thread")) return; // reading it: no pop-up
     pop(m);
     flagTitle();
   }

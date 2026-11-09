@@ -153,6 +153,13 @@
   .sd-side {
     position: sticky;
     top: calc(var(--header-h) + 16px);
+    /* A menu taller than the screen (the admin's) scrolls on its own, without scrolling the page (owner, 2026-11-09:
+       the last items were reachable only after scrolling the whole page). A shorter menu looks the same as before. */
+    max-height: calc(100vh - var(--header-h) - 32px);
+    max-height: var(--sd-side-max, calc(100dvh - var(--header-h) - 32px)); /* the admin page sets the exact room left */
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
   }
 }
 
