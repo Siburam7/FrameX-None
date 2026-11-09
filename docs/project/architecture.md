@@ -98,7 +98,11 @@ paintings hourly, tidy-ups) wait and run once when the next visitor comes, and `
   `/api/care` (CARE or ADMIN: `/stream`, `/queue`, `/presence`, `/threads[/:id[/accept|reply|typing|end|status]]`); Admin → Care team
   `GET/POST /api/admin/care-team`, `PATCH /api/admin/care-team/:id` (audited CARE_STAFF_*). Live updates are server-sent
   events kept in the server's memory (one Render instance); the website reads them with fetch (`FrameX.http.stream`) so
-  bearer sessions work, and reconnects by itself. CARE_HOURS (default "10-20", India time) and CARE_WAIT_SECONDS (120).
+  bearer sessions work, and reconnects by itself (2026-11-09: also after 70 s without the 25 s ping, when the page is
+  shown again after 30 s of silence, and when the device is back online). A customer's message reaches the desks as
+  a "message" event: a live chat only its care person, a written conversation every open desk. The customer's
+  connection stays open while the chat is open, while waiting / live, and while their open conversation has a
+  message of theirs from the last 3 days (an answer may come). CARE_HOURS (default "10-20", India time) and CARE_WAIT_SECONDS (120).
   A waiting request runs out by a timer and on any read (`expireWaiting`). Care people log in on the customer tab with
   their email and land on `admin.html#/live` (the admin panel shows a CARE login only Live chats + Orders).
   Orders for admins and FrameX Care: `/api/admin/orders` is its own router (`staffOrders`, ADMIN or CARE) mounted

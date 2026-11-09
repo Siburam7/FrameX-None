@@ -717,6 +717,22 @@
       round button, tap opens the chat and the pop-up goes; the stock check waits for its form). The old chat-e2e
       (2026-10-23 "Help & chat" labels) is out of date and not in the push check. Chime and tab title not testable
       headless (no sound / always visible): to try on a real phone.
+      DEPLOYED 2026-11-09 (main 2298b00). Read-only look at live shopframex.in (phone): "FrameX Care is typing…" first,
+      the answer after 1.4 s, the pop-up styles loaded, no console errors.
+- [x] 2026-11-09 **FrameX Care: messages, pop-up and sound live without a refresh** (owner tested on a real phone at
+      night: no sound, the pop-up only after a refresh, the customer's message reached the desk only after a refresh,
+      while care → customer was quick). Cause: outside the team's hours the chat is a written conversation, and
+      (1) the server pushed a customer's message to the desk only in a LIVE chat (else just a "queue" list refresh, so
+      the open conversation didn't change); (2) the customer's live connection closed with the chat unless
+      waiting / live, so an answer came only on the next page load; (3) the chime unlocked on pointerdown, which on a
+      touch screen doesn't count as a tap for sound (only pointerup / touchend / click). Fixed: support-service sends
+      "message" to every open desk for a written conversation; help-chat keeps the connection while the customer's
+      open conversation has a message of theirs from the last 3 days; sound unlocks on pointerup / touchend / click /
+      keydown (+ a silent sound for iPhone); a pop-up on reconnect also chimes; client.js stream reconnects after 70 s
+      without a ping, on coming back to the page after 30 s of silence, and when back online. Tests: backend care
+      12/12 (new: a message left reaches both desks at once), support 8/8; browser care-e2e 62/62 cookie mode and
+      62/62 bearer (live) mode (new: written conversation both ways live, pop-up with the chat closed). Local, push
+      needs the owner's OK. iPhone silent switch mutes web sounds (Apple's rule).
 - [x] 2026-11-09 **Login box shorter + Google and Facebook in one row** (owner: "login page ko chota karoo … facebook or
       google ko ek line main rakho", then "pehele design desktop par karo"). Design pictures only (repo code untouched):
       Desktop\FrameX-Login-Design-2026-11-09\login-v2-phone.png / login-v2-laptop.png, taken on the live site with the

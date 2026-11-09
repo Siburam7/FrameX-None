@@ -301,6 +301,15 @@ describe("FrameX Care: talking", () => {
     assert.equal((await priya.get("/api/care/queue")).json.messages.some((x) => x.id === t.id), true, "it is under messages left");
   });
 
+  test("a message left (no live chat) reaches every open care desk at once, not only after a refresh (2026-11-09)", async () => {
+    const t = (await asha.get("/api/support")).json.thread;
+    assert.notEqual(t.live && t.live.state, "LIVE");
+    assert.equal((await asha.post("/api/support/messages", { body: "Also, can you add a card?" })).status, 201);
+    const seen = await S.priyaDesk.next("message", (d) => d.threadId === t.id && /add a card/.test(d.message.body));
+    assert.equal(seen.message.from, "customer");
+    await S.rahulDesk.next("message", (d) => d.threadId === t.id && /add a card/.test(d.message.body));
+  });
+
   test("an answer to a message left is emailed to the customer when they aren't in a live chat, with the care person's name", async () => {
     S.ashaChat.close();
     await new Promise((r) => setTimeout(r, 100));

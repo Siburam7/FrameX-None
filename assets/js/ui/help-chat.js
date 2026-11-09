@@ -115,8 +115,16 @@
     try {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       if (!Ctx) return;
+      const first = !audio;
       audio = audio || new Ctx();
-      if (audio.state === "suspended") audio.resume().catch(() => {});
+      if (audio.state !== "running") audio.resume().catch(() => {});
+      if (first) {
+        // iPhone: a silent sound played inside the tap unlocks the speaker for later sounds
+        const src = audio.createBufferSource();
+        src.buffer = audio.createBuffer(1, 1, 22050);
+        src.connect(audio.destination);
+        src.start(0);
+      }
     } catch (error) {
       audio = null;
     }
@@ -470,15 +478,24 @@
     // An answer not read yet (e.g. written while the customer was away): the pop-up once, on the next page they open
     if (!isOpen && thread && thread.unread) {
       const last = [...thread.messages].reverse().find(fromCare);
-      if (last && String(last.id) !== remembered()) pop(last);
+      if (last && String(last.id) !== remembered()) {
+        chime(); // silent on a fresh page (no tap yet); heard when coming back to an open page
+        pop(last);
+      }
     }
     wantLive();
     if (isOpen || view === "live") render();
   }
 
   /** The live connection is open while the chat is open, or while the customer waits for / talks to someone. */
+  /** An open written conversation the customer took part in during the last 3 days: an answer may come any minute. */
+  const awaitingAnswer = () =>
+    Boolean(thread && thread.status === "OPEN" && (thread.messages || []).some((m) => m.from === "you" && Date.now() - new Date(m.at).getTime() < 3 * 86400000));
+
+  /** The live connection: while the chat is open, while waiting for / talking to someone, and (2026-11-09) while an
+   *  answer to their message may come, so it arrives with the chime and the pop-up instead of after a refresh. */
   function wantLive() {
-    const need = Boolean(user) && (isOpen || ["WAITING", "LIVE"].includes(liveState()));
+    const need = Boolean(user) && (isOpen || ["WAITING", "LIVE"].includes(liveState()) || awaitingAnswer());
     if (need && !live) live = http().stream("/support/stream", { onEvent, onOpen: () => load() }); // (re)connected: catch up
     if (!need && live) {
       live.close();
@@ -730,7 +747,8 @@
     if (user && user.role !== "CUSTOMER") return; // shops, artists, care and admins have their own pages
     build();
     // Sound is allowed after a tap or a key on the page (browsers' rule); the tab title comes back when it is seen
-    ["pointerdown", "keydown"].forEach((name) => document.addEventListener(name, unlockSound, { capture: true, passive: true }));
+    // (on phones a touch counts only when the finger lifts: pointerup / touchend / click, not pointerdown)
+    ["pointerup", "touchend", "click", "keydown"].forEach((name) => document.addEventListener(name, unlockSound, { capture: true, passive: true }));
     document.addEventListener("visibilitychange", () => {
       if (document.hidden || !unseen) return;
       unseen = 0;

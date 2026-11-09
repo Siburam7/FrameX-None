@@ -111,6 +111,9 @@
   (chat closed, another view, or tab hidden); the pop-up stays 10 s; a chime also when a care person joins; an unread
   answer pops once per tab on the next page; the chime is made in the browser (no file) and stays silent until the
   visitor has tapped the page (browsers' rule); no browser (system) notifications — they need a permission prompt.
+  Lesson (owner's real-phone test, same night): test the chat OUTSIDE the care hours too — then it is a written
+  conversation, which wasn't live both ways; and on touch screens unlock sound on pointerup / touchend / click,
+  never pointerdown. Fixed the same day (see tasks.md).
   Login OTP on WhatsApp waits for Meta business verification (Udyam first). My choices (owner can change): the checkout
   box is ticked by default (remembered when unticked) and appears only while WhatsApp is set up; WhatsApp for placed,
   payment failed, shipped, out for delivery (WhatsApp only), delivered, cancelled and refunds, not for confirmed /

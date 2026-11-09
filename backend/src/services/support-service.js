@@ -129,7 +129,10 @@ export async function customerSend(user, { body, orderNumber = "", topic = "" })
     return { ...t, alert, sent };
   });
   const out = { threadId: thread.id, message: { ...message(thread.sent), from: "customer" } };
+  // A live chat: its care person. A written conversation (outside the hours, nobody free, a message left): every open
+  // care desk, so whoever has it open sees it at once instead of after a refresh (owner, 2026-11-09).
   if (thread.live_state === "LIVE" && thread.agent_user_id) toStaff("message", out, { only: thread.agent_user_id });
+  else toStaff("message", out);
   toStaff("queue", { threadId: thread.id });
   if (thread.alert) {
     const panelUrl = `${linkBase()}/admin.html#/chats/${thread.id}`;

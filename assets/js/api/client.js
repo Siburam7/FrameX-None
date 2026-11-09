@@ -202,9 +202,29 @@
     let ctrl = null;
     let wait = 2000;
     let timer = 0;
+    // A connection can die without a word (a phone's screen off, another app, a network change): the server writes
+    // a ping every 25 s, so 70 s of silence -- or coming back to the page after 30 s of it -- means connect again now
+    // (owner, 2026-11-09: messages came only after a refresh).
+    let heard = Date.now();
+    let waiting = false; // between a drop and the next try
+    const stale = (ms) => ctrl && !waiting && Date.now() - heard > ms;
+    const again = () => {
+      if (stopped) return;
+      wait = 1000;
+      if (waiting) {
+        clearTimeout(timer);
+        waiting = false;
+        connect();
+      } else if (ctrl) ctrl.abort(); // the reading loop ends and connects again in a second
+    };
+    const watchdog = setInterval(() => !document.hidden && stale(70000) && again(), 15000);
+    const onShow = () => !document.hidden && stale(30000) && again();
+    document.addEventListener("visibilitychange", onShow);
+    window.addEventListener("online", again);
     async function connect() {
       if (stopped || !enabled()) return;
       ctrl = new AbortController();
+      heard = Date.now();
       const token = getToken();
       try {
         const response = await fetch(cfg.url + path, {
@@ -221,6 +241,7 @@
         for (;;) {
           const { value, done } = await reader.read();
           if (done) break;
+          heard = Date.now();
           buffer += decoder.decode(value, { stream: true });
           let cut;
           while ((cut = buffer.indexOf("\n\n")) >= 0) {
@@ -248,7 +269,11 @@
       }
       if (stopped) return;
       onDown();
-      timer = setTimeout(connect, wait);
+      waiting = true;
+      timer = setTimeout(() => {
+        waiting = false;
+        connect();
+      }, wait);
       wait = Math.min(wait * 2, 20000);
     }
     connect();
@@ -256,6 +281,9 @@
       close() {
         stopped = true;
         clearTimeout(timer);
+        clearInterval(watchdog);
+        document.removeEventListener("visibilitychange", onShow);
+        window.removeEventListener("online", again);
         if (ctrl) ctrl.abort();
       },
     };
